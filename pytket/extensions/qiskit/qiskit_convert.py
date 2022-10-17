@@ -346,7 +346,7 @@ class CircuitBuilder:
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
-    """Convert a :py:class:`qiskit.QuantumCircuit` to a :py:class:`Circuit`.
+    """Converts a qiskit :py:class`QuantumCircuit` to a pytket :py:class:`Circuit`.
 
     :param qcirc: A circuit to be converted
     :type qcirc: QuantumCircuit
@@ -561,24 +561,37 @@ def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
         wire_2_qubit[target_wire] = q
     return swaps
 
+
 # Define varibles for RebaseCustom
-cx_replacement = Circuit(2).CX(0,1)
+cx_replacement = Circuit(2).CX(0, 1)
 supported_tket_gates = set(_known_qiskit_gate.values())
+
 
 def tk1_func(a, b, c):
     tk1_circ = Circuit(1)
     tk1_circ.add_gate(OpType.TK1, [a, b, c], [0])
     return tk1_circ
 
+
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
 supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_func)
+
 
 def tk_to_qiskit(
     tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
-    """Convert back
+    """Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`QuantumCircuit`.
 
-    :param tkcirc: A circuit to be converted
+
+    In many cases there will be a qiskit gate to exactly replace each tket gate.
+    If no exact replacement can be found for a part of the circuit then an equivalent
+    circuit will be returned using the tket gates which are supported in qiskit.
+
+    As tket and qiskit use different qubit ordering conventions there is the option to reverse the
+    qubit indices of the returned circuit using the reverse_index parameter.
+
+
+    :param tkcirc: A :py:class:`Circuit` to be converted
     :type tkcirc: Circuit
     :param reverse_index: Reverse the order of wires
     :type reverse_index: bool
@@ -648,7 +661,7 @@ def tk_to_qiskit(
     if reverse_index:
         return qcirc.reverse_bits()
     return qcirc
-    
+
 
 def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary

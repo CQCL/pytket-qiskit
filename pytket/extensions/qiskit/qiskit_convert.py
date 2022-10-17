@@ -587,8 +587,9 @@ def tk_to_qiskit(
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    As tket and qiskit use different qubit ordering conventions there is the option to reverse the
-    qubit indices of the returned circuit using the reverse_index parameter.
+    As tket and qiskit use different qubit ordering conventions
+    there is the option to reverse the qubit indices of the returned circuit
+    using the reverse_index parameter.
 
 
     :param tkcirc: A :py:class:`Circuit` to be converted

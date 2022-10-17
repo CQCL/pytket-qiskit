@@ -73,6 +73,8 @@ from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
+from pytket.passes import RebaseCustom
+
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
     from qiskit.providers.models.backendproperties import (  # type: ignore
@@ -559,6 +561,17 @@ def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
         wire_2_qubit[target_wire] = q
     return swaps
 
+# Define varibles for RebaseCustom
+cx_replacement = Circuit(2).CX(0,1)
+supported_tket_gates = set(_known_qiskit_gate.values())
+
+def tk1_func(a, b, c):
+    tk1_circ = Circuit(1)
+    tk1_circ.add_gate(OpType.TK1, [a, b, c], [0])
+    return tk1_circ
+
+# This is a rebase to the set of tket gates which have an exact substitution in qiskit
+supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_func)
 
 def tk_to_qiskit(
     tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
@@ -604,6 +617,9 @@ def tk_to_qiskit(
         qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
     range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
+
+    supported_gate_rebase.apply(tkc)
+
     for command in tkc:
         append_tk_command_to_qiskit(
             command.op, command.args, qcirc, qregmap, cregmap, symb_map, range_preds
@@ -632,7 +648,7 @@ def tk_to_qiskit(
     if reverse_index:
         return qcirc.reverse_bits()
     return qcirc
-
+    
 
 def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary

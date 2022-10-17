@@ -41,6 +41,8 @@ Once you have created an account you can obtain an API token which you can use t
 
 ::
 
+    from pytket.extensions.qiskit import set_ibmq_config
+    
     set_ibmq_config(ibmq_api_token=ibm_token)
 
 This will save your IBMQ credentials locally. After saving your credentials you can access pytket-qiskit backend repeatedly without having to re-initialise your credentials.

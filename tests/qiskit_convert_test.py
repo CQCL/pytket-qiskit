@@ -695,8 +695,9 @@ def test_crx_and_cry() -> None:
     assert ops_dict["crx"] == 1 and ops_dict["cry"] == 1
 
 
-# test that tk_to_qiskit works for gates which don't have an exact substitution in qiskit e.g. ZZMax
-# See issue "Add support for ZZMax gate in converters"
+# test that tk_to_qiskit works for gates which don't have
+# an exact substitution in qiskit e.g. ZZMax
+# See issue "Add support for ZZMax gate in converters" #486
 def test_rebased_conversion() -> None:
     tket_circzz = Circuit(2)
     tket_circzz.add_gate(OpType.ZZMax, [0, 1])

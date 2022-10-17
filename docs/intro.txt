@@ -32,6 +32,37 @@ Windows. To install, run:
 This will install `pytket` if it isn't already installed, and add new classes
 and methods into the `pytket.extensions` namespace.
 
+Access and Credentials
+======================
+
+Accessing devices and simulators through the pytket-qiskit extension requires an IBMQ account. An account can be set up here -> https://quantum-computing.ibm.com/login.
+
+Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
+
+::
+
+    set_ibmq_config(ibmq_api_token=ibm_token)
+
+This will save your IBMQ credentials locally. After saving your credentials you can access pytket-qiskit backend repeatedly without having to re-initialise your credentials.
+
+If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
+
+::
+
+    from pytket.extensions.qiskit import set_ibmq_config
+
+    set_ibmq_config(ibmq_api_token=ibm_token, hub='your hub', group='your group', project='your project')
+
+To see which devices you can access you can use the ``available_devices`` method on the ``IBMQBackend`` or ``IBMQEmulatorBackend``. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
+
+::
+
+    from pytket.extensions.qiskit import IBMQBackend
+
+    backend = IBMQBackend # Initialise backend for an IBM device
+    backend.available_devices(hub='your hub', group='your group', project='your project') 
+
+
 Backends Available Through pytket-qiskit
 ========================================
 
@@ -56,15 +87,7 @@ and several types of simulator.
      - Unitary simulator
 
 * [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
-
-::
-
-    from pytket.extensions.qiskit import IBMQBackend
-
-    backend = IBMQBackend('ibmq_guadalupe')
-
-Access and Credentials
-======================
+* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend``s and compilation passes to be used directly through qiskit. see the `Notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
 
 Default Compilation
 ===================
@@ -81,33 +104,42 @@ Every ``Backend`` in pytket has its own ``default_compilation_pass`` method. Thi
    * - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
-   * - `CXMappingPass <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.CXMappingPass>`_ [2]
+   * - self.rebase_pass [2]
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
      - `FullPeepholeOptimise <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.FullPeepholeOptimise>`_
-   * - `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
-     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [2]
-     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [2]
+   * - `CXMappingPass <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
    * - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
-   * - self.rebase_pass [3]
+   * - self.rebase_pass [2]
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
-     - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
+     - `KAKDecomposition(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
+   * - 
+     - self.rebase_pass [2]
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
    * -
-     - self.rebase_pass [3]
-     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
+     - self.rebase_pass [2]
    * - 
      -
-     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [5].
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_ 
+   * - 
+     - 
+     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 1.
-* [2] Here ``CXMappingPass`` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
-* [3] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
-* [4] The ``default_compilation_pass`` for ``AerBackend`` is the same as above except it doesn't use ``SimplifyInitial``.
-* [5] ``SimplifyInitial`` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
+* [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
+* [3] Here ``CXMappingPass`` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
+* [4] ``SimplifyInitial`` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
+
+
+**Note:** The ``default_compilation_pass`` for ``AerBackend`` is the same as above except it doesn't use ``SimplifyInitial``.
+
 
 Backend Predicates
 ==================

@@ -322,6 +322,10 @@ class IBMQBackend(Backend):
     def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
+        # If you make changes to the default_compilation_pass,
+        # then please update this page accordingly
+        # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
+        # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
             if self._standard_gateset:
                 passlist.append(self.rebase_pass())

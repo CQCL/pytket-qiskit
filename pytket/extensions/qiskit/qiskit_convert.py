@@ -346,7 +346,7 @@ class CircuitBuilder:
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
-    """Converts a qiskit :py:class`QuantumCircuit` to a pytket :py:class:`Circuit`.
+    """Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
     :param qcirc: A circuit to be converted
     :type qcirc: QuantumCircuit
@@ -580,7 +580,7 @@ supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_t
 def tk_to_qiskit(
     tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
-    """Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`QuantumCircuit`.
+    """Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
 
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.

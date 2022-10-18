@@ -346,7 +346,7 @@ class CircuitBuilder:
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
-    """Converts a qiskit :py:class`QuantumCircuit` to a pytket :py:class:`Circuit`.
+    """Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
     :param qcirc: A circuit to be converted
     :type qcirc: QuantumCircuit

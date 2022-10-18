@@ -566,15 +566,15 @@ def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
 cx_replacement = Circuit(2).CX(0, 1)
 supported_tket_gates = set(_known_qiskit_gate.values())
 
-
-def tk1_func(a, b, c):
+# use U3 gate for tk1_replacement as this is a member of supported_tket_gates
+def tk1_to_u3(a, b, c):
     tk1_circ = Circuit(1)
-    tk1_circ.add_gate(OpType.TK1, [a, b, c], [0])
+    tk1_circ.add_gate(OpType.U3, [b, a - 1 / 2, c + 1 / 2], [0]).add_phase(-(a + c) / 2)
     return tk1_circ
 
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_func)
+supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_to_u3)
 
 
 def tk_to_qiskit(

@@ -580,7 +580,7 @@ supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_f
 def tk_to_qiskit(
     tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
-    """Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`QuantumCircuit`.
+    """Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
 
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.

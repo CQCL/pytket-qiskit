@@ -73,7 +73,7 @@ from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom
+from pytket.passes import RebaseCustom # type: ignore
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -170,7 +170,6 @@ _known_gate_rev_phase = {
 
 _known_gate_rev_phase[OpType.V] = (qiskit_gates.SXGate, -0.25)
 _known_gate_rev_phase[OpType.Vdg] = (qiskit_gates.SXdgGate, 0.25)
-
 
 # use minor signature hacks to figure out the string names of qiskit Gate objects
 _gate_str_2_optype: Dict[str, OpType] = dict()

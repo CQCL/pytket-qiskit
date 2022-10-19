@@ -802,6 +802,4 @@ def get_avg_characterisation(
         "edge_errors": avg_link_errors,
         "readout_errors": avg_readout_errors,
     }
-
-
-print("done here")
+    

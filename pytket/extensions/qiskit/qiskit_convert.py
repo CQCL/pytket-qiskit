@@ -73,7 +73,7 @@ from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom # type: ignore
+from pytket.passes import RebaseCustom  # type: ignore
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -802,3 +802,6 @@ def get_avg_characterisation(
         "edge_errors": avg_link_errors,
         "readout_errors": avg_readout_errors,
     }
+
+
+print("done here")

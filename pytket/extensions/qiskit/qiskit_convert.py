@@ -171,6 +171,7 @@ _known_gate_rev_phase = {
 _known_gate_rev_phase[OpType.V] = (qiskit_gates.SXGate, -0.25)
 _known_gate_rev_phase[OpType.Vdg] = (qiskit_gates.SXdgGate, 0.25)
 
+
 # use minor signature hacks to figure out the string names of qiskit Gate objects
 _gate_str_2_optype: Dict[str, OpType] = dict()
 for gate, optype in _known_qiskit_gate.items():
@@ -565,9 +566,11 @@ def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
 
 # Define varibles for RebaseCustom
 cx_replacement = Circuit(2).CX(0, 1)
-supported_tket_gates = set(_known_qiskit_gate.values())
 
-# use U3 gate for tk1_replacement as this is a member of supported_tket_gates
+# The set of tket gates that can be converted directly to qiskit gates
+supported_tket_gates = set(_known_gate_rev_phase.keys())
+
+# Use the U3 gate for tk1_replacement as this is a member of supported_tket_gates
 def tk1_to_u3(a, b, c):
     tk1_circ = Circuit(1)
     tk1_circ.add_gate(OpType.U3, [b, a - 1 / 2, c + 1 / 2], [0]).add_phase(-(a + c) / 2)

@@ -564,20 +564,20 @@ def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
 
 
 # Define varibles for RebaseCustom
-cx_replacement = Circuit(2).CX(0, 1)
+_cx_replacement = Circuit(2).CX(0, 1)
 
 # The set of tket gates that can be converted directly to qiskit gates
-supported_tket_gates = set(_known_gate_rev_phase.keys())
+_supported_tket_gates = set(_known_gate_rev_phase.keys())
 
-# Use the U3 gate for tk1_replacement as this is a member of supported_tket_gates
-def tk1_to_u3(a, b, c):
+# Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
+def _tk1_to_u3(a, b, c):
     tk1_circ = Circuit(1)
     tk1_circ.add_gate(OpType.U3, [b, a - 1 / 2, c + 1 / 2], [0]).add_phase(-(a + c) / 2)
     return tk1_circ
 
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(supported_tket_gates, cx_replacement, tk1_to_u3)
+supported_gate_rebase = RebaseCustom(_supported_tket_gates, _cx_replacement, _tk1_to_u3)
 
 
 def tk_to_qiskit(
@@ -592,7 +592,7 @@ def tk_to_qiskit(
     circuit will be returned using the tket gates which are supported in qiskit.
 
     As tket and qiskit use different qubit ordering conventions
-    there is the option to reverse the qubit indices of the returned circuit
+    there is the option to reverse the bit indices of the returned circuit
     using the reverse_index parameter.
 
 
@@ -636,6 +636,7 @@ def tk_to_qiskit(
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
     range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
 
+    # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
 
     for command in tkc:

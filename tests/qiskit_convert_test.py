@@ -50,7 +50,11 @@ from pytket.extensions.qiskit.result_convert import (
     _gen_uids,
 )
 from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass  # type: ignore
-from pytket.utils.results import compare_statevectors, permute_rows_cols_in_unitary
+from pytket.utils.results import (
+    compare_statevectors,
+    permute_rows_cols_in_unitary,
+    compare_unitaries,
+)
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
@@ -693,3 +697,20 @@ def test_crx_and_cry() -> None:
     qiskit_circ = tk_to_qiskit(tk_circ)
     ops_dict = qiskit_circ.count_ops()
     assert ops_dict["crx"] == 1 and ops_dict["cry"] == 1
+
+
+# test that tk_to_qiskit works for gates which don't have
+# an exact substitution in qiskit e.g. ZZMax
+# See issue "Add support for ZZMax gate in converters" #486
+def test_rebased_conversion() -> None:
+    tket_circzz = Circuit(3)
+    tket_circzz.V(0).H(1).Vdg(2)
+    tket_circzz.CV(0, 2)
+    tket_circzz.add_gate(OpType.ZZMax, [0, 1])
+    tket_circzz.add_gate(OpType.TK1, [0.1, 0.2, 0.3], [2])
+    tket_circzz.add_gate(OpType.PhasedISWAP, [0.25, -0.5], [0, 2])
+    qiskit_circzz = tk_to_qiskit(tket_circzz)
+    tket_circzz2 = qiskit_to_tk(qiskit_circzz)
+    u1 = tket_circzz.get_unitary()
+    u2 = tket_circzz2.get_unitary()
+    assert compare_unitaries(u1, u2)

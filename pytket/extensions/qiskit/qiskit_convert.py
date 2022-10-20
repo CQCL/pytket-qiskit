@@ -605,7 +605,7 @@ def tk_to_qiskit(
     :return: The converted circuit
     :rtype: QuantumCircuit
     """
-    tkc = tkcirc.copy() # Make a local copy of tkcirc
+    tkc = tkcirc.copy()  # Make a local copy of tkcirc
     qcirc = QuantumCircuit(name=tkc.name)
     qreg_sizes: Dict[str, int] = {}
     for qb in tkc.qubits:

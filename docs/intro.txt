@@ -77,15 +77,15 @@ and several types of simulator.
 
    * - Backend
      - Type
-   * - `IBMQBackend <https://cqcl.github.io/pytket-extensions/api/qiskit/api.html#pytket.extensions.qiskit.IBMQBackend>`_
+   * - `IBMQBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQBackend>`_
      - Interface to an IBM quantum computer.
-   * - `IBMQEmulatorBackend <https://cqcl.github.io/pytket-extensions/api/qiskit/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
+   * - `IBMQEmulatorBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
      - Emulator for a chosen ``IBMBackend`` (Device specific).
-   * - `AerBackend <https://cqcl.github.io/pytket-extensions/api/qiskit/api.html#pytket.extensions.qiskit.AerBackend>`_
+   * - `AerBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerBackend>`_
      - A noiseless, shots-based simulator for quantum circuits [1]
-   * - `AerStateBackend <https://cqcl.github.io/pytket-extensions/api/qiskit/api.html#pytket.extensions.qiskit.AerStateBackend>`_
+   * - `AerStateBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerStateBackend>`_
      - Statevector simulator.
-   * - `AerUnitaryBackend <https://cqcl.github.io/pytket-extensions/api/qiskit/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
+   * - `AerUnitaryBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
      - Unitary simulator
 
 * [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
@@ -107,23 +107,23 @@ Every ``Backend`` in pytket has its own ``default_compilation_pass`` method. Thi
      - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
    * - self.rebase_pass [2]
-     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
-     - `FullPeepholeOptimise <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.FullPeepholeOptimise>`_
-   * - `CXMappingPass <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
+     - `FullPeepholeOptimise <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.FullPeepholeOptimise>`_
+   * - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
      - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
      - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
    * - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
    * - self.rebase_pass [2]
-     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
      - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
      - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
    * - 
      - self.rebase_pass [2]
-     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api passes.html#pytket.passes.SynthesiseTket>`_
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
    * -
      - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
      - self.rebase_pass [2]

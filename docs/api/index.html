@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>pytket-qiskit &mdash; pytket-qiskit 0.29.0 documentation</title>
+  <title>pytket-qiskit &mdash; pytket-qiskit 0.30.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -29,7 +29,7 @@
             <a href="#" class="icon icon-home"> pytket-qiskit
           </a>
               <div class="version">
-                0.29
+                0.30
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -68,8 +68,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>pytket-qiskit</li>
+      <li><a href="#" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">pytket-qiskit</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -97,10 +97,156 @@ Windows. To install, run:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pytket</span><span class="o">-</span><span class="n">qiskit</span>
 </pre></div>
 </div>
+<p>This will install <cite>pytket</cite> if it isn’t already installed, and add new classes
+and methods into the <cite>pytket.extensions</cite> namespace.</p>
+</section>
+<section id="access-and-credentials">
+<h1>Access and Credentials<a class="headerlink" href="#access-and-credentials" title="Permalink to this headline"></a></h1>
+<p>Accessing devices and simulators through the pytket-qiskit extension requires an IBMQ account. An account can be set up here -&gt; <a class="reference external" href="https://quantum-computing.ibm.com/login">https://quantum-computing.ibm.com/login</a>.</p>
+<p>Once you have created an account you can obtain an API token which you can use to configure your credentials locally.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pytket.extensions.qiskit</span> <span class="kn">import</span> <span class="n">set_ibmq_config</span>
+
+<span class="n">set_ibmq_config</span><span class="p">(</span><span class="n">ibmq_api_token</span><span class="o">=</span><span class="n">ibm_token</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will save your IBMQ credentials locally. After saving your credentials you can access pytket-qiskit backend repeatedly without having to re-initialise your credentials.</p>
+<p>If you are a member of an IBM hub then you can add this information to <code class="docutils literal notranslate"><span class="pre">set_ibmq_config</span></code> as well.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pytket.extensions.qiskit</span> <span class="kn">import</span> <span class="n">set_ibmq_config</span>
+
+<span class="n">set_ibmq_config</span><span class="p">(</span><span class="n">ibmq_api_token</span><span class="o">=</span><span class="n">ibm_token</span><span class="p">,</span> <span class="n">hub</span><span class="o">=</span><span class="s1">&#39;your hub&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;your group&#39;</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">&#39;your project&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To see which devices you can access you can use the <code class="docutils literal notranslate"><span class="pre">available_devices</span></code> method on the <code class="docutils literal notranslate"><span class="pre">IBMQBackend</span></code> or <code class="docutils literal notranslate"><span class="pre">IBMQEmulatorBackend</span></code>. Note that it is possible to pass <code class="docutils literal notranslate"><span class="pre">hub</span></code>, <code class="docutils literal notranslate"><span class="pre">group</span></code> and <code class="docutils literal notranslate"><span class="pre">project</span></code> parameters to this method. This allows you to see which devices are accessible through your IBM hub.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pytket.extensions.qiskit</span> <span class="kn">import</span> <span class="n">IBMQBackend</span>
+
+<span class="n">backend</span> <span class="o">=</span> <span class="n">IBMQBackend</span> <span class="c1"># Initialise backend for an IBM device</span>
+<span class="n">backend</span><span class="o">.</span><span class="n">available_devices</span><span class="p">(</span><span class="n">hub</span><span class="o">=</span><span class="s1">&#39;your hub&#39;</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="s1">&#39;your group&#39;</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="s1">&#39;your project&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="backends-available-through-pytket-qiskit">
+<h1>Backends Available Through pytket-qiskit<a class="headerlink" href="#backends-available-through-pytket-qiskit" title="Permalink to this headline"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">pytket-qiskit</span></code> extension has several types of available <code class="docutils literal notranslate"><span class="pre">Backend</span></code>. These are the <code class="docutils literal notranslate"><span class="pre">IBMQBackend</span></code>
+and several types of simulator.</p>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Backend</p></th>
+<th class="head"><p>Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQBackend">IBMQBackend</a></p></td>
+<td><p>Interface to an IBM quantum computer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend">IBMQEmulatorBackend</a></p></td>
+<td><p>Emulator for a chosen <code class="docutils literal notranslate"><span class="pre">IBMBackend</span></code> (Device specific).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerBackend">AerBackend</a></p></td>
+<td><p>A noiseless, shots-based simulator for quantum circuits [1]</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerStateBackend">AerStateBackend</a></p></td>
+<td><p>Statevector simulator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerUnitaryBackend">AerUnitaryBackend</a></p></td>
+<td><p>Unitary simulator</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>[1] <code class="docutils literal notranslate"><span class="pre">AerBackend</span></code> is noiseless by default and has no architecture. However it can accept a user defined <code class="docutils literal notranslate"><span class="pre">NoiseModel</span></code> and <code class="docutils literal notranslate"><span class="pre">Architecture</span></code>.</p></li>
+<li><p>In addition to the backends above the pytket-qiskit extension also has the <code class="docutils literal notranslate"><span class="pre">TketBackend</span></code>. This allows a tket <a href="#id1"><span class="problematic" id="id2">``</span></a>Backend``s and compilation passes to be used directly through qiskit. see the <a class="reference external" href="https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb">Notebook example</a> on qiskit integration.</p></li>
+</ul>
+</section>
+<section id="default-compilation">
+<h1>Default Compilation<a class="headerlink" href="#default-compilation" title="Permalink to this headline"></a></h1>
+<p>Every <code class="docutils literal notranslate"><span class="pre">Backend</span></code> in pytket has its own <code class="docutils literal notranslate"><span class="pre">default_compilation_pass</span></code> method. This method applies a sequence of optimisations to a circuit depending on the value of an <code class="docutils literal notranslate"><span class="pre">optimisation_level</span></code> parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the Backend. The passes applied by different levels of optimisation are specified in the table below.</p>
+<table class="colwidths-given docutils align-default" id="id14">
+<caption><span class="caption-text"><strong>Default compilation pass for the IBMQBackend and IBMQEmulatorBackend</strong></span><a class="headerlink" href="#id14" title="Permalink to this table"></a></caption>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>optimisation_level = 0</p></th>
+<th class="head"><p>optimisation_level = 1 [1]</p></th>
+<th class="head"><p>optimisation_level = 2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes">DecomposeBoxes</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes">DecomposeBoxes</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes">DecomposeBoxes</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>self.rebase_pass [2]</p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket">SynthesiseTket</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.FullPeepholeOptimise">FullPeepholeOptimise</a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass">CXMappingPass</a> [3]</p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass">CXMappingPass</a> [3]</p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass">CXMappingPass</a> [3]</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass">NaivePlacementPass</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass">NaivePlacementPass</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass">NaivePlacementPass</a></p></td>
+</tr>
+<tr class="row-even"><td><p>self.rebase_pass [2]</p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket">SynthesiseTket</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition">KAKDecomposition(allow_swaps=False)</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies">RemoveRedundancies</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies">RemoveRedundancies</a></p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp">CliffordSimp(allow_swaps=False)</a></p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>self.rebase_pass [2]</p></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket">SynthesiseTket</a></p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial">SimplifyInitial</a> [4]</p></td>
+<td><p>self.rebase_pass [2]</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies">RemoveRedundancies</a></p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial">SimplifyInitial</a> [4]</p></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><p>[1] If no value is specified then <code class="docutils literal notranslate"><span class="pre">optimisation_level</span></code> defaults to a value of 1.</p></li>
+<li><p>[2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.</p></li>
+<li><p>[3] Here <code class="docutils literal notranslate"><span class="pre">CXMappingPass</span></code> maps program qubits to the architecture using a <a class="reference external" href="https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement">NoiseAwarePlacement</a></p></li>
+<li><p>[4] <code class="docutils literal notranslate"><span class="pre">SimplifyInitial</span></code> has arguments <code class="docutils literal notranslate"><span class="pre">allow_classical=False</span></code> and <code class="docutils literal notranslate"><span class="pre">create_all_qubits=True</span></code>.</p></li>
+</ul>
+<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">default_compilation_pass</span></code> for <code class="docutils literal notranslate"><span class="pre">AerBackend</span></code> is the same as above except it doesn’t use <code class="docutils literal notranslate"><span class="pre">SimplifyInitial</span></code>.</p>
+</section>
+<section id="backend-predicates">
+<h1>Backend Predicates<a class="headerlink" href="#backend-predicates" title="Permalink to this headline"></a></h1>
+<p>Circuits must satisfy certain conditions before they can be processed on a device or simulator. In pytket these conditions are called predicates.</p>
+<p>All pytket-qiskit backends have the following two predicates.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.GateSetPredicate">GateSetPredicate</a> - The circuit must contain only operations supported by the <code class="docutils literal notranslate"><span class="pre">Backend</span></code>. To view supported Ops run <code class="docutils literal notranslate"><span class="pre">BACKENDNAME.backend_info.gate_set</span></code>.</p></li>
+<li><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoSymbolsPredicate">NoSymbolsPredicate</a> - Parameterised gates must have numerical values when the circuit is executed.</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">IBMQBackend</span></code> and <code class="docutils literal notranslate"><span class="pre">IBMQEmulatorBackend</span></code> may also have the following predicates depending on the capabilities of the specified device.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoClassicalControlPredicate">NoClassicalControlPredicate</a></p></li>
+<li><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoMidMeasurePredicatePredicate">NoMidMeasurePredicate</a></p></li>
+<li><p><a class="reference external" href="https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoFastFeedforwardPredicate">NoFastFeedforwardPredicate</a></p></li>
+</ul>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#november-2022">0.30.0 (November 2022)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#october-2022">0.29.0 (October 2022)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#august-2022">0.28.0 (August 2022)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#july-2022">0.27.0 (July 2022)</a></li>

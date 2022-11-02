@@ -26,8 +26,138 @@ representations.
 Windows. To install, run:
 
 ::
-   
-   pip install pytket-qiskit
+
+    pip install pytket-qiskit
+
+This will install `pytket` if it isn't already installed, and add new classes
+and methods into the `pytket.extensions` namespace.
+
+Access and Credentials
+======================
+
+Accessing devices and simulators through the pytket-qiskit extension requires an IBMQ account. An account can be set up here -> https://quantum-computing.ibm.com/login.
+
+Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
+
+::
+
+    from pytket.extensions.qiskit import set_ibmq_config
+    
+    set_ibmq_config(ibmq_api_token=ibm_token)
+
+This will save your IBMQ credentials locally. After saving your credentials you can access pytket-qiskit backend repeatedly without having to re-initialise your credentials.
+
+If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
+
+::
+
+    from pytket.extensions.qiskit import set_ibmq_config
+
+    set_ibmq_config(ibmq_api_token=ibm_token, hub='your hub', group='your group', project='your project')
+
+To see which devices you can access you can use the ``available_devices`` method on the ``IBMQBackend`` or ``IBMQEmulatorBackend``. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
+
+::
+
+    from pytket.extensions.qiskit import IBMQBackend
+
+    backend = IBMQBackend # Initialise backend for an IBM device
+    backend.available_devices(hub='your hub', group='your group', project='your project') 
+
+
+Backends Available Through pytket-qiskit
+========================================
+
+The ``pytket-qiskit`` extension has several types of available ``Backend``. These are the ``IBMQBackend``
+and several types of simulator.
+
+.. list-table:: 
+   :widths: 25 25
+   :header-rows: 1
+
+   * - Backend
+     - Type
+   * - `IBMQBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQBackend>`_
+     - Interface to an IBM quantum computer.
+   * - `IBMQEmulatorBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
+     - Emulator for a chosen ``IBMBackend`` (Device specific).
+   * - `AerBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerBackend>`_
+     - A noiseless, shots-based simulator for quantum circuits [1]
+   * - `AerStateBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerStateBackend>`_
+     - Statevector simulator.
+   * - `AerUnitaryBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
+     - Unitary simulator
+
+* [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
+* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend``s and compilation passes to be used directly through qiskit. see the `Notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
+
+Default Compilation
+===================
+
+Every ``Backend`` in pytket has its own ``default_compilation_pass`` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the Backend. The passes applied by different levels of optimisation are specified in the table below.
+
+.. list-table:: **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
+   :widths: 25 25 25
+   :header-rows: 1
+
+   * - optimisation_level = 0
+     - optimisation_level = 1 [1]
+     - optimisation_level = 2
+   * - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
+     - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
+     - `DecomposeBoxes <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.DecomposeBoxes>`_
+   * - self.rebase_pass [2]
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
+     - `FullPeepholeOptimise <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.FullPeepholeOptimise>`_
+   * - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CXMappingPass>`_ [3]
+   * - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
+     - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
+     - `NaivePlacementPass <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.passes.NaivePlacementPass>`_
+   * - self.rebase_pass [2]
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
+     - `KAKDecomposition(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition>`_
+   * - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
+   * - 
+     - self.rebase_pass [2]
+     - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
+   * -
+     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
+     - self.rebase_pass [2]
+   * - 
+     -
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_ 
+   * - 
+     - 
+     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
+
+* [1] If no value is specified then ``optimisation_level`` defaults to a value of 1.
+* [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
+* [3] Here ``CXMappingPass`` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
+* [4] ``SimplifyInitial`` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
+
+
+**Note:** The ``default_compilation_pass`` for ``AerBackend`` is the same as above except it doesn't use ``SimplifyInitial``.
+
+
+Backend Predicates
+==================
+
+Circuits must satisfy certain conditions before they can be processed on a device or simulator. In pytket these conditions are called predicates.
+
+All pytket-qiskit backends have the following two predicates.
+
+* `GateSetPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the ``Backend``. To view supported Ops run ``BACKENDNAME.backend_info.gate_set``.
+* `NoSymbolsPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoSymbolsPredicate>`_ - Parameterised gates must have numerical values when the circuit is executed.
+
+The ``IBMQBackend`` and ``IBMQEmulatorBackend`` may also have the following predicates depending on the capabilities of the specified device.
+
+* `NoClassicalControlPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoClassicalControlPredicate>`_
+* `NoMidMeasurePredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoMidMeasurePredicatePredicate>`_
+* `NoFastFeedforwardPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoFastFeedforwardPredicate>`_
 
 .. toctree::
     api.rst

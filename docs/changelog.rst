@@ -1,11 +1,12 @@
 Changelog
 ~~~~~~~~~
 
-0.30.0 (unreleased)
--------------------
+0.30.0 (November 2022)
+----------------------
 
 * Update qiskit version to 0.39.
 * ``tk_to_qiskit`` now performs a rebase pass prior to conversion. Previously an error was returned if a ``Circuit`` contained gates such as ``OpType.ZZMax`` which have no exact replacement in qiskit. Now the unsupported gate will be implemented in terms of gates supported in qiskit rather than returning an error.
+* Updated pytket version requirement to 1.8.
 
 0.29.0 (October 2022)
 ---------------------

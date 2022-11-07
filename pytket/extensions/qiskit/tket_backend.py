@@ -123,9 +123,13 @@ class TketBackend(QiskitBackend):
     ) -> TketJob:
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]
-        circ_list = [qiskit_to_tk(qc) for qc in run_input]
         n_shots = options.get("shots", None)
-        jobinfos = [JobInfo(circ.qubits, circ.bits, n_shots) for circ in circ_list]
+        circ_list = []
+        jobinfos = []
+        for qc in run_input:
+            tk_circ = qiskit_to_tk(qc)
+            circ_list.append(tk_circ)
+            jobinfos.append(JobInfo(qc.name, tk_circ.qubits, tk_circ.bits, n_shots))
         if self._comp_pass:
             final_maps = []
             compiled_list = []

@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class JobInfo:
+    circuit_name: str
     qbits: List[UnitID]
     cbits: List[UnitID]
     n_shots: Optional[int]
@@ -79,6 +80,7 @@ class TketJob(JobV1):
                         tk_result, jobinfo.cbits, jobinfo.qbits, fm
                     ),
                     "header": {
+                        "name": jobinfo.circuit_name,
                         "creg_sizes": creg_sizes,
                         "memory_slots": memory_slots,
                         "clbit_labels": clbit_labels,

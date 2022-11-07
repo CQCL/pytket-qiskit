@@ -19,8 +19,13 @@ class MockShotBackend(Backend):
         arch: Optional[Union[Architecture, FullyConnected]] = None,
         gate_set: Optional[Set[OpType]] = None,
     ):
-        """Mock shot backend for testing qiskit embedding.
-        The readout bitstring will always be all 1s."""
+        """Mock shot backend for testing qiskit embedding. This should only be used
+        in conjunction with the TketBackend. The readout bitstring will always be 1s.
+        :param arch: The backend architecture
+        :type arch: Optional[Union[Architecture, FullyConnected]]
+        :param gate_set: The supported gateset, default to {OpType.CX, OpType.U3}
+        :type gate_set: Optional[Set[OpType]]
+        """
         self._id = 0
         self._arch = arch
         if gate_set:
@@ -30,12 +35,15 @@ class MockShotBackend(Backend):
 
     @property
     def required_predicates(self) -> List[Predicate]:
+        """Returns a GateSetPredicate constructed with the given gateset."""
         return [GateSetPredicate(self._gate_set)]
 
     def rebase_pass(self) -> BasePass:
+        """Return a pass that does nothing to a circuit."""
         return CustomPass(lambda c: c)
 
     def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
+        """Return a pass that does nothing to a circuit."""
         return self.rebase_pass()
 
     @property
@@ -44,6 +52,7 @@ class MockShotBackend(Backend):
 
     @property
     def backend_info(self) -> Optional[BackendInfo]:
+        """Returns a BackendInfo constructed with the given architecture."""
         return BackendInfo(
             name="TketBackend",
             device_name="MockShotBackend",
@@ -59,6 +68,7 @@ class MockShotBackend(Backend):
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
+        """Mock processing the circuits."""
         handles = []
         for c in circuits:
             handles.append(ResultHandle(self._id, json.dumps(c.to_dict())))
@@ -66,9 +76,11 @@ class MockShotBackend(Backend):
         return handles
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
+        """Always StatusEnum.COMPLETED."""
         return CircuitStatus(StatusEnum.COMPLETED)
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
+        """Always return a single readout containing all 1s."""
         circ_rep = json.loads(cast(str, handle[1]))
         circ = Circuit.from_dict(circ_rep)
         shots_list = [[1] * circ.n_bits]
@@ -76,7 +88,9 @@ class MockShotBackend(Backend):
         return BackendResult(shots=outcome_arr, q_bits=circ.qubits, c_bits=circ.bits)
 
     def pop_result(self, handle: ResultHandle) -> Optional[ResultCache]:
+        """Does nothing. Implementation is required by TketJob."""
         return None
 
     def cancel(self, handle: ResultHandle) -> None:
+        """Does nothing. Implementation is required by TketJob."""
         return

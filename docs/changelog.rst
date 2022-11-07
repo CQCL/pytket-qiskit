@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+0.31.0 (unreleased)
+-------------------
+
+* Update ``TketBackend`` to support ``FullyConnected`` architecture.
+* Fix the issue that some qiskit methods can't retrieve results from ``TketJob``.
+
 0.30.0 (November 2022)
 ----------------------
 

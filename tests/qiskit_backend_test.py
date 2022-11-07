@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import Optional
+from typing import Optional, Any
 
 import numpy as np
 import pytest
@@ -24,6 +24,9 @@ from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.providers.aer import Aer  # type: ignore
 from qiskit.utils import QuantumInstance  # type: ignore
+from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
+from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
+from qiskit.transpiler.passes import Unroller  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -32,6 +35,10 @@ from pytket.extensions.qiskit import (
     IBMQEmulatorBackend,
 )
 from pytket.extensions.qiskit.tket_backend import TketBackend
+from pytket.circuit import OpType  # type: ignore
+from pytket.architecture import Architecture, FullyConnected  # type: ignore
+
+from .mock_pytket_backend import MockShotBackend
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
@@ -127,3 +134,67 @@ def test_qiskit_counts(provider: Optional[AccountProvider]) -> None:
     res_dictstatefn = res[id(circfn)][0]
 
     assert res_dictstatefn.num_qubits == num_qubits
+
+
+def test_architectures() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/14
+    arch_list = [None, Architecture([[0, 1], [1, 2]]), FullyConnected(3)]
+    qc = circuit_gen(True)
+    for arch in arch_list:
+        # without architecture
+        b = MockShotBackend(arch=arch)
+        tb = TketBackend(b, b.default_compilation_pass())
+        job = execute(qc, tb, shots=100, memory=True)
+        shots = job.result().get_memory()
+        assert all(((r[0] == "1" and r[1] == r[2]) for r in shots))
+        counts = job.result().get_counts()
+        assert all(((r[0] == "1" and r[1] == r[2]) for r in counts.keys()))
+
+
+def test_grover() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/15
+    b = MockShotBackend()
+    backend = TketBackend(b, b.default_compilation_pass())
+    qinstance = QuantumInstance(backend)
+    oracle = QuantumCircuit(2)
+    oracle.cz(0, 1)
+
+    def is_good_state(bitstr: Any) -> bool:
+        return sum(map(int, bitstr)) == 2
+
+    problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
+    grover = Grover(quantum_instance=qinstance)
+    result = grover.amplify(problem)
+    assert result.top_measurement == "11"
+
+
+def test_unsupported_gateset() -> None:
+    # Working with gatesets that are unsupported by qiskit requires
+    # providing QuantumInstance with a custom pass manager.
+    b = MockShotBackend(gate_set={OpType.Rz, OpType.PhasedX, OpType.ZZMax})
+    backend = TketBackend(b, b.default_compilation_pass())
+    qinstance = QuantumInstance(backend)
+    oracle = QuantumCircuit(2)
+    oracle.cz(0, 1)
+
+    def is_good_state(bitstr: Any) -> bool:
+        return sum(map(int, bitstr)) == 2
+
+    problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
+    grover = Grover(quantum_instance=qinstance)
+    # Qiskit will attempt to rebase a Grover op into the MockShotBackend gateset.
+    # However, Rz, PhasedX and ZZMax gateset isn't supported by qiskit.
+    # (tested with qiskit 0.39.1)
+    with pytest.raises(TranspilerError) as e:
+        result = grover.amplify(problem)
+    err_msg = "Unable to map"
+    assert err_msg in str(e.value)
+
+    # By providing an Unroller pass, the QuantumInstance will rebase the Grover op into
+    # the u3, CX gateset instead.
+    unroll_pass = Unroller(["u3", "cx"])
+    qinstance = QuantumInstance(backend, pass_manager=unroll_pass)
+    grover = Grover(quantum_instance=qinstance)
+    problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
+    result = grover.amplify(problem)
+    assert result.top_measurement == "11"

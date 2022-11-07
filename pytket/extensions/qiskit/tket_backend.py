@@ -26,6 +26,7 @@ from pytket.predicates import (  # type: ignore
     GateSetPredicate,
     CompilationUnit,
 )
+from pytket.architecture import FullyConnected  # type: ignore
 
 
 def _extract_basis_gates(backend: Backend) -> List[str]:
@@ -74,6 +75,19 @@ class TketBackend(QiskitBackend):
         :type comp_pass: Optional[BasePass], optional
         """
         arch = backend.backend_info.architecture if backend.backend_info else None
+        coupling: Optional[List[List[Any]]]
+        if isinstance(arch, FullyConnected):
+            coupling = [
+                [n1.index[0], n2.index[0]]
+                for n1 in arch.nodes
+                for n2 in arch.nodes
+                if n1 != n2
+            ]
+        else:
+            coupling = (
+                [[n.index[0], m.index[0]] for n, m in arch.coupling] if arch else None
+            )
+
         config = QasmBackendConfiguration(
             backend_name=("statevector_" if backend.supports_state else "")
             + "pytket/"
@@ -93,9 +107,7 @@ class TketBackend(QiskitBackend):
             open_pulse=False,
             memory=backend.supports_shots,
             max_shots=10000,
-            coupling_map=[[n.index[0], m.index[0]] for n, m in arch.coupling]
-            if arch
-            else None,
+            coupling_map=coupling,
             max_experiments=10000,
         )
         super().__init__(configuration=config, provider=None)
@@ -111,9 +123,13 @@ class TketBackend(QiskitBackend):
     ) -> TketJob:
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]
-        circ_list = [qiskit_to_tk(qc) for qc in run_input]
         n_shots = options.get("shots", None)
-        jobinfos = [JobInfo(circ.qubits, circ.bits, n_shots) for circ in circ_list]
+        circ_list = []
+        jobinfos = []
+        for qc in run_input:
+            tk_circ = qiskit_to_tk(qc)
+            circ_list.append(tk_circ)
+            jobinfos.append(JobInfo(qc.name, tk_circ.qubits, tk_circ.bits, n_shots))
         if self._comp_pass:
             final_maps = []
             compiled_list = []

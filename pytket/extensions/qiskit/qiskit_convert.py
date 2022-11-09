@@ -464,6 +464,9 @@ def append_tk_command_to_qiskit(
         # subsequent conditional will handle it
         return Instruction("", 0, 0, [])
     if optype == OpType.Conditional:
+        if op.op.type == OpType.Phase:
+            # conditional phase not supported
+            return InstructionSet()
         if args[0] in range_preds:
             assert op.value == 1
             condition_bits, value = range_preds[args[0]]
@@ -525,6 +528,13 @@ def append_tk_command_to_qiskit(
             qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
             qargs=qargs,
         )
+
+    if optype == OpType.Phase:
+        params = _get_params(op, symb_map)
+        assert len(params) == 1
+        qcirc.global_phase += params[0]
+        return InstructionSet()
+
     # others are direct translations
     try:
         gatetype, phase = _known_gate_rev_phase[optype]

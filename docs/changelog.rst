@@ -6,6 +6,8 @@ Changelog
 
 * Update ``TketBackend`` to support ``FullyConnected`` architecture.
 * Fix the issue that some qiskit methods can't retrieve results from ``TketJob``.
+* Require pytket 1.9.0rc0.
+* Handle ``OpType.Phase`` when converting to qiskit.
 
 0.30.0 (November 2022)
 ----------------------

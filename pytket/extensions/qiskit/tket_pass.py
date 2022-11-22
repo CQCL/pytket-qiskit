@@ -73,7 +73,7 @@ class TketAutoPass(TketPass):
         "aer_simulator_unitary": AerUnitaryBackend,
     }
 
-    def __init__(self, backend: BackendV1, optimisation_level: int = 1):
+    def __init__(self, backend: BackendV1, optimisation_level: int = 2):
         """Identifies a Qiskit backend and provides the corresponding default
         compilation pass from pytket as a
         :py:class:`qiskit.transpiler.TransformationPass`.
@@ -82,8 +82,7 @@ class TketAutoPass(TketPass):
         :param optimisation_level: The level of optimisation to perform during
             compilation. Level 0 just solves the device constraints without
             optimising. Level 1 additionally performs some light optimisations.
-            Level 2 adds more intensive optimisations that can increase compilation
-            time for large circuits. Defaults to 1.
+            Level 2 adds more computationally intensive optimisations. Defaults to 2.
         :type optimisation_level: int, optional
         """
         if isinstance(backend._provider, AerProvider):

@@ -102,7 +102,7 @@ class IBMQEmulatorBackend(AerBackend):
     def required_predicates(self) -> List["Predicate"]:
         return list(self._ibmq.required_predicates)
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> "BasePass":
+    def default_compilation_pass(self, optimisation_level: int = 2) -> "BasePass":
         return self._ibmq.default_compilation_pass(optimisation_level)
 
     @property

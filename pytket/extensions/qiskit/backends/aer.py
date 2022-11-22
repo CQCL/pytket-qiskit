@@ -317,7 +317,7 @@ class _AerStateBaseBackend(_AerBaseBackend):
             ),
         ]
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
         if optimisation_level == 0:
             return SequencePass([DecomposeBoxes(), self.rebase_pass()])
@@ -442,7 +442,7 @@ class AerBackend(_AerBaseBackend):
             pred_list.append(ConnectivityPredicate(arch))
         return pred_list
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         if optimisation_level == 0:

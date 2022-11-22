@@ -58,7 +58,7 @@ class IBMQEmulatorBackend(AerBackend):
 
     """
 
-    _supports_shots = True
+    _supports_shots = False
     _supports_counts = True
     _supports_contextual_optimisation = True
     _persistent_handles = False

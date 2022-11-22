@@ -397,16 +397,13 @@ def test_machine_debug(manila_backend: IBMQBackend) -> None:
             cast(str, hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
         )
 
-        correct_shots = np.zeros((4, 2))
         correct_counts = {(0, 0): 4}
 
         res = backend.run_circuit(c, n_shots=4)
-        assert np.all(res.get_shots() == correct_shots)
         assert res.get_counts() == correct_counts
 
         # check that generating new shots still works
         res = backend.run_circuit(c, n_shots=4)
-        assert np.all(res.get_shots() == correct_shots)
         assert res.get_counts() == correct_counts
     finally:
         # ensure shared backend is reset for other tests
@@ -433,7 +430,7 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
             cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
             for hand, suffix in zip(
                 handles,
-                [f"{(2, 10, 0)}", f"{(2, 12, 1)}", f"{(2, 10, 0)}", f"{(2, 13, 2)}"],
+                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
             )
         )
     finally:
@@ -1056,7 +1053,7 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
     c.SX(0).SX(1).CX(0, 1).measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[2])))
+    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)

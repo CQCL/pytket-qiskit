@@ -14,6 +14,10 @@ else:
     IBMQ.load_account()
 
 provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
+
+print("Services:")
+print(provider.services())
+
 b = provider.get_backend("ibmq_lima")
 
 print("Made IBMQBackend")

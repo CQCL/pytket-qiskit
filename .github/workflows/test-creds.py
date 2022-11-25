@@ -2,6 +2,7 @@ import os
 
 from qiskit import IBMQ
 from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime.accounts import AccountManager
 
 if not IBMQ.stored_account():
     print("No stored account")
@@ -9,6 +10,7 @@ if not IBMQ.stored_account():
     if token:
         print("Enabling account")
         IBMQ.enable_account(token)
+        AccountManager.save(token=token)
 else:
     print("Stored account")
     IBMQ.load_account()

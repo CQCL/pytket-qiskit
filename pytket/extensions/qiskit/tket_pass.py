@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from qiskit.dagcircuit import DAGCircuit  # type: ignore
 from qiskit.providers import BackendV1  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
@@ -73,7 +74,12 @@ class TketAutoPass(TketPass):
         "aer_simulator_unitary": AerUnitaryBackend,
     }
 
-    def __init__(self, backend: BackendV1, optimisation_level: int = 2):
+    def __init__(
+        self,
+        backend: BackendV1,
+        optimisation_level: int = 2,
+        token: Optional[str] = None,
+    ):
         """Identifies a Qiskit backend and provides the corresponding default
         compilation pass from pytket as a
         :py:class:`qiskit.transpiler.TransformationPass`.
@@ -84,11 +90,13 @@ class TketAutoPass(TketPass):
             optimising. Level 1 additionally performs some light optimisations.
             Level 2 adds more computationally intensive optimisations. Defaults to 2.
         :type optimisation_level: int, optional
+        :param token: Authentication token to use the `QiskitRuntimeService`.
+        :type token: Optional[str]
         """
         if isinstance(backend._provider, AerProvider):
             tk_backend = self._aer_backend_map[backend.name()]()
         elif isinstance(backend._provider, AccountProvider):
-            tk_backend = IBMQBackend(backend.name())
+            tk_backend = IBMQBackend(backend.name(), token=token)
         else:
             raise NotImplementedError("This backend provider is not supported.")
         super().__init__(tk_backend.default_compilation_pass(optimisation_level))

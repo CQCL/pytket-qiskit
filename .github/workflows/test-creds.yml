@@ -21,9 +21,5 @@ jobs:
     - name: Test creds
       run: |
         python -m pip install --upgrade pip wheel build
-        python -m build
-        for w in dist/*.whl ; do
-            python -m pip install $w
-        done
-        python -m pip install qiskit_ibm_runtime
+        python -m pip install qiskit qiskit_ibm_runtime
         python .github/workflows/test-creds.py

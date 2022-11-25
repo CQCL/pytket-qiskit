@@ -9,6 +9,9 @@ if not IBMQ.stored_account():
     if token:
         print("Enabling account")
         IBMQ.enable_account(token)
+else:
+    print("Stored account")
+    IBMQ.load_account()
 
 provider = IBMQ.get_provider(hub="ibm-q", group="open", project="main")
 b = provider.get_backend("ibmq_lima")

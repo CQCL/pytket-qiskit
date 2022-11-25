@@ -127,6 +127,7 @@ class IBMQBackend(Backend):
         project: Optional[str] = None,
         monitor: bool = True,
         account_provider: Optional["AccountProvider"] = None,
+        token: Optional[str] = None,
     ):
         """A backend for running circuits on remote IBMQ devices.
         The provider arguments of `hub`, `group` and `project` can
@@ -152,6 +153,8 @@ class IBMQBackend(Backend):
          Used to pass credentials in if not configured on local machine (as well as hub,
          group and project). Defaults to None.
         :type account_provider: Optional[AccountProvider]
+        :param token: Authentication token to use the `QiskitRuntimeService`.
+        :type token: Optional[str]
         """
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -167,7 +170,7 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(self._backend)
         self._backend_info = self._get_backend_info(self._backend)
 
-        self._service = QiskitRuntimeService(channel="ibm_quantum")
+        self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
         self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}

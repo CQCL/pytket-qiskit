@@ -71,6 +71,7 @@ class IBMQEmulatorBackend(AerBackend):
         group: Optional[str] = None,
         project: Optional[str] = None,
         account_provider: Optional["AccountProvider"] = None,
+        token: Optional[str] = None,
     ):
         """Construct an IBMQEmulatorBackend. Identical to :py:class:`IBMQBackend`
         constructor, except there is no `monitor` parameter. See :py:class:`IBMQBackend`
@@ -83,6 +84,7 @@ class IBMQEmulatorBackend(AerBackend):
             group=group,
             project=project,
             account_provider=account_provider,
+            token=token,
         )
         aer_sim = AerSimulator.from_backend(self._ibmq._backend)
         super().__init__(noise_model=NoiseModel.from_backend(aer_sim))

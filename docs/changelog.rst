@@ -1,6 +1,15 @@
 Changelog
 ~~~~~~~~~
 
+0.31.0 (November 2022)
+----------------------
+
+* Update ``TketBackend`` to support ``FullyConnected`` architecture.
+* Fix the issue that some qiskit methods can't retrieve results from ``TketJob``.
+* Updated pytket version requirement to 1.9.
+* Handle ``OpType.Phase`` when converting to qiskit.
+* Change default optimization level in ``default_compilation_pass()`` to 2.
+
 0.30.0 (November 2022)
 ----------------------
 

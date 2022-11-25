@@ -319,7 +319,7 @@ class IBMQBackend(Backend):
             ] + predicates
         return predicates
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,

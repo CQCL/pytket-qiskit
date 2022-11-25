@@ -235,7 +235,7 @@ def test_Unitary2qBox() -> None:
 
 
 def test_gates_phase() -> None:
-    c = Circuit(4).SX(0).V(1).V(2).Vdg(3)
+    c = Circuit(4).SX(0).V(1).V(2).Vdg(3).Phase(0.5)
     qc = tk_to_qiskit(c)
 
     qr = QuantumRegister(4, "q")
@@ -244,7 +244,7 @@ def test_gates_phase() -> None:
     qc_correct.sx(qr[1])
     qc_correct.sx(qr[2])
     qc_correct.sxdg(qr[3])
-    qc_correct.global_phase = -pi / 4
+    qc_correct.global_phase = pi / 4
 
     assert qc == qc_correct
 

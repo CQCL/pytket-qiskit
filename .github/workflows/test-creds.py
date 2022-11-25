@@ -24,6 +24,8 @@ b = provider.get_backend("ibmq_lima")
 
 print("Made IBMQBackend")
 
-service = QiskitRuntimeService(channel="ibm_quantum")
+service = QiskitRuntimeService(
+    channel="ibm_quantum", token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+)
 
 print("Made QiskitRuntimeService")

@@ -10,7 +10,7 @@ if not IBMQ.stored_account():
     if token:
         print("Enabling account")
         IBMQ.enable_account(token)
-        AccountManager.save(token=token)
+        AccountManager.save(token=token, channel="ibm_quantum")
 else:
     print("Stored account")
     IBMQ.load_account()

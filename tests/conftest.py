@@ -72,6 +72,7 @@ def simulator_stabilizer_backend() -> IBMQBackend:
         hub="ibm-q",
         group="open",
         project="main",
+        monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 

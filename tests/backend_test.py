@@ -445,7 +445,7 @@ def test_nshots(manila_emulator_backend: IBMQEmulatorBackend) -> None:
         circuit.measure_all()
         n_shots = [1, 2, 3]
         results = b.get_results(b.process_circuits([circuit] * 3, n_shots=n_shots))
-        assert [len(r.get_shots()) for r in results] == n_shots
+        assert [sum(r.get_counts().values()) for r in results] == n_shots
 
 
 def test_pauli_statevector() -> None:
@@ -829,11 +829,12 @@ def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     assert manila_emulator_backend.required_predicates[1].verify(copy_circ)
     circ = manila_emulator_backend.get_compiled_circuit(circ)
     b_noi = AerBackend(noise_model=manila_emulator_backend._noise_model)
-    emu_shots = manila_emulator_backend.run_circuit(
+    emu_counts = manila_emulator_backend.run_circuit(
         circ, n_shots=10, seed=10
-    ).get_shots()
-    aer_shots = b_noi.run_circuit(circ, n_shots=10, seed=10).get_shots()
-    assert np.array_equal(emu_shots, aer_shots)
+    ).get_counts()
+    aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
+    # Even with the same seed, the results may differ.
+    assert sum(emu_counts.values()) == sum(aer_counts.values())
 
 
 @given(
@@ -1063,13 +1064,13 @@ def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     c.SX(0).SX(1).CX(0, 1).measure_all()
     c = manila_emulator_backend.get_compiled_circuit(c)
     h = manila_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[2])))
+    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
     r = manila_emulator_backend.get_result(h)
-    shots = r.get_shots()
-    assert len(shots) == 10
+    counts = r.get_counts()
+    assert sum(counts.values()) == 10
 
 
 @pytest.mark.timeout(None)

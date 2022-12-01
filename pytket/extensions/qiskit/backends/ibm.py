@@ -164,8 +164,8 @@ class IBMQBackend(Backend):
             else account_provider
         )
         self._backend: "_QiskIBMQBackend" = self._provider.get_backend(backend_name)
-        self._config = self._backend.configuration()
-        self._max_per_job = getattr(self._config, "max_experiments", 1)
+        config = self._backend.configuration()
+        self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(self._backend)
         self._backend_info = self._get_backend_info(self._backend)

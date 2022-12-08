@@ -9,6 +9,8 @@ Changelog
   no longer available from these backends. (``BackendResult.get_shots()`` will
   fail; use ``get_counts()`` instead.)
 
+* Fix incorrect circuit permutation handling for ``AerUnitaryBackend`` and ``AerStateBackend``.
+
 0.31.0 (November 2022)
 ----------------------
 

@@ -113,7 +113,7 @@ def test_statevector_sim_with_permutation() -> None:
     c = Circuit(3).X(0).SWAP(0, 1).SWAP(0, 2)
     qubits = c.qubits
     sv = b.run_circuit(c).get_state()
-    # add convert swaps to implicit permutation
+    # convert swaps to implicit permutation
     c.replace_SWAPs()
     assert c.implicit_qubit_permutation() == {
         qubits[0]: qubits[1],

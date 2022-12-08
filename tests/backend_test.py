@@ -107,6 +107,23 @@ def test_statevector() -> None:
     assert np.allclose(state1, state * 1j, atol=1e-10)
 
 
+def test_statevector_sim_with_permutation() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/35
+    b = AerStateBackend()
+    c = Circuit(3).X(0).SWAP(0, 1).SWAP(0, 2)
+    qubits = c.qubits
+    sv = b.run_circuit(c).get_state()
+    # add convert swaps to implicit permutation
+    c.replace_SWAPs()
+    assert c.implicit_qubit_permutation() == {
+        qubits[0]: qubits[1],
+        qubits[1]: qubits[2],
+        qubits[2]: qubits[0],
+    }
+    sv1 = b.run_circuit(c).get_state()
+    assert np.allclose(sv, sv1, atol=1e-10)
+
+
 def test_sim() -> None:
     c = circuit_gen(True)
     b = AerBackend()

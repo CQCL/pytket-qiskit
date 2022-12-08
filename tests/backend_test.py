@@ -414,16 +414,13 @@ def test_machine_debug(manila_backend: IBMQBackend) -> None:
             cast(str, hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
         )
 
-        correct_shots = np.zeros((4, 2))
         correct_counts = {(0, 0): 4}
 
         res = backend.run_circuit(c, n_shots=4)
-        assert np.all(res.get_shots() == correct_shots)
         assert res.get_counts() == correct_counts
 
         # check that generating new shots still works
         res = backend.run_circuit(c, n_shots=4)
-        assert np.all(res.get_shots() == correct_shots)
         assert res.get_counts() == correct_counts
     finally:
         # ensure shared backend is reset for other tests
@@ -450,7 +447,7 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
             cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
             for hand, suffix in zip(
                 handles,
-                [f"{(2, 10, 0)}", f"{(2, 12, 1)}", f"{(2, 10, 0)}", f"{(2, 13, 2)}"],
+                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
             )
         )
     finally:
@@ -458,20 +455,14 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
         backend._MACHINE_DEBUG = False
 
 
-def test_nshots() -> None:
-    backends = [AerBackend()]
-    if not skip_remote_tests:
-        backends.append(
-            IBMQEmulatorBackend(
-                "ibmq_manila", hub="ibm-q", group="open", project="main"
-            )
-        )
-    for b in backends:
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_nshots(manila_emulator_backend: IBMQEmulatorBackend) -> None:
+    for b in [AerBackend(), manila_emulator_backend]:
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
         results = b.get_results(b.process_circuits([circuit] * 3, n_shots=n_shots))
-        assert [len(r.get_shots()) for r in results] == n_shots
+        assert [sum(r.get_counts().values()) for r in results] == n_shots
 
 
 def test_pauli_statevector() -> None:
@@ -824,15 +815,12 @@ def test_aer_placed_expectation() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_ibmq_emulator() -> None:
-    b_emu = IBMQEmulatorBackend(
-        "ibmq_manila", hub="ibm-q", group="open", project="main"
-    )
-    assert b_emu._noise_model is not None
-    b_ibm = b_emu._ibmq
+def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert manila_emulator_backend._noise_model is not None
+    b_ibm = manila_emulator_backend._ibmq
     b_aer = AerBackend()
     for ol in range(3):
-        comp_pass = b_emu.default_compilation_pass(ol)
+        comp_pass = manila_emulator_backend.default_compilation_pass(ol)
         c = Circuit(3, 3)
         c.H(0)
         c.CX(0, 1)
@@ -841,23 +829,29 @@ def test_ibmq_emulator() -> None:
         c_cop = c.copy()
         comp_pass.apply(c_cop)
         c.measure_all()
-        for bac in (b_emu, b_ibm):
+        for bac in (manila_emulator_backend, b_ibm):
             assert all(pred.verify(c_cop) for pred in bac.required_predicates)
 
         c_cop_2 = c.copy()
         c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
         if ol == 0:
-            assert not all(pred.verify(c_cop_2) for pred in b_emu.required_predicates)
+            assert not all(
+                pred.verify(c_cop_2)
+                for pred in manila_emulator_backend.required_predicates
+            )
 
     circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     copy_circ = circ.copy()
-    b_emu.rebase_pass().apply(copy_circ)
-    assert b_emu.required_predicates[1].verify(copy_circ)
-    circ = b_emu.get_compiled_circuit(circ)
-    b_noi = AerBackend(noise_model=b_emu._noise_model)
-    emu_shots = b_emu.run_circuit(circ, n_shots=10, seed=10).get_shots()
-    aer_shots = b_noi.run_circuit(circ, n_shots=10, seed=10).get_shots()
-    assert np.array_equal(emu_shots, aer_shots)
+    manila_emulator_backend.rebase_pass().apply(copy_circ)
+    assert manila_emulator_backend.required_predicates[1].verify(copy_circ)
+    circ = manila_emulator_backend.get_compiled_circuit(circ)
+    b_noi = AerBackend(noise_model=manila_emulator_backend._noise_model)
+    emu_counts = manila_emulator_backend.run_circuit(
+        circ, n_shots=10, seed=10
+    ).get_counts()
+    aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
+    # Even with the same seed, the results may differ.
+    assert sum(emu_counts.values()) == sum(aer_counts.values())
 
 
 @given(
@@ -920,19 +914,19 @@ def test_aer_expanded_gates() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_remote_simulator() -> None:
-    remote_qasm = IBMQBackend(
-        "ibmq_qasm_simulator", hub="ibm-q", group="open", project="main"
-    )
+def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
     c = Circuit(3).CX(0, 1)
     c.add_gate(OpType.ZZPhase, 0.1, [0, 1])
     c.add_gate(OpType.CY, [0, 1])
     c.add_gate(OpType.CCX, [0, 1, 2])
     c.measure_all()
 
-    assert remote_qasm.valid_circuit(c)
+    assert qasm_simulator_backend.valid_circuit(c)
 
-    assert sum(remote_qasm.run_circuit(c, n_shots=10).get_counts().values()) == 10
+    assert (
+        sum(qasm_simulator_backend.run_circuit(c, n_shots=10).get_counts().values())
+        == 10
+    )
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -1073,7 +1067,7 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
     c.SX(0).SX(1).CX(0, 1).measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[2])))
+    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
@@ -1081,35 +1075,33 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess_emu() -> None:
-    b = IBMQEmulatorBackend("ibmq_manila", hub="ibm-q", group="open", project="main")
-    assert b.supports_contextual_optimisation
+def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert manila_emulator_backend.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.SX(0).SX(1).CX(0, 1).measure_all()
-    c = b.get_compiled_circuit(c)
-    h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[2])))
+    c = manila_emulator_backend.get_compiled_circuit(c)
+    h = manila_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
+    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
-    r = b.get_result(h)
-    shots = r.get_shots()
-    assert len(shots) == 10
+    r = manila_emulator_backend.get_result(h)
+    counts = r.get_counts()
+    assert sum(counts.values()) == 10
 
 
 @pytest.mark.timeout(None)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_cloud_stabiliser() -> None:
-    b = IBMQBackend("simulator_stabilizer", hub="ibm-q", group="open", project="main")
+def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
     c.H(0).SX(1).CX(0, 1).measure_all()
-    c = b.get_compiled_circuit(c, 0)
-    h = b.process_circuit(c, n_shots=10)
-    assert sum(b.get_result(h).get_counts().values()) == 10
+    c = simulator_stabilizer_backend.get_compiled_circuit(c, 0)
+    h = simulator_stabilizer_backend.process_circuit(c, n_shots=10)
+    assert sum(simulator_stabilizer_backend.get_result(h).get_counts().values()) == 10
 
     c = Circuit(2, 2)
     c.H(0).SX(1).Rz(0.1, 0).CX(0, 1).measure_all()
-    assert not b.valid_circuit(c)
+    assert not simulator_stabilizer_backend.valid_circuit(c)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -1129,12 +1121,11 @@ def test_available_devices() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_backendinfo_serialization1() -> None:
+def test_backendinfo_serialization1(
+    manila_emulator_backend: IBMQEmulatorBackend,
+) -> None:
     # https://github.com/CQCL/tket/issues/192
-    backend = IBMQEmulatorBackend(
-        "ibmq_manila", hub="ibm-q", group="open", project="main"
-    )
-    backend_info_json = backend.backend_info.to_dict()
+    backend_info_json = manila_emulator_backend.backend_info.to_dict()
     s = json.dumps(backend_info_json)
     backend_info_json1 = json.loads(s)
     assert backend_info_json == backend_info_json1

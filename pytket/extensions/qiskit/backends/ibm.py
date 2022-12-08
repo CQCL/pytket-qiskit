@@ -15,6 +15,7 @@
 import itertools
 import logging
 from ast import literal_eval
+from collections import Counter
 import json
 from typing import (
     cast,
@@ -31,12 +32,16 @@ from warnings import warn
 
 import qiskit  # type: ignore
 from qiskit import IBMQ
-from qiskit.qobj import QobjExperimentHeader  # type: ignore
-from qiskit.providers.ibmq.exceptions import IBMQBackendApiError  # type: ignore
-from qiskit.providers.ibmq.job import IBMQJob  # type: ignore
-from qiskit.result import Result, models  # type: ignore
+from qiskit.primitives import SamplerResult  # type: ignore
 from qiskit.tools.monitor import job_monitor  # type: ignore
-from qiskit.providers.ibmq.utils.utils import api_status_to_job_status  # type: ignore
+from qiskit.result.distributions import QuasiDistribution  # type: ignore
+from qiskit_ibm_runtime import (  # type: ignore
+    QiskitRuntimeService,
+    Session,
+    Options,
+    Sampler,
+    RuntimeJob,
+)
 
 from pytket.circuit import Circuit, OpType  # type: ignore
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
@@ -71,12 +76,10 @@ from pytket.predicates import (  # type: ignore
     Predicate,
 )
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.extensions.qiskit.result_convert import (
-    qiskit_experimentresult_to_backendresult,
-)
 from pytket.architecture import FullyConnected  # type: ignore
 from pytket.placement import NoiseAwarePlacement  # type: ignore
 from pytket.utils import prepare_circuit
+from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
@@ -86,35 +89,18 @@ if TYPE_CHECKING:
         IBMQBackend as _QiskIBMQBackend,
         AccountProvider,
     )
-    from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
 
-def _gen_debug_results(n_qubits: int, shots: int, index: int) -> Result:
-    raw_counts = {"0x0": shots}
-    raw_memory = ["0x0"] * shots
-    base_result_args = dict(
-        backend_name="test_backend",
-        backend_version="1.0.0",
-        qobj_id="id-123",
-        job_id="job-123",
-        success=True,
+def _gen_debug_results(n_qubits: int, shots: int, index: int) -> SamplerResult:
+    debug_dist = {n: 0.0 for n in range(pow(2, n_qubits))}
+    debug_dist[0] = 1.0
+    qd = QuasiDistribution(debug_dist)
+    return SamplerResult(
+        quasi_dists=[qd] * (index + 1),
+        metadata=[{"header_metadata": {}, "shots": shots}] * (index + 1),
     )
-    data = models.ExperimentResultData(counts=raw_counts, memory=raw_memory)
-    exp_result_header = QobjExperimentHeader(
-        creg_sizes=[["c", n_qubits]], memory_slots=n_qubits
-    )
-    exp_result = models.ExperimentResult(
-        shots=shots,
-        success=True,
-        meas_level=2,
-        data=data,
-        header=exp_result_header,
-        memory=True,
-    )
-    results = [exp_result] * (index + 1)
-    return Result(results=results, **base_result_args)
 
 
 class NoIBMQAccountError(Exception):
@@ -128,7 +114,7 @@ class NoIBMQAccountError(Exception):
 
 
 class IBMQBackend(Backend):
-    _supports_shots = True
+    _supports_shots = False
     _supports_counts = True
     _supports_contextual_optimisation = True
     _persistent_handles = True
@@ -141,6 +127,7 @@ class IBMQBackend(Backend):
         project: Optional[str] = None,
         monitor: bool = True,
         account_provider: Optional["AccountProvider"] = None,
+        token: Optional[str] = None,
     ):
         """A backend for running circuits on remote IBMQ devices.
         The provider arguments of `hub`, `group` and `project` can
@@ -166,6 +153,8 @@ class IBMQBackend(Backend):
          Used to pass credentials in if not configured on local machine (as well as hub,
          group and project). Defaults to None.
         :type account_provider: Optional[AccountProvider]
+        :param token: Authentication token to use the `QiskitRuntimeService`.
+        :type token: Optional[str]
         """
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -175,18 +164,21 @@ class IBMQBackend(Backend):
             else account_provider
         )
         self._backend: "_QiskIBMQBackend" = self._provider.get_backend(backend_name)
-        self._config = self._backend.configuration()
-        self._max_per_job = getattr(self._config, "max_experiments", 1)
+        config = self._backend.configuration()
+        self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(self._backend)
         self._backend_info = self._get_backend_info(self._backend)
+
+        self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
+        self._session = Session(service=self._service, backend=backend_name)
 
         self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[Tuple[str, int], models.ExperimentResult] = dict()
+        self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
 
         self._MACHINE_DEBUG = False
 
@@ -370,7 +362,8 @@ class IBMQBackend(Backend):
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
-        return (str, int, str)
+        # IBMQ job ID, index, number of measurements per shot, post-processing circuit
+        return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
         return auto_rebase_pass(
@@ -423,40 +416,47 @@ class IBMQBackend(Backend):
                 if self._MACHINE_DEBUG:
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
-                            _DEBUG_HANDLE_PREFIX
-                            + str((batch_chunk[i].n_qubits, n_shots, batch_id)),
+                            _DEBUG_HANDLE_PREFIX + str((n_shots, batch_id)),
                             i,
+                            batch_chunk[i].n_qubits,
                             ppcirc_strs[i],
                         )
                 else:
-                    job = self._backend.run(
-                        qcs, shots=n_shots, memory=self._config.memory
-                    )
-                    jobid = job.job_id()
+                    options = Options()
+                    options.optimization_level = 0
+                    options.resilience_level = 0
+                    options.transpilation.skip_transpilation = True
+                    options.execution.shots = n_shots
+                    sampler = Sampler(session=self._session, options=options)
+                    job = sampler.run(circuits=qcs)
+                    job_id = job.job_id
                     for i, ind in enumerate(indices_chunk):
-                        handle_list[ind] = ResultHandle(jobid, i, ppcirc_strs[i])
+                        handle_list[ind] = ResultHandle(
+                            job_id, i, qcs[i].count_ops()["measure"], ppcirc_strs[i]
+                        )
             batch_id += 1
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
         return cast(List[ResultHandle], handle_list)
 
-    def _retrieve_job(self, jobid: str) -> IBMQJob:
-        return self._backend.retrieve_job(jobid)
+    def _retrieve_job(self, jobid: str) -> RuntimeJob:
+        return self._service.job(jobid)
 
     def cancel(self, handle: ResultHandle) -> None:
         if not self._MACHINE_DEBUG:
             jobid = cast(str, handle[0])
             job = self._retrieve_job(jobid)
-            cancelled = job.cancel()
-            if not cancelled:
-                warn(f"Unable to cancel job {jobid}")
+            try:
+                job.cancel()
+            except Exception as e:
+                warn(f"Unable to cancel job {jobid}: {e}")
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
         jobid = cast(str, handle[0])
-        apistatus = self._provider._api_client.job_status(jobid)["status"]
-        ibmstatus = api_status_to_job_status(apistatus)
+        job = self._service.job(jobid)
+        ibmstatus = job.status()
         return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus.value)
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
@@ -469,33 +469,43 @@ class IBMQBackend(Backend):
             cached_result = self._cache[handle]
             if "result" in cached_result:
                 return cast(BackendResult, cached_result["result"])
-        jobid, index, ppcirc_str = handle
+        jobid, index, n_meas, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None
         cache_key = (jobid, index)
         if cache_key not in self._ibm_res_cache:
             if self._MACHINE_DEBUG or jobid.startswith(_DEBUG_HANDLE_PREFIX):
                 shots: int
-                n_qubits: int
-                n_qubits, shots, _ = literal_eval(jobid[len(_DEBUG_HANDLE_PREFIX) :])
-                res = _gen_debug_results(n_qubits, shots, index)
+                shots, _ = literal_eval(jobid[len(_DEBUG_HANDLE_PREFIX) :])
+                res = _gen_debug_results(n_meas, shots, index)
             else:
                 try:
                     job = self._retrieve_job(jobid)
-                except IBMQBackendApiError:
+                except Exception as e:
+                    warn(f"Unable to retrieve job {jobid}: {e}")
                     raise CircuitNotRunError(handle)
 
                 if self._monitor and job:
                     job_monitor(job)
-                newkwargs = {
-                    key: kwargs[key] for key in ("wait", "timeout") if key in kwargs
-                }
-                res = job.result(**newkwargs)
 
-            for circ_index, r in enumerate(res.results):
-                self._ibm_res_cache[(jobid, circ_index)] = r
-        result = qiskit_experimentresult_to_backendresult(
-            self._ibm_res_cache[cache_key], ppcirc
-        )
+                res = job.result(timeout=kwargs.get("timeout", None))
+            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                )
+
+        counts = self._ibm_res_cache[cache_key]  # Counter[int]
+        # Convert to `OutcomeArray`:
+        tket_counts: Counter = Counter()
+        for outcome_key, sample_count in counts.items():
+            array = OutcomeArray.from_ints(
+                ints=[outcome_key],
+                width=n_meas,
+                big_endian=False,
+            )
+            tket_counts[array] = sample_count
+        # Convert to `BackendResult`:
+        result = BackendResult(counts=tket_counts, ppcirc=ppcirc)
+
         self._cache[handle] = {"result": result}
         return result

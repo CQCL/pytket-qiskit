@@ -423,7 +423,9 @@ class IBMQBackend(Backend):
                         )
                 else:
                     options = Options()
+                    options.optimization_level = 0
                     options.resilience_level = 0
+                    options.transpilation.skip_transpilation = True
                     options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
                     job = sampler.run(circuits=qcs)

@@ -15,7 +15,7 @@
 import os
 import pytest
 from qiskit import IBMQ  # type: ignore
-from pytket.extensions.qiskit import IBMQBackend
+from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -34,9 +34,66 @@ def setup_qiskit_account() -> None:
 
 @pytest.fixture(scope="module")
 def manila_backend() -> IBMQBackend:
-    return IBMQBackend("ibmq_manila", hub="ibm-q", group="open", project="main")
+    return IBMQBackend(
+        "ibmq_manila",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
 
 
 @pytest.fixture(scope="module")
 def lima_backend() -> IBMQBackend:
-    return IBMQBackend("ibmq_lima", hub="ibm-q", group="open", project="main")
+    return IBMQBackend(
+        "ibmq_lima",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def qasm_simulator_backend() -> IBMQBackend:
+    return IBMQBackend(
+        "ibmq_qasm_simulator",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def simulator_stabilizer_backend() -> IBMQBackend:
+    return IBMQBackend(
+        "simulator_stabilizer",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        monitor=False,
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def manila_emulator_backend() -> IBMQEmulatorBackend:
+    return IBMQEmulatorBackend(
+        "ibmq_manila",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def belem_emulator_backend() -> IBMQEmulatorBackend:
+    return IBMQEmulatorBackend(
+        "ibmq_belem",
+        hub="ibm-q",
+        group="open",
+        project="main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )

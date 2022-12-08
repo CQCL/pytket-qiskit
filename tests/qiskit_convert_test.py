@@ -282,7 +282,9 @@ def test_tketautopass() -> None:
         backends.append(provider.get_backend("ibmq_manila"))
     for back in backends:
         for o_level in range(3):
-            tkpass = TketAutoPass(back, o_level)
+            tkpass = TketAutoPass(
+                back, o_level, token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+            )
             qc = get_test_circuit(True)
             pm = PassManager(passes=tkpass)
             pm.run(qc)

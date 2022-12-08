@@ -1,6 +1,14 @@
 Changelog
 ~~~~~~~~~
 
+0.32.0 (unreleased)
+-------------------
+
+* Use ``qiskit_ibm_runtime`` services for sampling on ``IBMQBackend`` and
+  ``IBMQEmulatorBackend``. Note that shots tables (ordered lists of results) are
+  no longer available from these backends. (``BackendResult.get_shots()`` will
+  fail; use ``get_counts()`` instead.)
+
 0.31.0 (November 2022)
 ----------------------
 

@@ -548,31 +548,6 @@ def append_tk_command_to_qiskit(
     return qcirc.append(g, qargs=qargs)
 
 
-def _get_implicit_swaps(circuit: Circuit) -> List[Tuple[Qubit, Qubit]]:
-    # We implement the implicit qubit permutation using SWAPs
-    qubits = circuit.qubits
-    perm = circuit.implicit_qubit_permutation()
-    # output wire -> qubit
-    qubit_2_wire = wire_2_qubit = {q: q for q in qubits}
-    # qubit -> output wire
-    swaps = []
-    for q in qubits:
-        q_wire = qubit_2_wire[q]
-        target_wire = perm[q]
-        if q_wire == target_wire:
-            continue
-        # find which qubit is on target_wire
-        p = wire_2_qubit[target_wire]
-        # swap p and q so q is on the target wire
-        swaps.append((q_wire, target_wire))
-        # update dicts
-        qubit_2_wire[q] = target_wire
-        qubit_2_wire[p] = q_wire
-        wire_2_qubit[q_wire] = p
-        wire_2_qubit[target_wire] = q
-    return swaps
-
-
 # Define varibles for RebaseCustom
 _cx_replacement = Circuit(2).CX(0, 1)
 
@@ -612,12 +587,15 @@ def tk_to_qiskit(
     :type tkcirc: Circuit
     :param reverse_index: Reverse the order of wires
     :type reverse_index: bool
-    :param replace_implicit_swaps: Implement implicit permutation using SWAPs
+    :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
+        to the end of the circuit.
     :type replace_implicit_swaps: bool
     :return: The converted circuit
     :rtype: QuantumCircuit
     """
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
+    if replace_implicit_swaps:
+        tkc.replace_implicit_wire_swaps()
     qcirc = QuantumCircuit(name=tkc.name)
     qreg_sizes: Dict[str, int] = {}
     for qb in tkc.qubits:
@@ -670,14 +648,6 @@ def tk_to_qiskit(
             new_p.__init__(p_name)
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
-
-    if replace_implicit_swaps:
-        swaps = _get_implicit_swaps(tkc)
-        for p, q in swaps:
-            qcirc.swap(
-                qregmap[p.reg_name][p.index[0]],
-                qregmap[q.reg_name][q.index[0]],
-            )
 
     if reverse_index:
         return qcirc.reverse_bits()

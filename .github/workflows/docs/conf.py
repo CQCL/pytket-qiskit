@@ -12,7 +12,21 @@ extensions = [
     "sphinx.ext.mathjax",
 ]
 
-html_theme = "sphinx_rtd_theme"
+pygments_style = "pastie"
+
+html_theme = "sphinx_book_theme"
+
+html_theme_options = {
+    "repository_url": "https://github.com/CQCL/pytket-quantinuum",
+    "use_repository_button": True,
+    "use_issues_button": True,
+}
+
+html_static_path = ["_static"]
+
+html_css_files = ["custom.css"]
+
+html_logo = "Quantinuum_logo2.png"
 
 # -- Extension configuration -------------------------------------------------
 

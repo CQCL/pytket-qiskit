@@ -17,7 +17,7 @@ pygments_style = "pastie"
 html_theme = "sphinx_book_theme"
 
 html_theme_options = {
-    "repository_url": "https://github.com/CQCL/pytket-quantinuum",
+    "repository_url": "https://github.com/CQCL/pytket-qiskit",
     "use_repository_button": True,
     "use_issues_button": True,
 }
@@ -43,13 +43,14 @@ autodoc_member_order = "groupwise"
 
 # The following code is for resolving broken hyperlinks in the doc.
 
-from sphinx.application import Sphinx
-from docutils import nodes
-from docutils.nodes import Element, TextElement
-from sphinx.environment import BuildEnvironment
-from urllib.parse import urljoin
 import re
 from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
+
+from docutils import nodes
+from docutils.nodes import Element, TextElement
+from sphinx.application import Sphinx
+from sphinx.environment import BuildEnvironment
 
 # Mappings for broken hyperlinks that intersphinx cannot resolve
 external_url_mapping = {

@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-0.32.0 (unreleased)
--------------------
+0.32.0 (December 2022)
+----------------------
 
 * Use ``qiskit_ibm_runtime`` services for sampling on ``IBMQBackend`` and
   ``IBMQEmulatorBackend``. Note that shots tables (ordered lists of results) are

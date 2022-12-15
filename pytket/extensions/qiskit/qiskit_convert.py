@@ -217,10 +217,12 @@ def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
 
 def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOperator:
     op = peg.operator
+    t = peg.params[0]
     qpodict = {}
     for p, c in zip(op.paulis, op.coeffs):
         if np.iscomplex(c):
             raise ValueError("Coefficient for Pauli {} is non-real.".format(p))
+        coeff = param_to_tk(t) * c
         qpslist = []
         pstr = p.to_label()
         for a in pstr:
@@ -233,7 +235,7 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
             else:
                 assert a == "I"
                 qpslist.append(Pauli.I)
-        qpodict[QubitPauliString(qubits, qpslist)] = c
+        qpodict[QubitPauliString(qubits, qpslist)] = coeff
     return QubitPauliOperator(qpodict)
 
 

@@ -26,8 +26,9 @@ from qiskit import (  # type: ignore
     Aer,
     IBMQ,
 )
-from qiskit.opflow import PauliTrotterEvolution  # type: ignore
+from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
 from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
+from qiskit.quantum_info import Pauli  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
@@ -716,3 +717,15 @@ def test_rebased_conversion() -> None:
     u1 = tket_circzz.get_unitary()
     u2 = tket_circzz2.get_unitary()
     assert compare_unitaries(u1, u2)
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/24
+def test_parametrized_evolution() -> None:
+    pauli_blocks = [PauliOp(Pauli("XXZ"), coeff=1.0), PauliOp(Pauli("YXY"), coeff=0.5)]
+    operator: PauliSumOp = sum(pauli_blocks) * Parameter("x")
+    evolved_circ_op = PauliTrotterEvolution(
+        trotter_mode=Suzuki(reps=2, order=4)
+    ).convert(operator.exp_i())
+    qc: QuantumCircuit = evolved_circ_op.primitive
+    tk_qc: Circuit = qiskit_to_tk(qc)
+    assert len(tk_qc.free_symbols()) == 1

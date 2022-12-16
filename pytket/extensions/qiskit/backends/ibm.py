@@ -251,10 +251,18 @@ class IBMQBackend(Backend):
         filtered_characterisation = {
             k: v for k, v in characterisation.items() if k in characterisation_keys
         }
+        # see below for references for config definitions
+        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/midcircuit-measurement/
+        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/dynamic-circuits/feature-table
         supports_mid_measure = config.simulator or config.multi_meas_enabled
-        supports_fast_feedforward = False
+        supports_fast_feedforward = "qasm3" in config.supported_features
+
         # simulator i.e. "ibmq_qasm_simulator" does not have `supported_instructions`
         # attribute
+        supports_reset = (
+            hasattr(config, "supported_instructions")
+            and "reset" in config.supported_instructions
+        )
         gate_set = _tk_gate_set(backend)
         backend_info = BackendInfo(
             cls.__name__,
@@ -264,6 +272,7 @@ class IBMQBackend(Backend):
             gate_set,
             supports_midcircuit_measurement=supports_mid_measure,
             supports_fast_feedforward=supports_fast_feedforward,
+            supports_reset=supports_reset,
             all_node_gate_errors=characterisation["NodeErrors"],
             all_edge_gate_errors=characterisation["EdgeErrors"],
             all_readout_errors=characterisation["ReadoutErrors"],
@@ -382,6 +391,7 @@ class IBMQBackend(Backend):
         Supported kwargs: `postprocess`.
         """
         circuits = list(circuits)
+
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
             len(circuits),
@@ -428,7 +438,10 @@ class IBMQBackend(Backend):
                     options.transpilation.skip_transpilation = True
                     options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
-                    job = sampler.run(circuits=qcs)
+                    job = sampler.run(
+                        circuits=qcs,
+                        dynamic=self.backend_info.supports_fast_feedforward,
+                    )
                     job_id = job.job_id
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(

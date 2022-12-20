@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+0.33.0 (unreleased)
+-------------------
+
+* Fix handling of parameter when converting ``PauliEvolutionGate`` to
+  ``QubitPauliOperator``.
+
 0.32.0 (December 2022)
 ----------------------
 

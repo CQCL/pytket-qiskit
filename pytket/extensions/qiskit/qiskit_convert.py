@@ -67,6 +67,7 @@ from pytket.circuit import (  # type: ignore
     CustomGateDef,
     Bit,
     Qubit,
+    QControlBox,
 )
 from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
@@ -283,13 +284,17 @@ class CircuitBuilder:
             if type(i) == ControlledGate:
                 if type(i.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
+                elif type(i.base_gate) == qiskit_gates.YGate:
+                    optype = OpType.CnY
+                elif type(i.base_gate) == qiskit_gates.ZGate:
+                    optype = OpType.CnZ
                 else:
-                    # Maybe handle multicontrolled gates in a more general way,
-                    # but for now just do CnRy
-                    raise NotImplementedError(
-                        "qiskit ControlledGate with "
-                        + "base gate {} not implemented".format(i.base_gate)
-                    )
+                    if type(i.base_gate) in set(_known_qiskit_gate.keys()):
+                        optype = OpType.QControlBox  # QControlBox case handled below
+                    else:
+                        raise NotImplementedError(
+                            f"qiskit ControlledGate with base gate {i.base_gate} not implemented"
+                        )
             elif type(i) == PauliEvolutionGate:
                 pass  # Special handling below
             else:
@@ -305,6 +310,18 @@ class CircuitBuilder:
                 self.tkc.add_unitary2qbox(
                     ubox, qubits[1], qubits[0], **condition_kwargs
                 )
+            elif optype == OpType.QControlBox:
+                base_tket_gate = _known_qiskit_gate[type(i.base_gate)]
+                params = [param_to_tk(p) for p in i.base_gate.params]
+                n_base_qubits = i.base_gate.num_qubits
+                sub_circ = Circuit(n_base_qubits)
+                # use base gate name for the CircBox (shows in renderer)
+                sub_circ.name = i.base_gate.name.capitalize()
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
+                c_box = CircBox(sub_circ)
+                q_ctrl_box = QControlBox(c_box, i.num_ctrl_qubits)
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
             elif type(i) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(i, qubits)
                 empty_circ = Circuit(len(qargs))
@@ -500,8 +517,11 @@ def append_tk_command_to_qiskit(
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
     if optype == OpType.CnX:
         return qcirc.mcx(qargs[:-1], qargs[-1])
-
-    # special case
+    num_controls = len(qargs) - 1
+    if optype == OpType.CnY:
+        return qcirc.append(qiskit_gates.YGate().control(num_controls), qargs)
+    if optype == OpType.CnZ:
+        return qcirc.append(qiskit_gates.ZGate().control(num_controls), qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
@@ -511,10 +531,7 @@ def append_tk_command_to_qiskit(
             # presumably more efficient; single control only
             new_gate = CRYGate(alpha)
         else:
-            new_ry_gate = RYGate(alpha)
-            new_gate = MCMT(
-                gate=new_ry_gate, num_ctrl_qubits=len(qargs) - 1, num_target_qubits=1
-            )
+            new_gate = RYGate(alpha).control(num_controls)
         qcirc.append(new_gate, qargs)
         return qcirc
 
@@ -556,6 +573,12 @@ _cx_replacement = Circuit(2).CX(0, 1)
 # The set of tket gates that can be converted directly to qiskit gates
 _supported_tket_gates = set(_known_gate_rev_phase.keys())
 
+_additional_multi_controlled_gates = {OpType.CnY, OpType.CnZ, OpType.CnRy}
+
+# tket gates which are protected from being decomposed in the rebase
+_protected_tket_gates = _supported_tket_gates | _additional_multi_controlled_gates
+
+
 Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
 
 # Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
@@ -566,7 +589,7 @@ def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:
 
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(_supported_tket_gates, _cx_replacement, _tk1_to_u3)
+supported_gate_rebase = RebaseCustom(_protected_tket_gates, _cx_replacement, _tk1_to_u3)
 
 
 def tk_to_qiskit(

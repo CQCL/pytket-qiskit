@@ -46,6 +46,7 @@ from pytket.circuit import (
     Node,
     Op,
     OpType,
+    QControlBox,
     Qubit,
     Unitary2qBox,
     UnitType,
@@ -282,12 +283,12 @@ class CircuitBuilder:
                 elif type(i.base_gate) == qiskit_gates.ZGate:
                     optype = OpType.CnZ
                 else:
-                    # Maybe handle multicontrolled gates in a more general way,
-                    # but for now just do CnRy
-                    raise NotImplementedError(
-                        "qiskit ControlledGate with "
-                        + "base gate {} not implemented".format(i.base_gate)
-                    )
+                    if type(i.base_gate) in set(_known_qiskit_gate.keys()):
+                        optype = OpType.QControlBox  # QControlBox case handled below
+                    else:
+                        raise NotImplementedError(
+                            f"qiskit ControlledGate with base gate {i.base_gate} not implemented"
+                        )
             elif type(i) == PauliEvolutionGate:
                 pass  # Special handling below
             else:
@@ -303,6 +304,16 @@ class CircuitBuilder:
                 self.tkc.add_unitary2qbox(
                     ubox, qubits[1], qubits[0], **condition_kwargs
                 )
+            elif optype == OpType.QControlBox:
+                base_tket_gate = _known_qiskit_gate[type(i.base_gate)]
+                params = [param_to_tk(p) for p in i.base_gate.params]
+                n_base_qubits = i.base_gate.num_qubits
+                sub_circ = Circuit(n_base_qubits)
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
+                c_box = CircBox(sub_circ)
+                q_ctrl_box = QControlBox(c_box, i.num_ctrl_qubits)
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
             elif type(i) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(i, qubits)
                 empty_circ = Circuit(len(qargs))

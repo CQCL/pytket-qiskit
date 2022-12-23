@@ -293,7 +293,8 @@ class CircuitBuilder:
                         optype = OpType.QControlBox  # QControlBox case handled below
                     else:
                         raise NotImplementedError(
-                            f"qiskit ControlledGate with base gate {i.base_gate} not implemented"
+                            f"qiskit ControlledGate with base gate {i.base_gate}"
+                            + "not implemented"
                         )
             elif type(i) == PauliEvolutionGate:
                 pass  # Special handling below

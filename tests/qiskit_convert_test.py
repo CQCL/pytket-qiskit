@@ -13,49 +13,48 @@
 # limitations under the License.
 import os
 from collections import Counter
-from typing import List, Set, Union
 from math import pi
-import pytest
-from sympy import Symbol  # type: ignore
+from typing import List, Set, Union
+
 import numpy as np
-from qiskit import (  # type: ignore
-    QuantumCircuit,
-    QuantumRegister,
-    ClassicalRegister,
-    execute,
-    Aer,
-    IBMQ,
+import pytest
+import qiskit.circuit.library.standard_gates as qiskit_gates
+from pytket.circuit import Circuit  # type: ignore
+from pytket.circuit import (
+    Bit,
+    CircBox,
+    CustomGateDef,
+    OpType,
+    Qubit,
+    Unitary2qBox,
+    reg_eq,
 )
-from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
+from pytket.passes import DecomposeBoxes  # type: ignore
+from pytket.passes import FullPeepholeOptimise, RebaseTket, SequencePass
+from pytket.utils.results import (
+    compare_statevectors,
+    compare_unitaries,
+    permute_rows_cols_in_unitary,
+)
+from qiskit import ClassicalRegister  # type: ignore
+from qiskit import IBMQ, Aer, QuantumCircuit, QuantumRegister, execute
+from qiskit.circuit import Parameter  # type: ignore
+from qiskit.circuit.library import MCMT, RYGate  # type: ignore
+from qiskit.opflow import PauliSumOp  # type: ignore
+from qiskit.opflow import PauliOp, PauliTrotterEvolution, Suzuki
 from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
 from qiskit.quantum_info import Pauli  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT  # type: ignore
-from qiskit.circuit import Parameter  # type: ignore
-from pytket.circuit import (  # type: ignore
-    Circuit,
-    CircBox,
-    Unitary2qBox,
-    OpType,
-    Qubit,
-    Bit,
-    CustomGateDef,
-    reg_eq,
-)
-from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
+from sympy import Symbol  # type: ignore
+
+from pytket.extensions.qiskit import qiskit_to_tk, tk_to_qiskit
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
-from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import (
-    qiskit_result_to_backendresult,
-    backendresult_to_qiskit_resultdata,
     _gen_uids,
+    backendresult_to_qiskit_resultdata,
+    qiskit_result_to_backendresult,
 )
-from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass  # type: ignore
-from pytket.utils.results import (
-    compare_statevectors,
-    permute_rows_cols_in_unitary,
-    compare_unitaries,
-)
+from pytket.extensions.qiskit.tket_pass import TketAutoPass, TketPass
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
@@ -729,3 +728,24 @@ def test_parametrized_evolution() -> None:
     qc: QuantumCircuit = evolved_circ_op.primitive
     tk_qc: Circuit = qiskit_to_tk(qc)
     assert len(tk_qc.free_symbols()) == 1
+
+
+def test_multicontrolled_gate_conversion() -> None:
+    my_qc = QuantumCircuit(4)
+    my_qc.append(qiskit_gates.YGate().control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.RYGate(0.25).control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.ZGate().control(3), [0, 1, 2, 3])
+    my_tkc = qiskit_to_tk(my_qc)
+    my_tkc.add_gate(OpType.CnRy, [0.95], [0, 1, 2, 3])
+    my_tkc.add_gate(OpType.CnZ, [1, 2, 3, 0])
+    my_tkc.add_gate(OpType.CnY, [0, 1, 3, 2])
+    unitary_before = my_tkc.get_unitary()
+    assert my_tkc.n_gates_of_type(OpType.CnY) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnZ) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnRy) == 2
+    my_new_qc = tk_to_qiskit(my_tkc)
+    qiskit_ops = my_new_qc.count_ops()
+    assert qiskit_ops["c3y"] and qiskit_ops["c3z"] and qiskit_ops["c3ry"] == 2
+    tcirc = qiskit_to_tk(my_new_qc)
+    unitary_after = tcirc.get_unitary()
+    assert compare_unitaries(unitary_before, unitary_after)

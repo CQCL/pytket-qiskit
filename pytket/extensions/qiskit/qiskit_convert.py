@@ -16,73 +16,67 @@
 """Methods to allow conversion between Qiskit and pytket circuit classes
 """
 from collections import defaultdict
+from inspect import signature
 from typing import (
+    TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
+    Iterable,
     List,
     Optional,
-    Union,
-    Any,
-    Iterable,
-    cast,
     Set,
     Tuple,
     TypeVar,
-    TYPE_CHECKING,
+    Union,
+    cast,
 )
-from inspect import signature
 from uuid import UUID
 
 import numpy as np
-
-import sympy  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
-from qiskit import (
-    ClassicalRegister,
-    QuantumCircuit,
-    QuantumRegister,
+import sympy  # type: ignore
+from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
+from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.circuit import Circuit  # type: ignore
+from pytket.circuit import (
+    Bit,
+    CircBox,
+    CustomGateDef,
+    Node,
+    Op,
+    OpType,
+    Qubit,
+    Unitary2qBox,
+    UnitType,
 )
+from pytket.passes import RebaseCustom, RemoveRedundancies  # type: ignore
+from pytket.pauli import Pauli, QubitPauliString  # type: ignore
+from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import (
     Barrier,
+    ControlledGate,
+    Gate,
     Instruction,
     InstructionSet,
-    Gate,
-    ControlledGate,
     Measure,
     Parameter,
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, MCMT, PauliEvolutionGate  # type: ignore
-
+from qiskit.circuit.library import CRYGate  # type: ignore
+from qiskit.circuit.library import MCMT, PauliEvolutionGate, RYGate
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
-from pytket.circuit import (  # type: ignore
-    CircBox,
-    Circuit,
-    Node,
-    Op,
-    OpType,
-    Unitary2qBox,
-    UnitType,
-    CustomGateDef,
-    Bit,
-    Qubit,
-)
-from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
-from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
-
-from pytket.passes import RebaseCustom, RemoveRedundancies  # type: ignore
 
 if TYPE_CHECKING:
+    from pytket.circuit import Op, UnitID  # type: ignore
+    from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
     from qiskit.providers.models.backendproperties import (  # type: ignore
         BackendProperties,
         Nduv,
     )
-    from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
-    from pytket.circuit import Op, UnitID  # type: ignore
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):
@@ -283,6 +277,10 @@ class CircuitBuilder:
             if type(i) == ControlledGate:
                 if type(i.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
+                elif type(i.base_gate) == qiskit_gates.YGate:
+                    optype = OpType.CnY
+                elif type(i.base_gate) == qiskit_gates.ZGate:
+                    optype = OpType.CnZ
                 else:
                     # Maybe handle multicontrolled gates in a more general way,
                     # but for now just do CnRy
@@ -501,7 +499,11 @@ def append_tk_command_to_qiskit(
     if optype == OpType.CnX:
         return qcirc.mcx(qargs[:-1], qargs[-1])
 
-    # special case
+    num_controls = len(qargs) - 1
+    if optype == OpType.CnY:
+        return qcirc.append(qiskit_gates.YGate().control(num_controls), qargs)
+    if optype == OpType.CnZ:
+        return qcirc.append(qiskit_gates.ZGate().control(num_controls), qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
@@ -511,10 +513,7 @@ def append_tk_command_to_qiskit(
             # presumably more efficient; single control only
             new_gate = CRYGate(alpha)
         else:
-            new_ry_gate = RYGate(alpha)
-            new_gate = MCMT(
-                gate=new_ry_gate, num_ctrl_qubits=len(qargs) - 1, num_target_qubits=1
-            )
+            new_gate = RYGate(alpha).control(num_controls)
         qcirc.append(new_gate, qargs)
         return qcirc
 
@@ -556,6 +555,11 @@ _cx_replacement = Circuit(2).CX(0, 1)
 # The set of tket gates that can be converted directly to qiskit gates
 _supported_tket_gates = set(_known_gate_rev_phase.keys())
 
+_additional_multi_controlled_gates = {OpType.CnY, OpType.CnZ, OpType.CnRy}
+
+# tket gates which are protected from being decomposed in the rebase
+_protected_tket_gates = _supported_tket_gates | _additional_multi_controlled_gates
+
 Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
 
 # Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
@@ -566,7 +570,7 @@ def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:
 
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(_supported_tket_gates, _cx_replacement, _tk1_to_u3)
+supported_gate_rebase = RebaseCustom(_protected_tket_gates, _cx_replacement, _tk1_to_u3)
 
 
 def tk_to_qiskit(

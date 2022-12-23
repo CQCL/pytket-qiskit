@@ -729,3 +729,24 @@ def test_parametrized_evolution() -> None:
     qc: QuantumCircuit = evolved_circ_op.primitive
     tk_qc: Circuit = qiskit_to_tk(qc)
     assert len(tk_qc.free_symbols()) == 1
+
+
+def test_multicontrolled_gate_conversion() -> None:
+    my_qc = QuantumCircuit(4)
+    my_qc.append(qiskit_gates.YGate().control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.RYGate(0.25).control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.ZGate().control(3), [0, 1, 2, 3])
+    my_tkc = qiskit_to_tk(my_qc)
+    my_tkc.add_gate(OpType.CnRy, [0.95], [0, 1, 2, 3])
+    my_tkc.add_gate(OpType.CnZ, [1, 2, 3, 0])
+    my_tkc.add_gate(OpType.CnY, [0, 1, 3, 2])
+    unitary_before = my_tkc.get_unitary()
+    assert my_tkc.n_gates_of_type(OpType.CnY) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnZ) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnRy) == 2
+    my_new_qc = tk_to_qiskit(my_tkc)
+    qiskit_ops = my_new_qc.count_ops()
+    assert qiskit_ops["c3y"] and qiskit_ops["c3z"] and qiskit_ops["c3ry"] == 2
+    tcirc = qiskit_to_tk(my_new_qc)
+    unitary_after = tcirc.get_unitary()
+    assert compare_unitaries(unitary_before, unitary_after)

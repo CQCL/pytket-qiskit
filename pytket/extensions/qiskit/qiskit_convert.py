@@ -53,7 +53,7 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, MCMT, PauliEvolutionGate  # type: ignore
+from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate  # type: ignore
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from pytket.circuit import (  # type: ignore

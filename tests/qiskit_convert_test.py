@@ -750,3 +750,23 @@ def test_multicontrolled_gate_conversion() -> None:
     tcirc = qiskit_to_tk(my_new_qc)
     unitary_after = tcirc.get_unitary()
     assert compare_unitaries(unitary_before, unitary_after)
+
+
+def test_qcontrolbox_conversion() -> None:
+    qr = QuantumRegister(3)
+    qc = QuantumCircuit(qr)
+    c2h_gate = qiskit_gates.HGate().control(2)
+    qc.append(c2h_gate, qr)
+    c = qiskit_to_tk(qc)
+    assert c.n_gates == 1
+    assert c.n_gates_of_type(OpType.QControlBox) == 1
+    c3rx_gate = qiskit_gates.RXGate(0.7).control(3)
+    c3rz_gate = qiskit_gates.RZGate(pi / 4).control(3)
+    c2rzz_gate = qiskit_gates.RZZGate(pi / 3).control(2)
+    qc2 = QuantumCircuit(4)
+    qc2.append(c3rz_gate, [0, 1, 3, 2])
+    qc2.append(c3rx_gate, [0, 1, 2, 3])
+    qc2.append(c2rzz_gate, [0, 1, 2, 3])
+    tkc2 = qiskit_to_tk(qc2)
+    assert tkc2.n_gates == 3
+    assert tkc2.n_gates_of_type(OpType.QControlBox) == 3

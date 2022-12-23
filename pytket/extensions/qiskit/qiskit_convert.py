@@ -309,6 +309,8 @@ class CircuitBuilder:
                 params = [param_to_tk(p) for p in i.base_gate.params]
                 n_base_qubits = i.base_gate.num_qubits
                 sub_circ = Circuit(n_base_qubits)
+                # use base gate name for the CircBox (shows in renderer)
+                sub_circ.name = i.base_gate.name.capitalize()
                 sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, i.num_ctrl_qubits)

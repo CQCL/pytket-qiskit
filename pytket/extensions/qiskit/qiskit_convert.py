@@ -66,7 +66,7 @@ from qiskit.circuit import (
     Reset,
 )
 from qiskit.circuit.library import CRYGate  # type: ignore
-from qiskit.circuit.library import MCMT, PauliEvolutionGate, RYGate
+from qiskit.circuit.library import PauliEvolutionGate, RYGate
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 
 if TYPE_CHECKING:

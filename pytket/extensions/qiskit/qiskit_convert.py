@@ -525,13 +525,10 @@ def append_tk_command_to_qiskit(
     if optype == OpType.CnX:
         return qcirc.mcx(qargs[:-1], qargs[-1])
     if optype == OpType.CnY:
-        num_controls = len(qargs) - 1
-        return qcirc.append(qiskit_gates.YGate().control(num_controls), qargs)
+        return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnZ:
-        num_controls = len(qargs) - 1
-        return qcirc.append(qiskit_gates.ZGate().control(num_controls), qargs)
+        return qcirc.append(qiskit_gates.ZGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnRy:
-        num_controls = len(qargs) - 1
         # might as well do a bit more checking
         assert len(op.params) == 1
         alpha = param_to_qiskit(op.params[0], symb_map)
@@ -540,7 +537,7 @@ def append_tk_command_to_qiskit(
             # presumably more efficient; single control only
             new_gate = CRYGate(alpha)
         else:
-            new_gate = RYGate(alpha).control(num_controls)
+            new_gate = RYGate(alpha).control(len(qargs) - 1)
         qcirc.append(new_gate, qargs)
         return qcirc
 

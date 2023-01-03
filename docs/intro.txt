@@ -9,7 +9,7 @@ representations, simulation and access to the `IBMQ <https://www.research.ibm.co
 run on IBM backends and simulators, as well as conversion to and from Qiskit
 representations.
 
-``pytket-qiskit`` is available for Python 3.8, 3.9 and 3.10, on Linux, MacOS and
+``pytket-qiskit`` is available for Python 3.9, 3.10 and 3.11, on Linux, MacOS and
 Windows. To install, run:
 
 ::

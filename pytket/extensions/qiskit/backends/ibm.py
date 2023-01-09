@@ -252,8 +252,9 @@ class IBMQBackend(Backend):
             k: v for k, v in characterisation.items() if k in characterisation_keys
         }
         # see below for references for config definitions
-        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/midcircuit-measurement/
-        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/dynamic-circuits/feature-table
+        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/:
+        # midcircuit-measurement/
+        # dynamic-circuits/feature-table
         supports_mid_measure = config.simulator or config.multi_meas_enabled
         supports_fast_feedforward = "qasm3" in config.supported_features
 

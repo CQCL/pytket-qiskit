@@ -256,7 +256,10 @@ class IBMQBackend(Backend):
         # midcircuit-measurement/
         # dynamic-circuits/feature-table
         supports_mid_measure = config.simulator or config.multi_meas_enabled
-        supports_fast_feedforward = "qasm3" in config.supported_features
+        supports_fast_feedforward = (
+            hasattr(config, "supported_features")
+            and "qasm3" in config.supported_features
+        )
 
         # simulator i.e. "ibmq_qasm_simulator" does not have `supported_instructions`
         # attribute

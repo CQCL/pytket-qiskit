@@ -29,7 +29,7 @@ from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, Bit, reg_eq, Unitary2qBox  # type: ignore
+from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
@@ -951,7 +951,7 @@ def test_ibmq_conditional(manila_backend: IBMQBackend) -> None:
     c.CX(1, 0).H(0).X(2, condition=reg_eq(ar, 0)).Measure(Qubit(2), ar[0])
 
     b = manila_backend
-    assert b.backend_info["supports_fast_feedforward"]
+    assert b.backend_info.supports_fast_feedforward
     compiled = b.get_compiled_circuit(c)
     assert not NoMidMeasurePredicate().verify(compiled)
     assert b.valid_circuit(compiled)

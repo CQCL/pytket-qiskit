@@ -1,6 +1,18 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Drop support for Python 3.8; add support for 3.11.
+
+0.33.0 (December 2022)
+----------------------
+
+* Fix handling of parameter when converting ``PauliEvolutionGate`` to
+  ``QubitPauliOperator``.
+* Updated pytket version requirement to 1.10.
+
 0.32.0 (December 2022)
 ----------------------
 

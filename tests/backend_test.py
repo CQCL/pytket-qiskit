@@ -29,7 +29,7 @@ from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
+from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, Bit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
@@ -939,9 +939,22 @@ def test_ibmq_mid_measure(manila_backend: IBMQBackend) -> None:
     b = manila_backend
     ps = b.default_compilation_pass(0)
     ps.apply(c)
-    # c = b.get_compiled_circuit(c)
     assert not NoMidMeasurePredicate().verify(c)
     assert b.valid_circuit(c)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ibmq_conditional(manila_backend: IBMQBackend) -> None:
+    c = Circuit(3, 2).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
+    c.add_barrier([0, 1, 2])
+    ar = c.add_c_register("a", 1)
+    c.CX(1, 0).H(0).X(2, condition=reg_eq(ar, 0)).Measure(Qubit(2), ar[0])
+
+    b = manila_backend
+    assert b.backend_info["supports_fast_feedforward"]
+    compiled = b.get_compiled_circuit(c)
+    assert not NoMidMeasurePredicate().verify(compiled)
+    assert b.valid_circuit(compiled)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)

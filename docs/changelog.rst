@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ----------
 
+* Handle more multi-controlled gates in ``tk_to_qiskit`` and ``qiskit_to_tk`` converters (including CnY and CnZ).
 * Drop support for Python 3.8; add support for 3.11.
 
 0.33.0 (December 2022)

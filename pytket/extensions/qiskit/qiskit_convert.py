@@ -599,25 +599,17 @@ supported_gate_rebase = RebaseCustom(_protected_tket_gates, _cx_replacement, _tk
 
 
 def tk_to_qiskit(
-    tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
+    tkcirc: Circuit, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
     """
     Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
-
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    As tket and qiskit use different qubit ordering conventions
-    there is the option to reverse the bit indices of the returned circuit
-    using the reverse_index parameter.
-
-
     :param tkcirc: A :py:class:`Circuit` to be converted
     :type tkcirc: Circuit
-    :param reverse_index: Reverse the order of wires
-    :type reverse_index: bool
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
     :type replace_implicit_swaps: bool
@@ -680,8 +672,6 @@ def tk_to_qiskit(
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 
-    if reverse_index:
-        return qcirc.reverse_bits()
     return qcirc
 
 

@@ -46,11 +46,7 @@ from pytket.circuit import (  # type: ignore
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
-from pytket.extensions.qiskit.result_convert import (
-    qiskit_result_to_backendresult,
-    backendresult_to_qiskit_resultdata,
-    _gen_uids,
-)
+from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
 from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass  # type: ignore
 from pytket.utils.results import (
     compare_statevectors,
@@ -482,13 +478,6 @@ def test_convert_result() -> None:
 
     assert tk_res.get_counts(one_bits) == Counter({(1, 1): 10})
     assert tk_res.get_counts(zero_bits) == Counter({(0, 0, 0, 0, 0): 10})
-
-    qbits = _gen_uids([(reg.name, reg.size) for reg in (qr1, qr2)], Qubit)
-    cbits = _gen_uids([(reg.name, reg.size) for reg in (cr, cr2)], Bit)
-
-    assert qisk_result.results[0].data.to_dict() == backendresult_to_qiskit_resultdata(
-        tk_res, cbits, qbits, None
-    )
 
 
 def add_x(

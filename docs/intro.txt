@@ -76,7 +76,7 @@ and several types of simulator.
      - Unitary simulator
 
 * [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
-* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend``s and compilation passes to be used directly through qiskit. see the `Notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
+* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend`` to be used directly through qiskit. see the `notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
 
 Default Compilation
 ===================

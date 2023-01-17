@@ -55,7 +55,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 
 class IBMQEmulatorBackend(Backend):
-    """A backend which uses the `AerBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerBackend>`_ simulator to emulate the behaviour of
+    """A backend which uses the AerBackend simulator to emulate the behaviour of
     IBMQBackend. Performs the same compilation and predicate checks as IBMQBackend.
     Requires a valid IBMQ account.
 

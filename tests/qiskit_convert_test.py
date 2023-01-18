@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Cambridge Quantum Computing
+# Copyright 2019-2023 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
 from qiskit.quantum_info import Pauli  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT  # type: ignore
+import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from pytket.circuit import (  # type: ignore
     Circuit,
@@ -45,11 +46,7 @@ from pytket.circuit import (  # type: ignore
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
-from pytket.extensions.qiskit.result_convert import (
-    qiskit_result_to_backendresult,
-    backendresult_to_qiskit_resultdata,
-    _gen_uids,
-)
+from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
 from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass  # type: ignore
 from pytket.utils.results import (
     compare_statevectors,
@@ -482,13 +479,6 @@ def test_convert_result() -> None:
     assert tk_res.get_counts(one_bits) == Counter({(1, 1): 10})
     assert tk_res.get_counts(zero_bits) == Counter({(0, 0, 0, 0, 0): 10})
 
-    qbits = _gen_uids([(reg.name, reg.size) for reg in (qr1, qr2)], Qubit)
-    cbits = _gen_uids([(reg.name, reg.size) for reg in (cr, cr2)], Bit)
-
-    assert qisk_result.results[0].data.to_dict() == backendresult_to_qiskit_resultdata(
-        tk_res, cbits, qbits, None
-    )
-
 
 def add_x(
     qbit: int, qr: QuantumRegister, circuits: List[Union[Circuit, QuantumCircuit]]
@@ -729,3 +719,44 @@ def test_parametrized_evolution() -> None:
     qc: QuantumCircuit = evolved_circ_op.primitive
     tk_qc: Circuit = qiskit_to_tk(qc)
     assert len(tk_qc.free_symbols()) == 1
+
+
+def test_multicontrolled_gate_conversion() -> None:
+    my_qc = QuantumCircuit(4)
+    my_qc.append(qiskit_gates.YGate().control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.RYGate(0.25).control(3), [0, 1, 2, 3])
+    my_qc.append(qiskit_gates.ZGate().control(3), [0, 1, 2, 3])
+    my_tkc = qiskit_to_tk(my_qc)
+    my_tkc.add_gate(OpType.CnRy, [0.95], [0, 1, 2, 3])
+    my_tkc.add_gate(OpType.CnZ, [1, 2, 3, 0])
+    my_tkc.add_gate(OpType.CnY, [0, 1, 3, 2])
+    unitary_before = my_tkc.get_unitary()
+    assert my_tkc.n_gates_of_type(OpType.CnY) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnZ) == 2
+    assert my_tkc.n_gates_of_type(OpType.CnRy) == 2
+    my_new_qc = tk_to_qiskit(my_tkc)
+    qiskit_ops = my_new_qc.count_ops()
+    assert qiskit_ops["c3y"] and qiskit_ops["c3z"] and qiskit_ops["c3ry"] == 2
+    tcirc = qiskit_to_tk(my_new_qc)
+    unitary_after = tcirc.get_unitary()
+    assert compare_unitaries(unitary_before, unitary_after)
+
+
+def test_qcontrolbox_conversion() -> None:
+    qr = QuantumRegister(3)
+    qc = QuantumCircuit(qr)
+    c2h_gate = qiskit_gates.HGate().control(2)
+    qc.append(c2h_gate, qr)
+    c = qiskit_to_tk(qc)
+    assert c.n_gates == 1
+    assert c.n_gates_of_type(OpType.QControlBox) == 1
+    c3rx_gate = qiskit_gates.RXGate(0.7).control(3)
+    c3rz_gate = qiskit_gates.RZGate(pi / 4).control(3)
+    c2rzz_gate = qiskit_gates.RZZGate(pi / 3).control(2)
+    qc2 = QuantumCircuit(4)
+    qc2.append(c3rz_gate, [0, 1, 3, 2])
+    qc2.append(c3rx_gate, [0, 1, 2, 3])
+    qc2.append(c2rzz_gate, [0, 1, 2, 3])
+    tkc2 = qiskit_to_tk(qc2)
+    assert tkc2.n_gates == 3
+    assert tkc2.n_gates_of_type(OpType.QControlBox) == 3

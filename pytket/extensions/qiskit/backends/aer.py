@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Cambridge Quantum Computing
+# Copyright 2019-2023 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -160,14 +160,12 @@ class _AerBaseBackend(Backend):
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
-        reverse_index = replace_implicit_swaps = (
-            self.supports_state or self.supports_unitary
-        )
+        replace_implicit_swaps = self.supports_state or self.supports_unitary
 
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             qcs = []
             for tkc in batch:
-                qc = tk_to_qiskit(tkc, reverse_index, replace_implicit_swaps)
+                qc = tk_to_qiskit(tkc, replace_implicit_swaps)
                 if self.supports_state:
                     qc.save_state()
                 elif self.supports_unitary:
@@ -350,7 +348,7 @@ class _AerStateBaseBackend(_AerBaseBackend):
             raise CircuitNotRunError(handle)
 
         res = job.result()
-        backresults = qiskit_result_to_backendresult(res, reverse_index=False)
+        backresults = qiskit_result_to_backendresult(res)
         for circ_index, backres in enumerate(backresults):
             newhandle = ResultHandle(handle[0], circ_index)
             self._cache[newhandle]["result"] = backres

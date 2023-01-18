@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Cambridge Quantum Computing
+# Copyright 2019-2023 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, MCMT, PauliEvolutionGate  # type: ignore
+from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate  # type: ignore
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from pytket.circuit import (  # type: ignore
@@ -67,6 +67,7 @@ from pytket.circuit import (  # type: ignore
     CustomGateDef,
     Bit,
     Qubit,
+    QControlBox,
 )
 from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
@@ -271,42 +272,59 @@ class CircuitBuilder:
         return self.tkc
 
     def add_qiskit_data(self, data: "QuantumCircuitData") -> None:
-        for i, qargs, cargs in data:
+        for instr, qargs, cargs in data:
             condition_kwargs = {}
-            if i.condition is not None:
-                cond_reg = self.cregmap[i.condition[0]]
+            if instr.condition is not None:
+                cond_reg = self.cregmap[instr.condition[0]]
                 condition_kwargs = {
                     "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
-                    "condition_value": i.condition[1],
+                    "condition_value": instr.condition[1],
                 }
             optype = None
-            if type(i) == ControlledGate:
-                if type(i.base_gate) == qiskit_gates.RYGate:
+            if type(instr) == ControlledGate:
+                if type(instr.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
+                elif type(instr.base_gate) == qiskit_gates.YGate:
+                    optype = OpType.CnY
+                elif type(instr.base_gate) == qiskit_gates.ZGate:
+                    optype = OpType.CnZ
                 else:
-                    # Maybe handle multicontrolled gates in a more general way,
-                    # but for now just do CnRy
-                    raise NotImplementedError(
-                        "qiskit ControlledGate with "
-                        + "base gate {} not implemented".format(i.base_gate)
-                    )
-            elif type(i) == PauliEvolutionGate:
+                    if type(instr.base_gate) in _known_qiskit_gate:
+                        optype = OpType.QControlBox  # QControlBox case handled below
+                    else:
+                        raise NotImplementedError(
+                            f"qiskit ControlledGate with base gate {instr.base_gate}"
+                            + "not implemented"
+                        )
+            elif type(instr) == PauliEvolutionGate:
                 pass  # Special handling below
             else:
-                optype = _known_qiskit_gate[type(i)]
+                optype = _known_qiskit_gate[type(instr)]
             qubits = [self.qbmap[qbit] for qbit in qargs]
             bits = [self.cbmap[bit] for bit in cargs]
 
             if optype == OpType.Unitary2qBox:
-                u = i.to_matrix()
+                u = instr.to_matrix()
                 ubox = Unitary2qBox(u)
                 # Note reversal of qubits, to account for endianness (pytket unitaries
                 # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
                 self.tkc.add_unitary2qbox(
                     ubox, qubits[1], qubits[0], **condition_kwargs
                 )
-            elif type(i) == PauliEvolutionGate:
-                qpo = _qpo_from_peg(i, qubits)
+            elif optype == OpType.QControlBox:
+                base_tket_gate = _known_qiskit_gate[type(instr.base_gate)]
+                params = [param_to_tk(p) for p in instr.base_gate.params]
+                n_base_qubits = instr.base_gate.num_qubits
+                sub_circ = Circuit(n_base_qubits)
+                # use base gate name for the CircBox (shows in renderer)
+                sub_circ.name = instr.base_gate.name.capitalize()
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
+                c_box = CircBox(sub_circ)
+                q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
+            elif type(instr) == PauliEvolutionGate:
+                qpo = _qpo_from_peg(instr, qubits)
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
@@ -314,12 +332,18 @@ class CircuitBuilder:
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
             elif optype in (OpType.CircBox, OpType.CustomGate):
-                qregs = [QuantumRegister(i.num_qubits, "q")] if i.num_qubits > 0 else []
+                qregs = (
+                    [QuantumRegister(instr.num_qubits, "q")]
+                    if instr.num_qubits > 0
+                    else []
+                )
                 cregs = (
-                    [ClassicalRegister(i.num_clbits, "c")] if i.num_clbits > 0 else []
+                    [ClassicalRegister(instr.num_clbits, "c")]
+                    if instr.num_clbits > 0
+                    else []
                 )
                 builder = CircuitBuilder(qregs, cregs)
-                builder.add_qiskit_data(i.definition)
+                builder.add_qiskit_data(instr.definition)
                 subc = builder.circuit()
                 if optype == OpType.CircBox:
                     cbox = CircBox(subc)
@@ -327,23 +351,23 @@ class CircuitBuilder:
                 else:
                     # warning, this will catch all `Gate` instances
                     # that were not picked up as a subclass in _known_qiskit_gate
-                    params = [param_to_tk(p) for p in i.params]
+                    params = [param_to_tk(p) for p in instr.params]
                     gate_def = CustomGateDef.define(
-                        i.name, subc, list(subc.free_symbols())
+                        instr.name, subc, list(subc.free_symbols())
                     )
                     self.tkc.add_custom_gate(gate_def, params, qubits + bits)
-            elif optype == OpType.CU3 and type(i) == qiskit_gates.CUGate:
-                if i.params[-1] == 0:
+            elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
+                if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,
-                        [param_to_tk(p) for p in i.params[:-1]],
+                        [param_to_tk(p) for p in instr.params[:-1]],
                         qubits,
                         **condition_kwargs,
                     )
                 else:
                     raise NotImplementedError("CUGate with nonzero phase")
             else:
-                params = [param_to_tk(p) for p in i.params]
+                params = [param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)
 
 
@@ -500,8 +524,10 @@ def append_tk_command_to_qiskit(
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
     if optype == OpType.CnX:
         return qcirc.mcx(qargs[:-1], qargs[-1])
-
-    # special case
+    if optype == OpType.CnY:
+        return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
+    if optype == OpType.CnZ:
+        return qcirc.append(qiskit_gates.ZGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
@@ -511,10 +537,7 @@ def append_tk_command_to_qiskit(
             # presumably more efficient; single control only
             new_gate = CRYGate(alpha)
         else:
-            new_ry_gate = RYGate(alpha)
-            new_gate = MCMT(
-                gate=new_ry_gate, num_ctrl_qubits=len(qargs) - 1, num_target_qubits=1
-            )
+            new_gate = RYGate(alpha).control(len(qargs) - 1)
         qcirc.append(new_gate, qargs)
         return qcirc
 
@@ -556,6 +579,12 @@ _cx_replacement = Circuit(2).CX(0, 1)
 # The set of tket gates that can be converted directly to qiskit gates
 _supported_tket_gates = set(_known_gate_rev_phase.keys())
 
+_additional_multi_controlled_gates = {OpType.CnY, OpType.CnZ, OpType.CnRy}
+
+# tket gates which are protected from being decomposed in the rebase
+_protected_tket_gates = _supported_tket_gates | _additional_multi_controlled_gates
+
+
 Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
 
 # Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
@@ -566,29 +595,21 @@ def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:
 
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(_supported_tket_gates, _cx_replacement, _tk1_to_u3)
+supported_gate_rebase = RebaseCustom(_protected_tket_gates, _cx_replacement, _tk1_to_u3)
 
 
 def tk_to_qiskit(
-    tkcirc: Circuit, reverse_index: bool = False, replace_implicit_swaps: bool = False
+    tkcirc: Circuit, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
     """
     Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
-
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    As tket and qiskit use different qubit ordering conventions
-    there is the option to reverse the bit indices of the returned circuit
-    using the reverse_index parameter.
-
-
     :param tkcirc: A :py:class:`Circuit` to be converted
     :type tkcirc: Circuit
-    :param reverse_index: Reverse the order of wires
-    :type reverse_index: bool
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
     :type replace_implicit_swaps: bool
@@ -651,8 +672,6 @@ def tk_to_qiskit(
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 
-    if reverse_index:
-        return qcirc.reverse_bits()
     return qcirc
 
 

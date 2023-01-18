@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Cambridge Quantum Computing
+# Copyright 2019-2023 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 
 class IBMQEmulatorBackend(Backend):
-    """A backend which uses the ibmq_qasm_simulator to emulate the behaviour of
+    """A backend which uses the AerBackend simulator to emulate the behaviour of
     IBMQBackend. Performs the same compilation and predicate checks as IBMQBackend.
     Requires a valid IBMQ account.
 

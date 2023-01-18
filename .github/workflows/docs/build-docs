@@ -2,11 +2,11 @@
 
 import argparse
 import datetime
-from importlib import import_module
-from pathlib import Path
 import shutil
 import subprocess
 import sys
+from importlib import import_module
+from pathlib import Path
 
 DOCS_DIR = Path(sys.argv[0]).absolute().parent
 MODULES_DIR = DOCS_DIR.parent.parent.parent
@@ -15,6 +15,7 @@ PYTKET_EX_DOCS_LINK = "https://cqcl.github.io/pytket-extensions/api/index.html"
 PYTKET_QISKIT_PYPI_LINK = "https://pypi.org/project/pytket-qiskit/"
 PYTKET_QISKIT_GITHUB = "https://github.com/CQCL/pytket-qiskit"
 MODULE = "qiskit"
+
 
 def get_module_version():
     m = import_module(f"pytket.extensions.{MODULE}")
@@ -51,12 +52,10 @@ def build_module_docs():
         )
         content.append(f"\tpytket <{PYTKET_DOCS_LINK}>\n")
         content.append(f"\tpytket extensions <{PYTKET_EX_DOCS_LINK}>\n")
-        content.append(
-            "\n.. toctree::\n\t:caption: Links:\n\t:maxdepth: 1\n\n"
-        )
+        content.append("\n.. toctree::\n\t:caption: Links:\n\t:maxdepth: 1\n\n")
         content.append(f"\tbug tracker <{PYTKET_QISKIT_GITHUB}/issues>\n")
         content.append(f"\tGitHub <{PYTKET_QISKIT_GITHUB}>\n")
-        content.append(f"\tPyPi <{PYTKET_QISKIT_PYPI_LINK}>\n")        
+        content.append(f"\tPyPi <{PYTKET_QISKIT_PYPI_LINK}>\n")
 
     with open(index_rst, "w") as f:
         f.writelines(content)
@@ -102,4 +101,4 @@ if __name__ == "__main__":
             MODULES_DIR / "docs" / "build",
             dest,
             dirs_exist_ok=True,
-            )
+        )

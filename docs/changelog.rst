@@ -1,7 +1,7 @@
 Changelog
 ~~~~~~~~~
 
-0.34.0 (January 2022)
+0.34.0 (January 2023)
 ---------------------
 
 * Handle more multi-controlled gates in ``tk_to_qiskit`` and ``qiskit_to_tk`` converters (including CnY and CnZ).

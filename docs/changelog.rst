@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Automatically use IBMQ token if saved in pytket config and not saved in qiskit
+  config.
+
 0.34.0 (January 2023)
 ---------------------
 

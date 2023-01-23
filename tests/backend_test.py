@@ -956,7 +956,7 @@ def test_ibmq_conditional(manila_backend: IBMQBackend) -> None:
     assert not NoMidMeasurePredicate().verify(compiled)
     print(compiled.get_commands())
     for x in b.required_predicates:
-        print(x, x.verify(compiled))
+        print(x, __repr__(x), x.verify(compiled))
     assert b.valid_circuit(compiled)
 
 

@@ -4,7 +4,17 @@ Changelog
 Unreleased
 ----------
 
+* Automatically use IBMQ token if saved in pytket config and not saved in qiskit
+  config.
+
+0.34.0 (January 2023)
+---------------------
+
+* Handle more multi-controlled gates in ``tk_to_qiskit`` and ``qiskit_to_tk`` converters (including CnY and CnZ).
 * Drop support for Python 3.8; add support for 3.11.
+* Fix ordering of registers in statevector simulation results.
+* Remove ``reverse_index`` argument in ``tk_to_qiskit()``.
+* Updated pytket version requirement to 1.11.
 
 0.33.0 (December 2022)
 ----------------------

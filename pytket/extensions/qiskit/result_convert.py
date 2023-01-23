@@ -3,7 +3,6 @@ from typing import (
     Iterator,
     Sequence,
     Set,
-    Type,
     Tuple,
     Optional,
     Dict,
@@ -20,21 +19,6 @@ from pytket.circuit import Bit, Qubit, UnitID, Circuit  # type: ignore
 
 from pytket.backends.backendresult import BackendResult
 from pytket.utils.outcomearray import OutcomeArray
-
-
-def _gen_uids(
-    labels: Sequence[Tuple[str, int]], derived: Type[UnitID], reverse_index: bool = True
-) -> List[UnitID]:
-    # sorted_labels = sorted(labels, key=lambda x: x[0])
-    # see
-    # https://github.com/Qiskit/qiskit-terra/blob/6148588d25a5a0e96744b541bb0da676779f3204/qiskit/result/postprocess.py#L36
-    if reverse_index:
-        return [
-            derived(name, index)
-            for name, size in reversed(labels)
-            for index in reversed(range(size))  # reversed to account for little-endian
-        ]
-    return [derived(name, index) for name, size in labels for index in range(size)]
 
 
 def _get_registers_from_uids(uids: List[UnitID]) -> Dict[str, Set[UnitID]]:
@@ -65,7 +49,7 @@ def _qiskit_ordered_uids(uids: List[UnitID]) -> List[UnitID]:
 
 def _hex_to_outar(hexes: Sequence[str], width: int) -> OutcomeArray:
     ints = [int(hexst, 16) for hexst in hexes]
-    return OutcomeArray.from_ints(ints, width)
+    return OutcomeArray.from_ints(ints, width, big_endian=False)
 
 
 # An empty ExperimentResult can be an empty dict, but it can also be a dict
@@ -89,19 +73,18 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
 def qiskit_experimentresult_to_backendresult(
     result: ExperimentResult,
     ppcirc: Optional[Circuit] = None,
-    reverse_index: bool = True,
 ) -> BackendResult:
     header = result.header
     width = header.memory_slots
 
     c_bits = (
-        _gen_uids(header.creg_sizes, Bit, reverse_index)
-        if hasattr(header, "creg_sizes")
+        [Bit(name, index) for name, index in header.clbit_labels]
+        if hasattr(header, "clbit_labels")
         else None
     )
     q_bits = (
-        _gen_uids(header.qreg_sizes, Qubit, reverse_index)
-        if hasattr(header, "qreg_sizes")
+        [Qubit(name, index) for name, index in header.qubit_labels]
+        if hasattr(header, "qubit_labels")
         else None
     )
     shots, counts, state, unitary = (None,) * 4
@@ -125,10 +108,10 @@ def qiskit_experimentresult_to_backendresult(
             )
 
         if "statevector" in datadict:
-            state = np.asarray(datadict["statevector"])
+            state = datadict["statevector"].reverse_qargs().data
 
         if "unitary" in datadict:
-            unitary = np.asarray(datadict["unitary"])
+            unitary = datadict["unitary"].reverse_qargs().data
 
     return BackendResult(
         c_bits=c_bits,
@@ -141,13 +124,9 @@ def qiskit_experimentresult_to_backendresult(
     )
 
 
-def qiskit_result_to_backendresult(
-    res: Result, reverse_index: bool = True
-) -> Iterator[BackendResult]:
+def qiskit_result_to_backendresult(res: Result) -> Iterator[BackendResult]:
     for result in res.results:
-        yield qiskit_experimentresult_to_backendresult(
-            result, reverse_index=reverse_index
-        )
+        yield qiskit_experimentresult_to_backendresult(result)
 
 
 def backendresult_to_qiskit_resultdata(

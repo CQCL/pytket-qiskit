@@ -113,6 +113,23 @@ class NoIBMQAccountError(Exception):
         )
 
 
+def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
+    token = None
+    if qiskit_config is not None:
+        token = qiskit_config.ibmq_api_token
+    if not IBMQ.active_account():
+        if IBMQ.stored_account():
+            IBMQ.load_account()
+        else:
+            if token is not None:
+                IBMQ.save_account(token)
+            else:
+                raise NoIBMQAccountError()
+    if not QiskitRuntimeService.saved_accounts():
+        if token is not None:
+            QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
+
+
 class IBMQBackend(Backend):
     _supports_shots = False
     _supports_counts = True
@@ -189,17 +206,7 @@ class IBMQBackend(Backend):
         project: Optional[str],
         qiskit_config: Optional[QiskitConfig],
     ) -> "AccountProvider":
-        if not IBMQ.active_account():
-            if IBMQ.stored_account():
-                IBMQ.load_account()
-            else:
-                if (
-                    qiskit_config is not None
-                    and qiskit_config.ibmq_api_token is not None
-                ):
-                    IBMQ.save_account(qiskit_config.ibmq_api_token)
-                else:
-                    raise NoIBMQAccountError()
+        _save_ibmq_auth(qiskit_config)
         provider_kwargs: Dict[str, Optional[str]] = {}
         if hub:
             provider_kwargs["hub"] = hub

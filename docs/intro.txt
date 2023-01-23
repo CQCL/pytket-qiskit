@@ -42,6 +42,17 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 
     set_ibmq_config(ibmq_api_token=ibm_token, hub='your hub', group='your group', project='your project')
 
+Alternatively you can use the following qiskit commands to save your credentials
+locally without saving the token in pytket config:
+
+::
+
+    from qiskit import IBMQ
+    from qiskit_ibm_runtime import QiskitRuntimeService
+
+    IBMQ.save_account(token=ibm_token)
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token)
+
 To see which devices you can access you can use the ``available_devices`` method on the ``IBMQBackend`` or ``IBMQEmulatorBackend``. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
 
 ::
@@ -76,7 +87,7 @@ and several types of simulator.
      - Unitary simulator
 
 * [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
-* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend``s and compilation passes to be used directly through qiskit. see the `Notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
+* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend`` to be used directly through qiskit. see the `notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
 
 Default Compilation
 ===================

@@ -1174,3 +1174,14 @@ def test_backendinfo_serialization2() -> None:
     s = json.dumps(backend_info_json)
     backend_info_json1 = json.loads(s)
     assert backend_info_json == backend_info_json1
+
+
+def test_sim_qubit_order() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/54
+    backend = AerStateBackend()
+    circ = Circuit()
+    circ.add_q_register("a", 1)
+    circ.add_q_register("b", 1)
+    circ.X(Qubit("a", 0))
+    s = backend.run_circuit(circ).get_state()
+    assert np.isclose(abs(s[2]), 1.0)

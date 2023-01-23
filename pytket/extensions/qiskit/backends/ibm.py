@@ -275,12 +275,35 @@ class IBMQBackend(Backend):
             and "reset" in config.supported_instructions
         )
         gate_set = _tk_gate_set(backend)
+        # if supports_fast_feedforward:
+        #     gate_set = gate_set.union(
+        #         {
+        #             OpType.RangePredicate,
+        #             OpType.MultiBit,
+        #             OpType.ExplicitPredicate,
+        #             OpType.ExplicitModifier,
+        #             OpType.SetBits,
+        #             OpType.CopyBits,
+        #         }
+        #     )
         backend_info = BackendInfo(
             cls.__name__,
             backend.name(),
             __extension_version__,
             arch,
-            gate_set,
+            gate_set.union(
+                {
+                    OpType.RangePredicate,
+                    # OpType.MultiBit,
+                    # OpType.ExplicitPredicate,
+                    # OpType.ExplicitModifier,
+                    # OpType.SetBits,
+                    # OpType.CopyBits,
+                    OpType.Conditional,
+                }
+            )
+            if supports_fast_feedforward
+            else gate_set,
             supports_midcircuit_measurement=supports_mid_measure,
             supports_fast_feedforward=supports_fast_feedforward,
             supports_reset=supports_reset,

@@ -17,6 +17,7 @@ import logging
 from ast import literal_eval
 from collections import Counter
 import json
+from time import sleep
 from typing import (
     cast,
     List,
@@ -33,7 +34,12 @@ from warnings import warn
 import qiskit  # type: ignore
 from qiskit import IBMQ
 from qiskit.primitives import SamplerResult  # type: ignore
-from qiskit.tools.monitor import job_monitor  # type: ignore
+
+
+# RuntimeJob has no queue_position attribute, which is referenced
+# via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
+# therefore we can't use job_monitor until fixed
+# from qiskit.tools.monitor import job_monitor  # type: ignore
 from qiskit.result.distributions import QuasiDistribution  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
@@ -258,19 +264,39 @@ class IBMQBackend(Backend):
         filtered_characterisation = {
             k: v for k, v in characterisation.items() if k in characterisation_keys
         }
+        # see below for references for config definitions
+        # quantum-computing.ibm.com/services/resources/docs/resources/manage/systems/:
+        # midcircuit-measurement/
+        # dynamic-circuits/feature-table
         supports_mid_measure = config.simulator or config.multi_meas_enabled
-        supports_fast_feedforward = False
+        supports_fast_feedforward = (
+            hasattr(config, "supported_features")
+            and "qasm3" in config.supported_features
+        )
+
         # simulator i.e. "ibmq_qasm_simulator" does not have `supported_instructions`
         # attribute
+        supports_reset = (
+            hasattr(config, "supported_instructions")
+            and "reset" in config.supported_instructions
+        )
         gate_set = _tk_gate_set(backend)
         backend_info = BackendInfo(
             cls.__name__,
             backend.name(),
             __extension_version__,
             arch,
-            gate_set,
+            gate_set.union(
+                {
+                    OpType.RangePredicate,
+                    OpType.Conditional,
+                }
+            )
+            if supports_fast_feedforward
+            else gate_set,
             supports_midcircuit_measurement=supports_mid_measure,
             supports_fast_feedforward=supports_fast_feedforward,
+            supports_reset=supports_reset,
             all_node_gate_errors=characterisation["NodeErrors"],
             all_edge_gate_errors=characterisation["EdgeErrors"],
             all_readout_errors=characterisation["ReadoutErrors"],
@@ -389,6 +415,7 @@ class IBMQBackend(Backend):
         Supported kwargs: `postprocess`.
         """
         circuits = list(circuits)
+
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
             len(circuits),
@@ -435,7 +462,10 @@ class IBMQBackend(Backend):
                     options.transpilation.skip_transpilation = True
                     options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
-                    job = sampler.run(circuits=qcs)
+                    job = sampler.run(
+                        circuits=qcs,
+                        dynamic=self.backend_info.supports_fast_feedforward,
+                    )
                     job_id = job.job_id
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
@@ -491,9 +521,16 @@ class IBMQBackend(Backend):
                 except Exception as e:
                     warn(f"Unable to retrieve job {jobid}: {e}")
                     raise CircuitNotRunError(handle)
-
+                # RuntimeJob has no queue_position attribute, which is referenced
+                # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
+                # therefore we can't use job_monitor until fixed
                 if self._monitor and job:
-                    job_monitor(job)
+                    #     job_monitor(job)
+                    status = job.status()
+                    while status.name not in ["DONE", "CANCELLED", "ERROR"]:
+                        status = job.status()
+                        print("Job status is", status.name)
+                        sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
             for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):

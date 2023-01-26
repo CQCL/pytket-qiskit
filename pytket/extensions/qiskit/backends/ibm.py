@@ -17,6 +17,7 @@ import logging
 from ast import literal_eval
 from collections import Counter
 import json
+from time import sleep
 from typing import (
     cast,
     List,
@@ -33,7 +34,12 @@ from warnings import warn
 import qiskit  # type: ignore
 from qiskit import IBMQ
 from qiskit.primitives import SamplerResult  # type: ignore
-from qiskit.tools.monitor import job_monitor  # type: ignore
+
+
+# RuntimeJob has no queue_position attribute, which is referenced
+# via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
+# therefore we can't use job_monitor until fixed
+# from qiskit.tools.monitor import job_monitor  # type: ignore
 from qiskit.result.distributions import QuasiDistribution  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
@@ -515,9 +521,16 @@ class IBMQBackend(Backend):
                 except Exception as e:
                     warn(f"Unable to retrieve job {jobid}: {e}")
                     raise CircuitNotRunError(handle)
-
+                # RuntimeJob has no queue_position attribute, which is referenced
+                # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
+                # therefore we can't use job_monitor until fixed
                 if self._monitor and job:
-                    job_monitor(job)
+                    #     job_monitor(job)
+                    status = job.status()
+                    while status.name not in ["DONE", "CANCELLED", "ERROR"]:
+                        status = job.status()
+                        print("Job status is", status.name)
+                        sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
             for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):

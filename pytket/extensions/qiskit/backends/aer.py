@@ -692,10 +692,6 @@ def _sparse_to_zx_tup(
 def _qubitpauliop_to_sparsepauliop(
     operator: QubitPauliOperator, n_qubits: int
 ) -> SparsePauliOp:
-    n_ops = len(operator._dict)
-    table_array = np.zeros((n_ops, 2 * n_qubits), dtype=np.bool_)
-    coeffs = np.zeros(n_ops, dtype=np.float64)
-
     strings, coeffs = [], []
     for term, coeff in operator._dict.items():
         termmap = term.map

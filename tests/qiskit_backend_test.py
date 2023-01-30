@@ -22,11 +22,11 @@ from qiskit import IBMQ, QuantumCircuit, execute  # type: ignore
 from qiskit.providers.ibmq import AccountProvider  # type: ignore
 from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
-from qiskit.providers.aer import Aer  # type: ignore
 from qiskit.utils import QuantumInstance  # type: ignore
 from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
 from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
 from qiskit.transpiler.passes import Unroller  # type: ignore
+from qiskit_aer import Aer  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,

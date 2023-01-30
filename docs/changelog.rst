@@ -6,6 +6,8 @@ Unreleased
 
 * Automatically use IBMQ token if saved in pytket config and not saved in qiskit
   config.
+* Update qiskit version to 0.40.
+* Update code to remove some deprecation warnings.
 
 0.34.0 (January 2023)
 ---------------------

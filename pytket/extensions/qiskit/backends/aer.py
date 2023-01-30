@@ -32,14 +32,12 @@ from typing import (
 
 import numpy as np
 
-from qiskit import Aer  # type: ignore
-from qiskit.providers.aer.library import (  # type: ignore # pylint: disable=unused-import
-    save_expectation_value,
-)
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.pauli_table import PauliTable  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
+from qiskit_aer import Aer  # type: ignore
+from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
 
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo

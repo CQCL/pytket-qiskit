@@ -46,7 +46,8 @@ setup(
     install_requires=[
         "pytket ~= 1.11",
         "qiskit ~= 0.40.0",
-        "qiskit_ibm_runtime ~= 0.8.0",
+        "qiskit-ibm-runtime ~= 0.8.0",
+        "qiskit-aer ~= 0.11.2",
     ],
     classifiers=[
         "Environment :: Console",

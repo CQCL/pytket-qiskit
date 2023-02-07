@@ -32,14 +32,11 @@ from typing import (
 
 import numpy as np
 
-from qiskit import Aer  # type: ignore
-from qiskit.providers.aer.library import (  # type: ignore # pylint: disable=unused-import
-    save_expectation_value,
-)
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
-from qiskit.quantum_info.operators.symplectic.pauli_table import PauliTable  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
+from qiskit_aer import Aer  # type: ignore
+from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
 
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
@@ -695,14 +692,12 @@ def _sparse_to_zx_tup(
 def _qubitpauliop_to_sparsepauliop(
     operator: QubitPauliOperator, n_qubits: int
 ) -> SparsePauliOp:
-    n_ops = len(operator._dict)
-    table_array = np.zeros((n_ops, 2 * n_qubits), dtype=np.bool_)
-    coeffs = np.zeros(n_ops, dtype=np.float64)
+    strings, coeffs = [], []
+    for term, coeff in operator._dict.items():
+        termmap = term.map
+        strings.append(
+            "".join(termmap.get(Qubit(i), Pauli.I).name for i in range(n_qubits))
+        )
+        coeffs.append(coeff)
 
-    for i, (term, coeff) in enumerate(operator._dict.items()):
-        coeffs[i] = coeff
-        z, x = _sparse_to_zx_tup(term, n_qubits)
-        table_array[i, :n_qubits] = x
-        table_array[i, n_qubits:] = z
-
-    return SparsePauliOp(PauliTable(table_array), coeffs)
+    return SparsePauliOp(strings, coeffs)

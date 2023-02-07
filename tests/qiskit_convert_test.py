@@ -23,7 +23,6 @@ from qiskit import (  # type: ignore
     QuantumRegister,
     ClassicalRegister,
     execute,
-    Aer,
     IBMQ,
 )
 from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
@@ -33,6 +32,7 @@ from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
+from qiskit_aer import Aer  # type: ignore
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,

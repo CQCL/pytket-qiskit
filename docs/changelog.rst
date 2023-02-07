@@ -1,13 +1,14 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.35.0 (February 2023)
+----------------------
 
 * Automatically use IBMQ token if saved in pytket config and not saved in qiskit
   config.
 * Update qiskit version to 0.40.
 * Update code to remove some deprecation warnings.
+* Work around https://github.com/Qiskit/qiskit-terra/issues/7865.
 
 0.34.0 (January 2023)
 ---------------------

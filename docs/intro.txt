@@ -16,13 +16,36 @@ Windows. To install, run:
 
     pip install pytket-qiskit
 
-This will install `pytket` if it isn't already installed, and add new classes
-and methods into the `pytket.extensions` namespace.
+This will install ``pytket`` if it isn't already installed, and add new classes
+and methods into the ``pytket.extensions`` namespace.
+
+An example using the shots based :py:class:`AerBackend` simulator is shown below. 
+
+::
+
+  from pytket.extensions.qiskit import AerBackend
+
+  backend = AerBackend()
+  circ = Circuit(2).H(0).CX(0, 1).measure_all()
+
+  # Compilation not needed here as both H and CX are supported gates
+  result = backend.run_circuit(circ, n_shots=1000)
+
+This simulator supports a large set of gates and by default has no architectural constraints or quantum noise. However the user can pass in a noise model or custom architecture to more closely model a real quantum device. 
+
+The :py:class:`AerBackend` also supports GPU simulation which can be configured as follows.
+
+::
+
+  from pytket.extensions.qiskit import AerBackend
+
+  backend = AerBackend()
+  backend._backend.set_option("device", "GPU")
 
 Access and Credentials
 ======================
 
-Accessing devices and simulators through the pytket-qiskit extension requires an IBMQ account. An account can be set up here -> https://quantum-computing.ibm.com/login.
+With the exception of the Aer simulators accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBMQ account. An account can be set up here -> https://quantum-computing.ibm.com/login.
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
@@ -32,7 +55,7 @@ Once you have created an account you can obtain an API token which you can use t
     
     set_ibmq_config(ibmq_api_token=ibm_token)
 
-This will save your IBMQ credentials locally. After saving your credentials you can access pytket-qiskit backend repeatedly without having to re-initialise your credentials.
+This will save your IBMQ credentials locally. After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
 
 If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
 
@@ -53,7 +76,7 @@ locally without saving the token in pytket config:
     IBMQ.save_account(token=ibm_token)
     QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token)
 
-To see which devices you can access you can use the ``available_devices`` method on the ``IBMQBackend`` or ``IBMQEmulatorBackend``. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
+To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend` or :py:class:`IBMQEmulatorBackend`. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
 
 ::
 
@@ -66,7 +89,7 @@ To see which devices you can access you can use the ``available_devices`` method
 Backends Available Through pytket-qiskit
 ========================================
 
-The ``pytket-qiskit`` extension has several types of available ``Backend``. These are the ``IBMQBackend``
+The ``pytket-qiskit`` extension has several types of available :py:class:`Backend`. These are the :py:class:`IBMQBackend`
 and several types of simulator.
 
 .. list-table:: 
@@ -86,13 +109,13 @@ and several types of simulator.
    * - `AerUnitaryBackend <https://cqcl.github.io/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
      - Unitary simulator
 
-* [1] ``AerBackend`` is noiseless by default and has no architecture. However it can accept a user defined ``NoiseModel`` and ``Architecture``.
-* In addition to the backends above the pytket-qiskit extension also has the ``TketBackend``. This allows a tket ``Backend`` to be used directly through qiskit. see the `notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
+* [1] :py:class`AerBackend` is noiseless by default and has no architecture. However it can accept a user defined :py:class:`NoiseModel` and :py:class:`Architecture`.
+* In addition to the backends above the ``pytket-qiskit`` extension also has the :py:class:`TketBackend`. This allows a tket :py:class:`Backend` to be used directly through qiskit. see the `notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
 
 Default Compilation
 ===================
 
-Every ``Backend`` in pytket has its own ``default_compilation_pass`` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the Backend. The passes applied by different levels of optimisation are specified in the table below.
+Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the :py:class:`Backend`. The passes applied by different levels of optimisation are specified in the table below.
 
 .. list-table:: **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
    :widths: 25 25 25
@@ -134,11 +157,11 @@ Every ``Backend`` in pytket has its own ``default_compilation_pass`` method. Thi
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
 * [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
-* [3] Here ``CXMappingPass`` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
-* [4] ``SimplifyInitial`` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
+* [3] Here :py:class:`CXMappingPass` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
+* [4] :py:class:`SimplifyInitial` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
 
 
-**Note:** The ``default_compilation_pass`` for ``AerBackend`` is the same as above except it doesn't use ``SimplifyInitial``.
+**Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above except it doesn't use :py:class:`SimplifyInitial`.
 
 
 Backend Predicates
@@ -146,12 +169,12 @@ Backend Predicates
 
 Circuits must satisfy certain conditions before they can be processed on a device or simulator. In pytket these conditions are called predicates.
 
-All pytket-qiskit backends have the following two predicates.
+All ``pytket-qiskit`` backends have the following two predicates.
 
-* `GateSetPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the ``Backend``. To view supported Ops run ``BACKENDNAME.backend_info.gate_set``.
+* `GateSetPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the :py:class`Backend`. To view supported Ops run ``BACKENDNAME.backend_info.gate_set``.
 * `NoSymbolsPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoSymbolsPredicate>`_ - Parameterised gates must have numerical values when the circuit is executed.
 
-The ``IBMQBackend`` and ``IBMQEmulatorBackend`` may also have the following predicates depending on the capabilities of the specified device.
+The :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend` may also have the following predicates depending on the capabilities of the specified device.
 
 * `NoClassicalControlPredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoClassicalControlPredicate>`_
 * `NoMidMeasurePredicate <https://cqcl.github.io/tket/pytket/api/predicates.html#pytket.predicates.NoMidMeasurePredicatePredicate>`_

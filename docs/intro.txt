@@ -45,7 +45,7 @@ The :py:class:`AerBackend` also supports GPU simulation which can be configured 
 Access and Credentials
 ======================
 
-With the exception of the Aer simulators accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBMQ account. An account can be set up here -> https://quantum-computing.ibm.com/login.
+With the exception of the Aer simulators, accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBMQ account. An account can be set up here: https://quantum-computing.ibm.com/login.
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 

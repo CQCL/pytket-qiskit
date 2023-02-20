@@ -19,7 +19,7 @@ Windows. To install, run:
 This will install ``pytket`` if it isn't already installed, and add new classes
 and methods into the ``pytket.extensions`` namespace.
 
-An example using the shots based :py:class:`AerBackend` simulator is shown below. 
+An example using the shots-based :py:class:`AerBackend` simulator is shown below. 
 
 ::
 

@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.36.0 (February 2023)
+----------------------
 
 * Update qiskit version to 0.41.
 * Fix order of Pauli terms when converting from ``QubitPauliOperator``.

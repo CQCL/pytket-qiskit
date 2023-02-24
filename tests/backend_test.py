@@ -812,7 +812,7 @@ def test_aer_placed_expectation() -> None:
         assert "default register Qubits" in str(errorinfoCirc.value)
 
 
-def test_operator_expectation_value():
+def test_operator_expectation_value() -> None:
     c = Circuit(2).X(0).V(0).V(1).S(0).S(1).H(0).H(1).S(0).S(1)
     op = QubitPauliOperator(
         {

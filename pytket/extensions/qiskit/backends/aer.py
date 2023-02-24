@@ -696,7 +696,9 @@ def _qubitpauliop_to_sparsepauliop(
     for term, coeff in operator._dict.items():
         termmap = term.map
         strings.append(
-            "".join(termmap.get(Qubit(i), Pauli.I).name for i in range(n_qubits))
+            "".join(
+                termmap.get(Qubit(i), Pauli.I).name for i in reversed(range(n_qubits))
+            )
         )
         coeffs.append(coeff)
 

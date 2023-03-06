@@ -112,11 +112,11 @@ class _AerBaseBackend(Backend):
                 f"Gate set {self._gate_set} missing at least one of {_required_gates}"
             )
         self._backend_info = BackendInfo(
-            type(self).__name__,
-            backend_name,
-            __extension_version__,
-            Architecture([]),
-            self._gate_set,
+            name=type(self).__name__,
+            device_name=backend_name,
+            version=__extension_version__,
+            architecture=Architecture([]),
+            gate_set=self._gate_set,
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},
         )
@@ -374,6 +374,7 @@ class AerBackend(_AerBaseBackend):
         :type simulation_method: str
         """
         super().__init__("aer_simulator")
+        self._backend_info.supports_fast_feedforward = True
 
         if not noise_model or all(
             value == [] for value in noise_model.to_dict().values()

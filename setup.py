@@ -48,6 +48,7 @@ setup(
         "qiskit ~= 0.41.0",
         "qiskit-ibm-runtime ~= 0.8.0",
         "qiskit-aer ~= 0.11.2",
+        "numpy"
     ],
     classifiers=[
         "Environment :: Console",

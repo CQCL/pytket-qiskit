@@ -28,7 +28,8 @@ from typing import (
     Union,
     cast,
     TYPE_CHECKING,
-    Set, )
+    Set,
+)
 
 import numpy as np
 from pytket.architecture import Architecture  # type: ignore
@@ -85,11 +86,14 @@ def _default_q_index(q: Qubit) -> int:
 _required_gates: Set[OpType] = {OpType.CX, OpType.U1, OpType.U2, OpType.U3}
 
 
-def _tket_gate_set_from_qiskit_backend(qiskit_backend: "QiskitAerBackend") -> Set[OpType]:
-    gates = {_gate_str_2_optype[gate_str]
-             for gate_str in qiskit_backend.configuration().basis_gates
-             if gate_str in _gate_str_2_optype
-             }
+def _tket_gate_set_from_qiskit_backend(
+    qiskit_backend: "QiskitAerBackend",
+) -> Set[OpType]:
+    gates = {
+        _gate_str_2_optype[gate_str]
+        for gate_str in qiskit_backend.configuration().basis_gates
+        if gate_str in _gate_str_2_optype
+    }
     # special case mapping TK1 to U
     gates.add(OpType.TK1)
     if not gates >= _required_gates:
@@ -110,15 +114,21 @@ class NoiseModelCharacterisation:
     architecture: Architecture = field(init=False)
     averaged_node_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
     averaged_edge_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
-    averaged_readout_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
+    averaged_readout_errors: Optional[Dict[Node, float]] = field(
+        init=False, default=None
+    )
 
     def __post_init__(self) -> None:
         if self.characterisation_dict:
             self.node_errors = self.characterisation_dict.get("NodeErrors")
             self.edge_errors = self.characterisation_dict.get("EdgeErrors")
             self.readout_errors = self.characterisation_dict.get("ReadoutErrors")
-            self.generic_one_qubit_q_errors = self.characterisation_dict.get("GenericOneQubitQErrors")
-            self.generic_two_qubit_q_errors = self.characterisation_dict.get("GenericTwoQubitQErrors")
+            self.generic_one_qubit_q_errors = self.characterisation_dict.get(
+                "GenericOneQubitQErrors"
+            )
+            self.generic_two_qubit_q_errors = self.characterisation_dict.get(
+                "GenericTwoQubitQErrors"
+            )
             self.architecture = self.characterisation_dict.get("Architecture")
             averaged_errors = get_avg_characterisation(self.characterisation_dict)
             self.averaged_node_errors = averaged_errors.get("node_errors")
@@ -128,15 +138,17 @@ class NoiseModelCharacterisation:
             self.architecture = Architecture([])
 
 
-def _get_characterisation_of_noise_model(noise_model: Optional[NoiseModel],
-                                         gate_set: Set[OpType]) -> Tuple[NoiseModelCharacterisation, Optional[NoiseModel]]:
-    if not noise_model or all(
-            value == [] for value in noise_model.to_dict().values()
-    ):
+def _get_characterisation_of_noise_model(
+    noise_model: Optional[NoiseModel], gate_set: Set[OpType]
+) -> Tuple[NoiseModelCharacterisation, Optional[NoiseModel]]:
+    if not noise_model or all(value == [] for value in noise_model.to_dict().values()):
         return NoiseModelCharacterisation(characterisation_dict=None), None
 
     characterisation = _process_model(noise_model, gate_set)
-    return NoiseModelCharacterisation(characterisation_dict=characterisation), noise_model
+    return (
+        NoiseModelCharacterisation(characterisation_dict=characterisation),
+        noise_model,
+    )
 
 
 class _AerBaseBackend(Backend):
@@ -166,7 +178,9 @@ class _AerBaseBackend(Backend):
             self._gate_set,
         )
 
-    def _arch_dependent_default_compilation_pass(self, arch: Architecture, optimisation_level: int = 2) -> BasePass:
+    def _arch_dependent_default_compilation_pass(
+        self, arch: Architecture, optimisation_level: int = 2
+    ) -> BasePass:
         assert optimisation_level in range(3)
         arch_specific_passes = [
             CXMappingPass(
@@ -183,13 +197,36 @@ class _AerBaseBackend(Backend):
             NaivePlacementPass(arch),
         ]
         if optimisation_level == 0:
-            return SequencePass([DecomposeBoxes(), self.rebase_pass(), *arch_specific_passes, self.rebase_pass()])
+            return SequencePass(
+                [
+                    DecomposeBoxes(),
+                    self.rebase_pass(),
+                    *arch_specific_passes,
+                    self.rebase_pass(),
+                ]
+            )
         if optimisation_level == 1:
-            return SequencePass([DecomposeBoxes(), SynthesiseTket(), *arch_specific_passes, SynthesiseTket()])
+            return SequencePass(
+                [
+                    DecomposeBoxes(),
+                    SynthesiseTket(),
+                    *arch_specific_passes,
+                    SynthesiseTket(),
+                ]
+            )
         return SequencePass(
-            [DecomposeBoxes(), FullPeepholeOptimise(), *arch_specific_passes, CliffordSimp(False), SynthesiseTket()])
+            [
+                DecomposeBoxes(),
+                FullPeepholeOptimise(),
+                *arch_specific_passes,
+                CliffordSimp(False),
+                SynthesiseTket(),
+            ]
+        )
 
-    def _arch_independent_default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+    def _arch_independent_default_compilation_pass(
+        self, optimisation_level: int = 2
+    ) -> BasePass:
         assert optimisation_level in range(3)
         if optimisation_level == 0:
             return SequencePass([DecomposeBoxes(), self.rebase_pass()])
@@ -200,16 +237,18 @@ class _AerBaseBackend(Backend):
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         arch = self._backend_info.architecture
         if arch.coupling and self._backend_info.get_misc("characterisation"):
-            return self._arch_dependent_default_compilation_pass(arch, optimisation_level)
+            return self._arch_dependent_default_compilation_pass(
+                arch, optimisation_level
+            )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)
 
     def process_circuits(
-            self,
-            circuits: Sequence[Circuit],
-            n_shots: Union[None, int, Sequence[Optional[int]]] = None,
-            valid_check: bool = True,
-            **kwargs: KwargTypes,
+        self,
+        circuits: Sequence[Circuit],
+        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        valid_check: bool = True,
+        **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
@@ -281,10 +320,10 @@ class _AerBaseBackend(Backend):
             return cast(BackendResult, self._cache[handle]["result"])
 
     def _snapshot_expectation_value(
-            self,
-            circuit: Circuit,
-            hamiltonian: Union[SparsePauliOp, qk_Pauli],
-            valid_check: bool = True,
+        self,
+        circuit: Circuit,
+        hamiltonian: Union[SparsePauliOp, qk_Pauli],
+        valid_check: bool = True,
     ) -> complex:
         if valid_check:
             self._check_all_circuits([circuit], nomeasure_warn=False)
@@ -305,10 +344,10 @@ class _AerBaseBackend(Backend):
         )
 
     def get_pauli_expectation_value(
-            self,
-            state_circuit: Circuit,
-            pauli: QubitPauliString,
-            valid_check: bool = True,
+        self,
+        state_circuit: Circuit,
+        pauli: QubitPauliString,
+        valid_check: bool = True,
     ) -> complex:
         """Calculates the expectation value of the given circuit using the built-in Aer
         snapshot functionality
@@ -339,10 +378,10 @@ class _AerBaseBackend(Backend):
         return self._snapshot_expectation_value(state_circuit, operator, valid_check)
 
     def get_operator_expectation_value(
-            self,
-            state_circuit: Circuit,
-            operator: QubitPauliOperator,
-            valid_check: bool = True,
+        self,
+        state_circuit: Circuit,
+        operator: QubitPauliOperator,
+        valid_check: bool = True,
     ) -> complex:
         """Calculates the expectation value of the given circuit with respect to the
         operator using the built-in Aer snapshot functionality
@@ -385,9 +424,9 @@ class AerBackend(_AerBaseBackend):
     _qiskit_backend_name = "aer_simulator"
 
     def __init__(
-            self,
-            noise_model: Optional[NoiseModel] = None,
-            simulation_method: str = "automatic",
+        self,
+        noise_model: Optional[NoiseModel] = None,
+        simulation_method: str = "automatic",
     ):
         """Backend for running simulations on the Qiskit Aer QASM simulator.
 
@@ -399,10 +438,15 @@ class AerBackend(_AerBaseBackend):
         :type simulation_method: str
         """
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(self._qiskit_backend_name)
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
         self._qiskit_backend.set_options(method=simulation_method)
         self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
-        characterisation, non_trivial_noise_model = _get_characterisation_of_noise_model(noise_model, self._gate_set)
+        (
+            characterisation,
+            non_trivial_noise_model,
+        ) = _get_characterisation_of_noise_model(noise_model, self._gate_set)
         self._noise_model = non_trivial_noise_model
         self._backend_info = BackendInfo(
             name=type(self).__name__,
@@ -420,10 +464,13 @@ class AerBackend(_AerBaseBackend):
             averaged_readout_errors=characterisation.averaged_readout_errors,
         )
         if characterisation.characterisation_dict:
-            self._backend_info.misc = {"characterisation": {
-                k: v for k, v in characterisation.characterisation_dict.items()
-                if k in ["GenericOneQubitQErrors", "GenericTwoQubitQErrors"]
-            }}
+            self._backend_info.misc = {
+                "characterisation": {
+                    k: v
+                    for k, v in characterisation.characterisation_dict.items()
+                    if k in ["GenericOneQubitQErrors", "GenericTwoQubitQErrors"]
+                }
+            }
         else:
             self._backend_info.misc = {"characterisation": None}
 
@@ -444,7 +491,9 @@ class AerBackend(_AerBaseBackend):
         ]
         if characterisation.architecture.coupling:
             # architecture is non-trivial
-            self._required_predicates.append(ConnectivityPredicate(characterisation.architecture))
+            self._required_predicates.append(
+                ConnectivityPredicate(characterisation.architecture)
+            )
 
 
 class AerStateBackend(_AerBaseBackend):
@@ -463,7 +512,9 @@ class AerStateBackend(_AerBaseBackend):
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Statevector simulator."""
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(self._qiskit_backend_name)
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
         self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
@@ -487,6 +538,7 @@ class AerStateBackend(_AerBaseBackend):
             ),
         ]
 
+
 class AerUnitaryBackend(_AerBaseBackend):
     _persistent_handles = False
     _supports_shots = True
@@ -503,7 +555,9 @@ class AerUnitaryBackend(_AerBaseBackend):
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Unitary simulator."""
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(self._qiskit_backend_name)
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
         self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
@@ -589,7 +643,7 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
             link_errors_qubits.add(q0)
             link_errors_qubits.add(q1)
             # to simulate a worse reverse direction square the fidelity
-            link_errors[(q1, q0)].update({optype: 1 - gate_fid ** 2})
+            link_errors[(q1, q0)].update({optype: 1 - gate_fid**2})
             generic_2q_qerrors_dict[(q0, q1)].append(
                 [error["instructions"], error["probabilities"]]
             )
@@ -633,7 +687,7 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
 
 
 def _sparse_to_zx_tup(
-        pauli: QubitPauliString, n_qubits: int
+    pauli: QubitPauliString, n_qubits: int
 ) -> Tuple[np.ndarray, np.ndarray]:
     x = np.zeros(n_qubits, dtype=np.bool_)
     z = np.zeros(n_qubits, dtype=np.bool_)
@@ -645,7 +699,7 @@ def _sparse_to_zx_tup(
 
 
 def _qubitpauliop_to_sparsepauliop(
-        operator: QubitPauliOperator, n_qubits: int
+    operator: QubitPauliOperator, n_qubits: int
 ) -> SparsePauliOp:
     strings, coeffs = [], []
     for term, coeff in operator._dict.items():

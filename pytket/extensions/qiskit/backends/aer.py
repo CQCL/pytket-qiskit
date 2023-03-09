@@ -91,10 +91,18 @@ def _default_q_index(q: Qubit) -> int:
 def _tket_gate_set_from_qiskit_backend(
     qiskit_backend: "QiskitAerBackend",
 ) -> Set[OpType]:
-    gates = _tk_gate_set(qiskit_backend)
+    config = qiskit_backend.configuration()
+    gate_set = {
+        _gate_str_2_optype[gate_str]
+        for gate_str in config.basis_gates
+        if gate_str in _gate_str_2_optype
+    }
+    if "unitary" in config.basis_gates:
+        gate_set.add(OpType.Unitary1qBox)
+        gate_set.add(OpType.Unitary3qBox)
     # special case mapping TK1 to U
-    gates.add(OpType.TK1)
-    return gates
+    gate_set.add(OpType.TK1)
+    return gate_set
 
 
 class _AerBaseBackend(Backend):
@@ -418,6 +426,7 @@ class AerBackend(_AerBaseBackend):
     _memory = True
 
     _qiskit_backend_name = "aer_simulator"
+    _allowed_special_gates = {OpType.Measure, OpType.Barrier, OpType.Reset, OpType.RangePredicate}
 
     def __init__(
         self,
@@ -438,7 +447,7 @@ class AerBackend(_AerBaseBackend):
             self._qiskit_backend_name
         )
         self._qiskit_backend.set_options(method=simulation_method)
-        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
+        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(self._allowed_special_gates)
         self._noise_model = _map_trivial_noise_model_to_none(noise_model)
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set

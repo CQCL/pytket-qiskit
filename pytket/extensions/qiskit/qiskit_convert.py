@@ -207,10 +207,7 @@ def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
             _gate_str_2_optype[gate_str]
             for gate_str in config.basis_gates
             if gate_str in _gate_str_2_optype
-        }.union({OpType.Measure, OpType.Reset, OpType.Barrier, OpType.RangePredicate})
-        if "unitary" in config.basis_gates:
-            gate_set.add(OpType.Unitary1qBox)
-            gate_set.add(OpType.Unitary3qBox)
+        }.union({OpType.Measure, OpType.Reset, OpType.Barrier})
         return gate_set
 
     else:

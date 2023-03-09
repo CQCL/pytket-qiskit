@@ -21,6 +21,7 @@ from hypothesis import given, strategies
 import numpy as np
 
 import pytest
+from pytket import Bit
 
 from qiskit import IBMQ  # type: ignore
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister

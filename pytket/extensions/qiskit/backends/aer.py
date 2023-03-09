@@ -96,52 +96,6 @@ def _tket_gate_set_from_qiskit_backend(
     return gates
 
 
-@dataclass
-class NoiseModelCharacterisation:
-    characterisation_dict: Optional[Dict[str, Any]] = None
-    node_errors: Optional[Dict] = field(init=False, default=None)
-    edge_errors: Optional[Dict] = field(init=False, default=None)
-    readout_errors: Optional[Dict] = field(init=False, default=None)
-    generic_one_qubit_q_errors: Optional[List] = field(init=False, default=None)
-    generic_two_qubit_q_errors: Optional[List] = field(init=False, default=None)
-    architecture: Architecture = field(init=False)
-    averaged_node_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
-    averaged_edge_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
-    averaged_readout_errors: Optional[Dict[Node, float]] = field(
-        init=False, default=None
-    )
-
-    def __post_init__(self) -> None:
-        if self.characterisation_dict:
-            self.node_errors = self.characterisation_dict.get("NodeErrors")
-            self.edge_errors = self.characterisation_dict.get("EdgeErrors")
-            self.readout_errors = self.characterisation_dict.get("ReadoutErrors")
-            self.generic_one_qubit_q_errors = self.characterisation_dict.get(
-                "GenericOneQubitQErrors"
-            )
-            self.generic_two_qubit_q_errors = self.characterisation_dict.get(
-                "GenericTwoQubitQErrors"
-            )
-            self.architecture = self.characterisation_dict.get("Architecture")
-            averaged_errors = get_avg_characterisation(self.characterisation_dict)
-            self.averaged_node_errors = averaged_errors.get("node_errors")
-            self.averaged_edge_errors = averaged_errors.get("edge_errors")
-            self.averaged_readout_errors = averaged_errors.get("readout_errors")
-        else:
-            self.architecture = Architecture([])
-
-
-def _get_characterisation_of_noise_model(
-    noise_model: Optional[NoiseModel], gate_set: Set[OpType]
-) -> Tuple[NoiseModelCharacterisation, Optional[NoiseModel]]:
-    if not noise_model or all(value == [] for value in noise_model.to_dict().values()):
-        return NoiseModelCharacterisation(characterisation_dict=None), None
-
-    characterisation = _process_model(noise_model, gate_set)
-    return (
-        NoiseModelCharacterisation(characterisation_dict=characterisation),
-        noise_model,
-    )
 
 
 class _AerBaseBackend(Backend):
@@ -405,6 +359,55 @@ class _AerBaseBackend(Backend):
         return self._snapshot_expectation_value(state_circuit, sparse_op, valid_check)
 
 
+@dataclass
+class NoiseModelCharacterisation:
+    characterisation_dict: Optional[Dict[str, Any]] = None
+    node_errors: Optional[Dict] = field(init=False, default=None)
+    edge_errors: Optional[Dict] = field(init=False, default=None)
+    readout_errors: Optional[Dict] = field(init=False, default=None)
+    generic_q_errors: Optional[Dict] = field(init=False, default=None)
+    architecture: Architecture = field(init=False)
+    averaged_node_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
+    averaged_edge_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
+    averaged_readout_errors: Optional[Dict[Node, float]] = field(
+        init=False, default=None
+    )
+
+    def __post_init__(self) -> None:
+        if self.characterisation_dict:
+            self.node_errors = self.characterisation_dict.get("NodeErrors")
+            self.edge_errors = self.characterisation_dict.get("EdgeErrors")
+            self.readout_errors = self.characterisation_dict.get("ReadoutErrors")
+            self.generic_q_errors = {
+                k: v
+                for k, v in self.characterisation_dict.items()
+                if k in ["GenericOneQubitQErrors", "GenericTwoQubitQErrors"]
+            }
+            self.architecture = self.characterisation_dict.get("Architecture")
+            averaged_errors = get_avg_characterisation(self.characterisation_dict)
+            self.averaged_node_errors = averaged_errors.get("node_errors")
+            self.averaged_edge_errors = averaged_errors.get("edge_errors")
+            self.averaged_readout_errors = averaged_errors.get("readout_errors")
+        else:
+            self.architecture = Architecture([])
+
+
+def _map_trivial_noise_model_to_none(noise_model: Optional[NoiseModel]) -> Optional[NoiseModel]:
+    if noise_model and all(value == [] for value in noise_model.to_dict().values()):
+        return None
+    return noise_model
+
+
+def _get_characterisation_of_noise_model(
+        noise_model: Optional[NoiseModel], gate_set: Set[OpType]
+) -> NoiseModelCharacterisation:
+    if noise_model is None:
+        return NoiseModelCharacterisation(characterisation_dict=None)
+
+    characterisation = _process_model(noise_model, gate_set)
+    return NoiseModelCharacterisation(characterisation_dict=characterisation)
+
+
 class AerBackend(_AerBaseBackend):
     _persistent_handles = False
     _supports_shots = True
@@ -436,11 +439,9 @@ class AerBackend(_AerBaseBackend):
         )
         self._qiskit_backend.set_options(method=simulation_method)
         self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
-        (
-            characterisation,
-            non_trivial_noise_model,
-        ) = _get_characterisation_of_noise_model(noise_model, self._gate_set)
-        self._noise_model = non_trivial_noise_model
+        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+        characterisation = _get_characterisation_of_noise_model(noise_model, self._gate_set)
+
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
@@ -455,17 +456,8 @@ class AerBackend(_AerBaseBackend):
             averaged_node_gate_errors=characterisation.averaged_node_errors,
             averaged_edge_gate_errors=characterisation.averaged_edge_errors,
             averaged_readout_errors=characterisation.averaged_readout_errors,
+            misc={"characterisation": characterisation.generic_q_errors}
         )
-        if characterisation.characterisation_dict:
-            self._backend_info.misc = {
-                "characterisation": {
-                    k: v
-                    for k, v in characterisation.characterisation_dict.items()
-                    if k in ["GenericOneQubitQErrors", "GenericTwoQubitQErrors"]
-                }
-            }
-        else:
-            self._backend_info.misc = {"characterisation": None}
 
         self._required_predicates = [
             NoSymbolsPredicate(),

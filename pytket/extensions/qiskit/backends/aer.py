@@ -426,7 +426,12 @@ class AerBackend(_AerBaseBackend):
     _memory = True
 
     _qiskit_backend_name = "aer_simulator"
-    _allowed_special_gates = {OpType.Measure, OpType.Barrier, OpType.Reset, OpType.RangePredicate}
+    _allowed_special_gates = {
+        OpType.Measure,
+        OpType.Barrier,
+        OpType.Reset,
+        OpType.RangePredicate,
+    }
 
     def __init__(
         self,
@@ -447,7 +452,9 @@ class AerBackend(_AerBaseBackend):
             self._qiskit_backend_name
         )
         self._qiskit_backend.set_options(method=simulation_method)
-        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(self._allowed_special_gates)
+        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
+            self._allowed_special_gates
+        )
         self._noise_model = _map_trivial_noise_model_to_none(noise_model)
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set

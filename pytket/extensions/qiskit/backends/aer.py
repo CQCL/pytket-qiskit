@@ -32,6 +32,11 @@ from typing import (
 )
 
 import numpy as np
+from qiskit.providers.aer.noise import NoiseModel  # type: ignore
+from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
+from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
+from qiskit_aer import Aer  # type: ignore
+from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
 from pytket.architecture import Architecture  # type: ignore
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
@@ -61,11 +66,6 @@ from pytket.predicates import (  # type: ignore
 )
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
-from qiskit.providers.aer.noise import NoiseModel  # type: ignore
-from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
-from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
-from qiskit_aer import Aer  # type: ignore
-from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
 
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .._metadata import __extension_version__

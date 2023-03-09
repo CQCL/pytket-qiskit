@@ -69,7 +69,12 @@ from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: 
 
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .._metadata import __extension_version__
-from ..qiskit_convert import tk_to_qiskit, _gate_str_2_optype, get_avg_characterisation
+from ..qiskit_convert import (
+    tk_to_qiskit,
+    _gate_str_2_optype,
+    _tk_gate_set,
+    get_avg_characterisation,
+)
 from ..result_convert import qiskit_result_to_backendresult
 
 if TYPE_CHECKING:
@@ -86,16 +91,10 @@ def _default_q_index(q: Qubit) -> int:
 def _tket_gate_set_from_qiskit_backend(
     qiskit_backend: "QiskitAerBackend",
 ) -> Set[OpType]:
-    gates = {
-        _gate_str_2_optype[gate_str]
-        for gate_str in qiskit_backend.configuration().basis_gates
-        if gate_str in _gate_str_2_optype
-    }
+    gates = _tk_gate_set(qiskit_backend)
     # special case mapping TK1 to U
     gates.add(OpType.TK1)
     return gates
-
-
 
 
 class _AerBaseBackend(Backend):
@@ -103,7 +102,6 @@ class _AerBaseBackend(Backend):
 
     _qiskit_backend: "QiskitAerBackend"
     _backend_info: BackendInfo
-    _gate_set: Set[OpType]
     _memory: bool
     _required_predicates: List[Predicate]
     _noise_model: Optional[NoiseModel] = None
@@ -122,7 +120,7 @@ class _AerBaseBackend(Backend):
 
     def rebase_pass(self) -> BasePass:
         return auto_rebase_pass(
-            self._gate_set,
+            self._backend_info.gate_set,
         )
 
     def _arch_dependent_default_compilation_pass(
@@ -392,14 +390,16 @@ class NoiseModelCharacterisation:
             self.architecture = Architecture([])
 
 
-def _map_trivial_noise_model_to_none(noise_model: Optional[NoiseModel]) -> Optional[NoiseModel]:
+def _map_trivial_noise_model_to_none(
+    noise_model: Optional[NoiseModel],
+) -> Optional[NoiseModel]:
     if noise_model and all(value == [] for value in noise_model.to_dict().values()):
         return None
     return noise_model
 
 
 def _get_characterisation_of_noise_model(
-        noise_model: Optional[NoiseModel], gate_set: Set[OpType]
+    noise_model: Optional[NoiseModel], gate_set: Set[OpType]
 ) -> NoiseModelCharacterisation:
     if noise_model is None:
         return NoiseModelCharacterisation(characterisation_dict=None)
@@ -438,16 +438,18 @@ class AerBackend(_AerBaseBackend):
             self._qiskit_backend_name
         )
         self._qiskit_backend.set_options(method=simulation_method)
-        self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
+        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
         self._noise_model = _map_trivial_noise_model_to_none(noise_model)
-        characterisation = _get_characterisation_of_noise_model(noise_model, self._gate_set)
+        characterisation = _get_characterisation_of_noise_model(
+            self._noise_model, gate_set
+        )
 
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
             architecture=characterisation.architecture,
-            gate_set=self._gate_set,
+            gate_set=gate_set,
             supports_midcircuit_measurement=True,  # is this correct?
             supports_fast_feedforward=True,
             all_node_gate_errors=characterisation.node_errors,
@@ -456,23 +458,12 @@ class AerBackend(_AerBaseBackend):
             averaged_node_gate_errors=characterisation.averaged_node_errors,
             averaged_edge_gate_errors=characterisation.averaged_edge_errors,
             averaged_readout_errors=characterisation.averaged_readout_errors,
-            misc={"characterisation": characterisation.generic_q_errors}
+            misc={"characterisation": characterisation.generic_q_errors},
         )
 
         self._required_predicates = [
             NoSymbolsPredicate(),
-            GateSetPredicate(
-                self._gate_set.union(
-                    {
-                        OpType.Measure,
-                        OpType.Reset,
-                        OpType.Barrier,
-                        OpType.noop,
-                        OpType.Unitary1qBox,
-                        OpType.RangePredicate,
-                    }
-                )
-            ),
+            GateSetPredicate(self._backend_info.gate_set),
         ]
         if characterisation.architecture.coupling:
             # architecture is non-trivial
@@ -500,27 +491,19 @@ class AerStateBackend(_AerBaseBackend):
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
         )
-        self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
             architecture=Architecture([]),
-            gate_set=self._gate_set,
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},
         )
         self._required_predicates = [
             NoClassicalControlPredicate(),
             NoFastFeedforwardPredicate(),
-            GateSetPredicate(
-                self._backend_info.gate_set.union(
-                    {
-                        OpType.noop,
-                        OpType.Unitary1qBox,
-                    }
-                )
-            ),
+            GateSetPredicate(self._backend_info.gate_set),
         ]
 
 
@@ -543,27 +526,19 @@ class AerUnitaryBackend(_AerBaseBackend):
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
         )
-        self._gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
             architecture=Architecture([]),
-            gate_set=self._gate_set,
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},
         )
         self._required_predicates = [
             NoClassicalControlPredicate(),
             NoFastFeedforwardPredicate(),
-            GateSetPredicate(
-                self._backend_info.gate_set.union(
-                    {
-                        OpType.noop,
-                        OpType.Unitary1qBox,
-                    }
-                )
-            ),
+            GateSetPredicate(self._backend_info.gate_set),
         ]
 
 

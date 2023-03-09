@@ -908,11 +908,11 @@ def test_simulation_method() -> None:
         counts = b.run_circuit(clifford_T_circ, n_shots=4).get_counts()
         assert sum(val for _, val in counts.items()) == 4
 
-    with pytest.raises(AttributeError) as warninfo:
+    with pytest.raises(CircuitNotValidError) as warninfo:
         # check for the error thrown when non-clifford circuit used with
         # stabilizer backend
         stabilizer_backend.run_circuit(clifford_T_circ, n_shots=4).get_counts()
-        assert "Attribute header is not defined" in str(warninfo.value)
+        assert "Circuit with index 0 in submitted does not satisfy GateSetPredicate" in str(warninfo.value)
 
 
 def test_aer_expanded_gates() -> None:

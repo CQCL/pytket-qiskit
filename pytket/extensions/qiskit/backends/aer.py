@@ -83,9 +83,6 @@ def _default_q_index(q: Qubit) -> int:
     return int(q.index[0])
 
 
-_required_gates: Set[OpType] = {OpType.CX, OpType.U1, OpType.U2, OpType.U3}
-
-
 def _tket_gate_set_from_qiskit_backend(
     qiskit_backend: "QiskitAerBackend",
 ) -> Set[OpType]:
@@ -96,10 +93,6 @@ def _tket_gate_set_from_qiskit_backend(
     }
     # special case mapping TK1 to U
     gates.add(OpType.TK1)
-    if not gates >= _required_gates:
-        raise NotImplementedError(
-            f"Gate set {gates} missing at least one of {_required_gates}"
-        )
     return gates
 
 

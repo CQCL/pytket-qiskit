@@ -72,7 +72,6 @@ from .._metadata import __extension_version__
 from ..qiskit_convert import (
     tk_to_qiskit,
     _gate_str_2_optype,
-    _tk_gate_set,
     get_avg_characterisation,
 )
 from ..result_convert import qiskit_result_to_backendresult

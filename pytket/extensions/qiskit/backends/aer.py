@@ -14,7 +14,7 @@
 
 import itertools
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from logging import warning
 from typing import (
     Dict,

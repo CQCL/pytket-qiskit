@@ -17,14 +17,11 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from logging import warning
 from typing import (
-    Any,
-    Callable,
     Dict,
     List,
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     cast,
     TYPE_CHECKING,
@@ -72,7 +69,6 @@ from .._metadata import __extension_version__
 from ..qiskit_convert import (
     tk_to_qiskit,
     _gate_str_2_optype,
-    get_avg_characterisation,
 )
 from ..result_convert import qiskit_result_to_backendresult
 
@@ -364,37 +360,18 @@ class _AerBaseBackend(Backend):
         return self._snapshot_expectation_value(state_circuit, sparse_op, valid_check)
 
 
-@dataclass
+@dataclass(frozen=True)
 class NoiseModelCharacterisation:
-    characterisation_dict: Optional[Dict[str, Any]] = None
-    node_errors: Optional[Dict] = field(init=False, default=None)
-    edge_errors: Optional[Dict] = field(init=False, default=None)
-    readout_errors: Optional[Dict] = field(init=False, default=None)
-    generic_q_errors: Optional[Dict] = field(init=False, default=None)
-    architecture: Architecture = field(init=False)
-    averaged_node_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
-    averaged_edge_errors: Optional[Dict[Node, float]] = field(init=False, default=None)
-    averaged_readout_errors: Optional[Dict[Node, float]] = field(
-        init=False, default=None
-    )
+    """Class to hold information from the processing of the noise model"""
 
-    def __post_init__(self) -> None:
-        if self.characterisation_dict:
-            self.node_errors = self.characterisation_dict.get("NodeErrors")
-            self.edge_errors = self.characterisation_dict.get("EdgeErrors")
-            self.readout_errors = self.characterisation_dict.get("ReadoutErrors")
-            self.generic_q_errors = {
-                k: v
-                for k, v in self.characterisation_dict.items()
-                if k in ["GenericOneQubitQErrors", "GenericTwoQubitQErrors"]
-            }
-            self.architecture = self.characterisation_dict.get("Architecture")
-            averaged_errors = get_avg_characterisation(self.characterisation_dict)
-            self.averaged_node_errors = averaged_errors.get("node_errors")
-            self.averaged_edge_errors = averaged_errors.get("edge_errors")
-            self.averaged_readout_errors = averaged_errors.get("readout_errors")
-        else:
-            self.architecture = Architecture([])
+    architecture: Architecture
+    node_errors: Optional[Dict] = None
+    edge_errors: Optional[Dict] = None
+    readout_errors: Optional[Dict] = None
+    averaged_node_errors: Optional[Dict[Node, float]] = None
+    averaged_edge_errors: Optional[Dict[Node, float]] = None
+    averaged_readout_errors: Optional[Dict[Node, float]] = None
+    generic_q_errors: Optional[Dict] = None
 
 
 def _map_trivial_noise_model_to_none(
@@ -409,10 +386,8 @@ def _get_characterisation_of_noise_model(
     noise_model: Optional[NoiseModel], gate_set: Set[OpType]
 ) -> NoiseModelCharacterisation:
     if noise_model is None:
-        return NoiseModelCharacterisation(characterisation_dict=None)
-
-    characterisation = _process_model(noise_model, gate_set)
-    return NoiseModelCharacterisation(characterisation_dict=characterisation)
+        return NoiseModelCharacterisation(architecture=Architecture([]))
+    return _process_noise_model(noise_model, gate_set)
 
 
 class AerBackend(_AerBaseBackend):
@@ -557,28 +532,29 @@ class AerUnitaryBackend(_AerBaseBackend):
         ]
 
 
-def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
+def _process_noise_model(
+    noise_model: NoiseModel, gate_set: Set[OpType]
+) -> NoiseModelCharacterisation:
     # obtain approximations for gate errors from noise model by using probability of
     #  "identity" error
     assert OpType.CX in gate_set
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    supported_single_optypes = gate_set.difference({OpType.CX})
-    supported_single_optypes.add(OpType.Reset)
     errors = [
         e
         for e in noise_model.to_dict()["errors"]
         if e["type"] == "qerror" or e["type"] == "roerror"
     ]
 
-    link_errors: dict = defaultdict(dict)
-    node_errors: dict = defaultdict(dict)
-    readout_errors: dict = {}
+    node_errors: dict[Node, dict[OpType, float]] = defaultdict(dict)
+    link_errors: dict[Tuple[Node, Node], dict[OpType, float]] = defaultdict(dict)
+    readout_errors: dict[Node, list[list[float]]] = {}
 
     generic_single_qerrors_dict: dict = defaultdict(list)
     generic_2q_qerrors_dict: dict = defaultdict(list)
 
+    qubits_set: set = set()
     # remember which qubits have explicit link errors
-    link_errors_qubits: set = set()
+    qubits_with_link_errors: set = set()
 
     coupling_map = []
     for error in errors:
@@ -600,13 +576,16 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
         if len(qubits) == 1:
             [q] = qubits
             optype = _gate_str_2_optype[name]
+            qubits_set.add(q)
             if error["type"] == "qerror":
-                node_errors[q].update({optype: 1 - gate_fid})
+                node_errors[Node(q)].update({optype: float(1 - gate_fid)})
                 generic_single_qerrors_dict[q].append(
                     [error["instructions"], error["probabilities"]]
                 )
             elif error["type"] == "roerror":
-                readout_errors[q] = error["probabilities"]
+                readout_errors[Node(q)] = cast(
+                    List[List[float]], error["probabilities"]
+                )
             else:
                 raise RuntimeWarning("Error type not 'qerror' or 'roerror'.")
         elif len(qubits) == 2:
@@ -614,51 +593,55 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
             #  the resulting noise channel is composed and reflected in probabilities
             [q0, q1] = qubits
             optype = _gate_str_2_optype[name]
-            link_errors[(q0, q1)].update({optype: 1 - gate_fid})
-            link_errors_qubits.add(q0)
-            link_errors_qubits.add(q1)
+            link_errors.update()
+            link_errors[(Node(q0), Node(q1))].update({optype: float(1 - gate_fid)})
+            qubits_with_link_errors.add(q0)
+            qubits_with_link_errors.add(q1)
             # to simulate a worse reverse direction square the fidelity
-            link_errors[(q1, q0)].update({optype: 1 - gate_fid**2})
+            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid**2)})
             generic_2q_qerrors_dict[(q0, q1)].append(
                 [error["instructions"], error["probabilities"]]
             )
             coupling_map.append(qubits)
 
     # free qubits (ie qubits with no link errors) have full connectivity
-    free_qubits = set(node_errors).union(set(readout_errors)) - link_errors_qubits
+    free_qubits = qubits_set - qubits_with_link_errors
 
     for q in free_qubits:
-        for lq in link_errors_qubits:
+        for lq in qubits_with_link_errors:
             coupling_map.append([q, lq])
             coupling_map.append([lq, q])
 
     for pair in itertools.permutations(free_qubits, 2):
         coupling_map.append(pair)
 
-    # map type (k1 -> k2) -> v[k1] -> v[k2]
-    K1 = TypeVar("K1")
-    K2 = TypeVar("K2")
-    V = TypeVar("V")
-    convert_keys_t = Callable[[Callable[[K1], K2], Dict[K1, V]], Dict[K2, V]]
-    # convert qubits to architecture Nodes
-    convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
-    node_errors = convert_keys(lambda q: Node(q), node_errors)
-    link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
-    readout_errors = convert_keys(lambda q: Node(q), readout_errors)
+    generic_q_errors = {
+        "GenericOneQubitQErrors": [
+            [k, v] for k, v in generic_single_qerrors_dict.items()
+        ],
+        "GenericTwoQubitQErrors": [
+            [list(k), v] for k, v in generic_2q_qerrors_dict.items()
+        ],
+    }
 
-    characterisation: Dict[str, Any] = {}
-    characterisation["NodeErrors"] = node_errors
-    characterisation["EdgeErrors"] = link_errors
-    characterisation["ReadoutErrors"] = readout_errors
-    characterisation["GenericOneQubitQErrors"] = [
-        [k, v] for k, v in generic_single_qerrors_dict.items()
-    ]
-    characterisation["GenericTwoQubitQErrors"] = [
-        [list(k), v] for k, v in generic_2q_qerrors_dict.items()
-    ]
-    characterisation["Architecture"] = Architecture(coupling_map)
+    averaged_node_errors: dict[Node, float] = {
+        k: sum(v.values()) / len(v) for k, v in node_errors.items()
+    }
+    averaged_link_errors = {k: sum(v.values()) / len(v) for k, v in link_errors.items()}
+    averaged_readout_errors = {
+        k: (v[0][1] + v[1][0]) / 2.0 for k, v in readout_errors.items()
+    }
 
-    return characterisation
+    return NoiseModelCharacterisation(
+        node_errors=dict(node_errors),
+        edge_errors=dict(link_errors),
+        readout_errors=readout_errors,
+        averaged_node_errors=averaged_node_errors,
+        averaged_edge_errors=averaged_link_errors,
+        averaged_readout_errors=averaged_readout_errors,
+        generic_q_errors=generic_q_errors,
+        architecture=Architecture(coupling_map),
+    )
 
 
 def _sparse_to_zx_tup(

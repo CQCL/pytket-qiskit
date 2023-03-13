@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.37.0 (unreleased)
+-------------------
+
+* Fix faulty information in ``AerBackend().backend_info``
+
 0.36.0 (February 2023)
 ----------------------
 

@@ -14,16 +14,14 @@
 
 import itertools
 from collections import defaultdict
+from dataclasses import dataclass
 from logging import warning
 from typing import (
-    Any,
-    Callable,
     Dict,
     List,
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     cast,
     TYPE_CHECKING,
@@ -31,13 +29,12 @@ from typing import (
 )
 
 import numpy as np
-
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
-
+from pytket.architecture import Architecture  # type: ignore
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -55,6 +52,7 @@ from pytket.passes import (  # type: ignore
     NaivePlacementPass,
 )
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
+from pytket.placement import NoiseAwarePlacement  # type: ignore
 from pytket.predicates import (  # type: ignore
     ConnectivityPredicate,
     GateSetPredicate,
@@ -63,19 +61,16 @@ from pytket.predicates import (  # type: ignore
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.extensions.qiskit.qiskit_convert import (
-    tk_to_qiskit,
-    _gate_str_2_optype,
-    get_avg_characterisation,
-)
-from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
-from pytket.extensions.qiskit._metadata import __extension_version__
-from pytket.architecture import Architecture  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
 
 from .ibm_utils import _STATUS_MAP, _batch_circuits
+from .._metadata import __extension_version__
+from ..qiskit_convert import (
+    tk_to_qiskit,
+    _gate_str_2_optype,
+)
+from ..result_convert import qiskit_result_to_backendresult
 
 if TYPE_CHECKING:
     from qiskit.providers.aer import AerJob  # type: ignore
@@ -88,41 +83,35 @@ def _default_q_index(q: Qubit) -> int:
     return int(q.index[0])
 
 
-_required_gates: Set[OpType] = {OpType.CX, OpType.U1, OpType.U2, OpType.U3}
+def _tket_gate_set_from_qiskit_backend(
+    qiskit_backend: "QiskitAerBackend",
+) -> Set[OpType]:
+    config = qiskit_backend.configuration()
+    gate_set = {
+        _gate_str_2_optype[gate_str]
+        for gate_str in config.basis_gates
+        if gate_str in _gate_str_2_optype
+    }
+    if "unitary" in config.basis_gates:
+        gate_set.add(OpType.Unitary1qBox)
+        gate_set.add(OpType.Unitary3qBox)
+    # special case mapping TK1 to U
+    gate_set.add(OpType.TK1)
+    return gate_set
 
 
 class _AerBaseBackend(Backend):
     """Common base class for all Aer simulator backends"""
 
-    _persistent_handles = False
+    _qiskit_backend: "QiskitAerBackend"
+    _backend_info: BackendInfo
+    _memory: bool
+    _required_predicates: List[Predicate]
+    _noise_model: Optional[NoiseModel] = None
 
-    def __init__(self, backend_name: str):
-        super().__init__()
-        self._backend: "QiskitAerBackend" = Aer.get_backend(backend_name)
-
-        self._gate_set: Set[OpType] = {
-            _gate_str_2_optype[gate_str]
-            for gate_str in self._backend.configuration().basis_gates
-            if gate_str in _gate_str_2_optype
-        }
-        # special case mapping TK1 to U
-        self._gate_set.add(OpType.TK1)
-        if not self._gate_set >= _required_gates:
-            raise NotImplementedError(
-                f"Gate set {self._gate_set} missing at least one of {_required_gates}"
-            )
-        self._backend_info = BackendInfo(
-            type(self).__name__,
-            backend_name,
-            __extension_version__,
-            Architecture([]),
-            self._gate_set,
-            supports_midcircuit_measurement=True,  # is this correct?
-            misc={"characterisation": None},
-        )
-
-        self._memory = False
-        self._noise_model: Optional[NoiseModel] = None
+    @property
+    def required_predicates(self) -> List[Predicate]:
+        return self._required_predicates
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
@@ -134,8 +123,73 @@ class _AerBaseBackend(Backend):
 
     def rebase_pass(self) -> BasePass:
         return auto_rebase_pass(
-            self._gate_set,
+            self._backend_info.gate_set,
         )
+
+    def _arch_dependent_default_compilation_pass(
+        self, arch: Architecture, optimisation_level: int = 2
+    ) -> BasePass:
+        assert optimisation_level in range(3)
+        arch_specific_passes = [
+            CXMappingPass(
+                arch,
+                NoiseAwarePlacement(
+                    arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,
+                ),
+                directed_cx=True,
+                delay_measures=False,
+            ),
+            NaivePlacementPass(arch),
+        ]
+        if optimisation_level == 0:
+            return SequencePass(
+                [
+                    DecomposeBoxes(),
+                    self.rebase_pass(),
+                    *arch_specific_passes,
+                    self.rebase_pass(),
+                ]
+            )
+        if optimisation_level == 1:
+            return SequencePass(
+                [
+                    DecomposeBoxes(),
+                    SynthesiseTket(),
+                    *arch_specific_passes,
+                    SynthesiseTket(),
+                ]
+            )
+        return SequencePass(
+            [
+                DecomposeBoxes(),
+                FullPeepholeOptimise(),
+                *arch_specific_passes,
+                CliffordSimp(False),
+                SynthesiseTket(),
+            ]
+        )
+
+    def _arch_independent_default_compilation_pass(
+        self, optimisation_level: int = 2
+    ) -> BasePass:
+        assert optimisation_level in range(3)
+        if optimisation_level == 0:
+            return SequencePass([DecomposeBoxes(), self.rebase_pass()])
+        if optimisation_level == 1:
+            return SequencePass([DecomposeBoxes(), SynthesiseTket()])
+        return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
+
+    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+        arch = self._backend_info.architecture
+        if arch.coupling and self._backend_info.get_misc("characterisation"):
+            return self._arch_dependent_default_compilation_pass(
+                arch, optimisation_level
+            )
+
+        return self._arch_independent_default_compilation_pass(optimisation_level)
 
     def process_circuits(
         self,
@@ -170,7 +224,7 @@ class _AerBaseBackend(Backend):
                 qcs.append(qc)
 
             seed = cast(Optional[int], kwargs.get("seed"))
-            job = self._backend.run(
+            job = self._qiskit_backend.run(
                 qcs,
                 shots=n_shots,
                 memory=self._memory,
@@ -231,7 +285,7 @@ class _AerBaseBackend(Backend):
             )
         qc = tk_to_qiskit(circuit)
         qc.save_expectation_value(hamiltonian, qc.qubits, "snap")
-        job = self._backend.run(qc)
+        job = self._qiskit_backend.run(qc)
         return cast(
             complex,
             job.result().data(qc)["snap"],
@@ -258,6 +312,13 @@ class _AerBaseBackend(Backend):
         :return: :math:`\\left<\\psi | P | \\psi \\right>`
         :rtype: complex
         """
+        if self._noise_model:
+            raise RuntimeError(
+                (
+                    "Snapshot based expectation value not supported with noise model. "
+                    "Use shots."
+                )
+            )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
 
@@ -285,6 +346,13 @@ class _AerBaseBackend(Backend):
         :return: :math:`\\left<\\psi | H | \\psi \\right>`
         :rtype: complex
         """
+        if self._noise_model:
+            raise RuntimeError(
+                (
+                    "Snapshot based expectation value not supported with noise model. "
+                    "Use shots."
+                )
+            )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
 
@@ -292,72 +360,52 @@ class _AerBaseBackend(Backend):
         return self._snapshot_expectation_value(state_circuit, sparse_op, valid_check)
 
 
-class _AerStateBaseBackend(_AerBaseBackend):
-    def __init__(self, *args: str):
-        self._qlists: Dict[ResultHandle, Tuple[int, ...]] = {}
-        super().__init__(*args)
+@dataclass(frozen=True)
+class NoiseModelCharacterisation:
+    """Class to hold information from the processing of the noise model"""
 
-    @property
-    def required_predicates(self) -> List[Predicate]:
-        return [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
-            GateSetPredicate(
-                self._backend_info.gate_set.union(
-                    {
-                        OpType.noop,
-                        OpType.Unitary1qBox,
-                    }
-                )
-            ),
-        ]
+    architecture: Architecture
+    node_errors: Optional[Dict] = None
+    edge_errors: Optional[Dict] = None
+    readout_errors: Optional[Dict] = None
+    averaged_node_errors: Optional[Dict[Node, float]] = None
+    averaged_edge_errors: Optional[Dict[Node, float]] = None
+    averaged_readout_errors: Optional[Dict[Node, float]] = None
+    generic_q_errors: Optional[Dict] = None
 
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
-        assert optimisation_level in range(3)
-        if optimisation_level == 0:
-            return SequencePass([DecomposeBoxes(), self.rebase_pass()])
-        elif optimisation_level == 1:
-            return SequencePass([DecomposeBoxes(), SynthesiseTket()])
-        else:
-            return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
-    def process_circuits(
-        self,
-        circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
-        valid_check: bool = True,
-        **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
-        handles = super().process_circuits(
-            circuits, n_shots=None, valid_check=valid_check, **kwargs
-        )
-        return handles
+def _map_trivial_noise_model_to_none(
+    noise_model: Optional[NoiseModel],
+) -> Optional[NoiseModel]:
+    if noise_model and all(value == [] for value in noise_model.to_dict().values()):
+        return None
+    return noise_model
 
-    def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
-        if handle in self._cache:
-            if "result" in self._cache[handle]:
-                return cast(BackendResult, self._cache[handle]["result"])
 
-        self._check_handle_type(handle)
-        try:
-            job: "AerJob" = self._cache[handle]["job"]
-        except KeyError:
-            raise CircuitNotRunError(handle)
-
-        res = job.result()
-        backresults = qiskit_result_to_backendresult(res)
-        for circ_index, backres in enumerate(backresults):
-            newhandle = ResultHandle(handle[0], circ_index)
-            self._cache[newhandle]["result"] = backres
-
-        return cast(BackendResult, self._cache[handle]["result"])
+def _get_characterisation_of_noise_model(
+    noise_model: Optional[NoiseModel], gate_set: Set[OpType]
+) -> NoiseModelCharacterisation:
+    if noise_model is None:
+        return NoiseModelCharacterisation(architecture=Architecture([]))
+    return _process_noise_model(noise_model, gate_set)
 
 
 class AerBackend(_AerBaseBackend):
+    _persistent_handles = False
     _supports_shots = True
     _supports_counts = True
     _supports_expectation = True
     _expectation_allows_nonhermitian = False
+
+    _memory = True
+
+    _qiskit_backend_name = "aer_simulator"
+    _allowed_special_gates = {
+        OpType.Measure,
+        OpType.Barrier,
+        OpType.Reset,
+        OpType.RangePredicate,
+    }
 
     def __init__(
         self,
@@ -373,228 +421,140 @@ class AerBackend(_AerBaseBackend):
          for available values. Defaults to "automatic".
         :type simulation_method: str
         """
-        super().__init__("aer_simulator")
+        super().__init__()
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
+        self._qiskit_backend.set_options(method=simulation_method)
+        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
+            self._allowed_special_gates
+        )
+        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+        characterisation = _get_characterisation_of_noise_model(
+            self._noise_model, gate_set
+        )
 
-        if not noise_model or all(
-            value == [] for value in noise_model.to_dict().values()
-        ):
-            self._noise_model = None
-        else:
-            self._noise_model = noise_model
-            characterisation = _process_model(noise_model, self._backend_info.gate_set)
-            averaged_errors = get_avg_characterisation(characterisation)
+        self._backend_info = BackendInfo(
+            name=type(self).__name__,
+            device_name=self._qiskit_backend_name,
+            version=__extension_version__,
+            architecture=characterisation.architecture,
+            gate_set=gate_set,
+            supports_midcircuit_measurement=True,  # is this correct?
+            supports_fast_feedforward=True,
+            all_node_gate_errors=characterisation.node_errors,
+            all_edge_gate_errors=characterisation.edge_errors,
+            all_readout_errors=characterisation.readout_errors,
+            averaged_node_gate_errors=characterisation.averaged_node_errors,
+            averaged_edge_gate_errors=characterisation.averaged_edge_errors,
+            averaged_readout_errors=characterisation.averaged_readout_errors,
+            misc={"characterisation": characterisation.generic_q_errors},
+        )
 
-            arch = characterisation["Architecture"]
-            self._backend_info.architecture = arch
-            self._backend_info.all_node_gate_errors = characterisation["NodeErrors"]
-            self._backend_info.all_edge_gate_errors = characterisation["EdgeErrors"]
-            self._backend_info.all_readout_errors = characterisation["ReadoutErrors"]
-
-            self._backend_info.averaged_node_gate_errors = averaged_errors[
-                "node_errors"
-            ]
-            self._backend_info.averaged_edge_gate_errors = averaged_errors[
-                "edge_errors"
-            ]
-            self._backend_info.averaged_readout_errors = averaged_errors[
-                "readout_errors"
-            ]
-
-            characterisation_keys = [
-                "GenericOneQubitQErrors",
-                "GenericTwoQubitQErrors",
-            ]
-            # filter entries to keep
-            characterisation = {
-                k: v for k, v in characterisation.items() if k in characterisation_keys
-            }
-            self._backend_info.misc["characterisation"] = characterisation
-
-        self._memory = True
-
-        self._backend.set_options(method=simulation_method)
-
-    @property
-    def required_predicates(self) -> List[Predicate]:
-        pred_list = [
+        self._required_predicates = [
             NoSymbolsPredicate(),
-            GateSetPredicate(
-                self._backend_info.gate_set.union(
-                    {
-                        OpType.Measure,
-                        OpType.Reset,
-                        OpType.Barrier,
-                        OpType.noop,
-                        OpType.Unitary1qBox,
-                        OpType.RangePredicate,
-                    }
-                )
-            ),
+            GateSetPredicate(self._backend_info.gate_set),
         ]
-        arch = self._backend_info.architecture
-        if arch.coupling:
+        if characterisation.architecture.coupling:
             # architecture is non-trivial
-            pred_list.append(ConnectivityPredicate(arch))
-        return pred_list
-
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
-        assert optimisation_level in range(3)
-        passlist = [DecomposeBoxes()]
-        if optimisation_level == 0:
-            passlist.append(self.rebase_pass())
-        elif optimisation_level == 1:
-            passlist.append(SynthesiseTket())
-        else:
-            passlist.append(FullPeepholeOptimise())
-        arch = self._backend_info.architecture
-        if arch.coupling and self._backend_info.get_misc("characterisation"):
-            # architecture is non-trivial
-            passlist.append(
-                CXMappingPass(
-                    arch,
-                    NoiseAwarePlacement(
-                        arch,
-                        self._backend_info.averaged_node_gate_errors,
-                        self._backend_info.averaged_edge_gate_errors,
-                        self._backend_info.averaged_readout_errors,
-                    ),
-                    directed_cx=True,
-                    delay_measures=False,
-                )
-            )
-            passlist.append(NaivePlacementPass(arch))
-            if optimisation_level == 0:
-                passlist.append(self.rebase_pass())
-            elif optimisation_level == 1:
-                passlist.append(SynthesiseTket())
-            else:
-                passlist.extend([CliffordSimp(False), SynthesiseTket()])
-        return SequencePass(passlist)
-
-    def process_circuits(
-        self,
-        circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
-        valid_check: bool = True,
-        **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
-        """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `seed`.
-        """
-        # discard result but useful to validate n_shots
-        Backend._get_n_shots_as_list(
-            n_shots,
-            len(circuits),
-            optional=False,
-        )
-        return super().process_circuits(circuits, n_shots, valid_check, **kwargs)
-
-    def get_pauli_expectation_value(
-        self,
-        state_circuit: Circuit,
-        pauli: QubitPauliString,
-        valid_check: bool = True,
-    ) -> complex:
-        """Calculates the expectation value of the given circuit using the built-in Aer
-        snapshot functionality.
-        Requires a simple circuit with default register qubits, and no noise model.
-
-        :param state_circuit: Circuit that generates the desired state
-            :math:`\\left|\\psi\\right>`.
-        :type state_circuit: Circuit
-        :param pauli: Pauli operator
-        :type pauli: QubitPauliString
-        :param valid_check: Explicitly check that the circuit satisfies all required
-            predicates to run on the backend. Defaults to True
-        :type valid_check: bool, optional
-        :return: :math:`\\left<\\psi | P | \\psi \\right>`
-        :rtype: complex
-        """
-        if self._noise_model:
-            raise RuntimeError(
-                (
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-                )
+            self._required_predicates.append(
+                ConnectivityPredicate(characterisation.architecture)
             )
 
-        return super().get_pauli_expectation_value(state_circuit, pauli, valid_check)
 
-    def get_operator_expectation_value(
-        self,
-        state_circuit: Circuit,
-        operator: QubitPauliOperator,
-        valid_check: bool = True,
-    ) -> complex:
-        """Calculates the expectation value of the given circuit with respect to the
-        operator using the built-in Aer snapshot functionality
-        Requires a simple circuit with default register qubits, and no noise model.
-
-        :param state_circuit: Circuit that generates the desired state
-            :math:`\\left|\\psi\\right>`.
-        :type state_circuit: Circuit
-        :param operator: Operator :math:`H`.
-        :type operator: QubitPauliOperator
-        :param valid_check: Explicitly check that the circuit satisfies all required
-            predicates to run on the backend. Defaults to True
-        :type valid_check: bool, optional
-        :return: :math:`\\left<\\psi | H | \\psi \\right>`
-        :rtype: complex
-        """
-        if self._noise_model:
-            raise RuntimeError(
-                (
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-                )
-            )
-
-        return super().get_operator_expectation_value(
-            state_circuit, operator, valid_check
-        )
-
-
-class AerStateBackend(_AerStateBaseBackend):
-    _supports_state = True
+class AerStateBackend(_AerBaseBackend):
+    _persistent_handles = False
+    _supports_shots = True
+    _supports_counts = True
     _supports_expectation = True
     _expectation_allows_nonhermitian = False
 
+    _noise_model = None
+    _memory = False
+
+    _qiskit_backend_name = "aer_simulator_statevector"
+    _supports_state = True
+
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Statevector simulator."""
-        super().__init__("aer_simulator_statevector")
+        super().__init__()
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
+        self._backend_info = BackendInfo(
+            name=type(self).__name__,
+            device_name=self._qiskit_backend_name,
+            version=__extension_version__,
+            architecture=Architecture([]),
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
+            supports_midcircuit_measurement=True,  # is this correct?
+            misc={"characterisation": None},
+        )
+        self._required_predicates = [
+            NoClassicalControlPredicate(),
+            NoFastFeedforwardPredicate(),
+            GateSetPredicate(self._backend_info.gate_set),
+        ]
 
 
-class AerUnitaryBackend(_AerStateBaseBackend):
+class AerUnitaryBackend(_AerBaseBackend):
+    _persistent_handles = False
+    _supports_shots = True
+    _supports_counts = True
+    _supports_expectation = True
+    _expectation_allows_nonhermitian = False
+
+    _memory = False
+    _noise_model = None
+
+    _qiskit_backend_name = "aer_simulator_unitary"
     _supports_unitary = True
 
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Unitary simulator."""
-        super().__init__("aer_simulator_unitary")
+        super().__init__()
+        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
+            self._qiskit_backend_name
+        )
+        self._backend_info = BackendInfo(
+            name=type(self).__name__,
+            device_name=self._qiskit_backend_name,
+            version=__extension_version__,
+            architecture=Architecture([]),
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
+            supports_midcircuit_measurement=True,  # is this correct?
+            misc={"characterisation": None},
+        )
+        self._required_predicates = [
+            NoClassicalControlPredicate(),
+            NoFastFeedforwardPredicate(),
+            GateSetPredicate(self._backend_info.gate_set),
+        ]
 
 
-def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
+def _process_noise_model(
+    noise_model: NoiseModel, gate_set: Set[OpType]
+) -> NoiseModelCharacterisation:
     # obtain approximations for gate errors from noise model by using probability of
     #  "identity" error
     assert OpType.CX in gate_set
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    supported_single_optypes = gate_set.difference({OpType.CX})
-    supported_single_optypes.add(OpType.Reset)
     errors = [
         e
         for e in noise_model.to_dict()["errors"]
         if e["type"] == "qerror" or e["type"] == "roerror"
     ]
 
-    link_errors: dict = defaultdict(dict)
-    node_errors: dict = defaultdict(dict)
-    readout_errors: dict = {}
+    node_errors: dict[Node, dict[OpType, float]] = defaultdict(dict)
+    link_errors: dict[Tuple[Node, Node], dict[OpType, float]] = defaultdict(dict)
+    readout_errors: dict[Node, list[list[float]]] = {}
 
     generic_single_qerrors_dict: dict = defaultdict(list)
     generic_2q_qerrors_dict: dict = defaultdict(list)
 
+    qubits_set: set = set()
     # remember which qubits have explicit link errors
-    link_errors_qubits: set = set()
+    qubits_with_link_errors: set = set()
 
     coupling_map = []
     for error in errors:
@@ -616,13 +576,16 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
         if len(qubits) == 1:
             [q] = qubits
             optype = _gate_str_2_optype[name]
+            qubits_set.add(q)
             if error["type"] == "qerror":
-                node_errors[q].update({optype: 1 - gate_fid})
+                node_errors[Node(q)].update({optype: float(1 - gate_fid)})
                 generic_single_qerrors_dict[q].append(
                     [error["instructions"], error["probabilities"]]
                 )
             elif error["type"] == "roerror":
-                readout_errors[q] = error["probabilities"]
+                readout_errors[Node(q)] = cast(
+                    List[List[float]], error["probabilities"]
+                )
             else:
                 raise RuntimeWarning("Error type not 'qerror' or 'roerror'.")
         elif len(qubits) == 2:
@@ -630,51 +593,55 @@ def _process_model(noise_model: NoiseModel, gate_set: Set[OpType]) -> dict:
             #  the resulting noise channel is composed and reflected in probabilities
             [q0, q1] = qubits
             optype = _gate_str_2_optype[name]
-            link_errors[(q0, q1)].update({optype: 1 - gate_fid})
-            link_errors_qubits.add(q0)
-            link_errors_qubits.add(q1)
+            link_errors.update()
+            link_errors[(Node(q0), Node(q1))].update({optype: float(1 - gate_fid)})
+            qubits_with_link_errors.add(q0)
+            qubits_with_link_errors.add(q1)
             # to simulate a worse reverse direction square the fidelity
-            link_errors[(q1, q0)].update({optype: 1 - gate_fid**2})
+            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid**2)})
             generic_2q_qerrors_dict[(q0, q1)].append(
                 [error["instructions"], error["probabilities"]]
             )
             coupling_map.append(qubits)
 
     # free qubits (ie qubits with no link errors) have full connectivity
-    free_qubits = set(node_errors).union(set(readout_errors)) - link_errors_qubits
+    free_qubits = qubits_set - qubits_with_link_errors
 
     for q in free_qubits:
-        for lq in link_errors_qubits:
+        for lq in qubits_with_link_errors:
             coupling_map.append([q, lq])
             coupling_map.append([lq, q])
 
     for pair in itertools.permutations(free_qubits, 2):
         coupling_map.append(pair)
 
-    # map type (k1 -> k2) -> v[k1] -> v[k2]
-    K1 = TypeVar("K1")
-    K2 = TypeVar("K2")
-    V = TypeVar("V")
-    convert_keys_t = Callable[[Callable[[K1], K2], Dict[K1, V]], Dict[K2, V]]
-    # convert qubits to architecture Nodes
-    convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
-    node_errors = convert_keys(lambda q: Node(q), node_errors)
-    link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
-    readout_errors = convert_keys(lambda q: Node(q), readout_errors)
+    generic_q_errors = {
+        "GenericOneQubitQErrors": [
+            [k, v] for k, v in generic_single_qerrors_dict.items()
+        ],
+        "GenericTwoQubitQErrors": [
+            [list(k), v] for k, v in generic_2q_qerrors_dict.items()
+        ],
+    }
 
-    characterisation: Dict[str, Any] = {}
-    characterisation["NodeErrors"] = node_errors
-    characterisation["EdgeErrors"] = link_errors
-    characterisation["ReadoutErrors"] = readout_errors
-    characterisation["GenericOneQubitQErrors"] = [
-        [k, v] for k, v in generic_single_qerrors_dict.items()
-    ]
-    characterisation["GenericTwoQubitQErrors"] = [
-        [list(k), v] for k, v in generic_2q_qerrors_dict.items()
-    ]
-    characterisation["Architecture"] = Architecture(coupling_map)
+    averaged_node_errors: dict[Node, float] = {
+        k: sum(v.values()) / len(v) for k, v in node_errors.items()
+    }
+    averaged_link_errors = {k: sum(v.values()) / len(v) for k, v in link_errors.items()}
+    averaged_readout_errors = {
+        k: (v[0][1] + v[1][0]) / 2.0 for k, v in readout_errors.items()
+    }
 
-    return characterisation
+    return NoiseModelCharacterisation(
+        node_errors=dict(node_errors),
+        edge_errors=dict(link_errors),
+        readout_errors=readout_errors,
+        averaged_node_errors=averaged_node_errors,
+        averaged_edge_errors=averaged_link_errors,
+        averaged_readout_errors=averaged_readout_errors,
+        generic_q_errors=generic_q_errors,
+        architecture=Architecture(coupling_map),
+    )
 
 
 def _sparse_to_zx_tup(

@@ -247,21 +247,19 @@ def test_process_characterisation_incomplete_noise_model() -> None:
 
     arch = back.backend_info.architecture
     nodes = arch.nodes
-    assert set(arch.coupling) == set(
-        [
-            (nodes[0], nodes[1]),
-            (nodes[0], nodes[2]),
-            (nodes[0], nodes[3]),
-            (nodes[1], nodes[2]),
-            (nodes[1], nodes[3]),
-            (nodes[2], nodes[0]),
-            (nodes[2], nodes[1]),
-            (nodes[2], nodes[3]),
-            (nodes[3], nodes[0]),
-            (nodes[3], nodes[1]),
-            (nodes[3], nodes[2]),
-        ]
-    )
+    assert set(arch.coupling) == {
+        (nodes[0], nodes[1]),
+        (nodes[0], nodes[2]),
+        (nodes[0], nodes[3]),
+        (nodes[1], nodes[2]),
+        (nodes[1], nodes[3]),
+        (nodes[2], nodes[0]),
+        (nodes[2], nodes[1]),
+        (nodes[2], nodes[3]),
+        (nodes[3], nodes[0]),
+        (nodes[3], nodes[1]),
+        (nodes[3], nodes[2]),
+    }
 
 
 def test_circuit_compilation_complete_noise_model() -> None:
@@ -908,11 +906,14 @@ def test_simulation_method() -> None:
         counts = b.run_circuit(clifford_T_circ, n_shots=4).get_counts()
         assert sum(val for _, val in counts.items()) == 4
 
-    with pytest.raises(AttributeError) as warninfo:
+    with pytest.raises(CircuitNotValidError) as warninfo:
         # check for the error thrown when non-clifford circuit used with
         # stabilizer backend
         stabilizer_backend.run_circuit(clifford_T_circ, n_shots=4).get_counts()
-        assert "Attribute header is not defined" in str(warninfo.value)
+        assert (
+            "Circuit with index 0 in submitted does not satisfy GateSetPredicate"
+            in str(warninfo.value)
+        )
 
 
 def test_aer_expanded_gates() -> None:

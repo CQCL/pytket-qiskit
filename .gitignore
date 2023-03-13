@@ -4,6 +4,7 @@ build
 dist
 *.pyc
 .vscode
+.idea
 .venv
 .mypy_cache
 .hypothesis

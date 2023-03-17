@@ -203,11 +203,13 @@ def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     config = backend.configuration()
     if config.simulator:
-        return {
+        gate_set = {
             _gate_str_2_optype[gate_str]
             for gate_str in config.basis_gates
             if gate_str in _gate_str_2_optype
         }.union({OpType.Measure, OpType.Reset, OpType.Barrier})
+        return gate_set
+
     else:
         return {
             _gate_str_2_optype[gate_str]

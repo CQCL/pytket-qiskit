@@ -1,10 +1,11 @@
 Changelog
 ~~~~~~~~~
 
-0.37.0 (unreleased)
+0.37.0 (March 2023)
 -------------------
 
 * Fix faulty information in ``AerBackend().backend_info``
+* Updated pytket version requirement to 1.13.
 
 0.36.0 (February 2023)
 ----------------------

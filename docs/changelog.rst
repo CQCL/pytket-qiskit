@@ -1,6 +1,10 @@
 Changelog
 ~~~~~~~~~
 
+0.37.1 (unreleased)
+-------------------
+* Fix backend settings for AerStateBackend and AerUnitaryBackend
+
 0.37.0 (March 2023)
 -------------------
 

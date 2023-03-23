@@ -464,8 +464,7 @@ class AerBackend(_AerBaseBackend):
 
 class AerStateBackend(_AerBaseBackend):
     _persistent_handles = False
-    _supports_shots = True
-    _supports_counts = True
+    _supports_state = True
     _supports_expectation = True
     _expectation_allows_nonhermitian = False
 
@@ -473,7 +472,6 @@ class AerStateBackend(_AerBaseBackend):
     _memory = False
 
     _qiskit_backend_name = "aer_simulator_statevector"
-    _supports_state = True
 
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Statevector simulator."""
@@ -499,16 +497,12 @@ class AerStateBackend(_AerBaseBackend):
 
 class AerUnitaryBackend(_AerBaseBackend):
     _persistent_handles = False
-    _supports_shots = True
-    _supports_counts = True
-    _supports_expectation = True
-    _expectation_allows_nonhermitian = False
+    _supports_unitary = True
 
     _memory = False
     _noise_model = None
 
     _qiskit_backend_name = "aer_simulator_unitary"
-    _supports_unitary = True
 
     def __init__(self) -> None:
         """Backend for running simulations on the Qiskit Aer Unitary simulator."""

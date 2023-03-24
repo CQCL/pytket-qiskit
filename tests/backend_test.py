@@ -32,7 +32,7 @@ from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  #
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
+from pytket.predicates import CompilationUnit, NoMidMeasurePredicate, MaxNQubitsPredicate  # type: ignore
 from pytket.architecture import Architecture  # type: ignore
 from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod  # type: ignore
 from pytket.transform import Transform  # type: ignore
@@ -1198,3 +1198,13 @@ def test_sim_qubit_order() -> None:
     circ.X(Qubit("a", 0))
     s = backend.run_circuit(circ).get_state()
     assert np.isclose(abs(s[2]), 1.0)
+
+def test_requrired_predicates() -> None:
+    backend = IBMQEmulatorBackend('ibmq_belem') # Emulator of a 5 qubit device
+    assert MaxNQubitsPredicate in backend.required_predicates
+    # 7 qubit circuit in IBMQ gateset
+    circ = Circuit(7).X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).measure_all() 
+    with pytest.raises(CircuitNotValidError) as errorinfo:
+        backend.run_circuit(circ, n_shots=100)
+        assert ("pytket.backends.backend_exceptions.CircuitNotValidError: Circuit with index 0 in submitted does not" + 
+                "satisfy MaxNQubitsPredicate(5) " in errorinfo)

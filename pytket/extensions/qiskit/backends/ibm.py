@@ -324,7 +324,7 @@ class IBMQBackend(Backend):
     def required_predicates(self) -> List[Predicate]:
         predicates = [
             NoSymbolsPredicate(),
-            MaxNQubitsPredicate(self._backend_info.n_nodes)
+            MaxNQubitsPredicate(self._backend_info.n_nodes),
             GateSetPredicate(
                 self._backend_info.gate_set.union(
                     {

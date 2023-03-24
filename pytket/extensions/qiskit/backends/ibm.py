@@ -79,6 +79,7 @@ from pytket.predicates import (  # type: ignore
     GateSetPredicate,
     NoClassicalControlPredicate,
     NoFastFeedforwardPredicate,
+    MaxNQubitsPredicate,
     Predicate,
 )
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
@@ -323,6 +324,7 @@ class IBMQBackend(Backend):
     def required_predicates(self) -> List[Predicate]:
         predicates = [
             NoSymbolsPredicate(),
+            MaxNQubitsPredicate(self._backend_info.n_nodes)
             GateSetPredicate(
                 self._backend_info.gate_set.union(
                     {

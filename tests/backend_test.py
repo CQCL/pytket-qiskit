@@ -32,7 +32,7 @@ from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  #
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate, MaxNQubitsPredicate  # type: ignore
+from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
 from pytket.architecture import Architecture  # type: ignore
 from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod  # type: ignore
 from pytket.transform import Transform  # type: ignore

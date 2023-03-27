@@ -1207,16 +1207,7 @@ def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> N
     circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).measure_all()
     with pytest.raises(CircuitNotValidError) as errorinfo:
         manila_emulator_backend.run_circuit(circ, n_shots=100)
-        assert (
-            "pytket.backends.backend_exceptions.CircuitNotValidError:"
+        assert ("pytket.backends.backend_exceptions.CircuitNotValidError:"
             + "Circuit with index 0 in submitted does"
             + "not satisfy MaxNQubitsPredicate(5)"
-            in str(errorinfo)
-        )
-
-
-print(
-    "pytket.backends.backend_exceptions.CircuitNotValidError:"
-    + "Circuit with index 0 in submitted does"
-    + "not satisfy MaxNQubitsPredicate(5)"
-)
+            in str(errorinfo))

@@ -346,7 +346,7 @@ class IBMQBackend(Backend):
             ] + predicates
         return predicates
 
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2, timeout: int =  1000) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
@@ -371,6 +371,7 @@ class IBMQBackend(Backend):
                         self._backend_info.averaged_node_gate_errors,
                         self._backend_info.averaged_edge_gate_errors,
                         self._backend_info.averaged_readout_errors,
+                        timeout=timeout,
                     ),
                     directed_cx=False,
                     delay_measures=(not mid_measure),

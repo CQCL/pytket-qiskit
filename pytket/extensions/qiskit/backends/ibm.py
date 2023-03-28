@@ -347,7 +347,7 @@ class IBMQBackend(Backend):
         return predicates
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, timeout: int = 1000
+        self, optimisation_level: int = 2, timeout: Optional[int] = None
     ) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
@@ -365,16 +365,26 @@ class IBMQBackend(Backend):
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
         if not isinstance(arch, FullyConnected):
+            if timeout is not None:
+                noise_aware_placement = NoiseAwarePlacement(
+                    arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,
+                    timeout=timeout,
+                )
+            else:
+                noise_aware_placement = NoiseAwarePlacement(
+                    arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,
+                )
+
             passlist.append(
                 CXMappingPass(
                     arch,
-                    NoiseAwarePlacement(
-                        arch,
-                        self._backend_info.averaged_node_gate_errors,
-                        self._backend_info.averaged_edge_gate_errors,
-                        self._backend_info.averaged_readout_errors,
-                        timeout=timeout,
-                    ),
+                    noise_aware_placement,
                     directed_cx=False,
                     delay_measures=(not mid_measure),
                 )

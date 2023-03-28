@@ -127,19 +127,25 @@ class _AerBaseBackend(Backend):
         )
 
     def _arch_dependent_default_compilation_pass(
-        self, arch: Architecture, optimisation_level: int = 2, timeout: int = 1000
+        self, arch: Architecture, optimisation_level: int = 2, timeout: Optional[int] = None
     ) -> BasePass:
         assert optimisation_level in range(3)
-        arch_specific_passes = [
-            CXMappingPass(
-                arch,
-                NoiseAwarePlacement(
-                    arch,
+        if timeout is not None:
+            noise_aware_placement = NoiseAwarePlacement(arch,
                     self._backend_info.averaged_node_gate_errors,
                     self._backend_info.averaged_edge_gate_errors,
                     self._backend_info.averaged_readout_errors,
-                    timeout=timeout,
-                ),
+                    timeout=timeout,)
+        else:
+            noise_aware_placement = NoiseAwarePlacement(arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,)
+
+        arch_specific_passes = [
+            CXMappingPass(
+                arch,
+                noise_aware_placement,
                 directed_cx=True,
                 delay_measures=False,
             ),
@@ -184,7 +190,7 @@ class _AerBaseBackend(Backend):
         return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, timeout: int = 1000
+        self, optimisation_level: int = 2, timeout: int = None
     ) -> BasePass:
         arch = self._backend_info.architecture
         if arch.coupling and self._backend_info.get_misc("characterisation"):

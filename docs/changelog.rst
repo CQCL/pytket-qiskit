@@ -1,6 +1,10 @@
 Changelog
 ~~~~~~~~~
 
+0.37.2 (April 2023) (unreleased)
+--------------------------------
+* Fix to ensure that the :py:class:`IBMBackend` and :py:class:`IBMQEmulatorBackend` both properly enforce :py:class:`MaxNQubitsPredicate`.
+
 0.37.1 (March 2023)
 -------------------
 * Fix backend settings for AerStateBackend and AerUnitaryBackend

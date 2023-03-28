@@ -183,7 +183,9 @@ class _AerBaseBackend(Backend):
             return SequencePass([DecomposeBoxes(), SynthesiseTket()])
         return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
-    def default_compilation_pass(self, optimisation_level: int = 2, timeout: int = 1000) -> BasePass:
+    def default_compilation_pass(
+        self, optimisation_level: int = 2, timeout: int = 1000
+    ) -> BasePass:
         arch = self._backend_info.architecture
         if arch.coupling and self._backend_info.get_misc("characterisation"):
             return self._arch_dependent_default_compilation_pass(

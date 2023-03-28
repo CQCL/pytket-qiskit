@@ -108,9 +108,9 @@ class IBMQEmulatorBackend(Backend):
     def required_predicates(self) -> List[Predicate]:
         return self._ibmq.required_predicates
 
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2, timeout: int = 1000) -> BasePass:
         return self._ibmq.default_compilation_pass(
-            optimisation_level=optimisation_level
+            optimisation_level=optimisation_level, timeout=timeout
         )
 
     @property

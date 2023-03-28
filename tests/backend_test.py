@@ -1198,3 +1198,18 @@ def test_sim_qubit_order() -> None:
     circ.X(Qubit("a", 0))
     s = backend.run_circuit(circ).get_state()
     assert np.isclose(abs(s[2]), 1.0)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/93
+    circ = Circuit(7)  # 7 qubit circuit in IBMQ gateset
+    circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).measure_all()
+    with pytest.raises(CircuitNotValidError) as errorinfo:
+        manila_emulator_backend.run_circuit(circ, n_shots=100)
+        assert (
+            "pytket.backends.backend_exceptions.CircuitNotValidError:"
+            + "Circuit with index 0 in submitted does"
+            + "not satisfy MaxNQubitsPredicate(5)"
+            in str(errorinfo)
+        )

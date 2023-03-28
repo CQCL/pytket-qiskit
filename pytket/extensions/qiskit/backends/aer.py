@@ -127,20 +127,27 @@ class _AerBaseBackend(Backend):
         )
 
     def _arch_dependent_default_compilation_pass(
-        self, arch: Architecture, optimisation_level: int = 2, timeout: Optional[int] = None
+        self,
+        arch: Architecture,
+        optimisation_level: int = 2,
+        timeout: Optional[int] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
         if timeout is not None:
-            noise_aware_placement = NoiseAwarePlacement(arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
-                    timeout=timeout,)
+            noise_aware_placement = NoiseAwarePlacement(
+                arch,
+                self._backend_info.averaged_node_gate_errors,
+                self._backend_info.averaged_edge_gate_errors,
+                self._backend_info.averaged_readout_errors,
+                timeout=timeout,
+            )
         else:
-            noise_aware_placement = NoiseAwarePlacement(arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,)
+            noise_aware_placement = NoiseAwarePlacement(
+                arch,
+                self._backend_info.averaged_node_gate_errors,
+                self._backend_info.averaged_edge_gate_errors,
+                self._backend_info.averaged_readout_errors,
+            )
 
         arch_specific_passes = [
             CXMappingPass(

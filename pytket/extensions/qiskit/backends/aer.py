@@ -209,7 +209,7 @@ class _AerBaseBackend(Backend):
             )
 
         return self._arch_independent_default_compilation_pass(
-            optimisation_level, placement_options=placement_options
+            optimisation_level
         )
 
     def process_circuits(

@@ -130,16 +130,19 @@ class _AerBaseBackend(Backend):
         self,
         arch: Architecture,
         optimisation_level: int = 2,
-        timeout: Optional[int] = None,
+        placement_options: Optional[Dict] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
-        if timeout is not None:
+        if placement_options is not None:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
                 self._backend_info.averaged_node_gate_errors,
                 self._backend_info.averaged_edge_gate_errors,
                 self._backend_info.averaged_readout_errors,
-                timeout=timeout,
+                maximum_matches=placement_options["maximum_matches"],
+                timeout=placement_options["timeout"],
+                maximum_pattern_gates=placement_options["maximum_pattern_gates"],
+                maximum_pattern_depth=placement_options["maximum_pattern_depth"],
             )
         else:
             noise_aware_placement = NoiseAwarePlacement(

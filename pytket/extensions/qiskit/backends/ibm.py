@@ -347,7 +347,7 @@ class IBMQBackend(Backend):
         return predicates
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, timeout: Optional[int] = None
+        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
     ) -> BasePass:
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
@@ -365,13 +365,16 @@ class IBMQBackend(Backend):
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
         if not isinstance(arch, FullyConnected):
-            if timeout is not None:
+            if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
                     self._backend_info.averaged_node_gate_errors,
                     self._backend_info.averaged_edge_gate_errors,
                     self._backend_info.averaged_readout_errors,
-                    timeout=timeout,
+                    maximum_matches=placement_options["maximum_matches"],
+                    timeout=placement_options["timeout"],
+                    maximum_pattern_gates=placement_options["maximum_pattern_gates"],
+                    maximum_pattern_depth=placement_options["maximum_pattern_depth"],
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(

@@ -139,10 +139,7 @@ class _AerBaseBackend(Backend):
                 self._backend_info.averaged_node_gate_errors,
                 self._backend_info.averaged_edge_gate_errors,
                 self._backend_info.averaged_readout_errors,
-                maximum_matches=placement_options["maximum_matches"],
-                timeout=placement_options["timeout"],
-                maximum_pattern_gates=placement_options["maximum_pattern_gates"],
-                maximum_pattern_depth=placement_options["maximum_pattern_depth"],
+                **placement_options,
             )
         else:
             noise_aware_placement = NoiseAwarePlacement(

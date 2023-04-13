@@ -1,9 +1,10 @@
 Changelog
 ~~~~~~~~~
 
-0.37.2 (April 2023) (unreleased)
---------------------------------
+0.38.0 (unreleased)
+-------------------
 * Fix to ensure that the :py:class:`IBMBackend` and :py:class:`IBMQEmulatorBackend` both properly enforce :py:class:`MaxNQubitsPredicate`.
+* Update qiskit version to 0.42.
 
 0.37.1 (March 2023)
 -------------------

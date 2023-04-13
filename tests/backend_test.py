@@ -870,6 +870,7 @@ def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
 )
 def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
     c = Circuit(n_bits, n_bits)
+    c.measure_all()
     aer_backend = AerBackend()
 
     # TODO TKET-813 add more shot based backends and move to integration tests

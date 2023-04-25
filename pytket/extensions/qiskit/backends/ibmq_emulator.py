@@ -111,6 +111,37 @@ class IBMQEmulatorBackend(Backend):
     def default_compilation_pass(
         self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
     ) -> BasePass:
+        """
+        A suggested compilation pass that will will, if possible, produce an equivalent
+        circuit suitable for running on this backend.
+
+        At a minimum it will ensure that compatible gates are used and that all two-
+        qubit interactions are compatible with the backend's qubit architecture. At
+        higher optimisation levels, further optimisations may be applied.
+
+        This is a an abstract method which is implemented in the backend itself, and so
+        is tailored to the backend's requirements.
+
+        The default_compilation_pass for the IBMQBackend supports an optional placement_options 
+        dictionary containing arguments to override the default settings in NoiseAwarePlacement. 
+
+        :param optimisation_level: The level of optimisation to perform during
+            compilation.
+
+            - Level 0 does the minimum required to solves the device constraints,
+              without any optimisation.
+            - Level 1 additionally performs some light optimisations.
+            - Level 2 (the default) adds more computationally intensive optimisations
+              that should give the best results from execution.
+
+        :type optimisation_level: int, optional
+
+        :param placement_options: Optional argument allowing the user to override the default
+          settings in NoiseAwarePlacement
+        :type placement_options: Dict, optional
+        :return: Compilation pass guaranteeing required predicates.
+        :rtype: BasePass
+        """
         return self._ibmq.default_compilation_pass(
             optimisation_level=optimisation_level, placement_options=placement_options
         )

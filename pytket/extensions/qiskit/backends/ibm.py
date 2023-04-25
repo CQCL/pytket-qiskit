@@ -360,8 +360,9 @@ class IBMQBackend(Backend):
         This is a an abstract method which is implemented in the backend itself, and so
         is tailored to the backend's requirements.
 
-        The default_compilation_pass for the IBMQBackend supports an optional placement_options 
-        dictionary containing arguments to override the default settings in NoiseAwarePlacement. 
+        The default_compilation_pass for the IBMQBackend, IBMQEmulatorBackend and the Aer simulators
+        supports an optional placement_options dictionary containing arguments to override the 
+        default settings in NoiseAwarePlacement.  
 
         :param optimisation_level: The level of optimisation to perform during
             compilation.

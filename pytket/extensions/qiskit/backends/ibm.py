@@ -79,6 +79,7 @@ from pytket.predicates import (  # type: ignore
     GateSetPredicate,
     NoClassicalControlPredicate,
     NoFastFeedforwardPredicate,
+    MaxNQubitsPredicate,
     Predicate,
 )
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
@@ -323,6 +324,7 @@ class IBMQBackend(Backend):
     def required_predicates(self) -> List[Predicate]:
         predicates = [
             NoSymbolsPredicate(),
+            MaxNQubitsPredicate(self._backend_info.n_nodes),
             GateSetPredicate(
                 self._backend_info.gate_set.union(
                     {
@@ -466,7 +468,7 @@ class IBMQBackend(Backend):
                         circuits=qcs,
                         dynamic=self.backend_info.supports_fast_feedforward,
                     )
-                    job_id = job.job_id
+                    job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
                             job_id, i, qcs[i].count_ops()["measure"], ppcirc_strs[i]

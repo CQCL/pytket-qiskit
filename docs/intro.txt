@@ -40,7 +40,12 @@ The :py:class:`AerBackend` also supports GPU simulation which can be configured 
   from pytket.extensions.qiskit import AerBackend
 
   backend = AerBackend()
-  backend._backend.set_option("device", "GPU")
+  backend._qiskit_backend.set_option("device", "GPU")
+
+.. note:: Making use of GPU simulation requires the qiskit-aer-gpu package. This can be installed with the command
+  ::
+
+    pip install qiskit-aer-gpu
 
 Access and Credentials
 ======================

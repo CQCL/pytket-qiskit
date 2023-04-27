@@ -1,13 +1,16 @@
 Changelog
 ~~~~~~~~~
 
-0.38.0 (unreleased)
+0.38.0 (April 2023)
 -------------------
+
 * Fix to ensure that the :py:class:`IBMBackend` and :py:class:`IBMQEmulatorBackend` both properly enforce :py:class:`MaxNQubitsPredicate`.
 * Update qiskit version to 0.42.
+* Updated pytket version requirement to 1.14.
 
 0.37.1 (March 2023)
 -------------------
+
 * Fix backend settings for AerStateBackend and AerUnitaryBackend
 
 0.37.0 (March 2023)

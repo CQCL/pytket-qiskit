@@ -77,16 +77,18 @@ def qiskit_experimentresult_to_backendresult(
     header = result.header
     width = header.memory_slots
 
-    c_bits = (
-        [Bit(name, index) for name, index in header.clbit_labels]
-        if hasattr(header, "clbit_labels")
-        else None
-    )
-    q_bits = (
-        [Qubit(name, index) for name, index in header.qubit_labels]
-        if hasattr(header, "qubit_labels")
-        else None
-    )
+    c_bits, q_bits = None, None
+    if hasattr(header, "creg_sizes"):
+        c_bits = []
+        for name, size in header.creg_sizes:
+            for index in range(size):
+                c_bits.append(Bit(name, index))
+    if hasattr(header, "qreg_sizes"):
+        q_bits = []
+        for name, size in header.qreg_sizes:
+            for index in range(size):
+                q_bits.append(Qubit(name, index))
+
     shots, counts, state, unitary = (None,) * 4
     datadict = result.data.to_dict()
     if _result_is_empty_shots(result):

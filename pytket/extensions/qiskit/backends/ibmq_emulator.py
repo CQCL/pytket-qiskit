@@ -182,7 +182,7 @@ class IBMQEmulatorBackend(Backend):
                 options.seed_simulator = kwargs.get("seed")
                 sampler = Sampler(session=self._session, options=options)
                 job = sampler.run(circuits=qcs)
-                job_id = job.job_id
+                job_id = job.job_id()
                 for i, ind in enumerate(indices_chunk):
                     handle_list[ind] = ResultHandle(
                         job_id, i, c_bit_strs[i], ppcirc_strs[i]

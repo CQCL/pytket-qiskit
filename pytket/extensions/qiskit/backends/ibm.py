@@ -380,7 +380,7 @@ class IBMQBackend(Backend):
           `NoiseAwarePlacement
           <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_.
           Options:
-          ``maximum_matches``, ``timeout``, ``maximum_pattern_gates``, ``maximum_pattern_depth``.
+          maximum_matches, timeout, maximum_pattern_gates, maximum_pattern_depth.
         :type placement_options: Dict, optional
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass

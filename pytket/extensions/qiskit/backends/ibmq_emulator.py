@@ -112,7 +112,7 @@ class IBMQEmulatorBackend(Backend):
         self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
     ) -> BasePass:
         """
-        See for :py:meth:`IBMQBackend.default_compilation_pass`.
+        See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
         """
         return self._ibmq.default_compilation_pass(
             optimisation_level=optimisation_level, placement_options=placement_options

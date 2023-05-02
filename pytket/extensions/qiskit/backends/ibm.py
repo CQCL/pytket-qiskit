@@ -360,9 +360,10 @@ class IBMQBackend(Backend):
         This is a an abstract method which is implemented in the backend itself, and so
         is tailored to the backend's requirements.
 
-        The default_compilation_pass for the IBMQBackend, IBMQEmulatorBackend and the
-        Aer simulators support an optional placement_options dictionary containing
-        arguments to override the default settings in NoiseAwarePlacement.
+        The default compilation pass for the :py:class:`IBMQBackend`,
+        :py:class:`IBMQEmulatorBackend` and the
+        Aer simulators support an optional ``placement_options`` dictionary containing
+        arguments to override the default settings in :py:class:`NoiseAwarePlacement`.
 
         :param optimisation_level: The level of optimisation to perform during
             compilation.
@@ -376,11 +377,7 @@ class IBMQBackend(Backend):
         :type optimisation_level: int, optional
 
         :param placement_options: Optional argument allowing the user to override
-          the default settings in
-          `NoiseAwarePlacement
-          <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_.
-          Options:
-          maximum_matches, timeout, maximum_pattern_gates, maximum_pattern_depth.
+          the default settings in :py:class:`NoiseAwarePlacement`.
         :type placement_options: Dict, optional
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass

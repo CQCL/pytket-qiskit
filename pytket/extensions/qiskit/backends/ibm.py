@@ -360,7 +360,7 @@ class IBMQBackend(Backend):
         This is a an abstract method which is implemented in the backend itself, and so
         is tailored to the backend's requirements.
 
-        The default compilation pass for the :py:class:`IBMQBackend`,
+        The default compilation passes for the :py:class:`IBMQBackend`,
         :py:class:`IBMQEmulatorBackend` and the
         Aer simulators support an optional ``placement_options`` dictionary containing
         arguments to override the default settings in :py:class:`NoiseAwarePlacement`.

@@ -127,18 +127,32 @@ class _AerBaseBackend(Backend):
         )
 
     def _arch_dependent_default_compilation_pass(
-        self, arch: Architecture, optimisation_level: int = 2
+        self,
+        arch: Architecture,
+        optimisation_level: int = 2,
+        placement_options: Optional[Dict] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
+        if placement_options is not None:
+            noise_aware_placement = NoiseAwarePlacement(
+                arch,
+                self._backend_info.averaged_node_gate_errors,
+                self._backend_info.averaged_edge_gate_errors,
+                self._backend_info.averaged_readout_errors,
+                **placement_options,
+            )
+        else:
+            noise_aware_placement = NoiseAwarePlacement(
+                arch,
+                self._backend_info.averaged_node_gate_errors,
+                self._backend_info.averaged_edge_gate_errors,
+                self._backend_info.averaged_readout_errors,
+            )
+
         arch_specific_passes = [
             CXMappingPass(
                 arch,
-                NoiseAwarePlacement(
-                    arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
-                ),
+                noise_aware_placement,
                 directed_cx=True,
                 delay_measures=False,
             ),
@@ -182,11 +196,16 @@ class _AerBaseBackend(Backend):
             return SequencePass([DecomposeBoxes(), SynthesiseTket()])
         return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+    def default_compilation_pass(
+        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
+    ) -> BasePass:
+        """
+        See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
+        """
         arch = self._backend_info.architecture
         if arch.coupling and self._backend_info.get_misc("characterisation"):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level
+                arch, optimisation_level, placement_options=placement_options
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)

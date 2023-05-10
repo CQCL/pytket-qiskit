@@ -5,6 +5,7 @@ Changelog
 -----------------
 
 * Updated pytket version requirement to 1.15.
+* The get_compiled_circuit method now allows for optional arguments to override the default settings in the NoiseAwarePlacement
 
 0.38.0 (April 2023)
 -------------------

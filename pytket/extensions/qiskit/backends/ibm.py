@@ -346,7 +346,42 @@ class IBMQBackend(Backend):
             ] + predicates
         return predicates
 
-    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
+    def default_compilation_pass(
+        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
+    ) -> BasePass:
+        """
+        A suggested compilation pass that will will, if possible, produce an equivalent
+        circuit suitable for running on this backend.
+
+        At a minimum it will ensure that compatible gates are used and that all two-
+        qubit interactions are compatible with the backend's qubit architecture. At
+        higher optimisation levels, further optimisations may be applied.
+
+        This is a an abstract method which is implemented in the backend itself, and so
+        is tailored to the backend's requirements.
+
+        The default compilation passes for the :py:class:`IBMQBackend`,
+        :py:class:`IBMQEmulatorBackend` and the
+        Aer simulators support an optional ``placement_options`` dictionary containing
+        arguments to override the default settings in :py:class:`NoiseAwarePlacement`.
+
+        :param optimisation_level: The level of optimisation to perform during
+            compilation.
+
+            - Level 0 does the minimum required to solves the device constraints,
+              without any optimisation.
+            - Level 1 additionally performs some light optimisations.
+            - Level 2 (the default) adds more computationally intensive optimisations
+              that should give the best results from execution.
+
+        :type optimisation_level: int, optional
+
+        :param placement_options: Optional argument allowing the user to override
+          the default settings in :py:class:`NoiseAwarePlacement`.
+        :type placement_options: Dict, optional
+        :return: Compilation pass guaranteeing required predicates.
+        :rtype: BasePass
+        """
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
@@ -363,15 +398,26 @@ class IBMQBackend(Backend):
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
         if not isinstance(arch, FullyConnected):
+            if placement_options is not None:
+                noise_aware_placement = NoiseAwarePlacement(
+                    arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,
+                    **placement_options,
+                )
+            else:
+                noise_aware_placement = NoiseAwarePlacement(
+                    arch,
+                    self._backend_info.averaged_node_gate_errors,
+                    self._backend_info.averaged_edge_gate_errors,
+                    self._backend_info.averaged_readout_errors,
+                )
+
             passlist.append(
                 CXMappingPass(
                     arch,
-                    NoiseAwarePlacement(
-                        arch,
-                        self._backend_info.averaged_node_gate_errors,
-                        self._backend_info.averaged_edge_gate_errors,
-                        self._backend_info.averaged_readout_errors,
-                    ),
+                    noise_aware_placement,
                     directed_cx=False,
                     delay_measures=(not mid_measure),
                 )

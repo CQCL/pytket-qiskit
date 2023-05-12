@@ -773,11 +773,15 @@ def test_state_prep_conversion() -> None:
     assert compare_statevectors(tk_sp.get_statevector(), ghz_state)
     # State prep with complex amplitudes
     qc_sp2 = QuantumCircuit(2)
-    complex_statvector = np.array([0, 1/np.sqrt(2), -1.j/np.sqrt(2), 0])
-    qc_sp2.initialize(complex_statvector, qc_sp2.qubits) 
-    tk_sp2 = qiskit_to_tk(qc_sp2)  
+    complex_statvector = np.array([0, 1 / np.sqrt(2), -1.0j / np.sqrt(2), 0])
+    qc_sp2.initialize(complex_statvector, qc_sp2.qubits)
+    tk_sp2 = qiskit_to_tk(qc_sp2)
     assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp2.n_gates == 1
     assert compare_statevectors(tk_sp2.get_statevector(), complex_statvector)
     # test tket -> qiskit conversion
     converted_qiskit_qc = tk_to_qiskit(tk_sp2)
+    print(converted_qiskit_qc)
+
+
+test_state_prep_conversion()

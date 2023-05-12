@@ -779,3 +779,5 @@ def test_state_prep_conversion() -> None:
     assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp2.n_gates == 1
     assert compare_statevectors(tk_sp2.get_statevector(), complex_statvector)
+    # test tket -> qiskit conversion
+    converted_qiskit_qc = tk_to_qiskit(tk_sp2)

@@ -150,6 +150,7 @@ _qiskit_gates_other = {
     Measure: OpType.Measure,
     Reset: OpType.Reset,
     UnitaryGate: OpType.Unitary2qBox,
+    Initialize: OpType.StatePreparationBox
 }
 
 _known_qiskit_gate = {**_qiskit_gates_1q, **_qiskit_gates_2q, **_qiskit_gates_other}
@@ -485,6 +486,12 @@ def append_tk_command_to_qiskit(
         # Note reversal of qubits, to account for endianness (pytket unitaries are
         # ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
         return qcirc.append(g, qargs=list(reversed(qargs)))
+    if optype == OpType.StatePreparationBox:
+        stateprep_op = Op.create(optype)
+        statevector_array = stateprep_op.get_statevector()
+        initializer = Initialize(statevector_array)
+        return qcirc.append(initializer, qargs=list(reversed(qargs)))
+    
     if optype == OpType.Barrier:
         if any(q.type == UnitType.bit for q in args):
             raise NotImplementedError(

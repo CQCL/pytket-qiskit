@@ -303,8 +303,6 @@ class CircuitBuilder:
                         )
             elif type(instr) == PauliEvolutionGate:
                 pass  # Special handling below
-            elif type(instr) == Initialize:
-                pass  # Special handling below
             else:
                 optype = _known_qiskit_gate[type(instr)]
             qubits = [self.qbmap[qbit] for qbit in qargs]

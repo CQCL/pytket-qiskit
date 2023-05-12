@@ -760,3 +760,22 @@ def test_qcontrolbox_conversion() -> None:
     tkc2 = qiskit_to_tk(qc2)
     assert tkc2.n_gates == 3
     assert tkc2.n_gates_of_type(OpType.QControlBox) == 3
+
+
+def test_state_prep_conversion() -> None:
+    # State prep with real amplitudes
+    ghz_state = 1 / np.sqrt(2) * np.array([1, 0, 0, 0, 0, 0, 0, 1])
+    qc_sp = QuantumCircuit(3)
+    qc_sp.initialize(ghz_state)
+    tk_sp = qiskit_to_tk(qc_sp)
+    assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
+    assert tk_sp.n_gates == 1
+    assert compare_statevectors(tk_sp.get_statevector(), ghz_state)
+    # State prep with complex amplitudes
+    qc_sp2 = QuantumCircuit(2)
+    complex_statvector = np.array([0, 1/np.sqrt(2), -1.j/np.sqrt(2), 0])
+    qc_sp2.initialize(complex_statvector, qc_sp2.qubits) 
+    tk_sp2 = qiskit_to_tk(qc_sp2)  
+    assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
+    assert tk_sp2.n_gates == 1
+    assert compare_statevectors(tk_sp2.get_statevector(), complex_statvector)

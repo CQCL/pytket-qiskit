@@ -56,6 +56,7 @@ from qiskit.circuit import (
 from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate  # type: ignore
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
+from qiskit.extensions import Initialize  # type: ignore
 from pytket.circuit import (  # type: ignore
     CircBox,
     Circuit,
@@ -68,6 +69,7 @@ from pytket.circuit import (  # type: ignore
     Bit,
     Qubit,
     QControlBox,
+    StatePreparationBox,
 )
 from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
@@ -300,6 +302,8 @@ class CircuitBuilder:
                         )
             elif type(instr) == PauliEvolutionGate:
                 pass  # Special handling below
+            elif type(instr) == Initialize:
+                pass  # Special handling below
             else:
                 optype = _known_qiskit_gate[type(instr)]
             qubits = [self.qbmap[qbit] for qbit in qargs]
@@ -324,6 +328,11 @@ class CircuitBuilder:
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
+            elif isinstance(instr, Initialize):
+                statevector_array = instr.params
+                pytket_state_prep_box = StatePreparationBox(statevector_array)
+                self.tkc.add_gate(pytket_state_prep_box, qubits)
 
             elif type(instr) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

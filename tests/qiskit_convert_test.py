@@ -781,4 +781,4 @@ def test_state_prep_conversion() -> None:
     assert compare_statevectors(tk_sp2.get_statevector(), complex_statvector)
     # test tket -> qiskit conversion
     converted_qiskit_qc = tk_to_qiskit(tk_sp2)
-    assert converted_qiskit_qc.count_ops()['initialize'] == 1
+    assert converted_qiskit_qc.count_ops()["initialize"] == 1

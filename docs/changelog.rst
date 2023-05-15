@@ -1,5 +1,8 @@
 Changelog
 ~~~~~~~~~
+0.40.0 (unreleased)
+-------------------
+* Handle qiskit state initialisation circuits with :py:class:`StatePreparationBox` in the circuit converters.
 
 0.39.0 (May 2023)
 -----------------

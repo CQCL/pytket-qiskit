@@ -763,15 +763,16 @@ def test_qcontrolbox_conversion() -> None:
 
 
 def test_state_prep_conversion() -> None:
-    # State prep with real amplitudes
+    # State prep with list of real amplitudes
     ghz_state = [1 / np.sqrt(2), 0, 0, 0, 0, 0, 0, 1 / np.sqrt(2)]
     qc_sp = QuantumCircuit(3)
     qc_sp.initialize(ghz_state)
     tk_sp = qiskit_to_tk(qc_sp)
     assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp.n_gates == 1
-    assert compare_statevectors(tk_sp.get_statevector(), ghz_state)
-    # State prep with complex amplitudes
+    ghz_array = np.array(ghz_state)
+    assert compare_statevectors(tk_sp.get_statevector(), ghz_array)
+    # State prep with ndarray of complex amplitudes
     qc_sp2 = QuantumCircuit(2)
     complex_statvector = np.array([0, 1 / np.sqrt(2), -1.0j / np.sqrt(2), 0])
     qc_sp2.initialize(complex_statvector, qc_sp2.qubits)

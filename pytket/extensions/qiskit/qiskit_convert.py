@@ -329,8 +329,8 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, Initialize):
-                statevector_array = instr.params
-                pytket_state_prep_box = StatePreparationBox(statevector_array)
+                amplitude_list = instr.params
+                pytket_state_prep_box = StatePreparationBox(amplitude_list)
                 self.tkc.add_gate(pytket_state_prep_box, qubits)
 
             elif type(instr) == PauliEvolutionGate:

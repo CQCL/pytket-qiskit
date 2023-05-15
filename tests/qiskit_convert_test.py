@@ -764,7 +764,7 @@ def test_qcontrolbox_conversion() -> None:
 
 def test_state_prep_conversion() -> None:
     # State prep with real amplitudes
-    ghz_state = 1 / np.sqrt(2) * np.array([1, 0, 0, 0, 0, 0, 0, 1])
+    ghz_state = 1 / np.sqrt(2) * [1, 0, 0, 0, 0, 0, 0, 1]
     qc_sp = QuantumCircuit(3)
     qc_sp.initialize(ghz_state)
     tk_sp = qiskit_to_tk(qc_sp)

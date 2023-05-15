@@ -329,9 +329,12 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, Initialize):
-                amplitude_list = instr.params
-                pytket_state_prep_box = StatePreparationBox(amplitude_list)
-                self.tkc.add_gate(pytket_state_prep_box, qubits)
+                # Check that the Initialize object is constructed with a list: 
+                # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
+                if isinstance(instr.params, list):
+                    amplitude_list = instr.params
+                    pytket_state_prep_box = StatePreparationBox(amplitude_list)
+                    self.tkc.add_gate(pytket_state_prep_box, qubits)
 
             elif type(instr) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

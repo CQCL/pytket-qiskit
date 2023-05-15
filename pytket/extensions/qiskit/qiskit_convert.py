@@ -329,7 +329,7 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, Initialize):
-                # Check that the Initialize object is constructed with a list: 
+                # Check that the Initialize object is constructed with a list:
                 # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
                 if isinstance(instr.params, list):
                     amplitude_list = instr.params

@@ -78,6 +78,8 @@ from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
 from pytket.passes import RebaseCustom, RemoveRedundancies  # type: ignore
 
+from pytket.circuit.display import view_browser
+
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
     from qiskit.providers.models.backendproperties import (  # type: ignore
@@ -244,12 +246,16 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
         qpodict[QubitPauliString(qubits, qpslist)] = coeff
     return QubitPauliOperator(qpodict)
 
-def _string_to_circuit(opstring: str) -> Circuit:
+
+def _string_to_circuit(string_list: Union[str, list[str]], n_qubits: int) -> Circuit:
     """Helper function to handle strings in QuantumCircuit.initialize"""
-    circ = Circuit(len(opstring))
-    # String is reversed for endian-ness
-    for count, char in enumerate(reversed(opstring)):
-        circ.add_gate(OpType.Reset, [count])
+    "".join(string_list)
+    circ = Circuit(n_qubits)
+    # Add a reset to every single qubit regardless of string length - qiskit behavior
+    for qubit in circ.qubits:
+        circ.add_gate(OpType.Reset, [qubit])
+
+    for count, char in enumerate(string_list):
         if char == "0":
             pass
         if char in ("1", "-"):
@@ -259,9 +265,10 @@ def _string_to_circuit(opstring: str) -> Circuit:
             if char == "r":
                 circ.S(count)
             elif char == "l":
-                circ.Sdg(count)       
-    
+                circ.Sdg(count)
+
     return circ
+
 
 class CircuitBuilder:
     def __init__(
@@ -349,21 +356,22 @@ class CircuitBuilder:
             elif isinstance(instr, Initialize):
                 # Check that the Initialize object is constructed with a list:
                 # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
-                if isinstance(instr.params, list):
+                if isinstance(instr.params[0], str):
+                    # Parse string to get the right single qubit gates
+                    circuit = _string_to_circuit(instr.params, instr.num_qubits)
+                    self.tkc.add_circuit(circuit, qubits)
+                
+                elif isinstance(instr.params, list) and len(instr.params) != 1:
                     amplitude_list = instr.params
                     pytket_state_prep_box = StatePreparationBox(amplitude_list)
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
-                elif isinstance(instr.params[0], str):
-                    circuit = _string_to_circuit(instr.params[0])
-                    self.tkc.add_circuit(circuit, qubits)
-                elif isinstance(instr.params, int):
+
+                elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
+                    # convert int to a binary string and apply X for |1>
+                    instr.params[0] = int(instr.params[0].real)
                     bitstring = bin(instr.params[0])[2:]
-                    for count, bit in enumerate(bitstring):
-                        self.tkc.add_gate(OpType.Reset, [count])
-                        if bit == "1":
-                            self.tkc.X(count)
-                        
-                  
+                    circuit = _string_to_circuit(bitstring, instr.num_qubits)
+                    self.tkc.add_circuit(circuit, qubits)
 
             elif type(instr) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

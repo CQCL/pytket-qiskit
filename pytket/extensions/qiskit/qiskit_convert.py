@@ -359,6 +359,7 @@ class CircuitBuilder:
                 elif isinstance(instr.params, int):
                     bitstring = bin(instr.params[0])[2:]
                     for count, bit in enumerate(bitstring):
+                        self.tkc.add_gate(OpType.Reset, [count])
                         if bit == "1":
                             self.tkc.X(count)
                         

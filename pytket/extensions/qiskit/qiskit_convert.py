@@ -71,7 +71,6 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
-from qiskit.quantum_info import Statevector
 from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
@@ -245,6 +244,23 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
         qpodict[QubitPauliString(qubits, qpslist)] = coeff
     return QubitPauliOperator(qpodict)
 
+def _string_to_circuit_list(opstring: str) -> list[Tuple[Circuit, int]]:
+    "Helper function for strings in QuantumCircuit.initialize"
+    circuit_list = []
+    for count, char in enumerate(opstring):
+        circ = Circuit(1)
+        if char == "0":
+            pass
+        elif char in ("1", "-"):
+            circ.X(0)
+            if char in ("+", "-", "r", "l"):
+                circ.H(0)
+        elif char == "r":
+            circ.S(0)
+        elif char == "l":
+            circ.Sdg(0)          
+        circuit_list.append((circ, count))
+    return circuit_list
 
 class CircuitBuilder:
     def __init__(
@@ -330,23 +346,23 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, Initialize):
-                # A qiskit Initialize object can be constructed using different data types:
+                # Check that the Initialize object is constructed with a list:
                 # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
                 if isinstance(instr.params, list):
                     amplitude_list = instr.params
                     pytket_state_prep_box = StatePreparationBox(amplitude_list)
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
-
-                elif isinstance(instr.params, str):
-                    statevector = Statevector.from_label(instr.params)
-                    pytket_state_prep_box = StatePreparationBox(statevector.data)
-                    self.tkc.add_gate(pytket_state_prep_box, qubits)
-
+                elif isinstance(instr.params[0], str):
+                    circuit_list = _string_to_circuit_list(instr.params[0])
+                    for circ, count in circuit_list:
+                        self.tkc.add_circuit(circ, count)
                 elif isinstance(instr.params, int):
                     bitstring = bin(instr.params[0])[2:]
                     for count, bit in enumerate(bitstring):
                         if bit == "1":
                             self.tkc.X(count)
+                        
+                  
 
             elif type(instr) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

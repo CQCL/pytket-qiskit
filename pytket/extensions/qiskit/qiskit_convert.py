@@ -71,6 +71,7 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
+from qiskit.quantum_info import Statevector
 from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
@@ -335,6 +336,16 @@ class CircuitBuilder:
                     amplitude_list = instr.params
                     pytket_state_prep_box = StatePreparationBox(amplitude_list)
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
+
+                elif isinstance(instr.params, str):
+                    statevector = Statevector.from_label(instr.params)
+                    pytket_state_prep_box = StatePreparationBox(statevector.data)
+                    self.tkc.add_gate(pytket_state_prep_box, qubits)
+                elif isinstance(instr.params, int):
+                    bitstring = bin(instr.params[0])[2:]
+                    for count, bit in enumerate(bitstring):
+                        if bit == "1":
+                            self.tkc.X(count)
 
             elif type(instr) == PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

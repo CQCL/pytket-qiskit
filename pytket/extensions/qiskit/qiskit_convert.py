@@ -244,23 +244,24 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
         qpodict[QubitPauliString(qubits, qpslist)] = coeff
     return QubitPauliOperator(qpodict)
 
-def _string_to_circuit_list(opstring: str) -> list[Tuple[Circuit, int]]:
-    "Helper function for strings in QuantumCircuit.initialize"
-    circuit_list = []
-    for count, char in enumerate(opstring):
-        circ = Circuit(1)
+def _string_to_circuit(opstring: str) -> Circuit:
+    """Helper function to handle strings in QuantumCircuit.initialize"""
+    circ = Circuit(len(opstring))
+    # String is reversed for endian-ness
+    for count, char in enumerate(reversed(opstring)):
+        circ.add_gate(OpType.Reset, [count])
         if char == "0":
             pass
-        elif char in ("1", "-"):
-            circ.X(0)
-            if char in ("+", "-", "r", "l"):
-                circ.H(0)
-        elif char == "r":
-            circ.S(0)
-        elif char == "l":
-            circ.Sdg(0)          
-        circuit_list.append((circ, count))
-    return circuit_list
+        if char in ("1", "-"):
+            circ.X(count)
+        if char in ("+", "-", "r", "l"):
+            circ.H(count)
+            if char == "r":
+                circ.S(count)
+            elif char == "l":
+                circ.Sdg(count)       
+    
+    return circ
 
 class CircuitBuilder:
     def __init__(
@@ -353,9 +354,8 @@ class CircuitBuilder:
                     pytket_state_prep_box = StatePreparationBox(amplitude_list)
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
                 elif isinstance(instr.params[0], str):
-                    circuit_list = _string_to_circuit_list(instr.params[0])
-                    for circ, count in circuit_list:
-                        self.tkc.add_circuit(circ, count)
+                    circuit = _string_to_circuit(instr.params[0])
+                    self.tkc.add_circuit(circuit, qubits)
                 elif isinstance(instr.params, int):
                     bitstring = bin(instr.params[0])[2:]
                     for count, bit in enumerate(bitstring):

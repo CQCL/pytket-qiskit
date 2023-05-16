@@ -330,7 +330,7 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, Initialize):
-                # Check that the Initialize object is constructed with a list:
+                # A qiskit Initialize object can be constructed using different data types:
                 # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
                 if isinstance(instr.params, list):
                     amplitude_list = instr.params
@@ -341,6 +341,7 @@ class CircuitBuilder:
                     statevector = Statevector.from_label(instr.params)
                     pytket_state_prep_box = StatePreparationBox(statevector.data)
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
+
                 elif isinstance(instr.params, int):
                     bitstring = bin(instr.params[0])[2:]
                     for count, bit in enumerate(bitstring):

@@ -783,3 +783,24 @@ def test_state_prep_conversion() -> None:
     # test tket -> qiskit conversion
     converted_qiskit_qc = tk_to_qiskit(tk_sp2)
     assert converted_qiskit_qc.count_ops()["initialize"] == 1
+
+from pytket.circuit.display import view_browser
+
+def test_state_prep_conversion_with_str_and_int():
+    qc = QuantumCircuit(5)
+    qc.initialize("rl+-1")
+    tk_circ = qiskit_to_tk(qc)
+    assert tk_circ.n_gates_of_type(OpType.Reset) == 5
+    assert tk_circ.n_gates_of_type(OpType.H) == 4
+    assert tk_circ.n_gates_of_type(OpType.X) == 2
+    qc = QuantumCircuit(4)
+    qc.initialize(7, qc.qubits)
+    tkc7 = qiskit_to_tk(qc)
+    print(tkc7.get_statevector())
+    assert n_gates_of_type(OpType.X) == 3
+
+
+
+
+
+test_state_prep_conversion_with_str_and_int()

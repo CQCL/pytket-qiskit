@@ -72,7 +72,9 @@ from pytket.passes import (  # type: ignore
     CliffordSimp,
     SimplifyInitial,
     NaivePlacementPass,
+    RebaseCustom,
 )
+from pytket.passes.auto_rebase import get_TK1_decomposition_function
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
@@ -135,6 +137,22 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
+
+
+# Variables for defining a rebase to the {X, SX, Rz, ECR} gateset
+# See https://github.com/CQCL/pytket-qiskit/issues/112
+_cx_replacement_with_ecr = (
+    Circuit(2).X(0).SX(1).Rz(-0.5, 0).add_gate(OpType.ECR, [0, 1])
+)
+_tk1_replacement_function = get_TK1_decomposition_function(
+    {OpType.X, OpType.SX, OpType.Rz}
+)
+
+ecr_rebase = RebaseCustom(
+    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
+    cx_replacement=_cx_replacement_with_ecr,
+    tk1_replacement=_tk1_replacement_function,
+)
 
 
 class IBMQBackend(Backend):
@@ -391,6 +409,8 @@ class IBMQBackend(Backend):
         if optimisation_level == 0:
             if self._standard_gateset:
                 passlist.append(self.rebase_pass())
+            else:
+                passlist.append(ecr_rebase)
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
@@ -435,6 +455,8 @@ class IBMQBackend(Backend):
             )
         if self._standard_gateset:
             passlist.extend([self.rebase_pass(), RemoveRedundancies()])
+        else:
+            passlist.extend([ecr_rebase, RemoveRedundancies()])
         if optimisation_level > 0:
             passlist.append(
                 SimplifyInitial(allow_classical=False, create_all_qubits=True)

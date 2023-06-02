@@ -486,7 +486,7 @@ class IBMQBackend(Backend):
         if self._primitive_gates == GateSet.X_SX_RZ_CX.value:
             return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
         elif self._primitive_gates == GateSet.X_SX_RZ_ECR.value:
-            return auto_rebase_pass(GateSet.X_SX_RZ_ECR.value)
+            return ecr_rebase
         else:
             raise NoRebaseException
 

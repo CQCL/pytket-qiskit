@@ -220,7 +220,7 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self.standard_gateset  = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+        self._standard_gateset  = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
         self._primitive_gates = GateSet["X_SX_RZ_CX"] if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX} else GateSet["X_SX_RZ_ECR"]
         self._monitor = monitor

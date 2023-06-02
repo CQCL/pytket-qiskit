@@ -167,10 +167,6 @@ _tk1_replacement_function = get_TK1_decomposition_function(
     {OpType.X, OpType.SX, OpType.Rz}
 )
 
-_gateset_with_ecr = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-
-_gateset_with_cx = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-
 ecr_rebase = RebaseCustom(
     gateset=_gateset_with_ecr,
     cx_replacement=_cx_replacement_with_ecr,

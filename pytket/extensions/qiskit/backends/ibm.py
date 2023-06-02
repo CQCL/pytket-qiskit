@@ -164,7 +164,7 @@ _tk1_replacement_function = get_TK1_decomposition_function(
 )
 
 ecr_rebase = RebaseCustom(
-    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
+    gateset=GateSet.X_SX_RZ_ECR.value,
     cx_replacement=_cx_replacement_with_ecr,
     tk1_replacement=_tk1_replacement_function,
 )
@@ -483,9 +483,9 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
-            return auto_rebase_pass({OpType.X, OpType.SX, OpType.Rz, OpType.CX})
-        elif self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
+        if self._primitive_gates == GateSet.X_SX_RZ_CX.value:
+            return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
+        elif self._primitive_gates == GateSet.X_SX_RZ_ECR.value:
             return ecr_rebase
         else:
             raise NoRebaseException

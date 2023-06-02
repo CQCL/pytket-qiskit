@@ -128,6 +128,15 @@ class GateSet(Enum):
     X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
 
 
+class NoRebaseException(Exception):
+    "Exception raised in the case that no gateset rebase is supported for an IBMBackend"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "No rebase is available to convert to the supported gateset of this Backend"
+        )
+
+
 def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
@@ -476,8 +485,10 @@ class IBMQBackend(Backend):
     def rebase_pass(self) -> BasePass:
         if self._primitive_gates == GateSet.X_SX_RZ_CX.value:
             return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
+        elif self._primitive_gates == GateSet.X_SX_RZ_ECR.value:
+            return auto_rebase_pass(GateSet.X_SX_RZ_ECR.value)
         else:
-            return ecr_rebase
+            raise NoRebaseException
 
     def process_circuits(
         self,

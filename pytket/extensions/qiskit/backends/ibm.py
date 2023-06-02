@@ -30,6 +30,7 @@ from typing import (
     Union,
 )
 from warnings import warn
+from enum import Enum
 
 import qiskit  # type: ignore
 from qiskit import IBMQ
@@ -120,6 +121,10 @@ class NoIBMQAccountError(Exception):
             "No IBMQ credentials found on disk, store your account using qiskit,"
             " or using :py:meth:`pytket.extensions.qiskit.set_ibmq_config` first."
         )
+
+class GateSet(Enum):
+    X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+    X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
 
 
 def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
@@ -215,8 +220,9 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+        self._standard_gates  = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
+        self._primitive_gates = GateSet["X_SX_RZ_CX"] if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX} else GateSet["X_SX_RZ_ECR"]
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
@@ -407,10 +413,7 @@ class IBMQBackend(Backend):
         # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._standard_gateset:
                 passlist.append(self.rebase_pass())
-            else:
-                passlist.append(ecr_rebase)
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
@@ -453,10 +456,7 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-        if self._standard_gateset:
-            passlist.extend([self.rebase_pass(), RemoveRedundancies()])
-        else:
-            passlist.extend([ecr_rebase, RemoveRedundancies()])
+        passlist.extend([self.rebase_pass(), RemoveRedundancies()])
         if optimisation_level > 0:
             passlist.append(
                 SimplifyInitial(allow_classical=False, create_all_qubits=True)
@@ -469,9 +469,11 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(
-            {OpType.CX, OpType.X, OpType.SX, OpType.Rz},
-        )
+        if self._primitive_gates == GateSet["X_SX_RZ_CX"]:
+            return auto_rebase_pass({OpType.X, OpType.SX, OpType.Rz, OpType.CX})
+        else:
+            return ecr_rebase
+        
 
     def process_circuits(
         self,

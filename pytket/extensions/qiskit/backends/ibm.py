@@ -123,9 +123,13 @@ class NoIBMQAccountError(Exception):
         )
 
 
+_gateset_with_ecr = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
+_gateset_with_cx = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+
+
 class GateSet(Enum):
-    X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-    X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
+    X_SX_RZ_CX = _gateset_with_cx
+    X_SX_RZ_ECR = _gateset_with_ecr
 
 
 class NoRebaseException(Exception):

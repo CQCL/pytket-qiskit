@@ -222,7 +222,7 @@ class IBMQBackend(Backend):
 
         self._standard_gateset  = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
-        self._primitive_gates = GateSet["X_SX_RZ_CX"] if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX} else GateSet["X_SX_RZ_ECR"]
+        self._primitive_gates = GateSet.X_SX_RZ_CX.value if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX} else GateSet.X_SX_RZ_ECR.value
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
@@ -469,8 +469,8 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == GateSet["X_SX_RZ_CX"]:
-            return auto_rebase_pass({OpType.X, OpType.SX, OpType.Rz, OpType.CX})
+        if self._primitive_gates == GateSet.X_SX_RZ_CX.value:
+            return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
         else:
             return ecr_rebase
         

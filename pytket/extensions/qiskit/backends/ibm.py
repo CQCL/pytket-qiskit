@@ -413,7 +413,7 @@ class IBMQBackend(Backend):
         # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-                passlist.append(self.rebase_pass())
+            passlist.append(self.rebase_pass())
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:

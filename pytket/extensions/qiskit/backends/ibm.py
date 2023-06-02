@@ -123,13 +123,9 @@ class NoIBMQAccountError(Exception):
         )
 
 
-_gateset_with_ecr = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-_gateset_with_cx = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-
-
 class GateSet(Enum):
-    X_SX_RZ_CX = _gateset_with_cx
-    X_SX_RZ_ECR = _gateset_with_ecr
+    X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+    X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
 
 
 class NoRebaseException(Exception):
@@ -168,7 +164,7 @@ _tk1_replacement_function = get_TK1_decomposition_function(
 )
 
 ecr_rebase = RebaseCustom(
-    gateset=_gateset_with_ecr,
+    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
     cx_replacement=_cx_replacement_with_ecr,
     tk1_replacement=_tk1_replacement_function,
 )
@@ -234,11 +230,11 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._standard_gateset = gate_set >= _gateset_with_cx
+        self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
         self._primitive_gates = (
             GateSet.X_SX_RZ_CX.value
-            if gate_set >= _gateset_with_cx
+            if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
             else GateSet.X_SX_RZ_ECR.value
         )
         self._monitor = monitor
@@ -487,9 +483,9 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == _gateset_with_cx:
-            return auto_rebase_pass(_gateset_with_cx)
-        elif self._primitive_gates == _gateset_with_ecr:
+        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
+            return auto_rebase_pass({OpType.X, OpType.SX, OpType.Rz, OpType.CX})
+        elif self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
             return ecr_rebase
         else:
             raise NoRebaseException

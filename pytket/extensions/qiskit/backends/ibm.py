@@ -122,6 +122,7 @@ class NoIBMQAccountError(Exception):
             " or using :py:meth:`pytket.extensions.qiskit.set_ibmq_config` first."
         )
 
+
 class GateSet(Enum):
     X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
     X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
@@ -220,9 +221,13 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._standard_gateset  = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+        self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
 
-        self._primitive_gates = GateSet.X_SX_RZ_CX.value if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX} else GateSet.X_SX_RZ_ECR.value
+        self._primitive_gates = (
+            GateSet.X_SX_RZ_CX.value
+            if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+            else GateSet.X_SX_RZ_ECR.value
+        )
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
@@ -473,7 +478,6 @@ class IBMQBackend(Backend):
             return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
         else:
             return ecr_rebase
-        
 
     def process_circuits(
         self,

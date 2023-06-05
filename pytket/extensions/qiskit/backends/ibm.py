@@ -170,13 +170,13 @@ ecr_rebase = RebaseCustom(
 )
 
 
-def _get_primitive_gates(gateset: Set[OpType], backend: "QiskitBackend") -> Set[OpType]:
+def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
     if gateset >= GateSet.X_SX_RZ_CX.value:
         return GateSet.X_SX_RZ_CX.value
     elif gateset >= GateSet.X_SX_RZ_ECR.value:
         return GateSet.X_SX_RZ_ECR.value
     else:
-        return _tk_gate_set(backend)
+        return gateset
 
 
 class IBMQBackend(Backend):
@@ -239,7 +239,7 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._primitive_gates = _get_primitive_gates(gate_set, self._backend)
+        self._primitive_gates = _get_primitive_gates(gate_set)
 
         self._monitor = monitor
 

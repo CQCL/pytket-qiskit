@@ -126,16 +126,14 @@ class NoIBMQAccountError(Exception):
 class GateSet(Enum):
     X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
     X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-    UNKNOWN = None 
+    UNKNOWN = None
 
 
-class NoRebaseException(Exception):
+class UnsupportedGateSetException(Exception):
     "Exception raised in the case that no gateset rebase is supported for an IBMBackend"
 
-    def __init__(self) -> None:
-        super().__init__(
-            "No rebase is available to convert to the supported gateset of this Backend"
-        )
+    def __init__(self, gateset) -> None:
+        super().__init__(f"Conversion to the {gateset} gateset is unsupported.")
 
 
 def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
@@ -169,6 +167,15 @@ ecr_rebase = RebaseCustom(
     cx_replacement=_cx_replacement_with_ecr,
     tk1_replacement=_tk1_replacement_function,
 )
+
+
+def _get_primitive_gates(gateset: set[OpType]) -> Optional[GateSet]:
+    if gateset >= GateSet.X_SX_RZ_CX.value:
+        return GateSet.X_SX_RZ_CX
+    elif gateset >= GateSet.X_SX_RZ_ECR.value:
+        return GateSet.X_SX_RZ_ECR
+    else:
+        return None
 
 
 class IBMQBackend(Backend):
@@ -231,11 +238,7 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._primitive_gates = (
-            GateSet.X_SX_RZ_CX.value
-            if gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-            else GateSet.X_SX_RZ_ECR.value
-        )
+        self._primitive_gates = _get_primitive_gates(gate_set)
 
         self._monitor = monitor
 
@@ -286,6 +289,16 @@ class IBMQBackend(Backend):
     @property
     def backend_info(self) -> BackendInfo:
         return self._backend_info
+
+    @property
+    def primitive_gates(self):
+        return self._primitive_gates
+
+    @primitive_gates.setter
+    def primitive_gates(self, primitives):
+        if primitives is None:
+            raise UnsupportedGateSetException(primitives)
+        self._primitive_gates = primitives
 
     @classmethod
     def _get_backend_info(cls, backend: "_QiskIBMQBackend") -> BackendInfo:
@@ -487,8 +500,6 @@ class IBMQBackend(Backend):
             return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
         elif self._primitive_gates == GateSet.X_SX_RZ_ECR.value:
             return ecr_rebase
-        else:
-            raise NoRebaseException
 
     def process_circuits(
         self,

@@ -28,7 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
-    Set
+    Set,
 )
 from warnings import warn
 from enum import Enum

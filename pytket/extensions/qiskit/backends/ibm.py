@@ -28,6 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    Set
 )
 from warnings import warn
 from enum import Enum
@@ -169,7 +170,7 @@ ecr_rebase = RebaseCustom(
 )
 
 
-def _get_primitive_gates(gateset: set[OpType], backend: "QiskitBackend") -> set[OpType]:
+def _get_primitive_gates(gateset: Set[OpType], backend: "QiskitBackend") -> Set[OpType]:
     if gateset >= GateSet.X_SX_RZ_CX.value:
         return GateSet.X_SX_RZ_CX.value
     elif gateset >= GateSet.X_SX_RZ_ECR.value:

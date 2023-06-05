@@ -127,7 +127,6 @@ class NoIBMQAccountError(Exception):
 class GateSet(Enum):
     X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
     X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-    UNKNOWN = None
 
 
 class UnsupportedGateSetException(Exception):

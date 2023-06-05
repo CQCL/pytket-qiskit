@@ -297,7 +297,7 @@ class IBMQBackend(Backend):
 
     @primitive_gates.setter
     def primitive_gates(self, primitives):
-        if primitives is None:
+        if primitives != GateSet.X_SX_RZ_CX or GateSet.X_SX_RZ_ECR:
             raise UnsupportedGateSetException(primitives)
         self._primitive_gates = primitives
 

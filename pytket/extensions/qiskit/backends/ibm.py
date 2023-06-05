@@ -130,7 +130,7 @@ class GateSet(Enum):
 
 
 class UnsupportedGateSetException(Exception):
-    "Exception raised in the case that no gateset rebase is supported for an IBMBackend"
+    "Exception raised in the case that no gateset rebase is supported for an IBMQBackend"
 
     def __init__(self, gateset) -> None:
         super().__init__(f"Conversion to the {gateset} gateset is unsupported.")

@@ -169,13 +169,13 @@ ecr_rebase = RebaseCustom(
 )
 
 
-def _get_primitive_gates(gateset: set[OpType]) -> Optional[GateSet]:
+def _get_primitive_gates(gateset: set[OpType], backend: "QiskitBackend") -> set[OpType]:
     if gateset >= GateSet.X_SX_RZ_CX.value:
-        return GateSet.X_SX_RZ_CX
+        return GateSet.X_SX_RZ_CX.value
     elif gateset >= GateSet.X_SX_RZ_ECR.value:
-        return GateSet.X_SX_RZ_ECR
+        return GateSet.X_SX_RZ_ECR.value
     else:
-        return None
+        return _tk_gate_set(backend)
 
 
 class IBMQBackend(Backend):

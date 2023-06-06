@@ -45,8 +45,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "pytket ~= 1.15",
-        "qiskit ~= 0.43.0",
-        "qiskit-ibm-runtime ~= 0.9.2",
+        "qiskit ~= 0.43.1",
+        "qiskit-ibm-runtime ~= 0.10.0",
         "qiskit-aer ~= 0.12.0",
         "numpy",
     ],

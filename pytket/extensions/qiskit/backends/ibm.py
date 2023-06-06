@@ -472,10 +472,10 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
+        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
             return ecr_rebase
         else:
-            return auto_rebase_pass(self.primitive_gates)
+            return auto_rebase_pass(self._primitive_gates)
 
     def process_circuits(
         self,

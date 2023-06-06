@@ -76,7 +76,7 @@ from pytket.passes import (  # type: ignore
     NaivePlacementPass,
     RebaseCustom,
 )
-from pytket.passes.auto_rebase import get_TK1_decomposition_function
+from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
@@ -124,18 +124,6 @@ class NoIBMQAccountError(Exception):
         )
 
 
-class GateSet(Enum):
-    X_SX_RZ_CX = {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-    X_SX_RZ_ECR = {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-
-
-class UnsupportedGateSetException(Exception):
-    "Exception raised when no gateset rebase is supported for an IBMQBackend"
-
-    def __init__(self, gateset) -> None:
-        super().__init__(f"Conversion to the {gateset} gateset is unsupported.")
-
-
 def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
@@ -158,22 +146,20 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
 _cx_replacement_with_ecr = (
     Circuit(2).X(0).SX(1).Rz(-0.5, 0).add_gate(OpType.ECR, [0, 1])
 )
-_tk1_replacement_function = get_TK1_decomposition_function(
-    {OpType.X, OpType.SX, OpType.Rz}
-)
+_tk1_replacement_function = _TK1_to_X_SX_Rz
 
 ecr_rebase = RebaseCustom(
-    gateset=GateSet.X_SX_RZ_ECR.value,
+    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.CX},
     cx_replacement=_cx_replacement_with_ecr,
     tk1_replacement=_tk1_replacement_function,
 )
 
 
 def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
-    if gateset >= GateSet.X_SX_RZ_CX.value:
-        return GateSet.X_SX_RZ_CX.value
-    elif gateset >= GateSet.X_SX_RZ_ECR.value:
-        return GateSet.X_SX_RZ_ECR.value
+    if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
+        return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+    elif gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
+        return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
     else:
         return gateset
 
@@ -289,16 +275,6 @@ class IBMQBackend(Backend):
     @property
     def backend_info(self) -> BackendInfo:
         return self._backend_info
-
-    @property
-    def primitive_gates(self):
-        return self._primitive_gates
-
-    @primitive_gates.setter
-    def primitive_gates(self, primitives):
-        if primitives != GateSet.X_SX_RZ_CX.value or GateSet.X_SX_RZ_ECR.value:
-            raise UnsupportedGateSetException(primitives)
-        self._primitive_gates = primitives
 
     @classmethod
     def _get_backend_info(cls, backend: "_QiskIBMQBackend") -> BackendInfo:
@@ -496,10 +472,10 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == GateSet.X_SX_RZ_CX.value:
-            return auto_rebase_pass(GateSet.X_SX_RZ_CX.value)
-        elif self._primitive_gates == GateSet.X_SX_RZ_ECR.value:
+        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
             return ecr_rebase
+        else:
+            return auto_rebase_pass(self.primitive_gates)
 
     def process_circuits(
         self,

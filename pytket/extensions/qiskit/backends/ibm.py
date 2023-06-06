@@ -31,7 +31,6 @@ from typing import (
     Set,
 )
 from warnings import warn
-from enum import Enum
 
 import qiskit  # type: ignore
 from qiskit import IBMQ

@@ -1,5 +1,8 @@
 Changelog
 ~~~~~~~~~
+0.40.0 (June 2023)(unreleased)
+------------------------------
+* Added support for the {X, SX, Rz, ECR} in the default compilation pass for :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.
 
 0.39.0 (May 2023)
 -----------------

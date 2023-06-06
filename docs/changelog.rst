@@ -4,7 +4,8 @@ Changelog
 0.40.0 (unreleased)
 -------------------
 
-* Update qiskit version to 0.43.
+* Update qiskit version to 0.43.1
+* Update qiskit-runtime version to 0.10.0
 
 0.39.0 (May 2023)
 -----------------

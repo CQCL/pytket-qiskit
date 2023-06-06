@@ -1,5 +1,8 @@
 Changelog
 ~~~~~~~~~
+0.40.0 (June 2023)(unreleased)
+------------------------------
+* Fix to the `tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
 
 0.39.0 (May 2023)
 -----------------

@@ -148,7 +148,7 @@ _cx_replacement_with_ecr = (
 _tk1_replacement_function = _TK1_to_X_SX_Rz
 
 ecr_rebase = RebaseCustom(
-    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.CX},
+    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
     cx_replacement=_cx_replacement_with_ecr,
     tk1_replacement=_tk1_replacement_function,
 )

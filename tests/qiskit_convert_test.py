@@ -760,3 +760,9 @@ def test_qcontrolbox_conversion() -> None:
     tkc2 = qiskit_to_tk(qc2)
     assert tkc2.n_gates == 3
     assert tkc2.n_gates_of_type(OpType.QControlBox) == 3
+
+# Ensures that the tk_to_qiskit converter does not cancel redundant gates
+def test_tk_to_qiskit_redundancies() -> None:
+    h_circ = Circuit(1).H(0).H(0)
+    qc_h = tk_to_qiskit(h_circ)
+    assert qc_h.count_ops()["h"] == 2

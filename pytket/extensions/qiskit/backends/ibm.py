@@ -136,7 +136,7 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
 
 
-class IBMBackend(Backend):
+class IBMQBackend(Backend):
     _supports_shots = False
     _supports_counts = True
     _supports_contextual_optimisation = True

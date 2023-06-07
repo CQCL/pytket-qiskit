@@ -29,6 +29,8 @@ from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
+from qiskit_ibm_provider import IBMProvider
+
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
@@ -151,10 +153,8 @@ def test_measures() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_noise() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
+    provider = IBMProvider(instance="ibm-q/open/main")
     back = provider.get_backend("ibmq_manila")
 
     noise_model = NoiseModel.from_backend(back)
@@ -198,10 +198,8 @@ def test_noise() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
+    provider = IBMProvider(instance="ibm-q/open/main")
     back = provider.get_backend("ibmq_manila")
 
     char = process_characterisation(back)
@@ -503,10 +501,8 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_aer_default_pass() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
+    provider = IBMProvider(instance="ibm-q/open/main")
     back = provider.get_backend("ibmq_manila")
 
     noise_model = NoiseModel.from_backend(back)
@@ -790,10 +786,7 @@ def test_aer_placed_expectation() -> None:
     )
     assert b.get_operator_expectation_value(c, operator) == (-0.5 + 0j)
 
-    if not IBMQ.active_account():
-        IBMQ.load_account()
-
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
+    provider = IBMProvider(instance="ibm-q/open/main")
     back = provider.get_backend("ibmq_manila")
 
     noise_model = NoiseModel.from_backend(back)
@@ -1138,7 +1131,7 @@ def test_available_devices() -> None:
     )
     assert len(backend_info_list) > 0
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
+    provider = IBMProvider(instance="ibm-q/open/main")
 
     backend_info_list = IBMQBackend.available_devices(account_provider=provider)
     assert len(backend_info_list) > 0

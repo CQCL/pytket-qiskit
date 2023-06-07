@@ -14,7 +14,8 @@
 
 import os
 import pytest
-from qiskit import IBMQ  # type: ignore
+#from qiskit import IBMQ  # type: ignore
+from qiskit_ibm_provider import IBMProvider
 from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
 
 
@@ -26,10 +27,10 @@ def setup_qiskit_account() -> None:
         # to enable one using the token in the env variable:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
-        if not IBMQ.stored_account():
+        if not IBMProvider.saved_accounts():
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
-                IBMQ.enable_account(token)
+                IBMProvider.save_account(token)
 
 
 @pytest.fixture(scope="module")

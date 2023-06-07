@@ -33,6 +33,7 @@ from warnings import warn
 
 import qiskit  # type: ignore
 from qiskit import IBMQ
+from qiskit_ibm_provider import IBMProvider
 from qiskit.primitives import SamplerResult  # type: ignore
 
 
@@ -124,12 +125,12 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    if not IBMQ.active_account():
-        if IBMQ.stored_account():
-            IBMQ.load_account()
+    if not IBMProvider().active_account():
+        if IBMProvider.saved_accounts():
+            IBMProvider()
         else:
             if token is not None:
-                IBMQ.save_account(token)
+                IBMProvider.save_account(token)
             else:
                 raise NoIBMQAccountError()
     if not QiskitRuntimeService.saved_accounts():
@@ -212,7 +213,7 @@ class IBMQBackend(Backend):
         group: Optional[str],
         project: Optional[str],
         qiskit_config: Optional[QiskitConfig],
-    ) -> "AccountProvider":
+    ) -> "IBMProvider":
         _save_ibmq_auth(qiskit_config)
         provider_kwargs: Dict[str, Optional[str]] = {}
         if hub:
@@ -231,9 +232,9 @@ class IBMQBackend(Backend):
             )
         try:
             if any(x is not None for x in provider_kwargs.values()):
-                provider = IBMQ.get_provider(**provider_kwargs)
+                provider = IBMProvider(**provider_kwargs)
             else:
-                provider = IBMQ.providers()[0]
+                provider = IBMProvider()
         except qiskit.providers.ibmq.exceptions.IBMQProviderError as err:
             logging.warn(
                 (
@@ -310,7 +311,7 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider: Optional["AccountProvider"] = kwargs.get("account_provider")
+        provider: Optional["IBMProvider"] = kwargs.get("account_provider")
         if provider is None:
             provider = cls._get_provider(
                 kwargs.get("hub"), kwargs.get("group"), kwargs.get("project"), None

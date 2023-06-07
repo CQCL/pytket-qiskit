@@ -91,9 +91,10 @@ from pytket.utils.results import KwargTypes
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
-if TYPE_CHECKING:
+#if TYPE_CHECKING:
     #from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend 
-    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
+
+from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -174,7 +175,7 @@ class IBMBackend(Backend):
         :param account_provider: An AccountProvider returned from IBMQ.enable_account.
          Used to pass credentials in if not configured on local machine (as well as hub,
          group and project). Defaults to None.
-        :type account_provider: Optional[Provider]
+        :type provider: Optional[IBMProvider]
         :param token: Authentication token to use the `QiskitRuntimeService`.
         :type token: Optional[str]
         """

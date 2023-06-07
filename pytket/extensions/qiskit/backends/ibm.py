@@ -32,7 +32,6 @@ from typing import (
 from warnings import warn
 
 import qiskit  # type: ignore
-from qiskit import IBMQ
 from qiskit_ibm_provider import IBMProvider
 from qiskit.primitives import SamplerResult  # type: ignore
 
@@ -93,12 +92,8 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
 if TYPE_CHECKING:
-    from qiskit.providers.ibmq import (  # type: ignore
-        AccountProvider,
-    )
     #from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend 
-
-from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
+    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -140,7 +135,7 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
 
 
-class IBMQBackend(Backend):
+class IBMPytketBackend(Backend):
     _supports_shots = False
     _supports_counts = True
     _supports_contextual_optimisation = True
@@ -153,7 +148,7 @@ class IBMQBackend(Backend):
         group: Optional[str] = None,
         project: Optional[str] = None,
         monitor: bool = True,
-        account_provider: Optional["AccountProvider"] = None,
+        provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
         """A backend for running circuits on remote IBMQ devices.
@@ -179,7 +174,7 @@ class IBMQBackend(Backend):
         :param account_provider: An AccountProvider returned from IBMQ.enable_account.
          Used to pass credentials in if not configured on local machine (as well as hub,
          group and project). Defaults to None.
-        :type account_provider: Optional[AccountProvider]
+        :type account_provider: Optional[Provider]
         :param token: Authentication token to use the `QiskitRuntimeService`.
         :type token: Optional[str]
         """
@@ -187,8 +182,8 @@ class IBMQBackend(Backend):
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
             self._get_provider(hub, group, project, self._pytket_config)
-            if account_provider is None
-            else account_provider
+            if provider is None
+            else provider
         )
         self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
         config = self._backend.configuration()

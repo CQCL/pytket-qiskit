@@ -94,9 +94,11 @@ from .config import QiskitConfig
 
 if TYPE_CHECKING:
     from qiskit.providers.ibmq import (  # type: ignore
-        IBMQBackend as _QiskIBMQBackend,
         AccountProvider,
     )
+    #from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend 
+
+from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -188,7 +190,7 @@ class IBMQBackend(Backend):
             if account_provider is None
             else account_provider
         )
-        self._backend: "_QiskIBMQBackend" = self._provider.get_backend(backend_name)
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -251,7 +253,7 @@ class IBMQBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def _get_backend_info(cls, backend: "_QiskIBMQBackend") -> BackendInfo:
+    def _get_backend_info(cls, backend: "_QiskIBMBackend") -> BackendInfo:
         config = backend.configuration()
         characterisation = process_characterisation(backend)
         averaged_errors = get_avg_characterisation(characterisation)
@@ -285,7 +287,7 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(backend)
         backend_info = BackendInfo(
             cls.__name__,
-            backend.name(),
+            backend.name,
             __extension_version__,
             arch,
             gate_set.union(

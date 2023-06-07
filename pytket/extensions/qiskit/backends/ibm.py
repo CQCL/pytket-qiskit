@@ -91,10 +91,11 @@ from pytket.utils.results import KwargTypes
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
-#if TYPE_CHECKING:
+if TYPE_CHECKING:
+    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
     #from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend 
 
-from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
+#from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -123,14 +124,13 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    if not IBMProvider().active_account():
-        if IBMProvider.saved_accounts():
-            IBMProvider()
-        else:
-            if token is not None:
-                IBMProvider.save_account(token)
-            else:
-                raise NoIBMQAccountError()
+    try:
+        IBMProvider() 
+    except:
+         if token is not None:
+            IBMProvider.save_account(token)
+         else:
+            raise NoIBMQAccountError()
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
@@ -157,7 +157,6 @@ class IBMBackend(Backend):
         be specified here as parameters or set in the config file
         using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
         This function can also be used to set the IBMQ API token.
-
         :param backend_name: Name of the IBMQ device, e.g. `ibmqx4`,
          `ibmq_16_melbourne`.
         :type backend_name: str
@@ -186,7 +185,7 @@ class IBMBackend(Backend):
             if provider is None
             else provider
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name) #type: ignore
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 

@@ -93,9 +93,10 @@ from .config import QiskitConfig
 
 if TYPE_CHECKING:
     from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
-    #from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend 
 
-#from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
+    # from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend
+
+# from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -125,11 +126,11 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
     try:
-        IBMProvider() 
+        IBMProvider()
     except:
-         if token is not None:
+        if token is not None:
             IBMProvider.save_account(token)
-         else:
+        else:
             raise NoIBMQAccountError()
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
@@ -185,7 +186,7 @@ class IBMQBackend(Backend):
             if provider is None
             else provider
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name) #type: ignore
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)  # type: ignore
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -206,30 +207,14 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def _get_provider(
-        hub: Optional[str],
-        group: Optional[str],
-        project: Optional[str],
+        instance: Optional[str],
         qiskit_config: Optional[QiskitConfig],
     ) -> "IBMProvider":
         _save_ibmq_auth(qiskit_config)
         provider_kwargs: Dict[str, Optional[str]] = {}
-        if hub:
-            provider_kwargs["hub"] = hub
-        else:
-            provider_kwargs["hub"] = qiskit_config.hub if qiskit_config else None
-        if group:
-            provider_kwargs["group"] = group
-        else:
-            provider_kwargs["group"] = qiskit_config.group if qiskit_config else None
-        if project:
-            provider_kwargs["project"] = project
-        else:
-            provider_kwargs["project"] = (
-                qiskit_config.project if qiskit_config else None
-            )
         try:
-            if any(x is not None for x in provider_kwargs.values()):
-                provider = IBMProvider(**provider_kwargs)
+            if instance is not None:
+                provider = IBMProvider(instance=instance)
             else:
                 provider = IBMProvider()
         except qiskit.providers.ibmq.exceptions.IBMQProviderError as err:
@@ -307,12 +292,8 @@ class IBMQBackend(Backend):
         return backend_info
 
     @classmethod
-    def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider: Optional["IBMProvider"] = kwargs.get("account_provider")
-        if provider is None:
-            provider = cls._get_provider(
-                kwargs.get("hub"), kwargs.get("group"), kwargs.get("project"), None
-            )
+    def available_devices(cls, instance: str) -> List[BackendInfo]:
+        provider = cls._get_provider(instance, None)
         backend_info_list = [
             cls._get_backend_info(backend) for backend in provider.backends()
         ]

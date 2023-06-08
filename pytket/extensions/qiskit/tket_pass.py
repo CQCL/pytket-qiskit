@@ -96,7 +96,7 @@ class TketAutoPass(TketPass):
         if isinstance(backend._provider, AerProvider):
             tk_backend = self._aer_backend_map[backend.name()]()
         elif isinstance(backend._provider, IBMProvider):
-            tk_backend = IBMQBackend(backend.name(), token=token)
+            tk_backend = IBMQBackend(backend.name, token=token)
         else:
             raise NotImplementedError("This backend provider is not supported.")
         super().__init__(tk_backend.default_compilation_pass(optimisation_level))

@@ -22,7 +22,6 @@ import numpy as np
 
 import pytest
 
-from qiskit import IBMQ  # type: ignore
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore

@@ -146,9 +146,7 @@ class IBMQBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        hub: Optional[str] = None,
-        group: Optional[str] = None,
-        project: Optional[str] = None,
+        instance: Optional[str] = None,
         monitor: bool = True,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
@@ -163,7 +161,7 @@ class IBMQBackend(Backend):
         :type backend_name: str
         :param hub: Name of the IBMQ hub to use for the provider.
          If None, just uses the first hub found. Defaults to None.
-        :param instance: 
+        :param instance:
         :type instance: str, optional
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional
@@ -177,7 +175,11 @@ class IBMQBackend(Backend):
         """
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
-        self._provider = (self._get_provider(instance=instance self._pytket_config) if provider is None else provider)
+        self._provider = (
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
+            if provider is None
+            else provider
+        )
         self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)  # type: ignore
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)

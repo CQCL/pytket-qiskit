@@ -14,7 +14,7 @@
 import json
 import os
 from collections import Counter
-from typing import Dict, cast
+from typing import Dict, cast, Optional
 import math
 import cmath
 from hypothesis import given, strategies
@@ -53,7 +53,7 @@ from pytket.extensions.qiskit import (
     AerUnitaryBackend,
     IBMQEmulatorBackend,
 )
-from pytket.extensions.qiskit import qiskit_to_tk, process_characterisation
+from pytket.extensions.qiskit import qiskit_to_tk, process_characterisation, NoIBMQAccountError
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -64,7 +64,6 @@ from pytket.utils.results import compare_statevectors
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of IBMQ account)"
-
 
 def circuit_gen(measure: bool = False) -> Circuit:
     c = Circuit(2, 2)
@@ -1126,9 +1125,7 @@ def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_available_devices() -> None:
-    backend_info_list = IBMQBackend.available_devices(
-        hub="ibm-q", group="open", project="main"
-    )
+    backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
     assert len(backend_info_list) > 0
 
     provider = IBMProvider(instance="ibm-q/open/main")

@@ -33,6 +33,8 @@ from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
+
+from qiskit_ibm_provider import IBMProvider
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
@@ -276,7 +278,7 @@ def test_tketautopass() -> None:
     if not skip_remote_tests:
         if not IBMQ.active_account():
             IBMQ.load_account()
-        provider = IBMQ.providers(hub="ibm-q")[0]
+        provider = IBMProvider(instance="ibm-q/open/main")
         backends.append(provider.get_backend("ibmq_manila"))
     for back in backends:
         for o_level in range(3):

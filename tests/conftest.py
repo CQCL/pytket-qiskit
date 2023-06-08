@@ -38,9 +38,7 @@ def setup_qiskit_account() -> None:
 def manila_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_manila",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -49,9 +47,7 @@ def manila_backend() -> IBMQBackend:
 def lima_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_lima",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -60,9 +56,7 @@ def lima_backend() -> IBMQBackend:
 def qasm_simulator_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_qasm_simulator",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -71,9 +65,7 @@ def qasm_simulator_backend() -> IBMQBackend:
 def simulator_stabilizer_backend() -> IBMQBackend:
     return IBMQBackend(
         "simulator_stabilizer",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -83,9 +75,7 @@ def simulator_stabilizer_backend() -> IBMQBackend:
 def manila_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibmq_manila",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -94,8 +84,6 @@ def manila_emulator_backend() -> IBMQEmulatorBackend:
 def belem_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibmq_belem",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )

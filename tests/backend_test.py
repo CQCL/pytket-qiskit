@@ -53,7 +53,11 @@ from pytket.extensions.qiskit import (
     AerUnitaryBackend,
     IBMQEmulatorBackend,
 )
-from pytket.extensions.qiskit import qiskit_to_tk, process_characterisation, NoIBMQAccountError
+from pytket.extensions.qiskit import (
+    qiskit_to_tk,
+    process_characterisation,
+    NoIBMQAccountError,
+)
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -64,6 +68,7 @@ from pytket.utils.results import compare_statevectors
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of IBMQ account)"
+
 
 def circuit_gen(measure: bool = False) -> Circuit:
     c = Circuit(2, 2)

@@ -37,6 +37,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     Sampler,
     RuntimeJob,
 )
+from qiskit_ibm_provider import IBMProvider
 
 from pytket.backends import Backend, CircuitNotRunError, ResultHandle, CircuitStatus
 from pytket.backends.backendinfo import BackendInfo
@@ -73,7 +74,7 @@ class IBMQEmulatorBackend(Backend):
         hub: Optional[str] = None,
         group: Optional[str] = None,
         project: Optional[str] = None,
-        account_provider: Optional["AccountProvider"] = None,
+        provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
         """Construct an IBMQEmulatorBackend. Identical to :py:class:`IBMQBackend`
@@ -86,7 +87,7 @@ class IBMQEmulatorBackend(Backend):
             hub=hub,
             group=group,
             project=project,
-            account_provider=account_provider,
+            provider=provider,
             token=token,
         )
 

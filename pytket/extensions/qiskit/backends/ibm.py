@@ -172,7 +172,7 @@ class IBMQBackend(Backend):
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional
         :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-        :param account_provider: An AccountProvider returned from IBMQ.enable_account.
+        :param provider: An AccountProvider returned from IBMQ.enable_account.
          Used to pass credentials in if not configured on local machine (as well as hub,
          group and project). Defaults to None.
         :type provider: Optional[IBMProvider]

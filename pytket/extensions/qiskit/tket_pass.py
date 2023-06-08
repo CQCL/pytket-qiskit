@@ -18,6 +18,9 @@ from qiskit.providers import BackendV1  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit.providers.aer.aerprovider import AerProvider  # type: ignore # type: ignore
+from qiskit_ibm_provider import IBMProvider
+
+
 from pytket.passes import BasePass  # type: ignore
 from pytket.extensions.qiskit import (
     IBMQBackend,
@@ -26,7 +29,6 @@ from pytket.extensions.qiskit import (
     AerUnitaryBackend,
 )
 from .qiskit_convert import qiskit_to_tk, tk_to_qiskit
-from qiskit_ibm_provider import IBMProvider
 
 
 class TketPass(TransformationPass):

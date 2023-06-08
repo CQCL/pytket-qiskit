@@ -71,9 +71,7 @@ class IBMQEmulatorBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        hub: Optional[str] = None,
-        group: Optional[str] = None,
-        project: Optional[str] = None,
+        instance: str,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
@@ -84,9 +82,7 @@ class IBMQEmulatorBackend(Backend):
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,
-            hub=hub,
-            group=group,
-            project=project,
+            instance=instance,
             provider=provider,
             token=token,
         )

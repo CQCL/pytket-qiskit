@@ -14,7 +14,7 @@
 import json
 import os
 from collections import Counter
-from typing import Dict, cast, Optional
+from typing import Dict, cast
 import math
 import cmath
 from hypothesis import given, strategies
@@ -56,7 +56,6 @@ from pytket.extensions.qiskit import (
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
     process_characterisation,
-    NoIBMQAccountError,
 )
 from pytket.utils.expectations import (
     get_pauli_expectation_value,

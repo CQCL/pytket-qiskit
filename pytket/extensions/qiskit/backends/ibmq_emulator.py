@@ -29,7 +29,6 @@ from warnings import warn
 
 from qiskit.providers.aer import AerSimulator  # type: ignore
 from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
-from qiskit.providers.ibmq import AccountProvider  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,

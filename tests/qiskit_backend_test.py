@@ -18,8 +18,7 @@ from typing import Optional, Any
 import numpy as np
 import pytest
 
-from qiskit import IBMQ, QuantumCircuit, execute  # type: ignore
-from qiskit.providers.ibmq import AccountProvider  # type: ignore
+from qiskit import QuantumCircuit, execute  # type: ignore
 from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.utils import QuantumInstance  # type: ignore

@@ -23,7 +23,6 @@ from typing import (
     List,
     Optional,
     Dict,
-    Any,
     Sequence,
     TYPE_CHECKING,
     Tuple,
@@ -205,7 +204,6 @@ class IBMQBackend(Backend):
         qiskit_config: Optional[QiskitConfig],
     ) -> "IBMProvider":
         _save_ibmq_auth(qiskit_config)
-        provider_kwargs: Dict[str, Optional[str]] = {}
         try:
             if instance is not None:
                 provider = IBMProvider(instance=instance)

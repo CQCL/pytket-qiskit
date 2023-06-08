@@ -28,6 +28,8 @@ from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
 from qiskit.transpiler.passes import Unroller  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
+from qiskit_ibm_provider import IBMProvider
+
 from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,
@@ -46,13 +48,11 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBMQ configuration)"
 
 
 @pytest.fixture
-def provider() -> Optional["AccountProvider"]:
+def provider() -> Optional["IBMProvider"]:
     if skip_remote_tests:
         return None
     else:
-        if not IBMQ.active_account():
-            IBMQ.load_account()
-        return IBMQ.providers(hub="ibm-q")[0]
+        return IBMProvider(instance="ibm-q")
 
 
 def circuit_gen(measure: bool = False) -> QuantumCircuit:

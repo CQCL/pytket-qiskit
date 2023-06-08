@@ -1130,7 +1130,7 @@ def test_available_devices() -> None:
 
     provider = IBMProvider(instance="ibm-q/open/main")
 
-    backend_info_list = IBMQBackend.available_devices(provider)
+    backend_info_list = IBMQBackend.available_devices(provider=provider)
     assert len(backend_info_list) > 0
 
     backend_info_list = IBMQBackend.available_devices()

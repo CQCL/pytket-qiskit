@@ -14,8 +14,9 @@
 
 import os
 import pytest
-#from qiskit import IBMQ  # type: ignore
-from qiskit_ibm_provider import IBMProvider # type: ignore
+
+# from qiskit import IBMQ  # type: ignore
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
 
 

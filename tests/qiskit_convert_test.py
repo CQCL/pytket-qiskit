@@ -277,7 +277,7 @@ def test_tketautopass() -> None:
     ]
     if not skip_remote_tests:
         provider = IBMProvider(instance="ibm-q/open/main")
-        backends.append(provider.get_backend("ibmq_manila")) #type: ignore
+        backends.append(provider.get_backend("ibmq_manila"))  # type: ignore
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(

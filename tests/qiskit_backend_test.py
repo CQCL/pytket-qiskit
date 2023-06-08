@@ -185,7 +185,7 @@ def test_unsupported_gateset() -> None:
     # (tested with qiskit 0.39.1)
     with pytest.raises(TranspilerError) as e:
         result = grover.amplify(problem)
-    err_msg = "Unable to map"
+    err_msg = "Unable to translate"
     assert err_msg in str(e.value)
 
     # By providing an Unroller pass, the QuantumInstance will rebase the Grover op into

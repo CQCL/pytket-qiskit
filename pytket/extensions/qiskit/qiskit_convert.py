@@ -709,15 +709,15 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     node_errors: dict = defaultdict(dict)
     readout_errors: dict = {}
 #
-    #t1_times = []
-    #t2_times = []
+    t1_times = []
+    t2_times = []
     frequencies = []
     gate_times = []
 
     if properties is not None:
         for index, qubit_info in enumerate(properties.qubits):
-            #t1_times.append([index, return_value_if_found(qubit_info, "T1")])
-            #t2_times.append([index, return_value_if_found(qubit_info, "T2")])
+            t1_times.append([index, return_value_if_found(qubit_info, "T1")])
+            t2_times.append([index, return_value_if_found(qubit_info, "T2")])
             frequencies.append([index, return_value_if_found(qubit_info, "frequency")])
             # readout error as a symmetric 2x2 matrix
             offdiag = return_value_if_found(qubit_info, "readout_error")
@@ -763,8 +763,8 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     characterisation["EdgeErrors"] = link_errors
     characterisation["ReadoutErrors"] = readout_errors
     characterisation["Architecture"] = arc
-    #characterisation["t1times"] = t1_times
-    #characterisation["t2times"] = t2_times
+    characterisation["t1times"] = t1_times
+    characterisation["t2times"] = t2_times
     characterisation["Frequencies"] = frequencies
     characterisation["GateTimes"] = gate_times
 

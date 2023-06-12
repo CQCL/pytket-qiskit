@@ -93,10 +93,6 @@ from .config import QiskitConfig
 if TYPE_CHECKING:
     from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
 
-    # from qiskit_ibm_runtime.ibm_backend import IBMBackend as _QiskIBMBackend
-
-# from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
-
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
 

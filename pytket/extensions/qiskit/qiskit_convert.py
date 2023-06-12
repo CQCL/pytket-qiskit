@@ -708,7 +708,7 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     link_errors: dict = defaultdict(dict)
     node_errors: dict = defaultdict(dict)
     readout_errors: dict = {}
-    #
+    
     t1_times = []
     t2_times = []
     frequencies = []

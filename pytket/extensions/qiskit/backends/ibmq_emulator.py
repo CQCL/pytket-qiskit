@@ -90,8 +90,7 @@ class IBMQEmulatorBackend(Backend):
         self._session = Session(service=self._service, backend="ibmq_qasm_simulator")
 
         # Get noise model:
-        aer_sim = AerSimulator.from_backend(self._ibmq._backend)
-        self._noise_model = NoiseModel.from_backend(aer_sim)
+        self._noise_model = NoiseModel.from_backend(self._ibmq._backend)
 
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()

@@ -284,9 +284,7 @@ class IBMQBackend(Backend):
         return backend_info
 
     @classmethod
-    def available_devices(
-        cls, **kwargs
-    ) -> List[BackendInfo]:
+    def available_devices(cls, **kwargs) -> List[BackendInfo]:
         provider = kwargs.get("provider")
         if provider is None:
             if kwargs.get("instance") is not None:

@@ -30,7 +30,6 @@ from typing import (
 )
 from warnings import warn
 
-import qiskit  # type: ignore
 from qiskit_ibm_provider import IBMProvider
 from qiskit_ibm_provider.exceptions import IBMProviderError
 from qiskit.primitives import SamplerResult  # type: ignore

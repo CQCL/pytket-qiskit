@@ -70,7 +70,7 @@ class IBMQEmulatorBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        instance: Optional[str],
+        instance: Optional[str] = None,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):

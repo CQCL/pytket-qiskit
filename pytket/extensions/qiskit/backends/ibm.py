@@ -152,19 +152,17 @@ class IBMQBackend(Backend):
         be specified here as parameters or set in the config file
         using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
         This function can also be used to set the IBMQ API token.
-        :param backend_name: Name of the IBMQ device, e.g. `ibmqx4`,
-         `ibmq_16_melbourne`.
+        :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
         :type backend_name: str
         :param hub: Name of the IBMQ hub to use for the provider.
          If None, just uses the first hub found. Defaults to None.
-        :param instance:
+        :param instance: A string containing information about the hub/group/project in
+          the following format. Use instance=f"{hub}/{group}/{project}".
         :type instance: str, optional
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional
         :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-        :param provider: An AccountProvider returned from IBMQ.enable_account.
-         Used to pass credentials in if not configured on local machine (as well as hub,
-         group and project). Defaults to None.
+        :param provider: An IBMProvider
         :type provider: Optional[IBMProvider]
         :param token: Authentication token to use the `QiskitRuntimeService`.
         :type token: Optional[str]

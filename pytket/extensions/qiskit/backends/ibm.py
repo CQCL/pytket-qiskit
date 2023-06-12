@@ -32,6 +32,7 @@ from warnings import warn
 
 import qiskit  # type: ignore
 from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_provider.exceptions import IBMProviderError
 from qiskit.primitives import SamplerResult  # type: ignore
 
 
@@ -205,7 +206,7 @@ class IBMQBackend(Backend):
                 provider = IBMProvider(instance=instance)
             else:
                 provider = IBMProvider()
-        except qiskit.providers.ibmq.exceptions.IBMQProviderError as err:
+        except IBMProviderError as err:
             logging.warn(
                 (
                     "Provider was not specified enough, specify hub,"

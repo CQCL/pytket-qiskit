@@ -285,11 +285,12 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(
-        cls, instance: Optional[str], provider: Optional[IBMProvider]
+        cls, **kwargs
     ) -> List[BackendInfo]:
+        provider = kwargs.get("provider")
         if provider is None:
-            if instance is not None:
-                provider = cls._get_provider(instance, None)
+            if kwargs.get("instance") is not None:
+                provider = cls._get_provider(kwargs.get("instance"), None)
             provider = IBMProvider()
 
         backend_info_list = [

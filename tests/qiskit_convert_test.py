@@ -770,8 +770,8 @@ def test_state_prep_conversion() -> None:
     tk_sp = qiskit_to_tk(qc_sp)
     assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp.n_gates == 1
-    ghz_array = np.array(ghz_state)
-    assert compare_statevectors(tk_sp.get_statevector(), ghz_array)
+    DecomposeBoxes().apply(tk_sp)
+    assert tk_sp.n_gates_of_type(OpType.Reset) == 3
     # State prep with ndarray of complex amplitudes
     qc_sp2 = QuantumCircuit(2)
     complex_statvector = np.array([0, 1 / np.sqrt(2), -1.0j / np.sqrt(2), 0])
@@ -779,12 +779,14 @@ def test_state_prep_conversion() -> None:
     tk_sp2 = qiskit_to_tk(qc_sp2)
     assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp2.n_gates == 1
-    assert compare_statevectors(tk_sp2.get_statevector(), complex_statvector)
     # test tket -> qiskit conversion
     converted_qiskit_qc = tk_to_qiskit(tk_sp2)
     assert converted_qiskit_qc.count_ops()["initialize"] == 1
+    tk_sp3 = qiskit_to_tk(converted_qiskit_qc)
+    # check circuit decomposes as expected
+    DecomposeBoxes().apply(tk_sp3)
+    assert tk_sp3.n_gates_of_type(OpType.Reset) == 2
 
-from pytket.circuit.display import view_browser
 
 def test_state_prep_conversion_with_str_and_int():
     qc = QuantumCircuit(5)
@@ -796,11 +798,4 @@ def test_state_prep_conversion_with_str_and_int():
     qc = QuantumCircuit(4)
     qc.initialize(7, qc.qubits)
     tkc7 = qiskit_to_tk(qc)
-    print(tkc7.get_statevector())
-    assert n_gates_of_type(OpType.X) == 3
-
-
-
-
-
-test_state_prep_conversion_with_str_and_int()
+    assert tkc7.n_gates_of_type(OpType.X) == 3

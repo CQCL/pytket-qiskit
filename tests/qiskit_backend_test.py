@@ -27,7 +27,7 @@ from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
 from qiskit.transpiler.passes import Unroller  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
-from qiskit_ibm_provider import IBMProvider # type: ignore 
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,

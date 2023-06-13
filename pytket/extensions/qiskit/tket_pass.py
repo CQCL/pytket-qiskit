@@ -18,7 +18,7 @@ from qiskit.providers import BackendV1  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit.providers.aer.aerprovider import AerProvider  # type: ignore # type: ignore
-from qiskit_ibm_provider import IBMProvider # type: ignore
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 
 from pytket.passes import BasePass  # type: ignore

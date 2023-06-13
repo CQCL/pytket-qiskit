@@ -367,9 +367,14 @@ class CircuitBuilder:
 
                 elif isinstance(instr.params, list) and len(instr.params) != 1:
                     amplitude_list = instr.params
-                    pytket_state_prep_box = StatePreparationBox(
-                        amplitude_list, qiskit_instruction=instr
-                    )
+                    if isinstance(instr, Initialize):
+                        pytket_state_prep_box = StatePreparationBox(
+                            amplitude_list, with_initial_reset=True
+                        )
+                    else:
+                        pytket_state_prep_box = StatePreparationBox(
+                            amplitude_list, with_initial_reset=False
+                        )
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:

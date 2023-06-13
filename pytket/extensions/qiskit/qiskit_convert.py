@@ -247,15 +247,16 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
     return QubitPauliOperator(qpodict)
 
 
-def _string_to_circuit(string_list: Union[str, list[str]], n_qubits: int) -> Circuit:
+def _string_to_circuit(circuit_string: str, n_qubits: int, add_resets=True) -> Circuit:
     """Helper function to handle strings in QuantumCircuit.initialize"""
-    "".join(string_list)
+
     circ = Circuit(n_qubits)
     # Add a reset to every single qubit regardless of string length - qiskit behavior
-    for qubit in circ.qubits:
-        circ.add_gate(OpType.Reset, [qubit])
+    if add_resets:
+        for qubit in circ.qubits:
+            circ.add_gate(OpType.Reset, [qubit])
 
-    for count, char in enumerate(string_list):
+    for count, char in enumerate(circuit_string):
         if char == "0":
             pass
         if char in ("1", "-"):
@@ -358,19 +359,21 @@ class CircuitBuilder:
                 # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
                 if isinstance(instr.params[0], str):
                     # Parse string to get the right single qubit gates
-                    circuit = _string_to_circuit(instr.params, instr.num_qubits)
+                    circuit = _string_to_circuit("".join(instr.params), instr.num_qubits)
                     self.tkc.add_circuit(circuit, qubits)
-                
+
                 elif isinstance(instr.params, list) and len(instr.params) != 1:
                     amplitude_list = instr.params
-                    pytket_state_prep_box = StatePreparationBox(amplitude_list)
+                    pytket_state_prep_box = StatePreparationBox(
+                        amplitude_list, with_initial_reset=True
+                    )
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
                     instr.params[0] = int(instr.params[0].real)
-                    bitstring = bin(instr.params[0])[2:]
-                    circuit = _string_to_circuit(bitstring, instr.num_qubits)
+                    bit_string = bin(instr.params[0])[2:]
+                    circuit = _string_to_circuit(bit_string, instr.num_qubits)
                     self.tkc.add_circuit(circuit, qubits)
 
             elif type(instr) == PauliEvolutionGate:

@@ -23,9 +23,7 @@ class QiskitConfig(PytketExtConfig):
 
     ext_dict_key: ClassVar[str] = "qiskit"
 
-    hub: Optional[str]
-    group: Optional[str]
-    project: Optional[str]
+    instance: Optional[str]
     ibmq_api_token: Optional[str]
 
     @classmethod
@@ -33,29 +31,21 @@ class QiskitConfig(PytketExtConfig):
         cls: Type["QiskitConfig"], ext_dict: Dict[str, Any]
     ) -> "QiskitConfig":
         return cls(
-            ext_dict.get("hub", None),
-            ext_dict.get("group", None),
-            ext_dict.get("project", None),
+            ext_dict.get("instance", None),
             ext_dict.get("ibmq_api_token", None),
         )
 
 
 def set_ibmq_config(
-    hub: Optional[str] = None,
-    group: Optional[str] = None,
-    project: Optional[str] = None,
+    instance: Optional[str] = None,
     ibmq_api_token: Optional[str] = None,
 ) -> None:
     """Set default values for any of hub, group, project or API token
     for your IBMQ provider. Can be overridden in backend construction."""
 
     config = QiskitConfig.from_default_config_file()
-    if hub is not None:
-        config.hub = hub
-    if group is not None:
-        config.group = group
-    if project is not None:
-        config.project = project
+    if instance is not None:
+        config.instance = instance
     if ibmq_api_token is not None:
         config.ibmq_api_token = ibmq_api_token
     config.update_default_config_file()

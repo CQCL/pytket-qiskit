@@ -27,11 +27,12 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    Any
 )
 from warnings import warn
 
-from qiskit_ibm_provider import IBMProvider
-from qiskit_ibm_provider.exceptions import IBMProviderError
+from qiskit_ibm_provider import IBMProvider # type: ignore
+from qiskit_ibm_provider.exceptions import IBMProviderError # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
 
 
@@ -91,7 +92,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
 if TYPE_CHECKING:
-    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend
+    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -278,7 +279,7 @@ class IBMQBackend(Backend):
         return backend_info
 
     @classmethod
-    def available_devices(cls, **kwargs) -> List[BackendInfo]:
+    def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
         provider = kwargs.get("provider")
         if provider is None:
             if kwargs.get("instance") is not None:

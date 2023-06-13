@@ -35,7 +35,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     Sampler,
     RuntimeJob,
 )
-from qiskit_ibm_provider import IBMProvider
+from qiskit_ibm_provider import IBMProvider # type: ignore
 
 from pytket.backends import Backend, CircuitNotRunError, ResultHandle, CircuitStatus
 from pytket.backends.backendinfo import BackendInfo

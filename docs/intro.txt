@@ -50,7 +50,7 @@ The :py:class:`AerBackend` also supports GPU simulation which can be configured 
 Access and Credentials
 ======================
 
-With the exception of the Aer simulators, accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBMQ account. An account can be set up here: https://quantum-computing.ibm.com/login.
+With the exception of the Aer simulators, accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBM account. An account can be set up here: https://quantum-computing.ibm.com/login.
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
@@ -60,7 +60,7 @@ Once you have created an account you can obtain an API token which you can use t
     
     set_ibmq_config(ibmq_api_token=ibm_token)
 
-This will save your IBMQ credentials locally. After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
+After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
 
 If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
 
@@ -68,27 +68,29 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 
     from pytket.extensions.qiskit import set_ibmq_config
 
-    set_ibmq_config(ibmq_api_token=ibm_token, hub='your hub', group='your group', project='your project')
+    set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
 
 Alternatively you can use the following qiskit commands to save your credentials
 locally without saving the token in pytket config:
 
 ::
 
-    from qiskit import IBMQ
+    from qiskit_ibm_provider import IBMProvider
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    IBMQ.save_account(token=ibm_token)
+    IBMProvider.save_account(token=ibm_token, overwrite=True)
     QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token)
 
-To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend` or :py:class:`IBMQEmulatorBackend`. Note that it is possible to pass ``hub``, ``group`` and ``project`` parameters to this method. This allows you to see which devices are accessible through your IBM hub.
+To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend` or :py:class:`IBMQEmulatorBackend`. Note that it is possible to pass optional ``instance`` and ``provider`` arguments to this method. This allows you to see which devices are accessible through your IBM hub.
 
 ::
 
     from pytket.extensions.qiskit import IBMQBackend
+    from qiskit_ibm_provider import IBMProvider
 
-    backend = IBMQBackend # Initialise backend for an IBM device
-    backend.available_devices(hub='your hub', group='your group', project='your project') 
+    ibm_provider = IBMProvider()
+    backend = IBMQBackend("ibmq_belem") # Initialise backend for an IBM device
+    backend.available_devices(instance=instance=f"{hub}/{group}/{project}", provider=ibm_provider) 
 
 
 Backends Available Through pytket-qiskit

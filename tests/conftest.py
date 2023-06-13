@@ -27,7 +27,10 @@ def setup_qiskit_account() -> None:
         # to enable one using the token in the env variable:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
-        if not IBMProvider.saved_accounts():
+        # if not IBMProvider.saved_accounts():
+        try:
+            IBMProvider()
+        except:
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
                 IBMProvider.save_account(token)

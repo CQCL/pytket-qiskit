@@ -502,12 +502,9 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_aer_default_pass() -> None:
+def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
 
-    provider = IBMProvider(instance="ibm-q/open/main")
-    back = provider.get_backend("ibmq_manila")
-
-    noise_model = NoiseModel.from_backend(back)
+    noise_model = NoiseModel.from_backend(manila_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
         for ol in range(3):

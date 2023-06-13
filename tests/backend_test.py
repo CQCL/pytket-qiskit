@@ -22,7 +22,7 @@ import numpy as np
 
 import pytest
 
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit.providers.aer.noise import ReadoutError  # type: ignore

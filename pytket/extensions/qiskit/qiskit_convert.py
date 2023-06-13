@@ -78,8 +78,6 @@ from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
 from pytket.passes import RebaseCustom, RemoveRedundancies  # type: ignore
 
-from pytket.circuit.display import view_browser
-
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
     from qiskit.providers.models.backendproperties import (  # type: ignore
@@ -247,12 +245,14 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
     return QubitPauliOperator(qpodict)
 
 
-def _string_to_circuit(circuit_string: str, n_qubits: int, add_resets=False) -> Circuit:
+def _string_to_circuit(
+    circuit_string: str, n_qubits: int, qiskit_instruction: Instruction
+) -> Circuit:
     """Helper function to handle strings in QuantumCircuit.initialize"""
 
     circ = Circuit(n_qubits)
-    # Add a reset to every single qubit regardless of string length - qiskit behavior
-    if add_resets:
+    # Check if Instruction is Initialize or Statepreparation
+    if isinstance(qiskit_instruction, Initialize):
         for qubit in circ.qubits:
             circ.add_gate(OpType.Reset, [qubit])
 
@@ -360,30 +360,25 @@ class CircuitBuilder:
                 if isinstance(instr.params[0], str):
                     # Parse string to get the right single qubit gates
                     circuit_string = "".join(instr.params)
-                    # add resets if we have a Initialize instruction.
-                    if isinstance(instr, Initialize):
-                        circuit = _string_to_circuit(circuit_string, instr.num_qubits, add_resets=True)
-                    # If we have a Statvector we don't add resets
-                    else:
-                        circuit = _string_to_circuit(circuit_string, instr.num_qubits, add_resets=False)
+                    circuit = _string_to_circuit(
+                        circuit_string, instr.num_qubits, qiskit_instruction=instr
+                    )
                     self.tkc.add_circuit(circuit, qubits)
 
                 elif isinstance(instr.params, list) and len(instr.params) != 1:
                     amplitude_list = instr.params
-                    if isinstance(instr, Initialize):
-                        pytket_state_prep_box = StatePreparationBox(amplitude_list, with_initial_reset=True)
-                    else:
-                        pytket_state_prep_box = StatePreparationBox(amplitude_list, with_initial_reset=False)
+                    pytket_state_prep_box = StatePreparationBox(
+                        amplitude_list, qiskit_instruction=instr
+                    )
                     self.tkc.add_gate(pytket_state_prep_box, qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
                     instr.params[0] = int(instr.params[0].real)
                     bit_string = bin(instr.params[0])[2:]
-                    if isinstance(instr, Initialize):
-                        circuit = _string_to_circuit(bit_string, instr.num_qubits, add_resets=True)
-                    else:
-                        circuit = _string_to_circuit(bit_string, instr.num_qubits, add_resets=False)
+                    circuit = _string_to_circuit(
+                        bit_string, instr.num_qubits, qiskit_instruction=instr
+                    )
                     self.tkc.add_circuit(circuit, qubits)
 
             elif type(instr) == PauliEvolutionGate:

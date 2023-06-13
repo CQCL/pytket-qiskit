@@ -43,7 +43,7 @@ from .mock_pytket_backend import MockShotBackend
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
-REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBMQ configuration)"
+REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
 
 
 @pytest.fixture

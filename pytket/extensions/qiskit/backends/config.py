@@ -36,7 +36,7 @@ class QiskitConfig(PytketExtConfig):
             ext_dict.get("hub", None),
             ext_dict.get("group", None),
             ext_dict.get("project", None),
-            ext_dict.get("ibmq_api_token", None),
+            ext_dict.get("ibmq_api_token", None),  # is here an issue?
         )
 
 

@@ -27,13 +27,13 @@ def setup_qiskit_account() -> None:
         # to enable one using the token in the env variable:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
-        # if not IBMProvider.saved_accounts():
         try:
             IBMProvider()
         except:
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
-                IBMProvider.save_account(token)
+                IBMProvider.save_account(token, overwrite=True)
+                IBMProvider()
 
 
 @pytest.fixture(scope="module")
@@ -89,3 +89,14 @@ def belem_emulator_backend() -> IBMQEmulatorBackend:
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
+
+
+@pytest.fixture(scope="module")
+def ibm_provider() -> IBMProvider:
+    token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+
+    try:
+        return IBMProvider(instance="ibm-q/open/main")
+    except:
+        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+        return IBMProvider(token=token, instance="ibm-q/open/main", overwrite=True)

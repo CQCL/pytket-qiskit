@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import itertools
 import logging
 from ast import literal_eval
@@ -121,11 +122,14 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
+    if token is None and os.getenv("PYTKET_REMOTE_QISKIT_TOKEN") is not None:
+        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
     try:
         IBMProvider()
     except:
         if token is not None:
-            IBMProvider.save_account(token)
+            IBMProvider.save_account(token, overwrite=True)
+            IBMProvider()
         else:
             raise NoIBMQAccountError()
     if not QiskitRuntimeService.saved_accounts():
@@ -168,7 +172,9 @@ class IBMQBackend(Backend):
         :type token: Optional[str]
         """
         super().__init__()
-        self._pytket_config = QiskitConfig.from_default_config_file()
+        self._pytket_config = (
+            QiskitConfig.from_default_config_file()
+        )  # it looks like this is not working?
         self._provider = (
             self._get_provider(instance=instance, qiskit_config=self._pytket_config)
             if provider is None

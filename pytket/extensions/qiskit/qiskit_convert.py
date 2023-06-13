@@ -53,10 +53,10 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate  # type: ignore
+from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation  # type: ignore
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
-from qiskit.extensions import Initialize, StatePreparation  # type: ignore
+from qiskit.extensions import Initialize  # type: ignore
 from pytket.circuit import (  # type: ignore
     CircBox,
     Circuit,
@@ -151,6 +151,7 @@ _qiskit_gates_other = {
     Reset: OpType.Reset,
     UnitaryGate: OpType.Unitary2qBox,
     Initialize: OpType.StatePreparationBox,
+    StatePreparation: OpType.StatePreparationBox
 }
 
 _known_qiskit_gate = {**_qiskit_gates_1q, **_qiskit_gates_2q, **_qiskit_gates_other}
@@ -252,6 +253,7 @@ def _string_to_circuit(
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
+    # If Initialize, add resets
     if isinstance(qiskit_instruction, Initialize):
         for qubit in circ.qubits:
             circ.add_gate(OpType.Reset, [qubit])

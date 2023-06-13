@@ -766,12 +766,11 @@ def test_state_prep_conversion() -> None:
     # State prep with list of real amplitudes
     ghz_state = [1 / np.sqrt(2), 0, 0, 0, 0, 0, 0, 1 / np.sqrt(2)]
     qc_sp = QuantumCircuit(3)
-    qc_sp.initialize(ghz_state)
+    qc_sp.prepare_state(ghz_state)
     tk_sp = qiskit_to_tk(qc_sp)
     assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp.n_gates == 1
-    DecomposeBoxes().apply(tk_sp)
-    assert tk_sp.n_gates_of_type(OpType.Reset) == 3
+    assert compare_statevectors(tk_sp.get_statevector(), ghz_state)
     # State prep with ndarray of complex amplitudes
     qc_sp2 = QuantumCircuit(2)
     complex_statvector = np.array([0, 1 / np.sqrt(2), -1.0j / np.sqrt(2), 0])
@@ -796,6 +795,8 @@ def test_state_prep_conversion_with_str_and_int():
     assert tk_circ.n_gates_of_type(OpType.H) == 4
     assert tk_circ.n_gates_of_type(OpType.X) == 2
     qc = QuantumCircuit(4)
-    qc.initialize(7, qc.qubits)
+    qc.prepare_state(7, qc.qubits)
     tkc7 = qiskit_to_tk(qc)
     assert tkc7.n_gates_of_type(OpType.X) == 3
+    expected_sv = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+    assert compare_statevectors(tkc7.get_statevector(), expected_sv)

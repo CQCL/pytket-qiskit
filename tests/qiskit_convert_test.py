@@ -276,7 +276,7 @@ def test_tketautopass(manila_backend: IBMQBackend) -> None:
         Aer.get_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
-    backends.append(manila_backend._backend)  # type: ignore
+    backends.append(manila_backend._backend)
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(

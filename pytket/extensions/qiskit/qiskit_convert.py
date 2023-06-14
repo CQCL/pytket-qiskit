@@ -356,9 +356,8 @@ class CircuitBuilder:
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
-            elif isinstance(instr, Initialize) or isinstance(instr, StatePreparation):
+            elif isinstance(instr, (Initialize, StatePreparation)):
                 # We need to check how Initialize is constructed. There are several ways.
-                # https://qiskit.org/documentation/stubs/qiskit.circuit.QuantumCircuit.initialize.html
                 if isinstance(instr.params[0], str):
                     # Parse string to get the right single qubit gates
                     circuit_string = "".join(instr.params)

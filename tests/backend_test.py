@@ -194,6 +194,7 @@ def test_noise(manila_backend: IBMQBackend) -> None:
     shots = b.run_circuit(c2, n_shots=10, seed=5).get_shots()
     assert shots.shape == (10, 4)
 
+
 @pytest.mark.timeout(None)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:

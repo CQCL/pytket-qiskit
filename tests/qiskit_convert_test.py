@@ -267,8 +267,9 @@ def test_tketpass() -> None:
     res = execute(qc2, back).result()
     u2 = res.get_unitary(qc2)
     assert np.allclose(u1, u2)
+    
 
-
+@pytest.mark.timeout(None)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_tketautopass(manila_backend: IBMQBackend) -> None:
     backends = [

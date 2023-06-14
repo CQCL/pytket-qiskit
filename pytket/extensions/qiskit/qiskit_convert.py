@@ -76,7 +76,7 @@ from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom, RemoveRedundancies  # type: ignore
+from pytket.passes import RebaseCustom  # type: ignore
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -722,9 +722,6 @@ def tk_to_qiskit(
 
     # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
-
-    # Remove redundant gate operations which could be introduced by the rebase
-    RemoveRedundancies().apply(tkc)
 
     for command in tkc:
         append_tk_command_to_qiskit(

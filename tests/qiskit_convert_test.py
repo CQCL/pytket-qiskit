@@ -42,6 +42,7 @@ from pytket.circuit import (  # type: ignore
     Bit,
     CustomGateDef,
     reg_eq,
+    StatePreparationBox,
 )
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
@@ -768,6 +769,8 @@ def test_tk_to_qiskit_redundancies() -> None:
     qc_h = tk_to_qiskit(h_circ)
     assert qc_h.count_ops()["h"] == 2
 
+
+# https://github.com/CQCL/pytket-qiskit/issues/100
 def test_state_prep_conversion() -> None:
     # State prep with list of real amplitudes
     ghz_state = [1 / np.sqrt(2), 0, 0, 0, 0, 0, 0, 1 / np.sqrt(2)]
@@ -793,7 +796,7 @@ def test_state_prep_conversion() -> None:
     assert tk_sp3.n_gates_of_type(OpType.Reset) == 2
 
 
-def test_state_prep_conversion_with_str_and_int():
+def test_state_prep_conversion_with_str_and_int() -> None:
     qc = QuantumCircuit(5)
     qc.initialize("rl+-1")
     tk_circ = qiskit_to_tk(qc)
@@ -806,3 +809,15 @@ def test_state_prep_conversion_with_str_and_int():
     assert tkc7.n_gates_of_type(OpType.X) == 3
     expected_sv = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
     assert compare_statevectors(tkc7.get_statevector(), expected_sv)
+
+
+def test_state_preparation_with_resets() -> None:
+    test_state = 1 / np.sqrt(3) * np.array([1, 1, 0, 0, 0, 0, 1, 0])
+    tket_sp_reset = StatePreparationBox(test_state, with_initial_reset=True)
+    tk_circ_reset = Circuit(3).add_gate(tket_sp_reset, [0, 1, 2])
+    qiskit_qc_init = tk_to_qiskit(tk_circ_reset)
+    assert qiskit_qc_init.count_ops()["initialize"] == 1
+    tket_sp_no_reset = StatePreparationBox(test_state, with_initial_reset=False)
+    tket_circ_no_reset = Circuit(3).add_gate(tket_sp_no_reset, [0, 1, 2])
+    qiskit_qc_sp = tk_to_qiskit(tket_circ_no_reset)
+    assert qiskit_qc_sp.count_ops()["state_preparation"] == 1

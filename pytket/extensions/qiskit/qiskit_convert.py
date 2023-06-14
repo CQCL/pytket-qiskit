@@ -151,7 +151,7 @@ _qiskit_gates_other = {
     Reset: OpType.Reset,
     UnitaryGate: OpType.Unitary2qBox,
     Initialize: OpType.StatePreparationBox,
-    StatePreparation: OpType.StatePreparationBox
+    StatePreparation: OpType.StatePreparationBox,
 }
 
 _known_qiskit_gate = {**_qiskit_gates_1q, **_qiskit_gates_2q, **_qiskit_gates_other}
@@ -542,8 +542,13 @@ def append_tk_command_to_qiskit(
     if optype == OpType.StatePreparationBox:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         statevector_array = op.get_statevector()
-        initializer = Initialize(statevector_array)
-        return qcirc.append(initializer, qargs=list(reversed(qargs)))
+        # check if the StatePreparationBox contains resets
+        if op.with_initial_reset():
+            initializer = Initialize(statevector_array)
+            return qcirc.append(initializer, qargs=list(reversed(qargs)))
+        else:
+            qiskit_state_prep_box = StatePreparation(statevector_array)
+            return qcirc.append(qiskit_state_prep_box, qargs=list(reversed(qargs)))
 
     if optype == OpType.Barrier:
         if any(q.type == UnitType.bit for q in args):

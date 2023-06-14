@@ -380,8 +380,8 @@ class CircuitBuilder:
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
-                    instr.params[0] = int(instr.params[0].real)
-                    bit_string = bin(instr.params[0])[2:]
+                    integer_parameter = int(instr.params[0].real)
+                    bit_string = bin(integer_parameter)[2:]
                     circuit = _string_to_circuit(
                         bit_string, instr.num_qubits, qiskit_instruction=instr
                     )

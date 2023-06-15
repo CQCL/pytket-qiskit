@@ -33,6 +33,7 @@ from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
+from qiskit.quantum_info import Statevector
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
@@ -56,6 +57,15 @@ from pytket.utils.results import (
 )
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
+
+# helper function for testing
+def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
+    """Given a QuantumCircuit, use aer_simulator_statevector to compute its
+    statevector, return the vector with its endianness adjusted"""
+    back = Aer.get_backend("aer_simulator_statevector")
+    qc.save_state()
+    job = back.run(qc)
+    return job.result().data()["statevector"].reverse_qargs().data
 
 
 def test_classical_barrier_error() -> None:
@@ -770,19 +780,21 @@ def test_tk_to_qiskit_redundancies() -> None:
     assert qc_h.count_ops()["h"] == 2
 
 
+from pytket.circuit.display import view_browser
+
 # https://github.com/CQCL/pytket-qiskit/issues/100
-def test_state_prep_conversion() -> None:
+def test_state_prep_conversion_array_or_list() -> None:
     # State prep with list of real amplitudes
-    ghz_state = [1 / np.sqrt(2), 0, 0, 0, 0, 0, 0, 1 / np.sqrt(2)]
+    ghz_state_permuted = [0, 0, 1 / np.sqrt(2), 0, 0, 0, 0, 1 / np.sqrt(2)]
     qc_sp = QuantumCircuit(3)
-    qc_sp.prepare_state(ghz_state)
+    qc_sp.prepare_state(ghz_state_permuted)
     tk_sp = qiskit_to_tk(qc_sp)
     assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
     assert tk_sp.n_gates == 1
-    assert compare_statevectors(tk_sp.get_statevector(), ghz_state)
+    assert compare_statevectors(tk_sp.get_statevector(), ghz_state_permuted)
     # State prep with ndarray of complex amplitudes
     qc_sp2 = QuantumCircuit(2)
-    complex_statvector = np.array([0, 1 / np.sqrt(2), -1.0j / np.sqrt(2), 0])
+    complex_statvector = np.array([1 / np.sqrt(2), 0, -1.0j / np.sqrt(2), 0])
     qc_sp2.initialize(complex_statvector, qc_sp2.qubits)
     tk_sp2 = qiskit_to_tk(qc_sp2)
     assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
@@ -794,24 +806,56 @@ def test_state_prep_conversion() -> None:
     # check circuit decomposes as expected
     DecomposeBoxes().apply(tk_sp3)
     assert tk_sp3.n_gates_of_type(OpType.Reset) == 2
+    state_arr = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
+    sv = Statevector(state_arr)
+    qc_2 = QuantumCircuit(2)
+    qc_2.prepare_state(sv, [0, 1])
+    tkc_2 = qiskit_to_tk(qc_2)
+    assert tkc_2.n_gates_of_type(OpType.StatePreparationBox) == 1
 
 
-def test_state_prep_conversion_with_str_and_int() -> None:
+def test_state_prep_conversion_with_int() -> None:
+    qc = QuantumCircuit(4)
+    qc.prepare_state(7, qc.qubits)
+    tkc7 = qiskit_to_tk(qc)
+    assert tkc7.n_gates_of_type(OpType.X) == 3
+    qc_sv = _get_qiskit_statevector(qc.decompose())
+    assert compare_statevectors(tkc7.get_statevector(), qc_sv)
+    int_statevector = Statevector.from_int(5, 8)
+    qc_s = QuantumCircuit(3)
+    qc_s.prepare_state(int_statevector)
+    d_qc_s = qc_s.decompose(reps=5)
+    sv_int = _get_qiskit_statevector(d_qc_s)
+    tkc_int = qiskit_to_tk(qc_s)
+    tkc_int_sv = tkc_int.get_statevector()
+    assert compare_statevectors(tkc_int_sv, sv_int)
+
+
+def test_state_prep_conversion_with_str() -> None:
     qc = QuantumCircuit(5)
     qc.initialize("rl+-1")
     tk_circ = qiskit_to_tk(qc)
     assert tk_circ.n_gates_of_type(OpType.Reset) == 5
     assert tk_circ.n_gates_of_type(OpType.H) == 4
     assert tk_circ.n_gates_of_type(OpType.X) == 2
-    qc = QuantumCircuit(4)
-    qc.prepare_state(7, qc.qubits)
-    tkc7 = qiskit_to_tk(qc)
-    assert tkc7.n_gates_of_type(OpType.X) == 3
-    expected_sv = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
-    assert compare_statevectors(tkc7.get_statevector(), expected_sv)
+    qc_string_sp = QuantumCircuit(3)
+    qc_string_sp.prepare_state("r-l")
+    decomposed_qc = qc_string_sp.decompose(reps=4)
+    qiskit_sv = _get_qiskit_statevector(decomposed_qc)
+    tk_string_sp = qiskit_to_tk(qc_string_sp)
+    assert tk_string_sp.n_gates_of_type(OpType.H) == 3
+    assert tk_string_sp.n_gates_of_type(OpType.Sdg) == 1
+    assert compare_statevectors(qiskit_sv, tk_string_sp.get_statevector())
+    sv_str = Statevector.from_label("rr+-")
+    sv_qc = QuantumCircuit(4)
+    sv_qc.prepare_state(sv_str)
+    decomposed_sv_qc = sv_qc.decompose(reps=6)
+    sv_array = _get_qiskit_statevector(decomposed_sv_qc)
+    tkc_sv = qiskit_to_tk(sv_qc)
+    assert compare_statevectors(sv_array, tkc_sv.get_statevector())
 
 
-def test_state_preparation_with_resets() -> None:
+def test_conversion_to_tket_with_and_without_resets() -> None:
     test_state = 1 / np.sqrt(3) * np.array([1, 1, 0, 0, 0, 0, 1, 0])
     tket_sp_reset = StatePreparationBox(test_state, with_initial_reset=True)
     tk_circ_reset = Circuit(3).add_gate(tket_sp_reset, [0, 1, 2])
@@ -819,5 +863,9 @@ def test_state_preparation_with_resets() -> None:
     assert qiskit_qc_init.count_ops()["initialize"] == 1
     tket_sp_no_reset = StatePreparationBox(test_state, with_initial_reset=False)
     tket_circ_no_reset = Circuit(3).add_gate(tket_sp_no_reset, [0, 1, 2])
+    tkc_sv = tket_circ_no_reset.get_statevector()
     qiskit_qc_sp = tk_to_qiskit(tket_circ_no_reset)
     assert qiskit_qc_sp.count_ops()["state_preparation"] == 1
+    decomp_qc = qiskit_qc_sp.decompose(reps=5)
+    qiskit_state = _get_qiskit_statevector(decomp_qc)
+    assert compare_statevectors(tkc_sv, qiskit_state)

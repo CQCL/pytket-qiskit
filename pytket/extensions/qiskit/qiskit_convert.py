@@ -57,6 +57,7 @@ from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePre
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from qiskit.extensions import Initialize  # type: ignore
+from qiskit.quantum_info import Statevector 
 from pytket.circuit import (  # type: ignore
     CircBox,
     Circuit,
@@ -258,7 +259,7 @@ def _string_to_circuit(
         for qubit in circ.qubits:
             circ.add_gate(OpType.Reset, [qubit])
 
-    for count, char in enumerate(circuit_string):
+    for count, char in enumerate(reversed(circuit_string)):
         if char == "0":
             pass
         if char in ("1", "-"):
@@ -376,7 +377,8 @@ class CircuitBuilder:
                         pytket_state_prep_box = StatePreparationBox(
                             amplitude_list, with_initial_reset=False
                         )
-                    self.tkc.add_gate(pytket_state_prep_box, qubits)
+                    reversed_qubits = list(reversed(qubits))
+                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>

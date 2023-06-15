@@ -780,8 +780,6 @@ def test_tk_to_qiskit_redundancies() -> None:
     assert qc_h.count_ops()["h"] == 2
 
 
-from pytket.circuit.display import view_browser
-
 # https://github.com/CQCL/pytket-qiskit/issues/100
 def test_state_prep_conversion_array_or_list() -> None:
     # State prep with list of real amplitudes
@@ -824,6 +822,8 @@ def test_state_prep_conversion_with_int() -> None:
     int_statevector = Statevector.from_int(5, 8)
     qc_s = QuantumCircuit(3)
     qc_s.prepare_state(int_statevector)
+    # unfortunately Aer doesn't support state_preparation
+    # instructions so we decompose first
     d_qc_s = qc_s.decompose(reps=5)
     sv_int = _get_qiskit_statevector(d_qc_s)
     tkc_int = qiskit_to_tk(qc_s)

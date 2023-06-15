@@ -65,7 +65,7 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     back = Aer.get_backend("aer_simulator_statevector")
     qc.save_state()
     job = back.run(qc)
-    return job.result().data()["statevector"].reverse_qargs().data
+    return np.array(job.result().data()["statevector"].reverse_qargs().data)
 
 
 def test_classical_barrier_error() -> None:

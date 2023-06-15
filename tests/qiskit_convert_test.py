@@ -783,7 +783,7 @@ def test_tk_to_qiskit_redundancies() -> None:
 # https://github.com/CQCL/pytket-qiskit/issues/100
 def test_state_prep_conversion_array_or_list() -> None:
     # State prep with list of real amplitudes
-    ghz_state_permuted = [0, 0, 1 / np.sqrt(2), 0, 0, 0, 0, 1 / np.sqrt(2)]
+    ghz_state_permuted = np.array([0, 0, 1 / np.sqrt(2), 0, 0, 0, 0, 1 / np.sqrt(2)])
     qc_sp = QuantumCircuit(3)
     qc_sp.prepare_state(ghz_state_permuted)
     tk_sp = qiskit_to_tk(qc_sp)

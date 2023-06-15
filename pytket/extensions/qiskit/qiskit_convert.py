@@ -57,7 +57,7 @@ from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePre
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from qiskit.extensions import Initialize  # type: ignore
-from qiskit.quantum_info import Statevector 
+from qiskit.quantum_info import Statevector
 from pytket.circuit import (  # type: ignore
     CircBox,
     Circuit,

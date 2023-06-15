@@ -779,7 +779,7 @@ def test_tk_to_qiskit_redundancies() -> None:
     qc_h = tk_to_qiskit(h_circ)
     assert qc_h.count_ops()["h"] == 2
 
-    
+
 def test_ccx_conversion() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/117
     c00 = QuantumCircuit(3)
@@ -806,7 +806,8 @@ def test_ccx_conversion() -> None:
         qiskit_to_tk(c11).get_unitary(),
         Circuit(3).CCX(0, 1, 2).get_unitary(),
     )
- 
+
+
 # https://github.com/CQCL/pytket-qiskit/issues/100
 def test_state_prep_conversion_array_or_list() -> None:
     # State prep with list of real amplitudes

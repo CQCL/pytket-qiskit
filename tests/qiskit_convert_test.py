@@ -767,3 +767,13 @@ def test_tk_to_qiskit_redundancies() -> None:
     h_circ = Circuit(1).H(0).H(0)
     qc_h = tk_to_qiskit(h_circ)
     assert qc_h.count_ops()["h"] == 2
+
+
+def test_ccx_conversion() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/117
+    c = QuantumCircuit(3)
+    c.ccx(0, 1, 2, 0)
+    assert compare_unitaries(
+        qiskit_to_tk(c).get_unitary(),
+        Circuit(3).X(0).X(1).CCX(0, 1, 2).X(0).X(1).get_unitary(),
+    )

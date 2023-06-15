@@ -1,10 +1,12 @@
 Changelog
 ~~~~~~~~~
+
 0.40.0 (unreleased)
 -------------------
 
 * Fix to the `tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
-* Handle qiskit circuits with :py:class:`Initialize` and :py:class:`StatePreparation` instructions in the :py:meth:`qiskit_to_tk` and :py:meth:`tk_to_qiskit` converters.
+* Handle qiskit circuits with :py:class:`Initialize` and :py:class:`StatePreparation` instructions in the :py:meth:`qiskit_to_tk` converter. The :py:meth:`tk_to_qiskit` converter now handles :py:class:`StatePreparationBox`.
+* Fix handling of control state in `qiskit_to_tk`.
 
 0.39.0 (May 2023)
 -----------------

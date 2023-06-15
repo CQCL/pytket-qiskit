@@ -380,7 +380,7 @@ class CircuitBuilder:
                             amplitude_list, with_initial_reset=False
                         )
                     # Need to reverse qubits here (endian-ness)
-                    reversed_qubits = qubits.reverse()
+                    reversed_qubits = list(reversed(qubits))
                     self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:

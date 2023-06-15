@@ -249,7 +249,8 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOpe
 def _string_to_circuit(
     circuit_string: str, n_qubits: int, qiskit_instruction: Instruction
 ) -> Circuit:
-    """Helper function to handle strings in QuantumCircuit.initialize"""
+    """Helper function to handle strings in QuantumCircuit.initialize
+    and QuantumCircuit.prepare_state"""
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
@@ -258,6 +259,8 @@ def _string_to_circuit(
         for qubit in circ.qubits:
             circ.add_gate(OpType.Reset, [qubit])
 
+    # We iterate through the string in reverse to add the
+    # gates in the correct order (endian-ness).
     for count, char in enumerate(reversed(circuit_string)):
         if char == "0":
             pass
@@ -376,6 +379,7 @@ class CircuitBuilder:
                         pytket_state_prep_box = StatePreparationBox(
                             amplitude_list, with_initial_reset=False
                         )
+                    # Need to reverse qubits here (endian-ness)
                     reversed_qubits = qubits.reverse()
                     self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 

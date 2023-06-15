@@ -273,6 +273,21 @@ class CircuitBuilder:
     def circuit(self) -> Circuit:
         return self.tkc
 
+    def add_xs(
+        self,
+        num_ctrl_qubits: Optional[int],
+        ctrl_state: Optional[Union[str, int]],
+        qargs: List["Qubit"],
+    ) -> None:
+        if ctrl_state is not None:
+            assert isinstance(num_ctrl_qubits, int)
+            assert num_ctrl_qubits >= 0
+            c = int(ctrl_state, 2) if isinstance(ctrl_state, str) else int(ctrl_state)
+            assert c >= 0 and (c >> num_ctrl_qubits) == 0
+            for i in range(num_ctrl_qubits):
+                if ((c >> i) & 1) == 0:
+                    self.tkc.X(self.qbmap[qargs[i]])
+
     def add_qiskit_data(self, data: "QuantumCircuitData") -> None:
         for instr, qargs, cargs in data:
             condition_kwargs = {}
@@ -282,6 +297,15 @@ class CircuitBuilder:
                     "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
                     "condition_value": instr.condition[1],
                 }
+            # Controlled operations may be controlled on values other than all-1. Handle
+            # this by prepending and appending X gates on the control qubits.
+            ctrl_state, num_ctrl_qubits = None, None
+            try:
+                ctrl_state = instr.ctrl_state
+                num_ctrl_qubits = instr.num_ctrl_qubits
+            except AttributeError:
+                pass
+            self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if type(instr) == ControlledGate:
                 if type(instr.base_gate) == qiskit_gates.RYGate:
@@ -371,6 +395,8 @@ class CircuitBuilder:
             else:
                 params = [param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)
+
+            self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
@@ -588,6 +614,7 @@ _protected_tket_gates = _supported_tket_gates | _additional_multi_controlled_gat
 
 
 Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
+
 
 # Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
 def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:

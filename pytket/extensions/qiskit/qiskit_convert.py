@@ -57,7 +57,6 @@ from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePre
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from qiskit.extensions import Initialize  # type: ignore
-from qiskit.quantum_info import Statevector
 from pytket.circuit import (  # type: ignore
     CircBox,
     Circuit,
@@ -377,7 +376,7 @@ class CircuitBuilder:
                         pytket_state_prep_box = StatePreparationBox(
                             amplitude_list, with_initial_reset=False
                         )
-                    reversed_qubits = list(reversed(qubits))
+                    reversed_qubits = qubits.reverse()
                     self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:

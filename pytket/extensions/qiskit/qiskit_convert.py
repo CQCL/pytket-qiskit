@@ -264,14 +264,24 @@ def _string_to_circuit(
     for count, char in enumerate(reversed(circuit_string)):
         if char == "0":
             pass
-        if char in ("1", "-"):
+        elif char == "1":
             circ.X(count)
-        if char in ("+", "-", "r", "l"):
+        elif char == "+":
             circ.H(count)
-            if char == "r":
-                circ.S(count)
-            elif char == "l":
-                circ.Sdg(count)
+        elif char == "-":
+            circ.X(count)
+            circ.H(count)
+        elif char == "r":
+            circ.H(count)
+            circ.S(count)
+        elif char == "l":
+            circ.H(count)
+            circ.Sdg(count)
+        else:
+            raise ValueError(
+                f"Cannot parse string for character {char}."
+                + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
+            )
 
     return circ
 

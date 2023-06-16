@@ -18,8 +18,7 @@ from typing import Optional, Any
 import numpy as np
 import pytest
 
-from qiskit import IBMQ, QuantumCircuit, execute  # type: ignore
-from qiskit.providers.ibmq import AccountProvider  # type: ignore
+from qiskit import QuantumCircuit, execute  # type: ignore
 from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.utils import QuantumInstance  # type: ignore
@@ -27,6 +26,8 @@ from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
 from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
 from qiskit.transpiler.passes import Unroller  # type: ignore
 from qiskit_aer import Aer  # type: ignore
+
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -42,17 +43,15 @@ from .mock_pytket_backend import MockShotBackend
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
-REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBMQ configuration)"
+REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
 
 
 @pytest.fixture
-def provider() -> Optional["AccountProvider"]:
+def provider() -> Optional["IBMProvider"]:
     if skip_remote_tests:
         return None
     else:
-        if not IBMQ.active_account():
-            IBMQ.load_account()
-        return IBMQ.providers(hub="ibm-q")[0]
+        return IBMProvider(instance="ibm-q")
 
 
 def circuit_gen(measure: bool = False) -> QuantumCircuit:

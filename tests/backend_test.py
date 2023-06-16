@@ -22,12 +22,13 @@ import numpy as np
 
 import pytest
 
-from qiskit import IBMQ  # type: ignore
-from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
+
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
@@ -51,7 +52,10 @@ from pytket.extensions.qiskit import (
     AerUnitaryBackend,
     IBMQEmulatorBackend,
 )
-from pytket.extensions.qiskit import qiskit_to_tk, process_characterisation
+from pytket.extensions.qiskit import (
+    qiskit_to_tk,
+    process_characterisation,
+)
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -150,14 +154,9 @@ def test_measures() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_noise() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
+def test_noise(manila_backend: IBMQBackend) -> None:
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
-    back = provider.get_backend("ibmq_manila")
-
-    noise_model = NoiseModel.from_backend(back)
+    noise_model = NoiseModel.from_backend(manila_backend._backend)
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
     x_qbs = [2, 0, 4]
@@ -196,15 +195,11 @@ def test_noise() -> None:
     assert shots.shape == (10, 4)
 
 
+@pytest.mark.timeout(None)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_process_characterisation() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
+def test_process_characterisation(manila_backend: IBMQBackend) -> None:
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
-    back = provider.get_backend("ibmq_manila")
-
-    char = process_characterisation(back)
+    char = process_characterisation(manila_backend._backend)
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
     link_errors: dict = char.get("EdgeErrors", {})
@@ -502,14 +497,9 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_aer_default_pass() -> None:
-    if not IBMQ.active_account():
-        IBMQ.load_account()
+def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
-    back = provider.get_backend("ibmq_manila")
-
-    noise_model = NoiseModel.from_backend(back)
+    noise_model = NoiseModel.from_backend(manila_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
         for ol in range(3):
@@ -772,7 +762,7 @@ def test_mixed_circuit() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_aer_placed_expectation() -> None:
+def test_aer_placed_expectation(manila_backend: IBMQBackend) -> None:
     # bug TKET-695
     n_qbs = 3
     c = Circuit(n_qbs, n_qbs)
@@ -790,13 +780,7 @@ def test_aer_placed_expectation() -> None:
     )
     assert b.get_operator_expectation_value(c, operator) == (-0.5 + 0j)
 
-    if not IBMQ.active_account():
-        IBMQ.load_account()
-
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
-    back = provider.get_backend("ibmq_manila")
-
-    noise_model = NoiseModel.from_backend(back)
+    noise_model = NoiseModel.from_backend(manila_backend._backend)
 
     noise_b = AerBackend(noise_model)
 
@@ -1132,15 +1116,11 @@ def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_available_devices() -> None:
-    backend_info_list = IBMQBackend.available_devices(
-        hub="ibm-q", group="open", project="main"
-    )
+def test_available_devices(ibm_provider: IBMProvider) -> None:
+    backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
     assert len(backend_info_list) > 0
 
-    provider = IBMQ.providers(hub="ibm-q", group="open")[0]
-
-    backend_info_list = IBMQBackend.available_devices(account_provider=provider)
+    backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
     assert len(backend_info_list) > 0
 
     backend_info_list = IBMQBackend.available_devices()

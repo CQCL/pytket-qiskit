@@ -17,7 +17,7 @@
 from ._metadata import __extension_version__, __extension_name__  # type: ignore
 from .backends import (
     IBMQBackend,
-    NoIBMQAccountError,
+    NoIBMQCredentialsError,
     AerBackend,
     AerStateBackend,
     AerUnitaryBackend,

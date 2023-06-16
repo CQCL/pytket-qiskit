@@ -1,7 +1,7 @@
 Changelog
 ~~~~~~~~~
 
-0.40.0rc0 (unreleased)
+0.40.0rc1 (unreleased)
 ----------------------
 
 * IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through the pytket-qiskit extension.

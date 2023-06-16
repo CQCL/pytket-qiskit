@@ -127,6 +127,7 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     try:
         if token is not None:
             IBMProvider.save_account(token, overwrite=True)
+            IBMProvider()
         else:
             IBMProvider()
     except:

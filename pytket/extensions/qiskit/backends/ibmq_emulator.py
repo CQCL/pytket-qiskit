@@ -27,9 +27,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.aer import AerSimulator  # type: ignore
 from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
-from qiskit.providers.ibmq import AccountProvider  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,
@@ -37,6 +35,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     Sampler,
     RuntimeJob,
 )
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 from pytket.backends import Backend, CircuitNotRunError, ResultHandle, CircuitStatus
 from pytket.backends.backendinfo import BackendInfo
@@ -70,10 +69,8 @@ class IBMQEmulatorBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        hub: Optional[str] = None,
-        group: Optional[str] = None,
-        project: Optional[str] = None,
-        account_provider: Optional["AccountProvider"] = None,
+        instance: Optional[str] = None,
+        provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
         """Construct an IBMQEmulatorBackend. Identical to :py:class:`IBMQBackend`
@@ -83,10 +80,8 @@ class IBMQEmulatorBackend(Backend):
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,
-            hub=hub,
-            group=group,
-            project=project,
-            account_provider=account_provider,
+            instance=instance,
+            provider=provider,
             token=token,
         )
 
@@ -94,8 +89,7 @@ class IBMQEmulatorBackend(Backend):
         self._session = Session(service=self._service, backend="ibmq_qasm_simulator")
 
         # Get noise model:
-        aer_sim = AerSimulator.from_backend(self._ibmq._backend)
-        self._noise_model = NoiseModel.from_backend(aer_sim)
+        self._noise_model = NoiseModel.from_backend(self._ibmq._backend)
 
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()

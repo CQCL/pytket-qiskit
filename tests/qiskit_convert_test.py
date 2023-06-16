@@ -23,7 +23,6 @@ from qiskit import (  # type: ignore
     QuantumRegister,
     ClassicalRegister,
     execute,
-    IBMQ,
 )
 from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
 from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
@@ -34,6 +33,7 @@ import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
+
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
@@ -45,7 +45,7 @@ from pytket.circuit import (  # type: ignore
     reg_eq,
     StatePreparationBox,
 )
-from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
+from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
@@ -57,6 +57,8 @@ from pytket.utils.results import (
 )
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
+
+REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
 
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
@@ -278,17 +280,15 @@ def test_tketpass() -> None:
     assert np.allclose(u1, u2)
 
 
-def test_tketautopass() -> None:
+@pytest.mark.timeout(None)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_tketautopass(manila_backend: IBMQBackend) -> None:
     backends = [
         Aer.get_backend("aer_simulator_statevector"),
         Aer.get_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
-    if not skip_remote_tests:
-        if not IBMQ.active_account():
-            IBMQ.load_account()
-        provider = IBMQ.providers(hub="ibm-q")[0]
-        backends.append(provider.get_backend("ibmq_manila"))
+    backends.append(manila_backend._backend)
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(

@@ -108,7 +108,7 @@ def _gen_debug_results(n_qubits: int, shots: int, index: int) -> SamplerResult:
     )
 
 
-class NoIBMQAccountError(Exception):
+class NoIBMQCredentialsError(Exception):
     """Raised when there is no IBMQ account available for the backend"""
 
     def __init__(self) -> None:
@@ -131,7 +131,7 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
             IBMProvider.save_account(token, overwrite=True)
             IBMProvider()
         else:
-            raise NoIBMQAccountError()
+            raise NoIBMQCredentialsError()
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)

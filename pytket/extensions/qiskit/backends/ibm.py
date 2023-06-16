@@ -125,7 +125,10 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     if token is None and os.getenv("PYTKET_REMOTE_QISKIT_TOKEN") is not None:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
     try:
-        IBMProvider()
+        if token is not None:
+            IBMProvider.save_account(token, overwrite=True)
+        else:
+            IBMProvider()
     except:
         if token is not None:
             IBMProvider.save_account(token, overwrite=True)

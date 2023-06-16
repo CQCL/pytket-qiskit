@@ -279,7 +279,7 @@ def _string_to_circuit(
             circ.Sdg(count)
         else:
             raise ValueError(
-                f"Cannot parse string for character {char}."
+                f"Cannot parse string for character {char}. "
                 + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
             )
 

@@ -48,6 +48,7 @@ setup(
         "qiskit ~= 0.43.1",
         "qiskit-ibm-runtime ~= 0.10.0",
         "qiskit-aer ~= 0.12.0",
+        "qiskit-ibm-provider ~= 0.5.0",
         "numpy",
     ],
     classifiers=[

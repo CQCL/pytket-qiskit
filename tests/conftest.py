@@ -14,7 +14,8 @@
 
 import os
 import pytest
-from qiskit import IBMQ  # type: ignore
+
+from qiskit_ibm_provider import IBMProvider  # type: ignore
 from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
 
 
@@ -26,19 +27,20 @@ def setup_qiskit_account() -> None:
         # to enable one using the token in the env variable:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
-        if not IBMQ.stored_account():
+        try:
+            IBMProvider()
+        except:
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
-                IBMQ.enable_account(token)
+                IBMProvider.save_account(token, overwrite=True)
+                IBMProvider()
 
 
 @pytest.fixture(scope="module")
 def manila_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_manila",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -47,9 +49,7 @@ def manila_backend() -> IBMQBackend:
 def lima_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_lima",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -58,9 +58,7 @@ def lima_backend() -> IBMQBackend:
 def qasm_simulator_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibmq_qasm_simulator",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -69,9 +67,7 @@ def qasm_simulator_backend() -> IBMQBackend:
 def simulator_stabilizer_backend() -> IBMQBackend:
     return IBMQBackend(
         "simulator_stabilizer",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -81,9 +77,7 @@ def simulator_stabilizer_backend() -> IBMQBackend:
 def manila_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibmq_manila",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -92,8 +86,17 @@ def manila_emulator_backend() -> IBMQEmulatorBackend:
 def belem_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibmq_belem",
-        hub="ibm-q",
-        group="open",
-        project="main",
+        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
+
+
+@pytest.fixture(scope="module")
+def ibm_provider() -> IBMProvider:
+    token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+
+    try:
+        return IBMProvider(instance="ibm-q/open/main")
+    except:
+        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+        return IBMProvider(token=token, instance="ibm-q/open/main", overwrite=True)

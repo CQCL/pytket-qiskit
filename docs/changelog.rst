@@ -1,8 +1,12 @@
 Changelog
 ~~~~~~~~~
+
 0.40.0 (unreleased)
 -------------------
+
+* IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through the pytket-qiskit extension.
 * Fix to the `tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
+* Fix handling of control state in `qiskit_to_tk`.
 
 0.40.0 (unreleased)
 -------------------

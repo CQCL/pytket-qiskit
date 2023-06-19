@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import itertools
 import logging
 from ast import literal_eval
@@ -23,17 +24,17 @@ from typing import (
     List,
     Optional,
     Dict,
-    Any,
     Sequence,
     TYPE_CHECKING,
     Tuple,
     Union,
     Set,
+    Any,
 )
 from warnings import warn
 
-import qiskit  # type: ignore
-from qiskit import IBMQ
+from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
 
 
@@ -95,10 +96,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
 if TYPE_CHECKING:
-    from qiskit.providers.ibmq import (  # type: ignore
-        IBMQBackend as _QiskIBMQBackend,
-        AccountProvider,
-    )
+    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -113,7 +111,7 @@ def _gen_debug_results(n_qubits: int, shots: int, index: int) -> SamplerResult:
     )
 
 
-class NoIBMQAccountError(Exception):
+class NoIBMQCredentialsError(Exception):
     """Raised when there is no IBMQ account available for the backend"""
 
     def __init__(self) -> None:
@@ -127,14 +125,20 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    if not IBMQ.active_account():
-        if IBMQ.stored_account():
-            IBMQ.load_account()
+    if token is None and os.getenv("PYTKET_REMOTE_QISKIT_TOKEN") is not None:
+        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+    try:
+        if token is not None:
+            IBMProvider.save_account(token, overwrite=True)
+            IBMProvider()
         else:
-            if token is not None:
-                IBMQ.save_account(token)
-            else:
-                raise NoIBMQAccountError()
+            IBMProvider()
+    except:
+        if token is not None:
+            IBMProvider.save_account(token, overwrite=True)
+            IBMProvider()
+        else:
+            raise NoIBMQCredentialsError()
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
@@ -172,11 +176,9 @@ class IBMQBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        hub: Optional[str] = None,
-        group: Optional[str] = None,
-        project: Optional[str] = None,
+        instance: Optional[str] = None,
         monitor: bool = True,
-        account_provider: Optional["AccountProvider"] = None,
+        provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
         """A backend for running circuits on remote IBMQ devices.
@@ -184,36 +186,31 @@ class IBMQBackend(Backend):
         be specified here as parameters or set in the config file
         using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
         This function can also be used to set the IBMQ API token.
-
-        :param backend_name: Name of the IBMQ device, e.g. `ibmqx4`,
-         `ibmq_16_melbourne`.
+        :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
         :type backend_name: str
         :param hub: Name of the IBMQ hub to use for the provider.
          If None, just uses the first hub found. Defaults to None.
-        :type hub: Optional[str], optional
-        :param group: Name of the IBMQ group to use for the provider. Defaults to None.
-        :type group: Optional[str], optional
-        :param project: Name of the IBMQ project to use for the provider.
-         Defaults to None.
-        :type project: Optional[str], optional
+        :param instance: A string containing information about the hub/group/project in
+          the following format. Use instance=f"{hub}/{group}/{project}".
+        :type instance: str, optional
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional
         :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-        :param account_provider: An AccountProvider returned from IBMQ.enable_account.
-         Used to pass credentials in if not configured on local machine (as well as hub,
-         group and project). Defaults to None.
-        :type account_provider: Optional[AccountProvider]
+        :param provider: An IBMProvider
+        :type provider: Optional[IBMProvider]
         :param token: Authentication token to use the `QiskitRuntimeService`.
         :type token: Optional[str]
         """
         super().__init__()
-        self._pytket_config = QiskitConfig.from_default_config_file()
+        self._pytket_config = (
+            QiskitConfig.from_default_config_file()
+        )  # it looks like this is not working?
         self._provider = (
-            self._get_provider(hub, group, project, self._pytket_config)
-            if account_provider is None
-            else account_provider
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
+            if provider is None
+            else provider
         )
-        self._backend: "_QiskIBMQBackend" = self._provider.get_backend(backend_name)
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)  # type: ignore
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -234,33 +231,16 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def _get_provider(
-        hub: Optional[str],
-        group: Optional[str],
-        project: Optional[str],
+        instance: Optional[str],
         qiskit_config: Optional[QiskitConfig],
-    ) -> "AccountProvider":
+    ) -> "IBMProvider":
         _save_ibmq_auth(qiskit_config)
-        provider_kwargs: Dict[str, Optional[str]] = {}
-        if hub:
-            provider_kwargs["hub"] = hub
-        else:
-            provider_kwargs["hub"] = qiskit_config.hub if qiskit_config else None
-        if group:
-            provider_kwargs["group"] = group
-        else:
-            provider_kwargs["group"] = qiskit_config.group if qiskit_config else None
-        if project:
-            provider_kwargs["project"] = project
-        else:
-            provider_kwargs["project"] = (
-                qiskit_config.project if qiskit_config else None
-            )
         try:
-            if any(x is not None for x in provider_kwargs.values()):
-                provider = IBMQ.get_provider(**provider_kwargs)
+            if instance is not None:
+                provider = IBMProvider(instance=instance)
             else:
-                provider = IBMQ.providers()[0]
-        except qiskit.providers.ibmq.exceptions.IBMQProviderError as err:
+                provider = IBMProvider()
+        except IBMProviderError as err:
             logging.warn(
                 (
                     "Provider was not specified enough, specify hub,"
@@ -276,7 +256,7 @@ class IBMQBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def _get_backend_info(cls, backend: "_QiskIBMQBackend") -> BackendInfo:
+    def _get_backend_info(cls, backend: "_QiskIBMBackend") -> BackendInfo:
         config = backend.configuration()
         characterisation = process_characterisation(backend)
         averaged_errors = get_avg_characterisation(characterisation)
@@ -310,7 +290,7 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(backend)
         backend_info = BackendInfo(
             cls.__name__,
-            backend.name(),
+            backend.name,
             __extension_version__,
             arch,
             gate_set.union(
@@ -336,11 +316,12 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider: Optional["AccountProvider"] = kwargs.get("account_provider")
+        provider = kwargs.get("provider")
         if provider is None:
-            provider = cls._get_provider(
-                kwargs.get("hub"), kwargs.get("group"), kwargs.get("project"), None
-            )
+            if kwargs.get("instance") is not None:
+                provider = cls._get_provider(kwargs.get("instance"), None)
+            provider = IBMProvider()
+
         backend_info_list = [
             cls._get_backend_info(backend) for backend in provider.backends()
         ]

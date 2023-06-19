@@ -415,7 +415,13 @@ class IBMQBackend(Backend):
         # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            passlist.append(self.rebase_pass())
+            if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX} or {
+                OpType.X,
+                OpType.SX,
+                OpType.Rz,
+                OpType.ECR,
+            }:
+                passlist.append(self.rebase_pass())
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
@@ -458,7 +464,13 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-        passlist.extend([self.rebase_pass(), RemoveRedundancies()])
+        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX} or {
+            OpType.X,
+            OpType.SX,
+            OpType.Rz,
+            OpType.ECR,
+        }:
+            passlist.extend([self.rebase_pass(), RemoveRedundancies()])
         if optimisation_level > 0:
             passlist.append(
                 SimplifyInitial(allow_classical=False, create_all_qubits=True)

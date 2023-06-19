@@ -1122,7 +1122,6 @@ def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
     c.H(0).SX(1).CX(0, 1).measure_all()
-    print(simulator_stabilizer_backend._primitive_gates)
     c = simulator_stabilizer_backend.get_compiled_circuit(c, 0)
     h = simulator_stabilizer_backend.process_circuit(c, n_shots=10)
     assert sum(simulator_stabilizer_backend.get_result(h).get_counts().values()) == 10

@@ -445,6 +445,7 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
         # ensure shared backend is reset for other tests
         backend._MACHINE_DEBUG = False
 
+
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(manila_emulator_backend: IBMQEmulatorBackend) -> None:
@@ -807,6 +808,7 @@ def test_operator_expectation_value() -> None:
     e = AerBackend().get_operator_expectation_value(c1, op)
     assert np.isclose(e, 1.0)
 
+
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
@@ -1084,6 +1086,7 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
     b.cancel(h)
 
+
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
@@ -1125,6 +1128,7 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
 
     backend_info_list = IBMQBackend.available_devices()
     assert len(backend_info_list) > 0
+
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -1179,6 +1183,7 @@ def test_sim_qubit_order() -> None:
     circ.X(Qubit("a", 0))
     s = backend.run_circuit(circ).get_state()
     assert np.isclose(abs(s[2]), 1.0)
+
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)

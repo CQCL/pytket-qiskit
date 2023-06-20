@@ -105,7 +105,7 @@ def ibm_provider() -> IBMProvider:
 @pytest.fixture(scope="module")
 def ibm_sherbrooke_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibm_sherbrooke",
+        backend_name="ibm_sherbrooke",
         monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )

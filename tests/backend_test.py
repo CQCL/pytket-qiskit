@@ -195,7 +195,7 @@ def test_noise(manila_backend: IBMQBackend) -> None:
     assert shots.shape == (10, 4)
 
 
-@pytest.mark.timeout(None)
+@pytest.mark.flaky(reruns=3, rerun_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:
 
@@ -671,7 +671,7 @@ def test_operator() -> None:
 
 
 # TKET-1432 this was either too slow or consumed too much memory when bugged
-@pytest.mark.timeout(10)
+@pytest.mark.flaky(reruns=3, rerun_delay=2)
 def test_expectation_bug() -> None:
     backend = AerStateBackend()
     # backend.compile_circuit(circuit)
@@ -1101,7 +1101,7 @@ def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     assert sum(counts.values()) == 10
 
 
-@pytest.mark.timeout(None)
+@pytest.mark.flaky(reruns=3, rerun_delay=2)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)

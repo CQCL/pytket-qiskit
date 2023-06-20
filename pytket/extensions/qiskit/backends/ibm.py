@@ -202,9 +202,7 @@ class IBMQBackend(Backend):
         :type token: Optional[str]
         """
         super().__init__()
-        self._pytket_config = (
-            QiskitConfig.from_default_config_file()
-        )  # it looks like this is not working?
+        self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
             self._get_provider(instance=instance, qiskit_config=self._pytket_config)
             if provider is None

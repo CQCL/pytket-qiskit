@@ -222,6 +222,8 @@ class IBMQBackend(Backend):
 
         self._primitive_gates = _get_primitive_gates(gate_set)
 
+        self._supports_rz = OpType.Rz in self._primitive_gates
+
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
@@ -396,12 +398,10 @@ class IBMQBackend(Backend):
         # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX} or {
-                OpType.X,
-                OpType.SX,
-                OpType.Rz,
-                OpType.ECR,
-            }:
+            if self._supports_rz:
+                # If the Rz gate is unsupported then the rebase should be skipped
+                # This prevents an error when compiling to the stabilizer backend
+                # where no TK1 replacement can be found for the rebase.
                 passlist.append(self.rebase_pass())
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
@@ -445,12 +445,8 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.CX} or {
-            OpType.X,
-            OpType.SX,
-            OpType.Rz,
-            OpType.ECR,
-        }:
+
+        if self._supports_rz:
             passlist.extend([self.rebase_pass(), RemoveRedundancies()])
         if optimisation_level > 0:
             passlist.append(

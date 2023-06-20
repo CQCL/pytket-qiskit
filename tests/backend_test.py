@@ -1204,6 +1204,12 @@ def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> N
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
+    assert ibm_sherbrooke_backend.backend_info.gate_set >= {
+        OpType.X,
+        OpType.SX,
+        OpType.Rz,
+        OpType.ECR,
+    }
     # circuit for an un-routed GHZ state
     circ = (
         Circuit(7)
@@ -1220,10 +1226,4 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
         compiled_circ = ibm_sherbrooke_backend.get_compiled_circuit(
             circ, optimisation_level
         )
-        assert ibm_sherbrooke_backend.backend_info.gate_set >= {
-            OpType.X,
-            OpType.SX,
-            OpType.Rz,
-            OpType.ECR,
-        }
         assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)

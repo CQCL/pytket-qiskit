@@ -1200,6 +1200,7 @@ def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> N
             in str(errorinfo)
         )
 
+
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:

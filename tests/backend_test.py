@@ -1199,3 +1199,30 @@ def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> N
             + "not satisfy MaxNQubitsPredicate(5)"
             in str(errorinfo)
         )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
+    # circuit for an un-routed GHZ state
+    circ = (
+        Circuit(7)
+        .H(0)
+        .CX(0, 1)
+        .CX(0, 2)
+        .CX(0, 3)
+        .CX(0, 4)
+        .CX(0, 5)
+        .CX(0, 6)
+        .measure_all()
+    )
+    for optimisation_level in range(3):
+        compiled_circ = ibm_sherbrooke_backend.get_compiled_circuit(
+            circ, optimisation_level
+        )
+        assert ibm_sherbrooke_backend.backend_info.gate_set >= {
+            OpType.X,
+            OpType.SX,
+            OpType.Rz,
+            OpType.ECR,
+        }
+        assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)

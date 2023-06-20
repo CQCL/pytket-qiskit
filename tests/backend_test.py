@@ -195,7 +195,7 @@ def test_noise(manila_backend: IBMQBackend) -> None:
     assert shots.shape == (10, 4)
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:
 
@@ -446,7 +446,7 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
         backend._MACHINE_DEBUG = False
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     for b in [AerBackend(), manila_emulator_backend]:
@@ -672,7 +672,7 @@ def test_operator() -> None:
 
 
 # TKET-1432 this was either too slow or consumed too much memory when bugged
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 def test_expectation_bug() -> None:
     backend = AerStateBackend()
     # backend.compile_circuit(circuit)
@@ -809,7 +809,7 @@ def test_operator_expectation_value() -> None:
     assert np.isclose(e, 1.0)
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     assert manila_emulator_backend._noise_model is not None
@@ -1087,7 +1087,7 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
     b.cancel(h)
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     assert manila_emulator_backend.supports_contextual_optimisation
@@ -1104,7 +1104,7 @@ def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     assert sum(counts.values()) == 10
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
@@ -1130,7 +1130,7 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     assert len(backend_info_list) > 0
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_backendinfo_serialization1(
     manila_emulator_backend: IBMQEmulatorBackend,
@@ -1185,7 +1185,7 @@ def test_sim_qubit_order() -> None:
     assert np.isclose(abs(s[2]), 1.0)
 
 
-@pytest.mark.flaky(reruns=3, reruns_delay=2)
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93

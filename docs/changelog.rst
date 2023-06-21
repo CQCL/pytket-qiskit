@@ -1,9 +1,9 @@
 Changelog
 ~~~~~~~~~
 
-0.40.0rc1 (unreleased)
-----------------------
-
+0.40.0(unreleased)
+------------------
+* Added support for the {X, SX, Rz, ECR} in the default compilation pass for :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.
 * IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through the pytket-qiskit extension.
 * Fix to the `tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
 * Handle qiskit circuits with :py:class:`Initialize` and :py:class:`StatePreparation` instructions in the :py:meth:`qiskit_to_tk` converter. The :py:meth:`tk_to_qiskit` converter now handles :py:class:`StatePreparationBox`.

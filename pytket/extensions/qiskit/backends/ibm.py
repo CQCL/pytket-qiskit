@@ -28,6 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Tuple,
     Union,
+    Set,
     Any,
 )
 from warnings import warn
@@ -73,7 +74,9 @@ from pytket.passes import (  # type: ignore
     CliffordSimp,
     SimplifyInitial,
     NaivePlacementPass,
+    RebaseCustom,
 )
+from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
@@ -141,6 +144,29 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
 
 
+# Variables for defining a rebase to the {X, SX, Rz, ECR} gateset
+# See https://github.com/CQCL/pytket-qiskit/issues/112
+_cx_replacement_with_ecr = (
+    Circuit(2).X(0).SX(1).Rz(-0.5, 0).add_gate(OpType.ECR, [0, 1])
+)
+_tk1_replacement_function = _TK1_to_X_SX_Rz
+
+ecr_rebase = RebaseCustom(
+    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
+    cx_replacement=_cx_replacement_with_ecr,
+    tk1_replacement=_tk1_replacement_function,
+)
+
+
+def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
+    if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
+        return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+    elif gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
+        return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
+    else:
+        return gateset
+
+
 class IBMQBackend(Backend):
     _supports_shots = False
     _supports_counts = True
@@ -176,9 +202,7 @@ class IBMQBackend(Backend):
         :type token: Optional[str]
         """
         super().__init__()
-        self._pytket_config = (
-            QiskitConfig.from_default_config_file()
-        )  # it looks like this is not working?
+        self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
             self._get_provider(instance=instance, qiskit_config=self._pytket_config)
             if provider is None
@@ -194,7 +218,9 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
         self._session = Session(service=self._service, backend=backend_name)
 
-        self._standard_gateset = gate_set >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
+        self._primitive_gates = _get_primitive_gates(gate_set)
+
+        self._supports_rz = OpType.Rz in self._primitive_gates
 
         self._monitor = monitor
 
@@ -370,7 +396,10 @@ class IBMQBackend(Backend):
         # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._standard_gateset:
+            if self._supports_rz:
+                # If the Rz gate is unsupported then the rebase should be skipped
+                # This prevents an error when compiling to the stabilizer backend
+                # where no TK1 replacement can be found for the rebase.
                 passlist.append(self.rebase_pass())
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
@@ -414,7 +443,8 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-        if self._standard_gateset:
+
+        if self._supports_rz:
             passlist.extend([self.rebase_pass(), RemoveRedundancies()])
         if optimisation_level > 0:
             passlist.append(
@@ -428,9 +458,10 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(
-            {OpType.CX, OpType.X, OpType.SX, OpType.Rz},
-        )
+        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
+            return ecr_rebase
+        else:
+            return auto_rebase_pass(self._primitive_gates)
 
     def process_circuits(
         self,

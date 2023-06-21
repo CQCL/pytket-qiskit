@@ -100,3 +100,12 @@ def ibm_provider() -> IBMProvider:
     except:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         return IBMProvider(token=token, instance="ibm-q/open/main", overwrite=True)
+
+
+@pytest.fixture(scope="module")
+def ibm_sherbrooke_backend() -> IBMQBackend:
+    return IBMQBackend(
+        backend_name="ibm_sherbrooke",
+        monitor=False,
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )

@@ -88,9 +88,10 @@ To see which devices you can access you can use the ``available_devices`` method
     from pytket.extensions.qiskit import IBMQBackend
     from qiskit_ibm_provider import IBMProvider
 
-    ibm_provider = IBMProvider()
+    ibm_provider = IBMProvider(instance=f"{hub}/{group}/{project}")
     backend = IBMQBackend("ibmq_belem") # Initialise backend for an IBM device
-    backend.available_devices(instance=instance=f"{hub}/{group}/{project}", provider=ibm_provider) 
+    backendinfo_list = backend.available_devices(instance=f"{hub}/{group}/{project}", provider=ibm_provider) 
+    print([backend.device_name for backend in backendinfo_list])
 
 
 Backends Available Through pytket-qiskit

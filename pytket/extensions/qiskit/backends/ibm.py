@@ -186,7 +186,7 @@ class IBMQBackend(Backend):
         be specified here as parameters or set in the config file
         using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
         This function can also be used to set the IBMQ API token.
-        
+
         :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
         :type backend_name: str
         :param instance: String containing information about the hub/group/project.

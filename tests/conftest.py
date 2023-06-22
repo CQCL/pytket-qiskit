@@ -28,12 +28,20 @@ def setup_qiskit_account() -> None:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
         try:
-            IBMProvider()
+            IBMProvider(
+                instance="ibm-q/open/main",
+            )
         except:
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
-                IBMProvider.save_account(token, overwrite=True)
-                IBMProvider()
+                IBMProvider.save_account(
+                    token,
+                    overwrite=True,
+                    instance="ibm-q/open/main",
+                )
+                IBMProvider(
+                    instance="ibm-q/open/main",
+                )
 
 
 @pytest.fixture(scope="module")

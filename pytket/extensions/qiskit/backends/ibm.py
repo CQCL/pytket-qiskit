@@ -121,7 +121,9 @@ class NoIBMQCredentialsError(Exception):
         )
 
 
-def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
+def _save_ibmq_auth(
+    instance: Optional[str], qiskit_config: Optional[QiskitConfig]
+) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
@@ -129,14 +131,25 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
     try:
         if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
+            if instance is not None:
+                IBMProvider.save_account(token, overwrite=True, instance=instance)
+                IBMProvider(instance=instance)
+            else:
+                IBMProvider.save_account(token, overwrite=True)
+                IBMProvider()
         else:
-            IBMProvider()
+            if instance is not None:
+                IBMProvider(instance=instance)
+            else:
+                IBMProvider()
     except:
         if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
+            if instance is not None:
+                IBMProvider.save_account(token, overwrite=True, instance=instance)
+                IBMProvider(instance=instance)
+            else:
+                IBMProvider.save_account(token, overwrite=True)
+                IBMProvider()
         else:
             raise NoIBMQCredentialsError()
     if not QiskitRuntimeService.saved_accounts():
@@ -234,7 +247,7 @@ class IBMQBackend(Backend):
         instance: Optional[str],
         qiskit_config: Optional[QiskitConfig],
     ) -> "IBMProvider":
-        _save_ibmq_auth(qiskit_config)
+        _save_ibmq_auth(instance, qiskit_config)
         try:
             if instance is not None:
                 provider = IBMProvider(instance=instance)

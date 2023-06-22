@@ -1123,6 +1123,9 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
     assert len(backend_info_list) > 0
 
+    # Check consistency with pytket-qiskit and qiskit provider
+    assert len(backend_info_list) == len(ibm_provider.backends())
+
     backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
     assert len(backend_info_list) > 0
 

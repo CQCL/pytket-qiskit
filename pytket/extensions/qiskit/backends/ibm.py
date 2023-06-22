@@ -188,10 +188,7 @@ class IBMQBackend(Backend):
         This function can also be used to set the IBMQ API token.
         :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
         :type backend_name: str
-        :param hub: Name of the IBMQ hub to use for the provider.
-         If None, just uses the first hub found. Defaults to None.
-        :param instance: A string containing information about the hub/group/project in
-          the following format. Use instance=f"{hub}/{group}/{project}".
+        :param instance: String containing information about the hub/group/project.
         :type instance: str, optional
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional

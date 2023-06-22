@@ -23,7 +23,6 @@ from qiskit import (  # type: ignore
     QuantumRegister,
     ClassicalRegister,
     execute,
-    IBMQ,
 )
 from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
 from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
@@ -33,6 +32,8 @@ from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
+from qiskit.quantum_info import Statevector
+
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
@@ -42,8 +43,9 @@ from pytket.circuit import (  # type: ignore
     Bit,
     CustomGateDef,
     reg_eq,
+    StatePreparationBox,
 )
-from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk
+from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
@@ -55,6 +57,17 @@ from pytket.utils.results import (
 )
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
+
+REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
+
+# helper function for testing
+def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
+    """Given a QuantumCircuit, use aer_simulator_statevector to compute its
+    statevector, return the vector with its endianness adjusted"""
+    back = Aer.get_backend("aer_simulator_statevector")
+    qc.save_state()
+    job = back.run(qc)
+    return np.array(job.result().data()["statevector"].reverse_qargs().data)
 
 
 def test_classical_barrier_error() -> None:
@@ -267,17 +280,15 @@ def test_tketpass() -> None:
     assert np.allclose(u1, u2)
 
 
-def test_tketautopass() -> None:
+@pytest.mark.timeout(None)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_tketautopass(manila_backend: IBMQBackend) -> None:
     backends = [
         Aer.get_backend("aer_simulator_statevector"),
         Aer.get_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
-    if not skip_remote_tests:
-        if not IBMQ.active_account():
-            IBMQ.load_account()
-        provider = IBMQ.providers(hub="ibm-q")[0]
-        backends.append(provider.get_backend("ibmq_manila"))
+    backends.append(manila_backend._backend)
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(
@@ -760,3 +771,129 @@ def test_qcontrolbox_conversion() -> None:
     tkc2 = qiskit_to_tk(qc2)
     assert tkc2.n_gates == 3
     assert tkc2.n_gates_of_type(OpType.QControlBox) == 3
+
+
+# Ensures that the tk_to_qiskit converter does not cancel redundant gates
+def test_tk_to_qiskit_redundancies() -> None:
+    h_circ = Circuit(1).H(0).H(0)
+    qc_h = tk_to_qiskit(h_circ)
+    assert qc_h.count_ops()["h"] == 2
+
+
+def test_ccx_conversion() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/117
+    c00 = QuantumCircuit(3)
+    c00.ccx(0, 1, 2, 0)  # 0 = "00" (little-endian)
+    assert compare_unitaries(
+        qiskit_to_tk(c00).get_unitary(),
+        Circuit(3).X(0).X(1).CCX(0, 1, 2).X(0).X(1).get_unitary(),
+    )
+    c10 = QuantumCircuit(3)
+    c10.ccx(0, 1, 2, 1)  # 1 = "10" (little-endian)
+    assert compare_unitaries(
+        qiskit_to_tk(c10).get_unitary(),
+        Circuit(3).X(1).CCX(0, 1, 2).X(1).get_unitary(),
+    )
+    c01 = QuantumCircuit(3)
+    c01.ccx(0, 1, 2, 2)  # 2 = "01" (little-endian)
+    assert compare_unitaries(
+        qiskit_to_tk(c01).get_unitary(),
+        Circuit(3).X(0).CCX(0, 1, 2).X(0).get_unitary(),
+    )
+    c11 = QuantumCircuit(3)
+    c11.ccx(0, 1, 2, 3)  # 3 = "11" (little-endian)
+    assert compare_unitaries(
+        qiskit_to_tk(c11).get_unitary(),
+        Circuit(3).CCX(0, 1, 2).get_unitary(),
+    )
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/100
+def test_state_prep_conversion_array_or_list() -> None:
+    # State prep with list of real amplitudes
+    ghz_state_permuted = np.array([0, 0, 1 / np.sqrt(2), 0, 0, 0, 0, 1 / np.sqrt(2)])
+    qc_sp = QuantumCircuit(3)
+    qc_sp.prepare_state(ghz_state_permuted)
+    tk_sp = qiskit_to_tk(qc_sp)
+    assert tk_sp.n_gates_of_type(OpType.StatePreparationBox) == 1
+    assert tk_sp.n_gates == 1
+    assert compare_statevectors(tk_sp.get_statevector(), ghz_state_permuted)
+    # State prep with ndarray of complex amplitudes
+    qc_sp2 = QuantumCircuit(2)
+    complex_statvector = np.array([1 / np.sqrt(2), 0, -1.0j / np.sqrt(2), 0])
+    qc_sp2.initialize(complex_statvector, qc_sp2.qubits)
+    tk_sp2 = qiskit_to_tk(qc_sp2)
+    assert tk_sp2.n_gates_of_type(OpType.StatePreparationBox) == 1
+    assert tk_sp2.n_gates == 1
+    # test tket -> qiskit conversion
+    converted_qiskit_qc = tk_to_qiskit(tk_sp2)
+    assert converted_qiskit_qc.count_ops()["initialize"] == 1
+    tk_sp3 = qiskit_to_tk(converted_qiskit_qc)
+    # check circuit decomposes as expected
+    DecomposeBoxes().apply(tk_sp3)
+    assert tk_sp3.n_gates_of_type(OpType.Reset) == 2
+    state_arr = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
+    sv = Statevector(state_arr)
+    qc_2 = QuantumCircuit(2)
+    qc_2.prepare_state(sv, [0, 1])
+    tkc_2 = qiskit_to_tk(qc_2)
+    assert tkc_2.n_gates_of_type(OpType.StatePreparationBox) == 1
+
+
+def test_state_prep_conversion_with_int() -> None:
+    qc = QuantumCircuit(4)
+    qc.prepare_state(7, qc.qubits)
+    tkc7 = qiskit_to_tk(qc)
+    assert tkc7.n_gates_of_type(OpType.X) == 3
+    qc_sv = _get_qiskit_statevector(qc.decompose())
+    assert compare_statevectors(tkc7.get_statevector(), qc_sv)
+    int_statevector = Statevector.from_int(5, 8)
+    qc_s = QuantumCircuit(3)
+    qc_s.prepare_state(int_statevector)
+    # unfortunately Aer doesn't support state_preparation
+    # instructions so we decompose first
+    d_qc_s = qc_s.decompose(reps=5)
+    sv_int = _get_qiskit_statevector(d_qc_s)
+    tkc_int = qiskit_to_tk(qc_s)
+    tkc_int_sv = tkc_int.get_statevector()
+    assert compare_statevectors(tkc_int_sv, sv_int)
+
+
+def test_state_prep_conversion_with_str() -> None:
+    qc = QuantumCircuit(5)
+    qc.initialize("rl+-1")
+    tk_circ = qiskit_to_tk(qc)
+    assert tk_circ.n_gates_of_type(OpType.Reset) == 5
+    assert tk_circ.n_gates_of_type(OpType.H) == 4
+    assert tk_circ.n_gates_of_type(OpType.X) == 2
+    qc_string_sp = QuantumCircuit(3)
+    qc_string_sp.prepare_state("r-l")
+    decomposed_qc = qc_string_sp.decompose(reps=4)
+    qiskit_sv = _get_qiskit_statevector(decomposed_qc)
+    tk_string_sp = qiskit_to_tk(qc_string_sp)
+    assert tk_string_sp.n_gates_of_type(OpType.H) == 3
+    assert tk_string_sp.n_gates_of_type(OpType.Sdg) == 1
+    assert compare_statevectors(qiskit_sv, tk_string_sp.get_statevector())
+    sv_str = Statevector.from_label("rr+-")
+    sv_qc = QuantumCircuit(4)
+    sv_qc.prepare_state(sv_str)
+    decomposed_sv_qc = sv_qc.decompose(reps=6)
+    sv_array = _get_qiskit_statevector(decomposed_sv_qc)
+    tkc_sv = qiskit_to_tk(sv_qc)
+    assert compare_statevectors(sv_array, tkc_sv.get_statevector())
+
+
+def test_conversion_to_tket_with_and_without_resets() -> None:
+    test_state = 1 / np.sqrt(3) * np.array([1, 1, 0, 0, 0, 0, 1, 0])
+    tket_sp_reset = StatePreparationBox(test_state, with_initial_reset=True)
+    tk_circ_reset = Circuit(3).add_gate(tket_sp_reset, [0, 1, 2])
+    qiskit_qc_init = tk_to_qiskit(tk_circ_reset)
+    assert qiskit_qc_init.count_ops()["initialize"] == 1
+    tket_sp_no_reset = StatePreparationBox(test_state, with_initial_reset=False)
+    tket_circ_no_reset = Circuit(3).add_gate(tket_sp_no_reset, [0, 1, 2])
+    tkc_sv = tket_circ_no_reset.get_statevector()
+    qiskit_qc_sp = tk_to_qiskit(tket_circ_no_reset)
+    assert qiskit_qc_sp.count_ops()["state_preparation"] == 1
+    decomp_qc = qiskit_qc_sp.decompose(reps=5)
+    qiskit_state = _get_qiskit_statevector(decomp_qc)
+    assert compare_statevectors(tkc_sv, qiskit_state)

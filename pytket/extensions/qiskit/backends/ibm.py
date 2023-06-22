@@ -125,8 +125,8 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    if token is None and os.getenv("PYTKET_REMOTE_QISKIT_TOKEN") is not None:
-        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+    # if token is None and os.getenv("PYTKET_REMOTE_QISKIT_TOKEN") is not None:
+    #     token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
     try:
         if token is not None:
             IBMProvider.save_account(token, overwrite=True)
@@ -237,7 +237,7 @@ class IBMQBackend(Backend):
             if instance is not None:
                 provider = IBMProvider(instance=instance)
             else:
-                provider = IBMProvider()
+                provider = IBMProvider() # this is the problem
         except IBMProviderError as err:
             logging.warn(
                 (
@@ -321,7 +321,7 @@ class IBMQBackend(Backend):
                     instance=kwargs.get("instance"), qiskit_config=None
                 )
             else:
-                provider = IBMProvider()
+                provider = IBMProvider() # this is the problem
 
         backend_info_list = [
             cls._get_backend_info(backend) for backend in provider.backends()

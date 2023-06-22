@@ -19,7 +19,7 @@ from qiskit_ibm_provider import IBMProvider  # type: ignore
 from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="session") # this is clearly not working with the new system
 def setup_qiskit_account() -> None:
     if os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None:
         # The remote tests require an active IBMQ account

@@ -186,12 +186,10 @@ class IBMQBackend(Backend):
         be specified here as parameters or set in the config file
         using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
         This function can also be used to set the IBMQ API token.
+
         :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
         :type backend_name: str
-        :param hub: Name of the IBMQ hub to use for the provider.
-         If None, just uses the first hub found. Defaults to None.
-        :param instance: A string containing information about the hub/group/project in
-          the following format. Use instance=f"{hub}/{group}/{project}".
+        :param instance: String containing information about the hub/group/project.
         :type instance: str, optional
         :param monitor: Use the IBM job monitor. Defaults to True.
         :type monitor: bool, optional
@@ -316,11 +314,14 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider = kwargs.get("provider")
+        provider: Optional["IBMProvider"] = kwargs.get("provider")
         if provider is None:
             if kwargs.get("instance") is not None:
-                provider = cls._get_provider(kwargs.get("instance"), None)
-            provider = IBMProvider()
+                provider = cls._get_provider(
+                    instance=kwargs.get("instance"), qiskit_config=None
+                )
+            else:
+                provider = IBMProvider()
 
         backend_info_list = [
             cls._get_backend_info(backend) for backend in provider.backends()

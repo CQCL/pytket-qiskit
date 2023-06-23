@@ -1,8 +1,9 @@
 Changelog
 ~~~~~~~~~
 
-0.40.0(unreleased)
+0.40.0 (June 2023)
 ------------------
+
 * IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through ``pytket-qiskit``. See the updated documentation on `credentials <https://cqcl.github.io/pytket-qiskit/api/index.html#access-and-credentials>`_.
 * The parameters ``hub``, ``group`` and ``project`` are no longer handled as separate arguments in :py:class:`IBMQBackend` and :py:meth:`IBMQBackend.available_devices`. Use ``"instance=f"{hub}/{group}/{project}"`` instead.
 * Added support for the {X, SX, Rz, ECR} in the default compilation pass for :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.

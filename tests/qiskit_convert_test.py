@@ -33,6 +33,7 @@ import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
+from qiskit.extensions import UnitaryGate
 
 from pytket.circuit import (  # type: ignore
     Circuit,
@@ -59,6 +60,7 @@ from pytket.utils.results import (
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
+
 
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
@@ -897,3 +899,18 @@ def test_conversion_to_tket_with_and_without_resets() -> None:
     decomp_qc = qiskit_qc_sp.decompose(reps=5)
     qiskit_state = _get_qiskit_statevector(decomp_qc)
     assert compare_statevectors(tkc_sv, qiskit_state)
+
+
+def test_unitary_gate() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/122
+    qkc = QuantumCircuit(3)
+    for n in range(4):
+        u = np.eye(1 << n, dtype=complex)
+        gate = UnitaryGate(u)
+        qkc.append(gate, list(range(n)))
+    tkc = qiskit_to_tk(qkc)
+    cmds = tkc.get_commands()
+    assert len(cmds) == 3
+    assert cmds[0].op.type == OpType.Unitary1qBox
+    assert cmds[1].op.type == OpType.Unitary2qBox
+    assert cmds[2].op.type == OpType.Unitary3qBox

@@ -897,3 +897,37 @@ def test_conversion_to_tket_with_and_without_resets() -> None:
     decomp_qc = qiskit_qc_sp.decompose(reps=5)
     qiskit_state = _get_qiskit_statevector(decomp_qc)
     assert compare_statevectors(tkc_sv, qiskit_state)
+
+
+def test_ccz_conversion() -> None:
+    qc_ccz = QuantumCircuit(4)
+    qc_ccz.append(qiskit_gates.CCZGate(), [0, 1, 2])
+    qc_ccz.append(qiskit_gates.CCZGate(), [3, 1, 0])
+    tkc_ccz = qiskit_to_tk(qc_ccz)
+    assert tkc_ccz.n_gates_of_type(OpType.CnZ) == tkc_ccz.n_gates == 2
+    # bidirectional CnZ conversion already supported
+
+
+def test_csx_conversion() -> None:
+    qc_csx = QuantumCircuit(2)
+    qc_csx.append(qiskit_gates.CSXGate(), [0, 1])
+    qc_csx.append(qiskit_gates.CSXGate(), [1, 0])
+    converted_tkc = qiskit_to_tk(qc_csx)
+    assert converted_tkc.n_gates_of_type(OpType.CSX) == converted_tkc.n_gates == 2
+    u1 = converted_tkc.get_unitary()
+    new_tkc_csx = Circuit(2)
+    new_tkc_csx.add_gate(OpType.CSX, [0, 1]).add_gate(OpType.CSX, [1, 0])
+    u2 = new_tkc_csx.get_unitary()
+    assert compare_unitaries(u1, u2)
+    converted_qc = tk_to_qiskit(new_tkc_csx)
+    assert converted_qc.count_ops()["csx"] == 2
+
+
+def test_CS_and_CSdg() -> None:
+    qiskit_qc = QuantumCircuit(2)
+    qiskit_qc.append(qiskit_gates.CSGate(), [0, 1])
+    qiskit_qc.append(qiskit_gates.CSdgGate(), [0, 1])
+    qiskit_qc.append(qiskit_gates.CSGate(), [1, 0])
+    qiskit_qc.append(qiskit_gates.CSdgGate(), [1, 0])
+    tkc = qiskit_to_tk(qiskit_qc)
+    assert tkc.n_gates_of_type(OpType.QControlBox) == 4

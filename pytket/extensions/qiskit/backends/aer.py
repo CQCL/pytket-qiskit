@@ -94,6 +94,7 @@ def _tket_gate_set_from_qiskit_backend(
     }
     if "unitary" in config.basis_gates:
         gate_set.add(OpType.Unitary1qBox)
+        gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)

@@ -428,8 +428,7 @@ class CircuitBuilder:
                 # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
                 params = instr.params
                 assert len(params) == 1
-                u = params[0]
-                assert isinstance(u, np.ndarray)
+                u = cast(np.ndarray, params[0])
                 assert len(cargs) == 0
                 n = len(qubits)
                 if n == 0:

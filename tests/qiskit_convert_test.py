@@ -33,7 +33,7 @@ import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
-from qiskit.extensions import UnitaryGate
+from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (  # type: ignore
     Circuit,

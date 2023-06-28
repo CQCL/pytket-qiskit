@@ -137,6 +137,7 @@ _qiskit_gates_other = {
     qiskit_gates.C3XGate: OpType.CnX,
     qiskit_gates.C4XGate: OpType.CnX,
     qiskit_gates.CCXGate: OpType.CCX,
+    qiskit_gates.CCZGate: OpType.CnZ,
     qiskit_gates.CSwapGate: OpType.CSWAP,
     # Multi-controlled gates (qiskit expects a list of controls followed by the target):
     qiskit_gates.MCXGate: OpType.CnX,

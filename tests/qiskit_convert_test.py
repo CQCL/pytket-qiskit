@@ -38,7 +38,9 @@ from qiskit.extensions import UnitaryGate
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
+    Unitary1qBox,
     Unitary2qBox,
+    Unitary3qBox,
     OpType,
     Qubit,
     Bit,
@@ -231,6 +233,22 @@ def test_boxes() -> None:
     assert d == d1
 
 
+def test_Unitary1qBox() -> None:
+    c = Circuit(1)
+    u = np.asarray([[0, 1], [1, 0]])
+    ubox = Unitary1qBox(u)
+    c.add_unitary1qbox(ubox, 0)
+    # Convert to qiskit
+    qc = tk_to_qiskit(c)
+    # Verify that unitary from simulator is correct
+    back = Aer.get_backend("aer_simulator_unitary")
+    qc.save_unitary()
+    job = execute(qc, back).result()
+    a = job.get_unitary(qc)
+    u1 = np.asarray(a)
+    assert np.allclose(u1, u)
+
+
 def test_Unitary2qBox() -> None:
     c = Circuit(2)
     u = np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
@@ -244,6 +262,35 @@ def test_Unitary2qBox() -> None:
     job = execute(qc, back).result()
     a = job.get_unitary(qc)
     u1 = permute_rows_cols_in_unitary(np.asarray(a), (1, 0))  # correct for endianness
+    assert np.allclose(u1, u)
+
+
+def test_Unitary3qBox() -> None:
+    c = Circuit(3)
+    u = np.asarray(
+        [
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+        ]
+    )
+    ubox = Unitary3qBox(u)
+    c.add_unitary3qbox(ubox, 0, 1, 2)
+    # Convert to qiskit
+    qc = tk_to_qiskit(c)
+    # Verify that unitary from simulator is correct
+    back = Aer.get_backend("aer_simulator_unitary")
+    qc.save_unitary()
+    job = execute(qc, back).result()
+    a = job.get_unitary(qc)
+    u1 = permute_rows_cols_in_unitary(
+        np.asarray(a), (2, 1, 0)
+    )  # correct for endianness
     assert np.allclose(u1, u)
 
 

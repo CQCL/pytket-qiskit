@@ -122,6 +122,7 @@ _qiskit_gates_2q = {
     qiskit_gates.CU1Gate: OpType.CU1,
     qiskit_gates.CU3Gate: OpType.CU3,
     qiskit_gates.CXGate: OpType.CX,
+    qiskit_gates.CSXGate: OpType.CSX,
     qiskit_gates.CYGate: OpType.CY,
     qiskit_gates.CZGate: OpType.CZ,
     qiskit_gates.ECRGate: OpType.ECR,

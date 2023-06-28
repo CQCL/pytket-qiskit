@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Fix conversion of qiskit `UnitaryGate` to and from pytket (up to 3 qubits).
+
 0.40.0 (June 2023)
 ------------------
 

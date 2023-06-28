@@ -63,7 +63,9 @@ from pytket.circuit import (  # type: ignore
     Node,
     Op,
     OpType,
+    Unitary1qBox,
     Unitary2qBox,
+    Unitary3qBox,
     UnitType,
     CustomGateDef,
     Bit,
@@ -149,7 +151,6 @@ _qiskit_gates_other = {
     Gate: OpType.CustomGate,
     Measure: OpType.Measure,
     Reset: OpType.Reset,
-    UnitaryGate: OpType.Unitary2qBox,
     Initialize: OpType.StatePreparationBox,
     StatePreparation: OpType.StatePreparationBox,
 }
@@ -196,8 +197,6 @@ for gate, optype in _known_qiskit_gate.items():
     name = gate(*([1] * n_params)).name
     _gate_str_2_optype[name] = optype
 
-# assumption that unitary will refer to unitary2qbox, even though it means any unitary
-_gate_str_2_optype["unitary"] = OpType.Unitary2qBox
 _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 # the aliasing of the name is ok in the reverse map
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
@@ -366,22 +365,14 @@ class CircuitBuilder:
                             f"qiskit ControlledGate with base gate {instr.base_gate}"
                             + "not implemented"
                         )
-            elif type(instr) == PauliEvolutionGate:
+            elif type(instr) in [PauliEvolutionGate, UnitaryGate]:
                 pass  # Special handling below
             else:
                 optype = _known_qiskit_gate[type(instr)]
             qubits = [self.qbmap[qbit] for qbit in qargs]
             bits = [self.cbmap[bit] for bit in cargs]
 
-            if optype == OpType.Unitary2qBox:
-                u = instr.to_matrix()
-                ubox = Unitary2qBox(u)
-                # Note reversal of qubits, to account for endianness (pytket unitaries
-                # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
-                self.tkc.add_unitary2qbox(
-                    ubox, qubits[1], qubits[0], **condition_kwargs
-                )
-            elif optype == OpType.QControlBox:
+            if optype == OpType.QControlBox:
                 base_tket_gate = _known_qiskit_gate[type(instr.base_gate)]
                 params = [param_to_tk(p) for p in instr.base_gate.params]
                 n_base_qubits = instr.base_gate.num_qubits
@@ -432,6 +423,38 @@ class CircuitBuilder:
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
                 self.tkc.add_circbox(ccbox, qubits)
+            elif type(instr) == UnitaryGate:
+                # Note reversal of qubits, to account for endianness (pytket unitaries
+                # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
+                params = instr.params
+                assert len(params) == 1
+                u = cast(np.ndarray, params[0])
+                assert len(cargs) == 0
+                n = len(qubits)
+                if n == 0:
+                    assert u.shape == (1, 1)
+                    self.tkc.add_phase(np.angle(u[0][0]) / np.pi)
+                elif n == 1:
+                    assert u.shape == (2, 2)
+                    ubox = Unitary1qBox(u)
+                    self.tkc.add_unitary1qbox(ubox, qubits[0], **condition_kwargs)
+                elif n == 2:
+                    assert u.shape == (4, 4)
+                    ubox = Unitary2qBox(u)
+                    self.tkc.add_unitary2qbox(
+                        ubox, qubits[1], qubits[0], **condition_kwargs
+                    )
+                elif n == 3:
+                    assert u.shape == (8, 8)
+                    ubox = Unitary3qBox(u)
+                    self.tkc.add_unitary3qbox(
+                        ubox, qubits[2], qubits[1], qubits[0], **condition_kwargs
+                    )
+                else:
+                    raise NotImplementedError(
+                        f"Conversion of {n}-qubit unitary gates not supported"
+                    )
+
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
             elif optype in (OpType.CircBox, OpType.CustomGate):
@@ -572,7 +595,7 @@ def append_tk_command_to_qiskit(
         else:
             instruc = subqc.to_instruction()
         return qcirc.append(instruc, qargs, cargs)
-    if optype == OpType.Unitary2qBox:
+    if optype in [OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox]:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         u = op.get_matrix()
         g = UnitaryGate(u, label="unitary")
@@ -698,7 +721,11 @@ _supported_tket_gates = set(_known_gate_rev_phase.keys())
 _additional_multi_controlled_gates = {OpType.CnY, OpType.CnZ, OpType.CnRy}
 
 # tket gates which are protected from being decomposed in the rebase
-_protected_tket_gates = _supported_tket_gates | _additional_multi_controlled_gates
+_protected_tket_gates = (
+    _supported_tket_gates
+    | _additional_multi_controlled_gates
+    | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
+)
 
 
 Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters

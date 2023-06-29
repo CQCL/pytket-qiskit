@@ -353,7 +353,10 @@ class CircuitBuilder:
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if isinstance(instr, ControlledGate):
-                if type(instr.base_gate) == qiskit_gates.RYGate:
+                if type(instr) in _known_qiskit_gate:
+                    optype = _known_qiskit_gate[type(instr)]
+                    pass
+                elif type(instr.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
                 elif type(instr.base_gate) == qiskit_gates.YGate:
                     optype = OpType.CnY

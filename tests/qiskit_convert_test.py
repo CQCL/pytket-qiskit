@@ -947,7 +947,7 @@ def test_conversion_to_tket_with_and_without_resets() -> None:
     qiskit_state = _get_qiskit_statevector(decomp_qc)
     assert compare_statevectors(tkc_sv, qiskit_state)
 
-    
+
 def test_unitary_gate() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/122
     qkc = QuantumCircuit(3)
@@ -961,8 +961,8 @@ def test_unitary_gate() -> None:
     assert cmds[0].op.type == OpType.Unitary1qBox
     assert cmds[1].op.type == OpType.Unitary2qBox
     assert cmds[2].op.type == OpType.Unitary3qBox
-    
-    
+
+
 def test_ccz_conversion() -> None:
     qc_ccz = QuantumCircuit(4)
     qc_ccz.append(qiskit_gates.CCZGate(), [0, 1, 2])
@@ -995,4 +995,3 @@ def test_CS_and_CSdg() -> None:
     qiskit_qc.append(qiskit_gates.CSdgGate(), [1, 0])
     tkc = qiskit_to_tk(qiskit_qc)
     assert tkc.n_gates_of_type(OpType.QControlBox) == 4
-

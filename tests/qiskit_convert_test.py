@@ -977,7 +977,8 @@ def test_csx_conversion() -> None:
     qc_csx.append(qiskit_gates.CSXGate(), [0, 1])
     qc_csx.append(qiskit_gates.CSXGate(), [1, 0])
     converted_tkc = qiskit_to_tk(qc_csx)
-    assert converted_tkc.n_gates_of_type(OpType.CSX) == converted_tkc.n_gates == 2
+    assert converted_tkc.n_gates == 2
+    assert converted_tkc.n_gates_of_type(OpType.CSX) == 2
     u1 = converted_tkc.get_unitary()
     new_tkc_csx = Circuit(2)
     new_tkc_csx.add_gate(OpType.CSX, [0, 1]).add_gate(OpType.CSX, [1, 0])
@@ -985,6 +986,10 @@ def test_csx_conversion() -> None:
     assert compare_unitaries(u1, u2)
     converted_qc = tk_to_qiskit(new_tkc_csx)
     assert converted_qc.count_ops()["csx"] == 2
+    qc_c3sx = QuantumCircuit(4)
+    qc_c3sx.append(qiskit_gates.C3SXGate(), [0, 1, 2, 3])
+    tkc_c3sx = qiskit_to_tk(qc_c3sx)
+    assert tkc_c3sx.n_gates == tkc_c3sx.n_gates_of_type(OpType.QControlBox) == 1
 
 
 def test_CS_and_CSdg() -> None:

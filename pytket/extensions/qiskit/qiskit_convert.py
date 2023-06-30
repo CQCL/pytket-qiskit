@@ -355,18 +355,12 @@ class CircuitBuilder:
             if isinstance(instr, ControlledGate):
                 if type(instr) in _known_qiskit_gate:
                     optype = _known_qiskit_gate[type(instr)]
-                    pass
                 elif type(instr.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
                 elif type(instr.base_gate) == qiskit_gates.YGate:
                     optype = OpType.CnY
                 elif type(instr.base_gate) == qiskit_gates.ZGate:
                     optype = OpType.CnZ
-                elif (
-                    type(instr.base_gate) in _known_qiskit_gate
-                    and type(instr) in _known_qiskit_gate
-                ):
-                    optype = _known_qiskit_gate[type(instr)]
                 else:
                     if type(instr.base_gate) in _known_qiskit_gate:
                         optype = OpType.QControlBox  # QControlBox case handled below

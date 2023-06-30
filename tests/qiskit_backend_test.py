@@ -19,12 +19,12 @@ import numpy as np
 import pytest
 
 from qiskit import QuantumCircuit, execute  # type: ignore
-from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
+from qiskit.opflow import CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
-from qiskit.utils import QuantumInstance  # type: ignore
+from qiskit.primitives import BackendSampler
+from qiskit.quantum_info import Statevector
 from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
-from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
-from qiskit.transpiler.passes import Unroller  # type: ignore
+from qiskit.algorithms.exceptions import AlgorithmError
 from qiskit_aer import Aer  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
@@ -81,7 +81,8 @@ def test_state() -> None:
     b = AerStateBackend()
     for comp in (None, b.default_compilation_pass()):
         tb = TketBackend(b, comp)
-        assert QuantumInstance(tb).is_statevector
+        sampler = BackendSampler(backend=tb)
+        assert isinstance(sampler, BackendSampler)
         job = execute(qc, tb)
         state = job.result().get_statevector()
         qb = Aer.get_backend("aer_simulator_statevector")
@@ -122,7 +123,7 @@ def test_qiskit_counts(belem_emulator_backend: IBMQEmulatorBackend) -> None:
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
     qc.cx(0, 1)
-    circfn = CircuitStateFn(qc)
+    circfn = Statevector(qc)
 
     s = CircuitSampler(TketBackend(belem_emulator_backend))
 
@@ -152,7 +153,7 @@ def test_grover() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/15
     b = MockShotBackend()
     backend = TketBackend(b, b.default_compilation_pass())
-    qinstance = QuantumInstance(backend)
+    sampler = BackendSampler(backend=backend)
     oracle = QuantumCircuit(2)
     oracle.cz(0, 1)
 
@@ -160,17 +161,17 @@ def test_grover() -> None:
         return sum(map(int, bitstr)) == 2
 
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
-    grover = Grover(quantum_instance=qinstance)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     assert result.top_measurement == "11"
 
 
 def test_unsupported_gateset() -> None:
     # Working with gatesets that are unsupported by qiskit requires
-    # providing QuantumInstance with a custom pass manager.
+    # providing BackendSampler with skip transpilation.
     b = MockShotBackend(gate_set={OpType.Rz, OpType.PhasedX, OpType.ZZMax})
     backend = TketBackend(b, b.default_compilation_pass())
-    qinstance = QuantumInstance(backend)
+    sampler = BackendSampler(backend=backend)
     oracle = QuantumCircuit(2)
     oracle.cz(0, 1)
 
@@ -178,20 +179,19 @@ def test_unsupported_gateset() -> None:
         return sum(map(int, bitstr)) == 2
 
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
-    grover = Grover(quantum_instance=qinstance)
+    grover = Grover(sampler=sampler)
     # Qiskit will attempt to rebase a Grover op into the MockShotBackend gateset.
     # However, Rz, PhasedX and ZZMax gateset isn't supported by qiskit.
     # (tested with qiskit 0.39.1)
-    with pytest.raises(TranspilerError) as e:
+    with pytest.raises(AlgorithmError) as e:
         result = grover.amplify(problem)
-    err_msg = "Unable to translate"
+    err_msg = "Sampler job failed."
     assert err_msg in str(e.value)
 
     # By providing an Unroller pass, the QuantumInstance will rebase the Grover op into
     # the u3, CX gateset instead.
-    unroll_pass = Unroller(["u3", "cx"])
-    qinstance = QuantumInstance(backend, pass_manager=unroll_pass)
-    grover = Grover(quantum_instance=qinstance)
+    sampler = BackendSampler(backend, skip_transpilation=True)
+    grover = Grover(sampler=sampler)
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
     result = grover.amplify(problem)
     assert result.top_measurement == "11"

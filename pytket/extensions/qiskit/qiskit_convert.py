@@ -354,8 +354,8 @@ class CircuitBuilder:
             optype = None
             if isinstance(instr, ControlledGate):
                 if type(instr) in _known_qiskit_gate:
-                # First we check that the gate isn't in _known_qiskit_gate
-                # this avoids CZ being converted to CnZ
+                    # First we check that the gate isn't in _known_qiskit_gate
+                    # this avoids CZ being converted to CnZ
                     optype = _known_qiskit_gate[type(instr)]
                 elif type(instr.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy

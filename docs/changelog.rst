@@ -5,7 +5,7 @@ Unreleased
 ----------
 
 * Fix conversion of qiskit `UnitaryGate` to and from pytket (up to 3 qubits).
-* Fix handling of qiskit controlled gates the :py:meth:`qiskit_to_tk` converter.
+* Fix handling of qiskit controlled gates in the :py:meth:`qiskit_to_tk` converter.
 * Handle CCZ and CSX gates in circuit converters.
 
 0.40.0 (June 2023)

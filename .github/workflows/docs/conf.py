@@ -3,7 +3,8 @@
 # Configuration file for the Sphinx documentation builder.
 # See https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-author = "Cambridge Quantum Computing Ltd"
+copyright = "2023 Quantinuum"
+author = "Quantinuum"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -12,8 +13,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx_copybutton",
 ]
-
-pygments_style = "borland"
 
 html_theme = "sphinx_book_theme"
 

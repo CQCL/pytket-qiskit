@@ -24,15 +24,15 @@ from qiskit import (  # type: ignore
     ClassicalRegister,
     execute,
 )
-from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
-from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
-from qiskit.quantum_info import Pauli  # type: ignore
+
+from qiskit.quantum_info import SparsePauliOp, Statevector
+from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.synthesis import SuzukiTrotter
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit.quantum_info import Statevector
 from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (  # type: ignore
@@ -83,9 +83,10 @@ def test_classical_barrier_error() -> None:
 
 def test_convert_circuit_with_complex_params() -> None:
     with pytest.raises(ValueError):
-        qiskit_op = PauliSumOp.from_list([("Z", 1j)])
-        evolved_op = qiskit_op.exp_i()
-        evolution_circ = PauliTrotterEvolution(reps=1).convert(evolved_op).to_circuit()
+        evolved_op = SparsePauliOp.from_list([("Z", 1j)])
+        evolution_gate = PauliEvolutionGate(evolved_op, time=1, synthesis=SuzukiTrotter(reps=2))
+        evolution_circ = QuantumCircuit(1)
+        evolution_circ.append(evolution_gate, [0])
         tk_circ = qiskit_to_tk(evolution_circ)
         DecomposeBoxes().apply(tk_circ)
 
@@ -351,11 +352,12 @@ def test_tketautopass(manila_backend: IBMQBackend) -> None:
 def test_instruction() -> None:
     # TKET-446
     qreg = QuantumRegister(3)
-    op = PauliSumOp.from_list([("XXI", 0.3), ("YYI", 0.5), ("ZZZ", -0.4)])
-    evolved_op = (1.2 * op).exp_i()
-    evo = PauliTrotterEvolution(reps=1)
-    evo_circop = evo.convert(evolved_op)
-    evo_instr = evo_circop.to_instruction()
+    op = SparsePauliOp.from_list([("XXI", 0.3), ("YYI", 0.5), ("ZZZ", -0.4)])
+    evolved_op = (1.2 * op)
+    evo = PauliEvolutionGate(evolved_op, time=1, synthesis=SuzukiTrotter(reps=1))
+    evolved_state = QuantumCircuit(qreg)
+    evolved_state.append(evo, [0,1,2])
+    evo_instr = evolved_state.to_instruction()
     evolution_circ = QuantumCircuit(qreg)
     evolution_circ.append(evo_instr, qargs=list(qreg))
     tk_circ = qiskit_to_tk(evolution_circ)
@@ -771,12 +773,10 @@ def test_rebased_conversion() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/24
 def test_parametrized_evolution() -> None:
-    pauli_blocks = [PauliOp(Pauli("XXZ"), coeff=1.0), PauliOp(Pauli("YXY"), coeff=0.5)]
-    operator: PauliSumOp = sum(pauli_blocks) * Parameter("x")
-    evolved_circ_op = PauliTrotterEvolution(
-        trotter_mode=Suzuki(reps=2, order=4)
-    ).convert(operator.exp_i())
-    qc: QuantumCircuit = evolved_circ_op.primitive
+    evolved_op = SparsePauliOp.from_list([("XXZ",1.0), ("YXY", 0.5)])
+    evolution_gate = PauliEvolutionGate(evolved_op, time=Parameter("x"), synthesis=SuzukiTrotter(reps=2, order=4))
+    qc = QuantumCircuit(3)
+    qc.append(evolution_gate, range(3))
     tk_qc: Circuit = qiskit_to_tk(qc)
     assert len(tk_qc.free_symbols()) == 1
 

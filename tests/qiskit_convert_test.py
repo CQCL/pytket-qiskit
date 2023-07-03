@@ -970,6 +970,11 @@ def test_ccz_conversion() -> None:
     tkc_ccz = qiskit_to_tk(qc_ccz)
     assert tkc_ccz.n_gates_of_type(OpType.CnZ) == tkc_ccz.n_gates == 2
     # bidirectional CnZ conversion already supported
+    qc_ccz2 = tk_to_qiskit(tkc_ccz)
+    assert qc_ccz2.count_ops()["ccz"] == 2
+    tkc_ccz2 = qiskit_to_tk(qc_ccz2)
+    assert compare_unitaries(tkc_ccz.get_unitary(), tkc_ccz2.get_unitary())
+
 
 
 def test_csx_conversion() -> None:

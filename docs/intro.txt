@@ -24,6 +24,7 @@ An example using the shots-based :py:class:`AerBackend` simulator is shown below
 ::
 
   from pytket.extensions.qiskit import AerBackend
+  from pytket import Circuit
 
   backend = AerBackend()
   circ = Circuit(2).H(0).CX(0, 1).measure_all()
@@ -60,7 +61,7 @@ Once you have created an account you can obtain an API token which you can use t
 
     from pytket.extensions.qiskit import set_ibmq_config
     
-    set_ibmq_config(ibmq_api_token=ibm_token)
+    set_ibmq_config(ibmq_api_token="ibm_token")
 
 After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
 
@@ -70,7 +71,7 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 
     from pytket.extensions.qiskit import set_ibmq_config
 
-    set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
+    set_ibmq_config(ibmq_api_token="ibm_token", instance=f"{'hub'}/{'group'}/{'project'}")
 
 Alternatively you can use the following qiskit commands to save your credentials
 locally without saving the token in pytket config:
@@ -92,7 +93,7 @@ To see which devices you can access you can use the ``available_devices`` method
     from pytket.extensions.qiskit import IBMQBackend
     from qiskit_ibm_provider import IBMProvider
 
-    my_instance=f"{hub}/{group}/{project}"
+    my_instance=f"{'hub'}/{'group'}/{'project'}"
     ibm_provider = IBMProvider(instance=my_instance)
     backend = IBMQBackend("ibmq_belem") # Initialise backend for an IBM device
     backendinfo_list = backend.available_devices(instance=my_instance, provider=ibm_provider) 

@@ -976,7 +976,6 @@ def test_ccz_conversion() -> None:
     assert compare_unitaries(tkc_ccz.get_unitary(), tkc_ccz2.get_unitary())
 
 
-
 def test_csx_conversion() -> None:
     qc_csx = QuantumCircuit(2)
     qc_csx.append(qiskit_gates.CSXGate(), [0, 1])

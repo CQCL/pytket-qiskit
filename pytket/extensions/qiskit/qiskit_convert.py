@@ -354,7 +354,7 @@ class CircuitBuilder:
             optype = None
             if isinstance(instr, ControlledGate):
                 if type(instr) in _known_qiskit_gate:
-                    # First we check that the gate isn't in _known_qiskit_gate
+                    # First we check if the gate is in _known_qiskit_gate
                     # this avoids CZ being converted to CnZ
                     optype = _known_qiskit_gate[type(instr)]
                 elif type(instr.base_gate) == qiskit_gates.RYGate:
@@ -383,8 +383,8 @@ class CircuitBuilder:
                 params = [param_to_tk(p) for p in instr.base_gate.params]
                 n_base_qubits = instr.base_gate.num_qubits
                 sub_circ = Circuit(n_base_qubits)
-                # Use U for the name of the base gate in QControlBox
-                sub_circ.name = "U"
+                # use base gate name for the CircBox (shows in renderer)
+                sub_circ.name = instr.base_gate.name.capitalize()
                 sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)

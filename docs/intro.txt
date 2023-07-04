@@ -83,8 +83,8 @@ locally without saving the token in pytket config:
     from qiskit_ibm_provider import IBMProvider
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    IBMProvider.save_account(token=ibm_token)
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token)
+    IBMProvider.save_account(token="ibm_token")
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token="ibm_token")
 
 To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend` or :py:class:`IBMQEmulatorBackend`. Note that it is possible to pass optional ``instance`` and ``provider`` arguments to this method. This allows you to see which devices are accessible through your IBM hub.
 

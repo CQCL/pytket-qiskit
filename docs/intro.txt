@@ -54,7 +54,7 @@ With the exception of the Aer simulators, accessing devices and simulators throu
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
-In this section we are assuming that you have set the following variables with the corresponsing values:
+In this section we are assuming that you have set the following variables with the corresponding values:
 
 ::
 

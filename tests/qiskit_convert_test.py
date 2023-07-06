@@ -33,11 +33,14 @@ import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
+from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (  # type: ignore
     Circuit,
     CircBox,
+    Unitary1qBox,
     Unitary2qBox,
+    Unitary3qBox,
     OpType,
     Qubit,
     Bit,
@@ -59,6 +62,7 @@ from pytket.utils.results import (
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
+
 
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
@@ -229,6 +233,22 @@ def test_boxes() -> None:
     assert d == d1
 
 
+def test_Unitary1qBox() -> None:
+    c = Circuit(1)
+    u = np.asarray([[0, 1], [1, 0]])
+    ubox = Unitary1qBox(u)
+    c.add_unitary1qbox(ubox, 0)
+    # Convert to qiskit
+    qc = tk_to_qiskit(c)
+    # Verify that unitary from simulator is correct
+    back = Aer.get_backend("aer_simulator_unitary")
+    qc.save_unitary()
+    job = execute(qc, back).result()
+    a = job.get_unitary(qc)
+    u1 = np.asarray(a)
+    assert np.allclose(u1, u)
+
+
 def test_Unitary2qBox() -> None:
     c = Circuit(2)
     u = np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
@@ -242,6 +262,35 @@ def test_Unitary2qBox() -> None:
     job = execute(qc, back).result()
     a = job.get_unitary(qc)
     u1 = permute_rows_cols_in_unitary(np.asarray(a), (1, 0))  # correct for endianness
+    assert np.allclose(u1, u)
+
+
+def test_Unitary3qBox() -> None:
+    c = Circuit(3)
+    u = np.asarray(
+        [
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+        ]
+    )
+    ubox = Unitary3qBox(u)
+    c.add_unitary3qbox(ubox, 0, 1, 2)
+    # Convert to qiskit
+    qc = tk_to_qiskit(c)
+    # Verify that unitary from simulator is correct
+    back = Aer.get_backend("aer_simulator_unitary")
+    qc.save_unitary()
+    job = execute(qc, back).result()
+    a = job.get_unitary(qc)
+    u1 = permute_rows_cols_in_unitary(
+        np.asarray(a), (2, 1, 0)
+    )  # correct for endianness
     assert np.allclose(u1, u)
 
 
@@ -897,3 +946,61 @@ def test_conversion_to_tket_with_and_without_resets() -> None:
     decomp_qc = qiskit_qc_sp.decompose(reps=5)
     qiskit_state = _get_qiskit_statevector(decomp_qc)
     assert compare_statevectors(tkc_sv, qiskit_state)
+
+
+def test_unitary_gate() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/122
+    qkc = QuantumCircuit(3)
+    for n in range(4):
+        u = np.eye(1 << n, dtype=complex)
+        gate = UnitaryGate(u)
+        qkc.append(gate, list(range(n)))
+    tkc = qiskit_to_tk(qkc)
+    cmds = tkc.get_commands()
+    assert len(cmds) == 3
+    assert cmds[0].op.type == OpType.Unitary1qBox
+    assert cmds[1].op.type == OpType.Unitary2qBox
+    assert cmds[2].op.type == OpType.Unitary3qBox
+
+
+def test_ccz_conversion() -> None:
+    qc_ccz = QuantumCircuit(4)
+    qc_ccz.append(qiskit_gates.CCZGate(), [0, 1, 2])
+    qc_ccz.append(qiskit_gates.CCZGate(), [3, 1, 0])
+    tkc_ccz = qiskit_to_tk(qc_ccz)
+    assert tkc_ccz.n_gates_of_type(OpType.CnZ) == tkc_ccz.n_gates == 2
+    # bidirectional CnZ conversion already supported
+    qc_ccz2 = tk_to_qiskit(tkc_ccz)
+    assert qc_ccz2.count_ops()["ccz"] == 2
+    tkc_ccz2 = qiskit_to_tk(qc_ccz2)
+    assert compare_unitaries(tkc_ccz.get_unitary(), tkc_ccz2.get_unitary())
+
+
+def test_csx_conversion() -> None:
+    qc_csx = QuantumCircuit(2)
+    qc_csx.append(qiskit_gates.CSXGate(), [0, 1])
+    qc_csx.append(qiskit_gates.CSXGate(), [1, 0])
+    converted_tkc = qiskit_to_tk(qc_csx)
+    assert converted_tkc.n_gates == 2
+    assert converted_tkc.n_gates_of_type(OpType.CSX) == 2
+    u1 = converted_tkc.get_unitary()
+    new_tkc_csx = Circuit(2)
+    new_tkc_csx.add_gate(OpType.CSX, [0, 1]).add_gate(OpType.CSX, [1, 0])
+    u2 = new_tkc_csx.get_unitary()
+    assert compare_unitaries(u1, u2)
+    converted_qc = tk_to_qiskit(new_tkc_csx)
+    assert converted_qc.count_ops()["csx"] == 2
+    qc_c3sx = QuantumCircuit(4)
+    qc_c3sx.append(qiskit_gates.C3SXGate(), [0, 1, 2, 3])
+    tkc_c3sx = qiskit_to_tk(qc_c3sx)
+    assert tkc_c3sx.n_gates == tkc_c3sx.n_gates_of_type(OpType.QControlBox) == 1
+
+
+def test_CS_and_CSdg() -> None:
+    qiskit_qc = QuantumCircuit(2)
+    qiskit_qc.append(qiskit_gates.CSGate(), [0, 1])
+    qiskit_qc.append(qiskit_gates.CSdgGate(), [0, 1])
+    qiskit_qc.append(qiskit_gates.CSGate(), [1, 0])
+    qiskit_qc.append(qiskit_gates.CSdgGate(), [1, 0])
+    tkc = qiskit_to_tk(qiskit_qc)
+    assert tkc.n_gates_of_type(OpType.QControlBox) == 4

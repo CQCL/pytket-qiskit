@@ -24,6 +24,7 @@ An example using the shots-based :py:class:`AerBackend` simulator is shown below
 ::
 
   from pytket.extensions.qiskit import AerBackend
+  from pytket import Circuit
 
   backend = AerBackend()
   circ = Circuit(2).H(0).CX(0, 1).measure_all()

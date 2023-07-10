@@ -71,6 +71,11 @@ from ..qiskit_convert import (
     _gate_str_2_optype,
 )
 from ..result_convert import qiskit_result_to_backendresult
+from .crosstalk_model import (
+    NoisyCircuitBuilder,
+    CrosstalkParams,
+    get_gate_times_from_backendinfo,
+)
 
 if TYPE_CHECKING:
     from qiskit.providers.aer import AerJob  # type: ignore
@@ -219,6 +224,18 @@ class _AerBaseBackend(Backend):
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         circuits = list(circuits)
+
+        if hasattr(self, "crosstalk_params") and self.crosstalk_params is not None:
+            gate_times = get_gate_times_from_backendinfo(self.backend_info)
+            noisy_circuits = []
+            for c in circuits:
+                noisy_circ_builder = NoisyCircuitBuilder(
+                    c, gate_times, self.crosstalk_params
+                )
+                noisy_circ_builder.build()
+                noisy_circuits.append(noisy_circ_builder.get_circuit())
+            circuits = noisy_circuits
+
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
             len(circuits),
@@ -431,6 +448,7 @@ class AerBackend(_AerBaseBackend):
         self,
         noise_model: Optional[NoiseModel] = None,
         simulation_method: str = "automatic",
+        crosstalk_params: Optional[CrosstalkParams] = None,
     ):
         """Backend for running simulations on the Qiskit Aer QASM simulator.
 
@@ -440,6 +458,9 @@ class AerBackend(_AerBaseBackend):
          https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
          for available values. Defaults to "automatic".
         :type simulation_method: str
+        :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
+         execution. Default to None.
+        :type: `CrosstalkParams`
         """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
@@ -475,6 +496,9 @@ class AerBackend(_AerBaseBackend):
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
+
+        self.crosstalk_params = crosstalk_params
+
         if characterisation.architecture.coupling:
             # architecture is non-trivial
             self._required_predicates.append(

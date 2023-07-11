@@ -5,6 +5,7 @@ import math
 from pytket.circuit import (
     Circuit,
     Qubit,
+    Node,
     Command,
     OpType,
     Op,
@@ -46,7 +47,7 @@ class NoiseGate:
 
 Instruction = Union[FractionalUnitary, Command, NoiseGate]
 Slice = List[Instruction]
-EPS = 1e-10
+EPS = 1e-9
 
 
 @dataclass
@@ -371,7 +372,7 @@ def get_gate_times_from_backendinfo(
     gate_times = {}
     for gt in backend_info.misc["characterisation"]["GateTimes"]:
         # GateTimes are nanoseconds
-        gate_times[_gate_str_2_optype[gt[0]], tuple([Qubit(q) for q in gt[1]])] = (
+        gate_times[_gate_str_2_optype[gt[0]], tuple([Node(q) for q in gt[1]])] = (
             gt[2] / 1e9
         )
     return gate_times

@@ -224,6 +224,14 @@ class _AerBaseBackend(Backend):
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         circuits = list(circuits)
+        n_shots_list = Backend._get_n_shots_as_list(
+            n_shots,
+            len(circuits),
+            optional=True,
+        )
+
+        if valid_check:
+            self._check_all_circuits(circuits)
 
         if hasattr(self, "crosstalk_params") and self.crosstalk_params is not None:
             gate_times = get_gate_times_from_backendinfo(self.backend_info)
@@ -235,15 +243,6 @@ class _AerBaseBackend(Backend):
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits
-
-        n_shots_list = Backend._get_n_shots_as_list(
-            n_shots,
-            len(circuits),
-            optional=True,
-        )
-
-        if valid_check:
-            self._check_all_circuits(circuits)
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)

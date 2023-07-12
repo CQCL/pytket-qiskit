@@ -124,6 +124,7 @@ _qiskit_gates_2q = {
     qiskit_gates.CU1Gate: OpType.CU1,
     qiskit_gates.CU3Gate: OpType.CU3,
     qiskit_gates.CXGate: OpType.CX,
+    qiskit_gates.CSXGate: OpType.CSX,
     qiskit_gates.CYGate: OpType.CY,
     qiskit_gates.CZGate: OpType.CZ,
     qiskit_gates.ECRGate: OpType.ECR,
@@ -139,6 +140,7 @@ _qiskit_gates_other = {
     qiskit_gates.C3XGate: OpType.CnX,
     qiskit_gates.C4XGate: OpType.CnX,
     qiskit_gates.CCXGate: OpType.CCX,
+    qiskit_gates.CCZGate: OpType.CnZ,
     qiskit_gates.CSwapGate: OpType.CSWAP,
     # Multi-controlled gates (qiskit expects a list of controls followed by the target):
     qiskit_gates.MCXGate: OpType.CnX,
@@ -350,8 +352,12 @@ class CircuitBuilder:
                 pass
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
-            if type(instr) == ControlledGate:
-                if type(instr.base_gate) == qiskit_gates.RYGate:
+            if isinstance(instr, ControlledGate):
+                if type(instr) in _known_qiskit_gate:
+                    # First we check if the gate is in _known_qiskit_gate
+                    # this avoids CZ being converted to CnZ
+                    optype = _known_qiskit_gate[type(instr)]
+                elif type(instr.base_gate) == qiskit_gates.RYGate:
                     optype = OpType.CnRy
                 elif type(instr.base_gate) == qiskit_gates.YGate:
                     optype = OpType.CnY

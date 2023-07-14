@@ -12,7 +12,9 @@ from pytket.circuit import (
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
+    PauliExpBox,
 )
+from pytket.pauli import Pauli
 from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
@@ -109,7 +111,7 @@ class NoisyCircuitBuilder:
         self.N = ct_params.N
         self.ct_params = ct_params
         self.two_level_map = {}
-        for i, q in enumerate(self.all_qubits):
+        for i, (q, _, _) in enumerate(self.ct_params.non_markovian_noise):
             two_level_q = Qubit("two-level", i)
             self.two_level_map[q] = two_level_q
         self.reset()
@@ -241,9 +243,8 @@ class NoisyCircuitBuilder:
                     (qubits[0], qubits[1])
                 )
                 if value is None:
-                    raise ValueError(
-                        f"two_q_induced_phase_errors does not have: {qubits}"
-                    )
+                    # Don't add and error if the two-q interaction is not specified
+                    continue
                 Z = value[1] / inst.n_fractions
                 if abs(Z) > EPS:
                     noise_slice.append(
@@ -261,46 +262,26 @@ class NoisyCircuitBuilder:
             if abs(ZZ) > EPS:
                 noise_slice.append(
                     NoiseGate(
-                        Command(Op.create(OpType.ZZPhase, ZZ), [q, two_level_q]),
+                        Command(Op.create(OpType.ZZPhase, ZZ), [two_level_q, q]),
                         "non_markovian",
                     )
                 )
             if abs(ZX) > EPS:
-                RZX = Unitary2qBox(
-                    np.array(
-                        [
-                            [
-                                math.cos(ZX * math.pi / 2),
-                                -1j * math.sin(ZX * math.pi / 2),
-                                0,
-                                0,
-                            ],
-                            [
-                                -1j * math.sin(ZX * math.pi / 2),
-                                math.cos(ZX * math.pi / 2),
-                                0,
-                                0,
-                            ],
-                            [
-                                0,
-                                0,
-                                math.cos(ZX * math.pi / 2),
-                                1j * math.sin(ZX * math.pi / 2),
-                            ],
-                            [
-                                0,
-                                0,
-                                1j * math.sin(ZX * math.pi / 2),
-                                math.cos(ZX * math.pi / 2),
-                            ],
-                        ]
-                    )
-                )
-                noise_slice.append(
-                    NoiseGate(
-                        Command(RZX, [q, two_level_q]),
-                        "non_markovian",
-                    )
+                noise_slice.extend(
+                    [
+                        NoiseGate(
+                            Command(Op.create(OpType.H), [q]),
+                            "non_markovian",
+                        ),
+                        NoiseGate(
+                            Command(Op.create(OpType.ZZPhase, ZX), [two_level_q, q]),
+                            "non_markovian",
+                        ),
+                        NoiseGate(
+                            Command(Op.create(OpType.H), [q]),
+                            "non_markovian",
+                        ),
+                    ]
                 )
 
     def add_noise(self) -> None:

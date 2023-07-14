@@ -17,6 +17,7 @@ from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
 import numpy as np
+from scipy.linalg import fractional_matrix_power
 
 
 @dataclass
@@ -163,21 +164,6 @@ class NoisyCircuitBuilder:
             self._append(s, frontier)
         self._fill_gaps(frontier)
 
-    # Unitary factorisation
-    @staticmethod
-    def _matrix_power(u: np.ndarray, p: float) -> None:
-        """Raise a matrix to the power p via eigen decomp"""
-        values, vectors = np.linalg.eig(u)
-        gate = np.zeros(u.shape)
-        for i in range(len(values)):
-            gate = (
-                gate
-                + np.power(values[i] + 0j, p)
-                * vectors[:, [i]]
-                @ vectors[:, [i]].conj().T
-            )
-        return gate
-
     @staticmethod
     def _get_ubox(u: np.ndarray) -> Union[Unitary1qBox, Unitary2qBox, Unitary3qBox]:
         """Return a UnitaryxqBox for a given unitary"""
@@ -210,7 +196,7 @@ class NoisyCircuitBuilder:
                         f"Command {cmd} cannot be factorised into equal slices"
                     )
                 power = 1 / (self.N * gt)
-                u_i = self._matrix_power(u, power)
+                u_i = fractional_matrix_power(u, power)
                 for _ in range(round(self.N * gt)):
                     u_i_box = self._get_ubox(u_i)
                     self._slices.append(

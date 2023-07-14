@@ -287,13 +287,15 @@ class NoisyCircuitBuilder:
     def add_noise(self) -> None:
         """Add noise gates between slices"""
         i = 1
+        base_noise_slice = []
+        self._add_zz_crosstalks(base_noise_slice)
+        self._add_single_q_phase(base_noise_slice)
+        self._add_non_markovian(base_noise_slice)
         while i < len(self._slices):
             noise_slice = []
-            self._add_zz_crosstalks(noise_slice)
-            self._add_single_q_phase(noise_slice)
             if self.circ.n_qubits > 2:
                 self._add_two_q_induced_phase(self._slices[i - 1], noise_slice)
-            self._add_non_markovian(noise_slice)
+            noise_slice.extend(base_noise_slice)
             self._slices.insert(i, noise_slice)
             i = i + 2
 

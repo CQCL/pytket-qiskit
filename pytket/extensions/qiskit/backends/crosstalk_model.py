@@ -12,9 +12,7 @@ from pytket.circuit import (
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
-    PauliExpBox,
 )
-from pytket.pauli import Pauli
 from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
@@ -185,9 +183,10 @@ class NoisyCircuitBuilder:
             if cmd.op.type in [OpType.Measure, OpType.Reset]:
                 self._slices.append(cmd)
             else:
-                gt = self.gate_times.get((cmd.op.type, tuple(cmd.qubits)))
                 if self.ct_params.virtual_z and cmd.op.type == OpType.Z:
                     gt = 1 / self.N
+                else:
+                    gt = self.gate_times.get((cmd.op.type, tuple(cmd.qubits)))
                 if gt is None:
                     raise ValueError(
                         f"No gate time for OpType {cmd.op.type} on qubits {cmd.qubits}"

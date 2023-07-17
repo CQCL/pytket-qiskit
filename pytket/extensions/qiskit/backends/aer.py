@@ -57,8 +57,10 @@ from pytket.predicates import (  # type: ignore
     ConnectivityPredicate,
     GateSetPredicate,
     NoClassicalControlPredicate,
+    NoBarriersPredicate,
     NoFastFeedforwardPredicate,
     NoSymbolsPredicate,
+    DefaultRegisterPredicate,
     Predicate,
 )
 from pytket.utils.operators import QubitPauliOperator
@@ -470,38 +472,53 @@ class AerBackend(_AerBaseBackend):
 
         if self._crosstalk_params is not None:
             self._noise_model = self._crosstalk_params.get_noise_model()
+            self._backend_info = BackendInfo(
+                name=type(self).__name__,
+                device_name=self._qiskit_backend_name,
+                version=__extension_version__,
+                architecture=Architecture([]),
+                gate_set=gate_set,
+            )
         else:
             self._noise_model = _map_trivial_noise_model_to_none(noise_model)
-        characterisation = _get_characterisation_of_noise_model(
-            self._noise_model, gate_set
-        )
+            characterisation = _get_characterisation_of_noise_model(
+                self._noise_model, gate_set
+            )
 
-        self._backend_info = BackendInfo(
-            name=type(self).__name__,
-            device_name=self._qiskit_backend_name,
-            version=__extension_version__,
-            architecture=characterisation.architecture,
-            gate_set=gate_set,
-            supports_midcircuit_measurement=True,  # is this correct?
-            supports_fast_feedforward=True,
-            all_node_gate_errors=characterisation.node_errors,
-            all_edge_gate_errors=characterisation.edge_errors,
-            all_readout_errors=characterisation.readout_errors,
-            averaged_node_gate_errors=characterisation.averaged_node_errors,
-            averaged_edge_gate_errors=characterisation.averaged_edge_errors,
-            averaged_readout_errors=characterisation.averaged_readout_errors,
-            misc={"characterisation": characterisation.generic_q_errors},
-        )
+            self._backend_info = BackendInfo(
+                name=type(self).__name__,
+                device_name=self._qiskit_backend_name,
+                version=__extension_version__,
+                architecture=characterisation.architecture,
+                gate_set=gate_set,
+                supports_midcircuit_measurement=True,  # is this correct?
+                supports_fast_feedforward=True,
+                all_node_gate_errors=characterisation.node_errors,
+                all_edge_gate_errors=characterisation.edge_errors,
+                all_readout_errors=characterisation.readout_errors,
+                averaged_node_gate_errors=characterisation.averaged_node_errors,
+                averaged_edge_gate_errors=characterisation.averaged_edge_errors,
+                averaged_readout_errors=characterisation.averaged_readout_errors,
+                misc={"characterisation": characterisation.generic_q_errors},
+            )
 
         self._required_predicates = [
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
+        if self._crosstalk_params is not None:
+            self._required_predicates.extend(
+                [
+                    NoClassicalControlPredicate(),
+                    DefaultRegisterPredicate(),
+                    NoBarriersPredicate(),
+                ]
+            )
 
-        if characterisation.architecture.coupling:
+        if self._backend_info.architecture.coupling:
             # architecture is non-trivial
             self._required_predicates.append(
-                ConnectivityPredicate(characterisation.architecture)
+                ConnectivityPredicate(self._backend_info.architecture)
             )
 
 

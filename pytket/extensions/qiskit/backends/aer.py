@@ -232,10 +232,10 @@ class _AerBaseBackend(Backend):
         if valid_check:
             self._check_all_circuits(circuits)
 
-        if hasattr(self, "crosstalk_params") and self.crosstalk_params is not None:
+        if hasattr(self, "crosstalk_params") and self._crosstalk_params is not None:
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(c, self.crosstalk_params)
+                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits
@@ -466,10 +466,10 @@ class AerBackend(_AerBaseBackend):
             self._allowed_special_gates
         )
 
-        self.crosstalk_params = crosstalk_params
+        self._crosstalk_params = crosstalk_params
 
-        if self.crosstalk_params is not None:
-            self._noise_model = self.crosstalk_params.get_noise_model()
+        if self._crosstalk_params is not None:
+            self._noise_model = self._crosstalk_params.get_noise_model()
         else:
             self._noise_model = _map_trivial_noise_model_to_none(noise_model)
         characterisation = _get_characterisation_of_noise_model(

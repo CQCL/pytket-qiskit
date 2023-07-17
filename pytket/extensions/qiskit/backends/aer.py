@@ -465,7 +465,13 @@ class AerBackend(_AerBaseBackend):
         gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
             self._allowed_special_gates
         )
-        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+
+        self.crosstalk_params = crosstalk_params
+
+        if self.crosstalk_params is not None:
+            self._noise_model = self.crosstalk_params.get_noise_model()
+        else:
+            self._noise_model = _map_trivial_noise_model_to_none(noise_model)
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set
         )
@@ -491,8 +497,6 @@ class AerBackend(_AerBaseBackend):
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
-
-        self.crosstalk_params = crosstalk_params
 
         if characterisation.architecture.coupling:
             # architecture is non-trivial

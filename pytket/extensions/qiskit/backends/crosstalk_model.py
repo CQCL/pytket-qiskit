@@ -2,6 +2,9 @@ from typing import List, Tuple, Union, Dict
 from dataclasses import dataclass
 import math
 
+from qiskit.providers.aer.noise import NoiseModel  # type: ignore
+from qiskit_aer.noise.errors.standard_errors import amplitude_damping_error, phase_damping_error  # type: ignore
+
 from pytket.circuit import (
     Circuit,
     Qubit,
@@ -76,6 +79,22 @@ class CrosstalkParams:
     virtual_z: bool
     N: float
     gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float]
+    phase_damping_error: Dict[Qubit, float]
+    amplitude_damping_error: Dict[Qubit, float]
+
+    def get_noise_model(self) -> NoiseModel:
+        """Construct a NoiseModel from phase_damping_error and amplitude_damping_error"""
+        noise_model = NoiseModel()
+        # TODO the 2nd argument for add_quantum_error needs to be specified
+        for q, phase in self.phase_damping_error.items():
+            noise_model.add_quantum_error(
+                phase_damping_error(phase / self.N), [], [q.index[0]]
+            )
+        for q, amp in self.amplitude_damping_error.items():
+            noise_model.add_quantum_error(
+                amplitude_damping_error(amp / self.N), [], [q.index[0]]
+            )
+        return noise_model
 
 
 class NoisyCircuitBuilder:

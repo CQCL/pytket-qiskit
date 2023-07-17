@@ -101,7 +101,8 @@ class CrosstalkParams:
     :param virtual_z: If True, then don't break any single qubit Z gate into
         unitary fractions, instead add the full unitary.
     :type bool
-    :param N: hyperparameter N
+    :param N: hyperparameter specifies splices per second.
+        1/N must divide all gate times.
     :type: float
     :param gate_times: python dict to store the gate time information.
     :type gate_times: `Dict[Tuple[OpType, Tuple[Qubit, ...]], float]`

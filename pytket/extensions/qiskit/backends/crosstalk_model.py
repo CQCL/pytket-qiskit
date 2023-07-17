@@ -34,12 +34,7 @@ from pytket.circuit import (  # type: ignore
     Unitary3qBox,
 )
 from pytket.backends.backendinfo import BackendInfo
-from pytket.qasm.qasm import (
-    _tk_to_qasm_params,
-    _tk_to_qasm_noparams,
-    _tk_to_qasm_extra_noparams,
-    _tk_to_qasm_extra_params,
-)
+from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
 
 @dataclass

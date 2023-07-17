@@ -13,14 +13,16 @@
 # limitations under the License.
 
 
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 from dataclasses import dataclass
-import math
 
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit_aer.noise.errors.standard_errors import amplitude_damping_error, phase_damping_error  # type: ignore
 
-from pytket.circuit import (
+import numpy as np
+from scipy.linalg import fractional_matrix_power  # type: ignore
+
+from pytket.circuit import (  # type: ignore
     Circuit,
     Qubit,
     Node,
@@ -34,17 +36,14 @@ from pytket.circuit import (
 from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
-import numpy as np
-from scipy.linalg import fractional_matrix_power
-
 
 @dataclass
 class FractionalUnitary:
     """
     Wrapper for a fractional unitary gate
     :param cmd: the fractional UnitaryBox wrapped in a pytket Command
-    :param n_fractions: the number of fractional gates used to compose the original unitary gate.
-
+    :param n_fractions: the number of fractional gates
+    used to compose the original unitary gate.
     """
 
     cmd: Command
@@ -76,16 +75,18 @@ class CrosstalkParams:
 
     :param zz_crosstalks: symmetric crosstalks between qubit pairs
     :type zz_crosstalks: `Dict[Tuple[Qubit, Qubit], float]`
-    :param single_q_phase_errors: dict specify the single qubit phase error on each qubit
+    :param single_q_phase_errors: dict specify the single qubit phase error
+    on each qubit
     :type single_q_phase_errors: `Dict[Qubit, float]`
-    :param two_q_induced_phase_errors: keys of dictionary specify the control and target qubit index,
-    while the values are tuples with the spectator qubit index and the amount of phase error to be applied.
+    :param two_q_induced_phase_errors: keys of dictionary specify the control
+    and target qubit index, while the values are tuples with the spectator
+    qubit index and the amount of phase error to be applied.
     :type two_q_induced_phase_errors: `Dict[Tuple[Qubit, Qubit], Tuple[Qubit, float]]`
     :param non_markovian_noise: List storing the non-Markovian noise parameters.
     Each tuple in the list contains the qubit index and the zx, zz noise parameters.
     :type non_markovian_noise: `List[Tuple[Qubit, float, float]]`
-    :param virtual_z: If True, then don't break any single qubit Z gate into unitary fractions,
-    instead add the full unitary.
+    :param virtual_z: If True, then don't break any single qubit Z gate into
+    unitary fractions, instead add the full unitary.
     :type bool
     :param N: hyperparameter N
     :type: float
@@ -104,7 +105,8 @@ class CrosstalkParams:
     amplitude_damping_error: Dict[Qubit, float]
 
     def get_noise_model(self) -> NoiseModel:
-        """Construct a NoiseModel from phase_damping_error and amplitude_damping_error"""
+        """Construct a NoiseModel from phase_damping_error
+        and amplitude_damping_error"""
         noise_model = NoiseModel()
         # TODO the 2nd argument for add_quantum_error needs to be specified
         for q, phase in self.phase_damping_error.items():
@@ -160,9 +162,9 @@ class NoisyCircuitBuilder:
     @staticmethod
     def _get_qubits(inst: Instruction) -> List[Qubit]:
         if isinstance(inst, Command):
-            return inst.qubits
+            return inst.qubits  # type: ignore
         else:
-            return inst.cmd.qubits
+            return inst.cmd.qubits  # type: ignore
 
     def _append(
         self,
@@ -200,7 +202,8 @@ class NoisyCircuitBuilder:
         self._slices = []
         frontier = {q: 0 for q in self.all_qubits}
         for s in old_slices:
-            self._append(s, frontier)
+            for inst in s:
+                self._append(inst, frontier)
         self._fill_gaps(frontier)
 
     @staticmethod
@@ -215,13 +218,15 @@ class NoisyCircuitBuilder:
         raise ValueError(f"Unsupported unitary shape: {u.shape}")
 
     def unitary_factorisation(self) -> None:
-        """For each unitary U with time D, factorise it into N*D unitaries u_i, such that
-        u_0;u1;...;u_(N*D-1) = U. Store the factorised circuit as a list of slices
+        """For each unitary U with time D, factorise it into N*D unitaries u_i,
+        such that u_0;u1;...;u_(N*D-1) = U.
+        Store the factorised circuit as a list of slices
         """
         for cmd in self.circ:
             if cmd.op.type in [OpType.Measure, OpType.Reset]:
-                self._slices.append(cmd)
+                self._slices.append([cmd])
             else:
+                gt: Optional[float]
                 if self.ct_params.virtual_z and cmd.op.type == OpType.Z:
                     gt = 1 / self.N
                 else:
@@ -241,7 +246,7 @@ class NoisyCircuitBuilder:
                 for _ in range(n_fractions):
                     u_i_box = self._get_ubox(u_i)
                     self._slices.append(
-                        FractionalUnitary(Command(u_i_box, cmd.args), n_fractions)
+                        [FractionalUnitary(Command(u_i_box, cmd.args), n_fractions)]
                     )
 
     def _add_zz_crosstalks(self, noise_slice: Slice) -> None:
@@ -324,12 +329,12 @@ class NoisyCircuitBuilder:
     def add_noise(self) -> None:
         """Add noise gates between slices"""
         i = 1
-        base_noise_slice = []
+        base_noise_slice: Slice = []
         self._add_zz_crosstalks(base_noise_slice)
         self._add_single_q_phase(base_noise_slice)
         self._add_non_markovian(base_noise_slice)
         while i < len(self._slices):
-            noise_slice = []
+            noise_slice: Slice = []
             if self.circ.n_qubits > 2:
                 self._add_two_q_induced_phase(self._slices[i - 1], noise_slice)
             noise_slice.extend(base_noise_slice)
@@ -368,7 +373,8 @@ class NoisyCircuitBuilder:
 def get_gate_times_from_backendinfo(
     backend_info: BackendInfo,
 ) -> Dict[Tuple[OpType, Tuple[Qubit, ...]], float]:
-    """Convert the gate time information stored in a `BackendInfo` into the format required by `NoisyCircuitBuilder`"""
+    """Convert the gate time information stored in a `BackendInfo`
+    into the format required by `NoisyCircuitBuilder`"""
     if (
         "characterisation" not in backend_info.misc
         or "GateTimes" not in backend_info.misc["characterisation"]

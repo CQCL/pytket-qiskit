@@ -232,10 +232,10 @@ class _AerBaseBackend(Backend):
         if valid_check:
             self._check_all_circuits(circuits)
 
-        if hasattr(self, "crosstalk_params") and self._crosstalk_params is not None:
+        if hasattr(self, "crosstalk_params") and self._crosstalk_params is not None:  # type: ignore
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
+                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)  # type: ignore
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits

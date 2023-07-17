@@ -65,6 +65,8 @@ class CrosstalkParams:
     :param virtual_z: If True, then don't break any single qubit Z gate into unitary fractions,
     instead add the full unitary.
     :param N: hyperparameter N
+    :param gate_times: python dict to store the gate time information.
+    :type gate_times: `Dict[Tuple[OpType, Tuple[Qubit, ...]], float]`
     """
 
     zz_crosstalks: Dict[Tuple[Qubit, Qubit], float]
@@ -73,6 +75,7 @@ class CrosstalkParams:
     non_markovian_noise: List[Tuple[Qubit, float, float]]
     virtual_z: bool
     N: float
+    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float]
 
 
 class NoisyCircuitBuilder:
@@ -90,14 +93,11 @@ class NoisyCircuitBuilder:
     def __init__(
         self,
         circ: Circuit,
-        gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float],
         ct_params: CrosstalkParams,
     ) -> None:
         """Construct a builder to generate noisy circuit
         :param circ: the original circuit.
         :type circ: `Circuit`
-        :param gate_times: python dict to store the gate time information.
-        :type gate_times: `Dict[Tuple[OpType, Tuple[Qubit, ...]], float]`
         :param N: hyperparameter N
         :type N: float
         :param ct_params: crosstalk parameters.
@@ -105,7 +105,6 @@ class NoisyCircuitBuilder:
         """
         self.circ = circ
         self.all_qubits = set(circ.qubits)
-        self.gate_times = gate_times
         self.N = ct_params.N
         self.ct_params = ct_params
         self.two_level_map = {}
@@ -186,24 +185,23 @@ class NoisyCircuitBuilder:
                 if self.ct_params.virtual_z and cmd.op.type == OpType.Z:
                     gt = 1 / self.N
                 else:
-                    gt = self.gate_times.get((cmd.op.type, tuple(cmd.qubits)))
+                    gt = self.ct_params.gate_times.get((cmd.op.type, tuple(cmd.qubits)))
                 if gt is None:
                     raise ValueError(
                         f"No gate time for OpType {cmd.op.type} on qubits {cmd.qubits}"
                     )
                 u = cmd.op.get_unitary()
-                if (self.N * gt) % 1 > 1e-10:
+                n_fractions = round(self.N * gt)
+                if abs((self.N * gt) - n_fractions) > 1e-9:
                     raise ValueError(
                         f"Command {cmd} cannot be factorised into equal slices"
                     )
-                power = 1 / (self.N * gt)
+                power = 1 / n_fractions
                 u_i = fractional_matrix_power(u, power)
-                for _ in range(round(self.N * gt)):
+                for _ in range(n_fractions):
                     u_i_box = self._get_ubox(u_i)
                     self._slices.append(
-                        FractionalUnitary(
-                            Command(u_i_box, cmd.args), round(self.N * gt)
-                        )
+                        FractionalUnitary(Command(u_i_box, cmd.args), n_fractions)
                     )
 
     def _add_zz_crosstalks(self, noise_slice: Slice) -> None:
@@ -335,7 +333,6 @@ def get_gate_times_from_backendinfo(
         "characterisation" not in backend_info.misc
         or "GateTimes" not in backend_info.misc["characterisation"]
     ):
-        # print(backend_info.misc["characterisation"])
         raise ValueError("'GateTimes' is not present in the provided 'BackendInfo'")
     gate_times = {}
     for gt in backend_info.misc["characterisation"]["GateTimes"]:

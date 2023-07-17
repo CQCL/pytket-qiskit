@@ -74,7 +74,6 @@ from ..result_convert import qiskit_result_to_backendresult
 from .crosstalk_model import (
     NoisyCircuitBuilder,
     CrosstalkParams,
-    get_gate_times_from_backendinfo,
 )
 
 if TYPE_CHECKING:
@@ -234,12 +233,9 @@ class _AerBaseBackend(Backend):
             self._check_all_circuits(circuits)
 
         if hasattr(self, "crosstalk_params") and self.crosstalk_params is not None:
-            gate_times = get_gate_times_from_backendinfo(self.backend_info)
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(
-                    c, gate_times, self.crosstalk_params
-                )
+                noisy_circ_builder = NoisyCircuitBuilder(c, self.crosstalk_params)
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits

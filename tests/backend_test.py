@@ -56,6 +56,11 @@ from pytket.extensions.qiskit import (
     qiskit_to_tk,
     process_characterisation,
 )
+from pytket.extensions.qiskit.backends.crosstalk_model import (
+    CrosstalkParams,
+    NoisyCircuitBuilder,
+    FractionalUnitary,
+)
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -1230,3 +1235,78 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
             circ, optimisation_level
         )
         assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)
+
+
+def test_crosstalk_noise_model() -> None:
+    circ = Circuit(3).X(0).CX(0, 1).CX(1, 2).measure_all()
+    zz_crosstalks = {
+        (Qubit(0), Qubit(1)): 0.0003,
+        (Qubit(0), Qubit(2)): 0.0013,
+        (Qubit(1), Qubit(2)): 0.002,
+    }
+    single_q_phase_errors = {
+        Qubit(0): 0.00498,
+        Qubit(1): 0.0021,
+        Qubit(2): 0.0021,
+    }
+    two_q_induced_phase_errors = {
+        (Qubit(0), Qubit(1)): (Qubit(2), 0.0033),
+        (Qubit(1), Qubit(0)): (Qubit(2), 0.0033),
+        (Qubit(0), Qubit(2)): (Qubit(1), 0.0033),
+        (Qubit(2), Qubit(0)): (Qubit(1), 0.0033),
+        (Qubit(1), Qubit(2)): (Qubit(0), 0.0033),
+        (Qubit(2), Qubit(1)): (Qubit(0), 0.0033),
+    }
+    non_markovian_noise = [
+        (Qubit(0), 0.007, 0.007),
+        (Qubit(1), 0.004, 0.006),
+        (Qubit(2), 0.005, 0.006),
+    ]
+    phase_damping_error = {
+        Qubit(0): 0.05,
+        Qubit(1): 0.05,
+        Qubit(2): 0.05,
+    }
+    amplitude_damping_error = {
+        Qubit(0): 0.05,
+        Qubit(1): 0.05,
+        Qubit(2): 0.05,
+    }
+
+    N = 10
+    gate_times = {}
+    for q in circ.qubits:
+        gate_times[(OpType.X, tuple([q]))] = 0.1
+    for q0 in circ.qubits:
+        for q1 in circ.qubits:
+            if q0 != q1:
+                gate_times[(OpType.CX, (q0, q1))] = 0.5
+
+    ctparams = CrosstalkParams(
+        zz_crosstalks,
+        single_q_phase_errors,
+        two_q_induced_phase_errors,
+        non_markovian_noise,
+        False,
+        N,
+        gate_times,
+        phase_damping_error,
+        amplitude_damping_error,
+    )
+    # test manual construction
+    noisy_circ_builder = NoisyCircuitBuilder(circ, ctparams)
+    noisy_circ_builder.build()
+    slices = noisy_circ_builder.get_slices()
+    n_fractions = 0
+    for s in slices:
+        for inst in s:
+            if isinstance(inst, FractionalUnitary):
+                n_fractions = n_fractions + 1
+    assert n_fractions == 11
+
+    # test processing circuit
+    aer = AerBackend(crosstalk_params=ctparams)
+    compiled_circ = aer.get_compiled_circuit(circ, optimisation_level=0)
+    h = aer.process_circuit(compiled_circ, n_shots=100)
+    res = aer.get_result(h)
+    res.get_counts()

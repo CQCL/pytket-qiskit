@@ -40,14 +40,6 @@ from pytket.qasm.qasm import (
     _tk_to_qasm_extra_noparams,
     _tk_to_qasm_extra_params,
 )
-from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
-
-_tk_to_qiskit_inst_str = {
-    **_tk_to_qasm_params,
-    **_tk_to_qasm_noparams,
-    **_tk_to_qasm_extra_noparams,
-    **_tk_to_qasm_extra_params,
-}
 
 
 @dataclass
@@ -111,9 +103,6 @@ class CrosstalkParams:
     :type phase_damping_error: `Dict[Qubit, float]`
     :param amplitude_damping_error: dict pecify amplitude damping error
         on each qubit
-    :param damping_error_instruction_set: the `OpType`s the damping
-        errors apply to.
-    :type damping_error_instruction_set: `List[OpType]`
     """
 
     zz_crosstalks: Dict[Tuple[Qubit, Qubit], float]
@@ -125,24 +114,19 @@ class CrosstalkParams:
     gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float]
     phase_damping_error: Dict[Qubit, float]
     amplitude_damping_error: Dict[Qubit, float]
-    damping_error_instruction_set: List[OpType]
 
     def get_noise_model(self) -> NoiseModel:
         """Construct a NoiseModel from phase_damping_error
         and amplitude_damping_error"""
         noise_model = NoiseModel()
-        qiskit_instructions = [
-            _tk_to_qiskit_inst_str[optype]
-            for optype in self.damping_error_instruction_set
-        ]
         for q, phase in self.phase_damping_error.items():
             noise_model.add_quantum_error(
-                phase_damping_error(phase / self.N), qiskit_instructions, [q.index[0]]
+                phase_damping_error(phase / self.N), ["unitary"], [q.index[0]]
             )
         for q, amp in self.amplitude_damping_error.items():
             noise_model.add_quantum_error(
                 amplitude_damping_error(amp / self.N),
-                qiskit_instructions,
+                ["unitary"],
                 [q.index[0]],
                 warnings=False,
             )

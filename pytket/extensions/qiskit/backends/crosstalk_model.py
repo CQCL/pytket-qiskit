@@ -43,7 +43,7 @@ class FractionalUnitary:
     Wrapper for a fractional unitary gate
     :param cmd: the fractional UnitaryBox wrapped in a pytket Command
     :param n_fractions: the number of fractional gates
-    used to compose the original unitary gate.
+        used to compose the original unitary gate.
     """
 
     cmd: Command
@@ -56,7 +56,7 @@ class NoiseGate:
     Wrapper for a gate that simulates noise
     :param cmd: gate wrapped in a pytket Command
     :param type: one of zz_crosstalks, single_q_phase, two_q_induced_phase
-    and non_markovian.
+        and non_markovian.
     """
 
     cmd: Command
@@ -76,22 +76,28 @@ class CrosstalkParams:
     :param zz_crosstalks: symmetric crosstalks between qubit pairs
     :type zz_crosstalks: `Dict[Tuple[Qubit, Qubit], float]`
     :param single_q_phase_errors: dict specify the single qubit phase error
-    on each qubit
+        on each qubit
     :type single_q_phase_errors: `Dict[Qubit, float]`
     :param two_q_induced_phase_errors: keys of dictionary specify the control
-    and target qubit index, while the values are tuples with the spectator
-    qubit index and the amount of phase error to be applied.
+        and target qubit index, while the values are tuples with the spectator
+        qubit index and the amount of phase error to be applied.
     :type two_q_induced_phase_errors: `Dict[Tuple[Qubit, Qubit], Tuple[Qubit, float]]`
     :param non_markovian_noise: List storing the non-Markovian noise parameters.
-    Each tuple in the list contains the qubit index and the zx, zz noise parameters.
+        Each tuple in the list contains the qubit index and the zx, zz noise parameters.
     :type non_markovian_noise: `List[Tuple[Qubit, float, float]]`
     :param virtual_z: If True, then don't break any single qubit Z gate into
-    unitary fractions, instead add the full unitary.
+        unitary fractions, instead add the full unitary.
     :type bool
     :param N: hyperparameter N
     :type: float
     :param gate_times: python dict to store the gate time information.
     :type gate_times: `Dict[Tuple[OpType, Tuple[Qubit, ...]], float]`
+    :param phase_damping_error: dict specify amplitude phase damping error
+        on each qubit
+    :type phase_damping_error: `Dict[Qubit, float]`
+    :param amplitude_damping_error: dict pecify amplitude damping error
+        on each qubit
+    :type amplitude_damping_error: `Dict[Qubit, float]`
     """
 
     zz_crosstalks: Dict[Tuple[Qubit, Qubit], float]

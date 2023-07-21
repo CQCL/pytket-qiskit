@@ -456,8 +456,8 @@ class AerBackend(_AerBaseBackend):
          for available values. Defaults to "automatic".
         :type simulation_method: str
         :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
-         execution. Default to None.
-        :type: `CrosstalkParams`
+         execution. `noise_model` will be overwritten if this is given. Default to None.
+        :type: Optional[`CrosstalkParams`]
         """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(

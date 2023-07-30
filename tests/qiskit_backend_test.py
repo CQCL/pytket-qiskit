@@ -19,10 +19,8 @@ import numpy as np
 import pytest
 
 from qiskit import QuantumCircuit, execute  # type: ignore
-from qiskit.opflow import CircuitSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.primitives import BackendSampler
-from qiskit.quantum_info import Statevector
 from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
 from qiskit.algorithms.exceptions import AlgorithmError
 from qiskit_aer import Aer  # type: ignore
@@ -120,18 +118,16 @@ def test_cancel() -> None:
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_qiskit_counts(belem_emulator_backend: IBMQEmulatorBackend) -> None:
     num_qubits = 2
-    qc = QuantumCircuit(num_qubits)
+    qc = QuantumCircuit(num_qubits, num_qubits)
     qc.h(0)
     qc.cx(0, 1)
-    circfn = Statevector(qc)
+    backend = TketBackend(belem_emulator_backend)
 
-    s = CircuitSampler(TketBackend(belem_emulator_backend))
+    sampler = BackendSampler(backend)
+    
+    _ = sampler.run(qc)
 
-    res = s.sample_circuits([circfn])
-
-    res_dictstatefn = res[id(circfn)][0]
-
-    assert res_dictstatefn.num_qubits == num_qubits
+    assert sampler.circuits[0].num_qubits == num_qubits
 
 
 def test_architectures() -> None:

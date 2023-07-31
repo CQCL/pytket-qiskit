@@ -124,7 +124,7 @@ def test_qiskit_counts(belem_emulator_backend: IBMQEmulatorBackend) -> None:
     backend = TketBackend(belem_emulator_backend)
 
     sampler = BackendSampler(backend)
-    
+
     _ = sampler.run(qc)
 
     assert sampler.circuits[0].num_qubits == num_qubits

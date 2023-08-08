@@ -24,6 +24,7 @@ An example using the shots-based :py:class:`AerBackend` simulator is shown below
 ::
 
   from pytket.extensions.qiskit import AerBackend
+  from pytket import Circuit
 
   backend = AerBackend()
   circ = Circuit(2).H(0).CX(0, 1).measure_all()
@@ -54,7 +55,17 @@ With the exception of the Aer simulators, accessing devices and simulators throu
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
-.. note:: The documentation below is correct as of pytket-qiskit version 0.40.0. In the 0.40.0 release pytket-qiskit moved to using the `qiskit-ibm-provider <https://qiskit.org/ecosystem/ibm-provider/tutorials/Migration_Guide_from_qiskit-ibmq-provider.html>`_. In pytket-qiskit versions 0.39.0 and older the parameters ``hub``, ``group`` and ``project`` were handled separately instead of a single ``instance`` string as in 0.40.0 and newer.
+In this section we are assuming that you have set the following variables with the corresponding values:
+
+::
+
+    # Replace the placeholders with your actual values
+    ibm_token = '<your_ibm_token_here>'    
+    hub = '<your_hub_here>'
+    group = '<your_group_here>'
+    project = '<your_project_here>'
+
+.. note:: The documentation below is correct as of pytket-qiskit version 0.40.0 and newer. In the 0.40.0 release pytket-qiskit moved to using the `qiskit-ibm-provider <https://qiskit.org/ecosystem/ibm-provider/tutorials/Migration_Guide_from_qiskit-ibmq-provider.html>`_. In pytket-qiskit versions 0.39.0 and older the parameters ``hub``, ``group`` and ``project`` were handled separately instead of a single ``instance`` string as in 0.40.0 and newer.
 
 ::
 

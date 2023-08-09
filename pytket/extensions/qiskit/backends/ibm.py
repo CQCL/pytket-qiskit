@@ -77,10 +77,8 @@ from pytket.passes import (  # type: ignore
 )
 from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
-    NoMidMeasurePredicate,
     NoSymbolsPredicate,
     GateSetPredicate,
-    NoClassicalControlPredicate,
     NoFastFeedforwardPredicate,
     MaxNQubitsPredicate,
     Predicate,
@@ -338,13 +336,7 @@ class IBMQBackend(Backend):
                 )
             ),
         ]
-        mid_measure = self._backend_info.supports_midcircuit_measurement
         fast_feedforward = self._backend_info.supports_fast_feedforward
-        if not mid_measure:
-            predicates = [
-                NoClassicalControlPredicate(),
-                NoMidMeasurePredicate(),
-            ] + predicates
         if not fast_feedforward:
             predicates = [
                 NoFastFeedforwardPredicate(),

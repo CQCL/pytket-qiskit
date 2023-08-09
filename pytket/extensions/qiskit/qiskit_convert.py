@@ -374,7 +374,15 @@ class CircuitBuilder:
             elif type(instr) in [PauliEvolutionGate, UnitaryGate]:
                 pass  # Special handling below
             else:
-                optype = _known_qiskit_gate[type(instr)]
+                try:
+                    optype = _known_qiskit_gate[type(instr)]
+                except KeyError:
+                    raise NotImplementedError(
+                        f"Conversion of qiskit's {instr.name} instruction is "
+                        + "currently unsupported by qiskit_to_tk. Perhaps try "
+                        + "using QuantumCircuit.decompose() before attempting "
+                        + "conversion."
+                    )
             qubits = [self.qbmap[qbit] for qbit in qargs]
             bits = [self.cbmap[bit] for bit in cargs]
 

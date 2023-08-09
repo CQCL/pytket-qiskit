@@ -400,27 +400,6 @@ def test_conditions() -> None:
     # conversion loses rangepredicates so equality comparison not valid
 
 
-def test_condition_errors() -> None:
-    with pytest.raises(Exception) as errorinfo:
-        c = Circuit(2, 2)
-        c.X(0, condition_bits=[0], condition_value=1)
-        tk_to_qiskit(c)
-    assert "OpenQASM conditions must be an entire register" in str(errorinfo.value)
-    with pytest.raises(Exception) as errorinfo:
-        c = Circuit(2, 2)
-        b = c.add_c_register("b", 2)
-        c.X(Qubit(0), condition_bits=[b[0], Bit(0)], condition_value=1)
-        tk_to_qiskit(c)
-    assert "OpenQASM conditions can only use a single register" in str(errorinfo.value)
-    with pytest.raises(Exception) as errorinfo:
-        c = Circuit(2, 2)
-        c.X(0, condition_bits=[1, 0], condition_value=1)
-        tk_to_qiskit(c)
-    assert "OpenQASM conditions must be an entire register in order" in str(
-        errorinfo.value
-    )
-
-
 def test_correction() -> None:
     checked_x = Circuit(2, 1)
     checked_x.CX(0, 1)

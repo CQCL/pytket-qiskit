@@ -6,6 +6,10 @@ Unreleased
 
 * Implement crosstalk noise model for AerBackend.
 
+0.42.0 (August 2023)
+--------------------
+
+* Update pytket version requirement to 1.18.
 
 0.41.0 (July 2023)
 ------------------

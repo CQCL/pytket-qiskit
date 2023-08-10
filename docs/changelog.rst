@@ -1,6 +1,13 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Update qiskit version to 0.44.
+* Add option to specify the maximum number of qubits supported by Aer backends
+  (defaults to 40).
+
 0.42.0 (August 2023)
 --------------------
 

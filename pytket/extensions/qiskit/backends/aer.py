@@ -34,7 +34,7 @@ from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
-from pytket.architecture import Architecture  # type: ignore
+from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -109,6 +109,7 @@ class _AerBaseBackend(Backend):
     _memory: bool
     _required_predicates: List[Predicate]
     _noise_model: Optional[NoiseModel] = None
+    _has_arch: bool = False
 
     @property
     def required_predicates(self) -> List[Predicate]:
@@ -204,7 +205,11 @@ class _AerBaseBackend(Backend):
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
         """
         arch = self._backend_info.architecture
-        if arch.coupling and self._backend_info.get_misc("characterisation"):
+        if (
+            self._has_arch
+            and arch.coupling
+            and self._backend_info.get_misc("characterisation")
+        ):
             return self._arch_dependent_default_compilation_pass(
                 arch, optimisation_level, placement_options=placement_options
             )
@@ -431,15 +436,17 @@ class AerBackend(_AerBaseBackend):
         self,
         noise_model: Optional[NoiseModel] = None,
         simulation_method: str = "automatic",
+        n_qubits: int = 40,
     ):
         """Backend for running simulations on the Qiskit Aer QASM simulator.
 
         :param noise_model: Noise model to apply during simulation. Defaults to None.
         :type noise_model: Optional[NoiseModel], optional
         :param simulation_method: Simulation method, see
-         https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
-         for available values. Defaults to "automatic".
+            https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
+            for available values. Defaults to "automatic".
         :type simulation_method: str
+        :param n_qubits: The maximum number of qubits supported by the backend.
         """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
@@ -453,12 +460,17 @@ class AerBackend(_AerBaseBackend):
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set
         )
+        self._has_arch = (
+            characterisation.architecture and characterisation.architecture.nodes
+        )
 
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=characterisation.architecture,
+            architecture=characterisation.architecture
+            if self._has_arch
+            else FullyConnected(n_qubits),
             gate_set=gate_set,
             supports_midcircuit_measurement=True,  # is this correct?
             supports_fast_feedforward=True,
@@ -475,7 +487,7 @@ class AerBackend(_AerBaseBackend):
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
-        if characterisation.architecture.coupling:
+        if self._has_arch:
             # architecture is non-trivial
             self._required_predicates.append(
                 ConnectivityPredicate(characterisation.architecture)
@@ -493,8 +505,14 @@ class AerStateBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_statevector"
 
-    def __init__(self) -> None:
-        """Backend for running simulations on the Qiskit Aer Statevector simulator."""
+    def __init__(
+        self,
+        n_qubits: int = 40,
+    ) -> None:
+        """Backend for running simulations on the Qiskit Aer Statevector simulator.
+
+        :param n_qubits: The maximum number of qubits supported by the backend.
+        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -503,7 +521,7 @@ class AerStateBackend(_AerBaseBackend):
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=Architecture([]),
+            architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},
@@ -524,8 +542,11 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_unitary"
 
-    def __init__(self) -> None:
-        """Backend for running simulations on the Qiskit Aer Unitary simulator."""
+    def __init__(self, n_qubits: int = 40) -> None:
+        """Backend for running simulations on the Qiskit Aer Unitary simulator.
+
+        :param n_qubits: The maximum number of qubits supported by the backend.
+        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -534,7 +555,7 @@ class AerUnitaryBackend(_AerBaseBackend):
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=Architecture([]),
+            architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},

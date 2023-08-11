@@ -73,9 +73,7 @@ from pytket.passes import (  # type: ignore
     CliffordSimp,
     SimplifyInitial,
     NaivePlacementPass,
-    RebaseCustom,
 )
-from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
@@ -139,20 +137,6 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     if not QiskitRuntimeService.saved_accounts():
         if token is not None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
-
-
-# Variables for defining a rebase to the {X, SX, Rz, ECR} gateset
-# See https://github.com/CQCL/pytket-qiskit/issues/112
-_cx_replacement_with_ecr = (
-    Circuit(2).X(0).SX(1).Rz(-0.5, 0).add_gate(OpType.ECR, [0, 1])
-)
-_tk1_replacement_function = _TK1_to_X_SX_Rz
-
-ecr_rebase = RebaseCustom(
-    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
-    cx_replacement=_cx_replacement_with_ecr,
-    tk1_replacement=_tk1_replacement_function,
-)
 
 
 def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
@@ -456,10 +440,7 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
-            return ecr_rebase
-        else:
-            return auto_rebase_pass(self._primitive_gates)
+        return auto_rebase_pass(self._primitive_gates)
 
     def process_circuits(
         self,

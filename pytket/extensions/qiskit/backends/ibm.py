@@ -74,7 +74,6 @@ from pytket.passes import (  # type: ignore
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,

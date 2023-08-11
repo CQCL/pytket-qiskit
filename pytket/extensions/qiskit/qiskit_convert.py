@@ -379,7 +379,7 @@ class CircuitBuilder:
                 except KeyError:
                     raise NotImplementedError(
                         f"Conversion of qiskit's {instr.name} instruction is "
-                        + "currently unsupported by qiskit_to_tk. Perhaps try "
+                        + "currently unsupported by qiskit_to_tk. Consider "
                         + "using QuantumCircuit.decompose() before attempting "
                         + "conversion."
                     )

@@ -376,13 +376,13 @@ class CircuitBuilder:
             else:
                 try:
                     optype = _known_qiskit_gate[type(instr)]
-                except KeyError as keyerr:
+                except KeyError:
                     raise NotImplementedError(
                         f"Conversion of qiskit's {instr.name} instruction is "
                         + "currently unsupported by qiskit_to_tk. Perhaps try "
                         + "using QuantumCircuit.decompose() before attempting "
                         + "conversion."
-                    ) from keyerr
+                    )
             qubits = [self.qbmap[qbit] for qbit in qargs]
             bits = [self.cbmap[bit] for bit in cargs]
 
@@ -656,6 +656,17 @@ def append_tk_command_to_qiskit(
             width = op.width
             value = op.value
         regname = args[0].reg_name
+        if len(cregmap[regname]) != width:
+            raise NotImplementedError("OpenQASM conditions must be an entire register")
+        for i, a in enumerate(args[:width]):
+            if a.reg_name != regname:
+                raise NotImplementedError(
+                    "OpenQASM conditions can only use a single register"
+                )
+            if a.index != [i]:
+                raise NotImplementedError(
+                    "OpenQASM conditions must be an entire register in order"
+                )
         instruction = append_tk_command_to_qiskit(
             op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds
         )

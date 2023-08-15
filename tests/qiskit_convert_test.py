@@ -29,7 +29,7 @@ from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
@@ -1008,3 +1008,12 @@ def test_CS_and_CSdg() -> None:
     qiskit_qc.append(qiskit_gates.CSdgGate(), [1, 0])
     tkc = qiskit_to_tk(qiskit_qc)
     assert tkc.n_gates_of_type(OpType.QControlBox) == 4
+
+
+def test_failed_conversion_error() -> None:
+    qc = QuantumCircuit(2)
+    qc.append(XXPlusYYGate(0.1), [0, 1])  # add unsupported gate
+    with pytest.raises(
+        NotImplementedError, match=r"Conversion of qiskit's xx_plus_yy instruction"
+    ):
+        qiskit_to_tk(qc)

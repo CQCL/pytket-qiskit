@@ -155,7 +155,6 @@ def test_measures() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_noise(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
@@ -198,7 +197,6 @@ def test_noise(manila_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:
-
     char = process_characterisation(manila_backend._backend)
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
@@ -221,7 +219,6 @@ def test_process_characterisation_no_noise_model() -> None:
 
 
 def test_process_characterisation_incomplete_noise_model() -> None:
-
     my_noise_model = NoiseModel()
 
     my_noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cx"], [0, 1])
@@ -499,7 +496,6 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
@@ -1230,3 +1226,18 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
             circ, optimisation_level
         )
         assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)
+
+
+def test_statevector_simulator_gateset() -> None:
+    sv_backend = AerStateBackend()
+    sv_supported_gates = sv_backend.backend_info.gate_set
+    assert (OpType.Reset, OpType.Measure) in sv_supported_gates
+    circ = Circuit(3, 1)
+    circ.CCX(*range(3))
+    circ.U1(1 / 4, 2)
+    circ.H(2)
+    circ.Measure(2, 0)
+    circ.CZ(0, 1, condition_bits=[0], condition_value=1)
+    circ.add_gate(OpType.Reset, [2])
+    compiled_circ = sv_backend.get_compiled_circuit(circ)
+    assert sv_backend.valid_circuit(compiled_circ)

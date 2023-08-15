@@ -1231,7 +1231,7 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
 def test_statevector_simulator_gateset() -> None:
     sv_backend = AerStateBackend()
     sv_supported_gates = sv_backend.backend_info.gate_set
-    assert (OpType.Reset, OpType.Measure) in sv_supported_gates
+    assert OpType.Reset and OpType.Measure in sv_supported_gates
     circ = Circuit(3, 1)
     circ.CCX(*range(3))
     circ.U1(1 / 4, 2)

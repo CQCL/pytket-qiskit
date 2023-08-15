@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.43.0 (August 2023)
+--------------------
 
 * Update qiskit version to 0.44.
 * Update qiskit-aer version to 0.12.2.

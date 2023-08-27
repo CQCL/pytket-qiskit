@@ -1,0 +1,16 @@
+{
+    "language": {
+        "name": "python",
+        "versions": ["3.9"]
+    },
+    "tests_command": [
+        "pytest"
+    ],
+    "styles_check_command": [
+        "pylint -rn pytket/extensions/qiskit tests"
+    ],
+    "coverages_check_command": [
+        "coverage3 run -m pytest",
+        "coverage3 report --fail-under=80"
+    ]
+}

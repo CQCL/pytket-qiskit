@@ -8,5 +8,5 @@
     },
     "tests_command": [
         "/bin/bash -ec 'cd tests && pytest'",
-    ],
+    ]
 }

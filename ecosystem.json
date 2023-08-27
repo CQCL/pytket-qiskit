@@ -1,4 +1,7 @@
 {
+    "dependencies_files": [
+        "tests/test-requirements.txt"
+    ],
     "language": {
         "name": "python",
         "versions": ["3.9"]

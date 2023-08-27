@@ -7,6 +7,6 @@
         "versions": ["3.9"]
     },
     "tests_command": [
-        "/bin/bash -ec 'cd tests && pytest'",
+        "/bin/bash -ec 'cd tests && pytest'"
     ]
 }

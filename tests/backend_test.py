@@ -1232,6 +1232,7 @@ def test_statevector_simulator_gateset() -> None:
     sv_backend = AerStateBackend()
     sv_supported_gates = sv_backend.backend_info.gate_set
     assert OpType.Reset and OpType.Measure in sv_supported_gates
+    assert OpType.Conditional in sv_supported_gates
     circ = Circuit(3, 1)
     circ.CCX(*range(3))
     circ.U1(1 / 4, 2)
@@ -1241,3 +1242,4 @@ def test_statevector_simulator_gateset() -> None:
     circ.add_gate(OpType.Reset, [2])
     compiled_circ = sv_backend.get_compiled_circuit(circ)
     assert sv_backend.valid_circuit(compiled_circ)
+    statevector = sv_backend.run_circuit(compiled_circ).get_state()

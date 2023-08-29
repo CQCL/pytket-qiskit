@@ -527,12 +527,12 @@ class AerStateBackend(_AerBaseBackend):
             version=__extension_version__,
             architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
-            supports_midcircuit_measurement=True,  # is this correct?
+            supports_midcircuit_measurement=True,
+            supports_reset=True,
+            supports_fast_feedforward=True,
             misc={"characterisation": None},
         )
         self._required_predicates = [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
 

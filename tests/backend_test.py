@@ -15,6 +15,7 @@ import json
 import os
 from collections import Counter
 from typing import Dict, cast
+from warnings import warn
 import math
 import cmath
 from hypothesis import given, strategies
@@ -30,6 +31,7 @@ from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  #
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer
+from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
@@ -1127,8 +1129,14 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
     assert len(backend_info_list) > 0
 
-    backend_info_list = IBMQBackend.available_devices()
-    assert len(backend_info_list) > 0
+    try:
+        backend_info_list = IBMQBackend.available_devices()
+        assert len(backend_info_list) > 0
+    except IBMError as e:
+        if "Max retries exceeded" in e.message:
+            warn("`IBMQBackend.available_devices()` timed out.")
+        else:
+            assert not f"Unexpected error: {e.message}"
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)

@@ -1133,6 +1133,8 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     except IBMError as e:
         if "Max retries exceeded" in e.message:
             warn("`IBMQBackend.available_devices()` timed out.")
+        else:
+            assert not f"Unexpected error: {e.message}"
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)

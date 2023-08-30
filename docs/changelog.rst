@@ -1,6 +1,10 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased (September 2023)
+---------------------------
+* Fix to add include Measure, Reset and Conditional operations to the supported operations of :py:class:`AerStateBackend`.
+
 0.43.0 (August 2023)
 --------------------
 

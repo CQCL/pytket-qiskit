@@ -1240,6 +1240,7 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     return np.array(job.result().data()["statevector"].reverse_qargs().data)
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/99
 def test_statevector_simulator_gateset() -> None:
     sv_backend = AerStateBackend()
     sv_supported_gates = sv_backend.backend_info.gate_set

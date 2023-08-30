@@ -1259,3 +1259,10 @@ def test_statevector_simulator_gateset() -> None:
     qc = tk_to_qiskit(compiled_circ)
     qiskit_statevector = _get_qiskit_statevector(qc)
     assert compare_statevectors(tket_statevector, qiskit_statevector)
+
+
+def test_unitary_sim_gateset() -> None:
+    backend = AerUnitaryBackend()
+    unitary_sim_gateset = backend.backend_info.gate_set
+    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
+    assert unitary_sim_gateset.isdisjoint(unsupported_ops)

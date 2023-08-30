@@ -15,6 +15,7 @@ import json
 import os
 from collections import Counter
 from typing import Dict, cast
+from warnings import warn
 import math
 import cmath
 from hypothesis import given, strategies
@@ -29,6 +30,7 @@ from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
@@ -155,7 +157,6 @@ def test_measures() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_noise(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
@@ -198,7 +199,6 @@ def test_noise(manila_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:
-
     char = process_characterisation(manila_backend._backend)
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
@@ -221,7 +221,6 @@ def test_process_characterisation_no_noise_model() -> None:
 
 
 def test_process_characterisation_incomplete_noise_model() -> None:
-
     my_noise_model = NoiseModel()
 
     my_noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cx"], [0, 1])
@@ -499,7 +498,6 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
@@ -1129,8 +1127,14 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
     assert len(backend_info_list) > 0
 
-    backend_info_list = IBMQBackend.available_devices()
-    assert len(backend_info_list) > 0
+    try:
+        backend_info_list = IBMQBackend.available_devices()
+        assert len(backend_info_list) > 0
+    except IBMError as e:
+        if "Max retries exceeded" in e.message:
+            warn("`IBMQBackend.available_devices()` timed out.")
+        else:
+            assert not f"Unexpected error: {e.message}"
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)

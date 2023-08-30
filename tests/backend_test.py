@@ -29,6 +29,7 @@ from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_aer import Aer
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
@@ -54,6 +55,7 @@ from pytket.extensions.qiskit import (
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
+    tk_to_qiskit,
     process_characterisation,
 )
 from pytket.utils.expectations import (
@@ -1228,6 +1230,16 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
         assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)
 
 
+# helper function for testing
+def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
+    """Given a QuantumCircuit, use aer_simulator_statevector to compute its
+    statevector, return the vector with its endianness adjusted"""
+    back = Aer.get_backend("aer_simulator_statevector")
+    qc.save_state()
+    job = back.run(qc)
+    return np.array(job.result().data()["statevector"].reverse_qargs().data)
+
+
 def test_statevector_simulator_gateset() -> None:
     sv_backend = AerStateBackend()
     sv_supported_gates = sv_backend.backend_info.gate_set
@@ -1242,4 +1254,7 @@ def test_statevector_simulator_gateset() -> None:
     circ.add_gate(OpType.Reset, [2])
     compiled_circ = sv_backend.get_compiled_circuit(circ)
     assert sv_backend.valid_circuit(compiled_circ)
-    statevector = sv_backend.run_circuit(compiled_circ).get_state()
+    tket_statevector = sv_backend.run_circuit(compiled_circ).get_state()
+    qc = tk_to_qiskit(compiled_circ)
+    qiskit_statevector = _get_qiskit_statevector(qc)
+    assert compare_statevectors(tket_statevector, qiskit_statevector)

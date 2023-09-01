@@ -73,6 +73,7 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
+
 try:
     from pytket.unit_id import _TEMP_BIT_NAME
 except:

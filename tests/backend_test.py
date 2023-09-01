@@ -524,7 +524,7 @@ def test_routing_measurements() -> None:
     arc = Architecture(coupling)
     mm = MappingManager(arc)
     mm.route_circuit(physical_c, [LexiLabellingMethod(), LexiRouteRoutingMethod()])
-    Transform.DecomposeSWAPtoCX().apply(physical_c)
+    Transform.DecomposeSWAPtoCX(arc).apply(physical_c)
     Transform.DecomposeCXDirected(arc).apply(physical_c)
     Transform.OptimisePostRouting().apply(physical_c)
     assert (

@@ -76,7 +76,7 @@ from pytket.circuit import (  # type: ignore
 
 try:
     from pytket.unit_id import _TEMP_BIT_NAME
-except:
+except (ModuleNotFoundError, ImportError):
     from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore     # pytket 1.18 and earlier
 
 

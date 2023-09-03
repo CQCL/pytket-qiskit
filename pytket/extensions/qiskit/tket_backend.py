@@ -143,7 +143,7 @@ class TketBackend(QiskitBackend):
                 final_maps.append(cu.final_map)
             circ_list = compiled_list
         else:
-            final_maps = [None] * len(circ_list)
+            final_maps = [None] * len(circ_list)  # type: ignore
         handles = self._backend.process_circuits(circ_list, n_shots=n_shots)
 
         return TketJob(self, handles, jobinfos, final_maps)

@@ -299,7 +299,7 @@ class CircuitBuilder:
         qregs: List[QuantumRegister],
         cregs: Optional[List[ClassicalRegister]] = None,
         name: Optional[str] = None,
-        phase: Optional[sympy.Expr] = 0 * sympy.pi,
+        phase: Optional[sympy.Expr] = None,
     ):
         self.qregs = qregs
         self.cregs = [] if cregs is None else cregs
@@ -309,9 +309,10 @@ class CircuitBuilder:
             self.tkc = Circuit(name=name)
         else:
             self.tkc = Circuit()
-        self.tkc.add_phase(phase)
+        if phase is not None:
+            self.tkc.add_phase(phase)
         for reg in qregs:
-            tk_reg = self.tkc.add_q_register(reg.name, len(reg))
+            self.tkc.add_q_register(reg.name, len(reg))
             for i, qb in enumerate(reg):
                 self.qbmap[qb] = Qubit(reg.name, i)
         self.cregmap = {}
@@ -399,10 +400,10 @@ class CircuitBuilder:
                 sub_circ = Circuit(n_base_qubits)
                 # use base gate name for the CircBox (shows in renderer)
                 sub_circ.name = instr.base_gate.name.capitalize()
-                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))  # type: ignore
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
-                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)  # type: ignore
 
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
@@ -418,15 +419,15 @@ class CircuitBuilder:
                     amplitude_list = instr.params
                     if isinstance(instr, Initialize):
                         pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=True
+                            amplitude_list, with_initial_reset=True  # type: ignore
                         )
                     else:
                         pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=False
+                            amplitude_list, with_initial_reset=False  # type: ignore
                         )
                     # Need to reverse qubits here (endian-ness)
                     reversed_qubits = list(reversed(qubits))
-                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
+                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)  # type: ignore
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
@@ -442,7 +443,7 @@ class CircuitBuilder:
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
-                self.tkc.add_circbox(ccbox, qubits)
+                self.tkc.add_circbox(ccbox, qubits)  # type: ignore
             elif type(instr) == UnitaryGate:
                 # Note reversal of qubits, to account for endianness (pytket unitaries
                 # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
@@ -456,19 +457,19 @@ class CircuitBuilder:
                     self.tkc.add_phase(np.angle(u[0][0]) / np.pi)
                 elif n == 1:
                     assert u.shape == (2, 2)
-                    ubox = Unitary1qBox(u)
-                    self.tkc.add_unitary1qbox(ubox, qubits[0], **condition_kwargs)
+                    u1box = Unitary1qBox(u)
+                    self.tkc.add_unitary1qbox(u1box, qubits[0], **condition_kwargs)
                 elif n == 2:
                     assert u.shape == (4, 4)
-                    ubox = Unitary2qBox(u)
+                    u2box = Unitary2qBox(u)
                     self.tkc.add_unitary2qbox(
-                        ubox, qubits[1], qubits[0], **condition_kwargs
+                        u2box, qubits[1], qubits[0], **condition_kwargs
                     )
                 elif n == 3:
                     assert u.shape == (8, 8)
-                    ubox = Unitary3qBox(u)
+                    u3box = Unitary3qBox(u)
                     self.tkc.add_unitary3qbox(
-                        ubox, qubits[2], qubits[1], qubits[0], **condition_kwargs
+                        u3box, qubits[2], qubits[1], qubits[0], **condition_kwargs
                     )
                 else:
                     raise NotImplementedError(
@@ -476,7 +477,7 @@ class CircuitBuilder:
                     )
 
             elif optype == OpType.Barrier:
-                self.tkc.add_barrier(qubits)
+                self.tkc.add_barrier(qubits)  # type: ignore
             elif optype in (OpType.CircBox, OpType.CustomGate):
                 qregs = (
                     [QuantumRegister(instr.num_qubits, "q")]
@@ -493,7 +494,7 @@ class CircuitBuilder:
                 subc = builder.circuit()
                 if optype == OpType.CircBox:
                     cbox = CircBox(subc)
-                    self.tkc.add_circbox(cbox, qubits + bits, **condition_kwargs)
+                    self.tkc.add_circbox(cbox, qubits + bits, **condition_kwargs)  # type: ignore
                 else:
                     # warning, this will catch all `Gate` instances
                     # that were not picked up as a subclass in _known_qiskit_gate
@@ -501,20 +502,20 @@ class CircuitBuilder:
                     gate_def = CustomGateDef.define(
                         instr.name, subc, list(subc.free_symbols())
                     )
-                    self.tkc.add_custom_gate(gate_def, params, qubits + bits)
+                    self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,
                         [param_to_tk(p) for p in instr.params[:-1]],
-                        qubits,
+                        qubits,  # type: ignore
                         **condition_kwargs,
                     )
                 else:
                     raise NotImplementedError("CUGate with nonzero phase")
             else:
                 params = [param_to_tk(p) for p in instr.params]
-                self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)
+                self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)  # type: ignore
 
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
 
@@ -575,7 +576,7 @@ def param_to_qiskit(
 def _get_params(
     op: Op, symb_map: Dict[Parameter, sympy.Symbol]
 ) -> List[Union[float, ParameterExpression]]:
-    return [param_to_qiskit(p, symb_map) for p in op.params]
+    return [param_to_qiskit(p, symb_map) for p in op.params]  # type: ignore
 
 
 def append_tk_command_to_qiskit(
@@ -600,7 +601,7 @@ def append_tk_command_to_qiskit(
         return qcirc.reset(qb)
 
     if optype in [OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate]:
-        subcircuit = op.get_circuit()
+        subcircuit = op.get_circuit()  # type: ignore
         subqc = tk_to_qiskit(subcircuit)
         qargs = []
         cargs = []
@@ -617,16 +618,16 @@ def append_tk_command_to_qiskit(
         return qcirc.append(instruc, qargs, cargs)
     if optype in [OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox]:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
-        u = op.get_matrix()
+        u = op.get_matrix()  # type: ignore
         g = UnitaryGate(u, label="unitary")
         # Note reversal of qubits, to account for endianness (pytket unitaries are
         # ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
         return qcirc.append(g, qargs=list(reversed(qargs)))
     if optype == OpType.StatePreparationBox:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
-        statevector_array = op.get_statevector()
+        statevector_array = op.get_statevector()  # type: ignore
         # check if the StatePreparationBox contains resets
-        if op.with_initial_reset():
+        if op.with_initial_reset():  # type: ignore
             initializer = Initialize(statevector_array)
             return qcirc.append(initializer, qargs=list(reversed(qargs)))
         else:
@@ -642,25 +643,25 @@ def append_tk_command_to_qiskit(
         g = Barrier(len(args))
         return qcirc.append(g, qargs=qargs)
     if optype == OpType.RangePredicate:
-        if op.lower != op.upper:
+        if op.lower != op.upper:  # type: ignore
             raise NotImplementedError
-        range_preds[args[-1]] = (args[:-1], op.lower)
+        range_preds[args[-1]] = (args[:-1], op.lower)  # type: ignore
         # attach predicate to bit,
         # subsequent conditional will handle it
         return Instruction("", 0, 0, [])
     if optype == OpType.Conditional:
-        if op.op.type == OpType.Phase:
+        if op.op.type == OpType.Phase:  # type: ignore
             # conditional phase not supported
             return InstructionSet()
         if args[0] in range_preds:
-            assert op.value == 1
-            condition_bits, value = range_preds[args[0]]
-            del range_preds[args[0]]
+            assert op.value == 1  # type: ignore
+            condition_bits, value = range_preds[args[0]]  # type: ignore
+            del range_preds[args[0]]  # type: ignore
             args = condition_bits + args[1:]
             width = len(condition_bits)
         else:
-            width = op.width
-            value = op.value
+            width = op.width  # type: ignore
+            value = op.value  # type: ignore
         regname = args[0].reg_name
         if len(cregmap[regname]) != width:
             raise NotImplementedError("OpenQASM conditions must be an entire register")
@@ -674,7 +675,7 @@ def append_tk_command_to_qiskit(
                     "OpenQASM conditions must be an entire register in order"
                 )
         instruction = append_tk_command_to_qiskit(
-            op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds
+            op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds  # type: ignore
         )
 
         instruction.c_if(cregmap[regname], value)
@@ -690,7 +691,7 @@ def append_tk_command_to_qiskit(
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
-        alpha = param_to_qiskit(op.params[0], symb_map)
+        alpha = param_to_qiskit(op.params[0], symb_map)  # type: ignore
         assert len(qargs) >= 2
         if len(qargs) == 2:
             # presumably more efficient; single control only
@@ -820,7 +821,7 @@ def tk_to_qiskit(
         append_tk_command_to_qiskit(
             command.op, command.args, qcirc, qregmap, cregmap, symb_map, range_preds
         )
-    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)
+    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)  # type: ignore
 
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()
@@ -863,7 +864,7 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     n_qubits = config.n_qubits
     if coupling_map is None:
         # Assume full connectivity
-        arc = FullyConnected(n_qubits)
+        arc: Union[FullyConnected, Architecture] = FullyConnected(n_qubits)
     else:
         arc = Architecture(coupling_map)
 

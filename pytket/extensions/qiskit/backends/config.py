@@ -45,7 +45,7 @@ def set_ibmq_config(
 
     config = QiskitConfig.from_default_config_file()
     if instance is not None:
-        config.instance = instance
+        config.instance = instance  # type: ignore
     if ibmq_api_token is not None:
-        config.ibmq_api_token = ibmq_api_token
+        config.ibmq_api_token = ibmq_api_token  # type: ignore
     config.update_default_config_file()

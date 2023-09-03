@@ -58,7 +58,7 @@ class MockShotBackend(Backend):
             device_name="MockShotBackend",
             version="0.0.1",
             gate_set=self._gate_set,
-            architecture=self._arch,
+            architecture=self._arch,  # type: ignore
         )
 
     def process_circuits(

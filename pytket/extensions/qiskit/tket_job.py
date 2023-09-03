@@ -18,7 +18,7 @@ from qiskit.providers import JobStatus, JobV1  # type: ignore
 from qiskit.result import Result  # type: ignore
 from pytket.backends import ResultHandle, StatusEnum
 from pytket.backends.backend import Backend, KwargTypes
-from pytket.circuit import UnitID  # type: ignore
+from pytket.circuit import UnitID, Qubit, Bit  # type: ignore
 from pytket.extensions.qiskit.result_convert import (
     backendresult_to_qiskit_resultdata,
     _get_header_info,
@@ -31,8 +31,8 @@ if TYPE_CHECKING:
 @dataclass
 class JobInfo:
     circuit_name: str
-    qbits: List[UnitID]
-    cbits: List[UnitID]
+    qbits: List[Qubit]
+    cbits: List[Bit]
     n_shots: Optional[int]
 
 
@@ -69,15 +69,15 @@ class TketJob(JobV1):
         result_list = []
         for h, jobinfo, fm in zip(self._handles, self._jobinfos, self._final_maps):
             tk_result = self._pytket_backend.get_result(h)
-            creg_sizes, clbit_labels = _get_header_info(jobinfo.cbits)
-            qreg_sizes, qubit_labels = _get_header_info(jobinfo.qbits)
+            creg_sizes, clbit_labels = _get_header_info(jobinfo.cbits)  # type: ignore
+            qreg_sizes, qubit_labels = _get_header_info(jobinfo.qbits)  # type: ignore
             memory_slots = sum(size for _, size in creg_sizes)
             result_list.append(
                 {
                     "shots": jobinfo.n_shots,
                     "success": True,
                     "data": backendresult_to_qiskit_resultdata(
-                        tk_result, jobinfo.cbits, jobinfo.qbits, fm
+                        tk_result, jobinfo.cbits, jobinfo.qbits, fm  # type: ignore
                     ),
                     "header": {
                         "name": jobinfo.circuit_name,

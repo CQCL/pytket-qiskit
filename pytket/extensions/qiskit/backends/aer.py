@@ -138,17 +138,17 @@ class _AerBaseBackend(Backend):
         if placement_options is not None:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
                 **placement_options,
             )
         else:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
             )
 
         arch_specific_passes = [
@@ -207,11 +207,11 @@ class _AerBaseBackend(Backend):
         arch = self._backend_info.architecture
         if (
             self._has_arch
-            and arch.coupling
+            and arch.coupling  # type: ignore
             and self._backend_info.get_misc("characterisation")
         ):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level, placement_options=placement_options
+                arch, optimisation_level, placement_options=placement_options  # type: ignore
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)
@@ -394,7 +394,7 @@ class NoiseModelCharacterisation:
     edge_errors: Optional[Dict] = None
     readout_errors: Optional[Dict] = None
     averaged_node_errors: Optional[Dict[Node, float]] = None
-    averaged_edge_errors: Optional[Dict[Node, float]] = None
+    averaged_edge_errors: Optional[Dict[Tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[Dict[Node, float]] = None
     generic_q_errors: Optional[Dict] = None
 
@@ -460,8 +460,8 @@ class AerBackend(_AerBaseBackend):
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set
         )
-        self._has_arch = (
-            characterisation.architecture and characterisation.architecture.nodes
+        self._has_arch = bool(characterisation.architecture) and bool(
+            characterisation.architecture.nodes
         )
 
         self._backend_info = BackendInfo(

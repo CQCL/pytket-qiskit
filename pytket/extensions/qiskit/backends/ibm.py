@@ -183,7 +183,7 @@ class IBMQBackend(Backend):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)  # type: ignore
             if provider is None
             else provider
         )
@@ -287,7 +287,7 @@ class IBMQBackend(Backend):
             all_edge_gate_errors=characterisation["EdgeErrors"],
             all_readout_errors=characterisation["ReadoutErrors"],
             averaged_node_gate_errors=averaged_errors["node_errors"],
-            averaged_edge_gate_errors=averaged_errors["edge_errors"],
+            averaged_edge_gate_errors=averaged_errors["edge_errors"],  # type: ignore
             averaged_readout_errors=averaged_errors["readout_errors"],
             misc={"characterisation": filtered_characterisation},
         )
@@ -393,17 +393,17 @@ class IBMQBackend(Backend):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
+                    self._backend_info.averaged_node_gate_errors,  # type: ignore
+                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                    self._backend_info.averaged_readout_errors,  # type: ignore
                     **placement_options,
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
+                    self._backend_info.averaged_node_gate_errors,  # type: ignore
+                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                    self._backend_info.averaged_readout_errors,  # type: ignore
                 )
 
             passlist.append(

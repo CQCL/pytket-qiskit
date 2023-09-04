@@ -1249,13 +1249,15 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     return np.array(job.result().data()["statevector"].reverse_qargs().data)
 
 
+# The three tests below and helper function above relate to this issue.
 # https://github.com/CQCL/pytket-qiskit/issues/99
-def test_statevector_simulator_gateset() -> None:
+def test_statevector_simulator_gateset_deterministic() -> None:
     sv_backend = AerStateBackend()
     sv_supported_gates = sv_backend.backend_info.gate_set
     assert OpType.Reset and OpType.Measure in sv_supported_gates
     assert OpType.Conditional in sv_supported_gates
-    # This circuit is deterministic despite the non-unitary ops.
+    # This circuit is deterministic in the sense that it prepares a
+    # non-mixed state starting from ""all-0".
     # In general circuits with measures/resets won't be deterministic
     circ = Circuit(3, 1)
     circ.CCX(*range(3))
@@ -1270,6 +1272,22 @@ def test_statevector_simulator_gateset() -> None:
     qc = tk_to_qiskit(compiled_circ)
     qiskit_statevector = _get_qiskit_statevector(qc)
     assert compare_statevectors(tket_statevector, qiskit_statevector)
+
+
+def test_statevector_non_deterministic() -> None:
+    circ = Circuit(2, 1)
+    circ.H(0).H(1)
+    circ.Measure(0, 0)
+    circ.CX(1, 0, condition_bits=[0], condition_value=1)
+    sv_backend = AerStateBackend()
+    statevector = sv_backend.run_circuit(circ).get_state()
+    # Possible results: 1/sqrt(2)(|00>+|01>) or 1/sqrt(2)(|01>+|10>)
+    result1 = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
+    result2 = 1 / np.sqrt(2) * np.array([0, 1, 1, 0])
+    possible_results = (result1, result2)
+    assert compare_statevectors(
+        statevector, possible_results[0]
+    ) or compare_statevectors(statevector, possible_results[1])
 
 
 def test_unitary_sim_gateset() -> None:

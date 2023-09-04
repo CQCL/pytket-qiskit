@@ -735,8 +735,8 @@ def test_convert_multi_c_reg() -> None:
     c.add_c_register("c", 2)
     [m0] = c.add_c_register("m", 1)  # type: ignore
     c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)  # type: ignore
-    c.CX(q0, q1)
-    c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
+    c.CX(q0, q1)  # type: ignore
+    c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])  # type: ignore
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
     assert circ.get_commands()[0].args == [m0, q1]  # type: ignore

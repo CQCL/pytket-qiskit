@@ -733,7 +733,7 @@ def test_convert_multi_c_reg() -> None:
     c = Circuit()
     q0, q1 = c.add_q_register("q", 2)  # type: ignore
     c.add_c_register("c", 2)
-    [m0] = c.add_c_register("m", 1).to_list()  # type: ignore
+    [m0] = c.add_c_register("m", 1)  # type: ignore
     c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)  # type: ignore
     c.CX(q0, q1)
     c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])

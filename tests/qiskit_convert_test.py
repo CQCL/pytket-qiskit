@@ -587,7 +587,7 @@ def assert_tket_circuits_identical(circuits: List[Circuit]) -> None:
         circ.name = "tk_circ_must_be_same_name"
         qbs = circ.qubits
         qubit_map = {qbs[mm]: Qubit("node", mm) for mm in range(len(qbs))}
-        circ.rename_units(qubit_map)
+        circ.rename_units(qubit_map)  # type: ignore
         circ_copies.append(circ)
     for nn in range(1, len(circ_copies)):
         assert circ_copies[0] == circ_copies[nn]
@@ -620,7 +620,7 @@ def assert_equivalence(
             circuits[nn] = tk_to_qiskit(circuits[nn])
         elif require_qk_conversions_equality and require_tk_equality:
             tk_circuits.append(qiskit_to_tk(circuits[nn]))
-        names.add(circuits[nn].name)
+        names.add(circuits[nn].name)  # type: ignore
     assert len(names) == len(circuits)
     assert_tket_circuits_identical(tk_circuits)
 
@@ -731,15 +731,15 @@ def test_parameter_equality() -> None:
 # https://github.com/CQCL/pytket-extensions/issues/275
 def test_convert_multi_c_reg() -> None:
     c = Circuit()
-    q0, q1 = c.add_q_register("q", 2)
+    q0, q1 = c.add_q_register("q", 2)  # type: ignore
     c.add_c_register("c", 2)
-    [m0] = c.add_c_register("m", 1)
-    c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)
+    [m0] = c.add_c_register("m", 1)  # type: ignore
+    c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)  # type: ignore
     c.CX(q0, q1)
     c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
-    assert circ.get_commands()[0].args == [m0, q1]
+    assert circ.get_commands()[0].args == [m0, q1]  # type: ignore
 
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy

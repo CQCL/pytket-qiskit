@@ -242,6 +242,7 @@ def test_process_characterisation_incomplete_noise_model() -> None:
     assert back.valid_circuit(c)
 
     arch = back.backend_info.architecture
+    assert isinstance(arch, Architecture)
     nodes = arch.nodes
     assert set(arch.coupling) == {
         (nodes[0], nodes[1]),
@@ -522,11 +523,11 @@ def test_routing_measurements() -> None:
     physical_c = qiskit_to_tk(qc)
     sim = AerBackend()
     original_results = sim.run_circuit(physical_c, n_shots=10, seed=4).get_shots()
-    coupling = [[1, 0], [2, 0], [2, 1], [3, 2], [3, 4], [4, 2]]
+    coupling = [(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)]
     arc = Architecture(coupling)
     mm = MappingManager(arc)
     mm.route_circuit(physical_c, [LexiLabellingMethod(), LexiRouteRoutingMethod()])
-    Transform.DecomposeSWAPtoCX().apply(physical_c)
+    Transform.DecomposeSWAPtoCX(arc).apply(physical_c)
     Transform.DecomposeCXDirected(arc).apply(physical_c)
     Transform.OptimisePostRouting().apply(physical_c)
     assert (
@@ -539,7 +540,7 @@ def test_routing_no_cx() -> None:
     circ.H(1)
     circ.Rx(0.2, 0)
     circ.measure_all()
-    coupling = [[1, 0], [2, 0], [2, 1], [3, 2], [3, 4], [4, 2]]
+    coupling = [(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)]
     arc = Architecture(coupling)
     mm = MappingManager(arc)
     mm.route_circuit(circ, [LexiRouteRoutingMethod()])
@@ -1015,8 +1016,8 @@ def test_compilation_correctness(manila_backend: IBMQBackend) -> None:
         fmap = cu.final_map
         c_idx = {c.qubits[i]: i for i in range(5)}
         c1_idx = {c1.qubits[i]: i for i in range(5)}
-        ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}
-        inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}
+        ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
+        inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
         m_ini = lift_perm(ini)
         m_inv_fin = lift_perm(inv_fin)
 

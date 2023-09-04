@@ -1254,6 +1254,8 @@ def test_statevector_simulator_gateset() -> None:
     sv_supported_gates = sv_backend.backend_info.gate_set
     assert OpType.Reset and OpType.Measure in sv_supported_gates
     assert OpType.Conditional in sv_supported_gates
+    # This circuit is deterministic despite the non-unitary ops.
+    # In general circuits with measures/resets won't be determinstic
     circ = Circuit(3, 1)
     circ.CCX(*range(3))
     circ.U1(1 / 4, 2)

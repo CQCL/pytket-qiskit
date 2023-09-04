@@ -1257,7 +1257,7 @@ def test_statevector_simulator_gateset_deterministic() -> None:
     assert OpType.Reset and OpType.Measure in sv_supported_gates
     assert OpType.Conditional in sv_supported_gates
     # This circuit is deterministic in the sense that it prepares a
-    # non-mixed state starting from ""all-0".
+    # non-mixed state starting from the "all-0" state.
     # In general circuits with measures/resets won't be deterministic
     circ = Circuit(3, 1)
     circ.CCX(*range(3))

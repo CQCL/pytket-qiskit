@@ -1284,10 +1284,9 @@ def test_statevector_non_deterministic() -> None:
     # Possible results: 1/sqrt(2)(|00>+|01>) or 1/sqrt(2)(|01>+|10>)
     result1 = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
     result2 = 1 / np.sqrt(2) * np.array([0, 1, 1, 0])
-    possible_results = (result1, result2)
-    assert compare_statevectors(
-        statevector, possible_results[0]
-    ) or compare_statevectors(statevector, possible_results[1])
+    assert compare_statevectors(statevector, result1) or compare_statevectors(
+        statevector, result2
+    )
 
 
 def test_unitary_sim_gateset() -> None:

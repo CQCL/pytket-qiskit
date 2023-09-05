@@ -96,6 +96,12 @@ def _tket_gate_set_from_qiskit_backend(
         gate_set.add(OpType.Unitary1qBox)
         gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
+
+    if qiskit_backend.name() != "aer_simulator_unitary":
+        gate_set.add(OpType.Reset)
+        gate_set.add(OpType.Measure)
+        gate_set.add(OpType.Conditional)
+
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)
     return gate_set
@@ -523,12 +529,12 @@ class AerStateBackend(_AerBaseBackend):
             version=__extension_version__,
             architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
-            supports_midcircuit_measurement=True,  # is this correct?
+            supports_midcircuit_measurement=True,
+            supports_reset=True,
+            supports_fast_feedforward=True,
             misc={"characterisation": None},
         )
         self._required_predicates = [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
 

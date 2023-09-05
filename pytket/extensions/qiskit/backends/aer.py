@@ -96,6 +96,12 @@ def _tket_gate_set_from_qiskit_backend(
         gate_set.add(OpType.Unitary1qBox)
         gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
+
+    if qiskit_backend.name() != "aer_simulator_unitary":
+        gate_set.add(OpType.Reset)
+        gate_set.add(OpType.Measure)
+        gate_set.add(OpType.Conditional)
+
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)
     return gate_set
@@ -138,17 +144,17 @@ class _AerBaseBackend(Backend):
         if placement_options is not None:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
                 **placement_options,
             )
         else:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
             )
 
         arch_specific_passes = [
@@ -207,11 +213,11 @@ class _AerBaseBackend(Backend):
         arch = self._backend_info.architecture
         if (
             self._has_arch
-            and arch.coupling
+            and arch.coupling  # type: ignore
             and self._backend_info.get_misc("characterisation")
         ):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level, placement_options=placement_options
+                arch, optimisation_level, placement_options=placement_options  # type: ignore
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)
@@ -394,7 +400,7 @@ class NoiseModelCharacterisation:
     edge_errors: Optional[Dict] = None
     readout_errors: Optional[Dict] = None
     averaged_node_errors: Optional[Dict[Node, float]] = None
-    averaged_edge_errors: Optional[Dict[Node, float]] = None
+    averaged_edge_errors: Optional[Dict[Tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[Dict[Node, float]] = None
     generic_q_errors: Optional[Dict] = None
 
@@ -460,8 +466,8 @@ class AerBackend(_AerBaseBackend):
         characterisation = _get_characterisation_of_noise_model(
             self._noise_model, gate_set
         )
-        self._has_arch = (
-            characterisation.architecture and characterisation.architecture.nodes
+        self._has_arch = bool(characterisation.architecture) and bool(
+            characterisation.architecture.nodes
         )
 
         self._backend_info = BackendInfo(
@@ -523,12 +529,12 @@ class AerStateBackend(_AerBaseBackend):
             version=__extension_version__,
             architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
-            supports_midcircuit_measurement=True,  # is this correct?
+            supports_midcircuit_measurement=True,
+            supports_reset=True,
+            supports_fast_feedforward=True,
             misc={"characterisation": None},
         )
         self._required_predicates = [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
 

@@ -30,6 +30,7 @@ from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
@@ -56,6 +57,7 @@ from pytket.extensions.qiskit import (
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
+    tk_to_qiskit,
     process_characterisation,
 )
 from pytket.utils.expectations import (
@@ -1235,3 +1237,60 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
             circ, optimisation_level
         )
         assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)
+
+
+# helper function for testing
+def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
+    """Given a QuantumCircuit, use aer_simulator_statevector to compute its
+    statevector, return the vector with its endianness adjusted"""
+    back = Aer.get_backend("aer_simulator_statevector")
+    qc.save_state()
+    job = back.run(qc)
+    return np.array(job.result().data()["statevector"].reverse_qargs().data)
+
+
+# The three tests below and helper function above relate to this issue.
+# https://github.com/CQCL/pytket-qiskit/issues/99
+def test_statevector_simulator_gateset_deterministic() -> None:
+    sv_backend = AerStateBackend()
+    sv_supported_gates = sv_backend.backend_info.gate_set
+    assert OpType.Reset and OpType.Measure in sv_supported_gates
+    assert OpType.Conditional in sv_supported_gates
+    # This circuit is deterministic in the sense that it prepares a
+    # non-mixed state starting from the "all-0" state.
+    # In general circuits with measures/resets won't be deterministic
+    circ = Circuit(3, 1)
+    circ.CCX(*range(3))
+    circ.U1(1 / 4, 2)
+    circ.H(2)
+    circ.Measure(2, 0)
+    circ.CZ(0, 1, condition_bits=[0], condition_value=1)
+    circ.add_gate(OpType.Reset, [2])
+    compiled_circ = sv_backend.get_compiled_circuit(circ)
+    assert sv_backend.valid_circuit(compiled_circ)
+    tket_statevector = sv_backend.run_circuit(compiled_circ).get_state()
+    qc = tk_to_qiskit(compiled_circ)
+    qiskit_statevector = _get_qiskit_statevector(qc)
+    assert compare_statevectors(tket_statevector, qiskit_statevector)
+
+
+def test_statevector_non_deterministic() -> None:
+    circ = Circuit(2, 1)
+    circ.H(0).H(1)
+    circ.Measure(0, 0)
+    circ.CX(1, 0, condition_bits=[0], condition_value=1)
+    sv_backend = AerStateBackend()
+    statevector = sv_backend.run_circuit(circ).get_state()
+    # Possible results: 1/sqrt(2)(|00>+|01>) or 1/sqrt(2)(|01>+|10>)
+    result1 = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
+    result2 = 1 / np.sqrt(2) * np.array([0, 1, 1, 0])
+    assert compare_statevectors(statevector, result1) or compare_statevectors(
+        statevector, result2
+    )
+
+
+def test_unitary_sim_gateset() -> None:
+    backend = AerUnitaryBackend()
+    unitary_sim_gateset = backend.backend_info.gate_set
+    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
+    assert unitary_sim_gateset.isdisjoint(unsupported_ops)

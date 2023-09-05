@@ -1,9 +1,10 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+Unreleased (September 2023)
+---------------------------
 
+* Fix to add include Measure, Reset and Conditional operations to the supported operations of :py:class:`AerStateBackend`.
 * Update qiskit-ibm-runtime version to 0.12.0.
 * Update qiskit-ibm-provider version to 0.7.0.
 

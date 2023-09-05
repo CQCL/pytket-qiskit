@@ -532,7 +532,6 @@ class AerBackend(_AerBaseBackend):
                 ]
             )
 
-        if self._backend_info.architecture.coupling:
         if self._has_arch:
             # architecture is non-trivial
             self._required_predicates.append(

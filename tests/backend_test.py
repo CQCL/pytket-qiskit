@@ -1317,6 +1317,8 @@ def test_crosstalk_noise_model() -> None:
     h = aer.process_circuit(compiled_circ, n_shots=100)
     res = aer.get_result(h)
     res.get_counts()
+
+
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     """Given a QuantumCircuit, use aer_simulator_statevector to compute its

@@ -1,13 +1,20 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased (September 2023)
----------------------------
+
+0.44.0 (Unreleased)
+-------------------
+
+* Implement crosstalk noise model for AerBackend.
+
+
+0.44.0 (September 2023)
+-----------------------
 
 * Fix to add include Measure, Reset and Conditional operations to the supported operations of :py:class:`AerStateBackend`.
 * Update qiskit-ibm-runtime version to 0.12.0.
 * Update qiskit-ibm-provider version to 0.7.0.
-* * Implement crosstalk noise model for AerBackend.
+* Update pytket version requirement to 1.19.
 
 0.43.0 (August 2023)
 --------------------

@@ -74,6 +74,9 @@ def qiskit_experimentresult_to_backendresult(
     result: ExperimentResult,
     ppcirc: Optional[Circuit] = None,
 ) -> BackendResult:
+    if not result.success:
+        raise RuntimeError(result.status)
+
     header = result.header
     width = header.memory_slots
 

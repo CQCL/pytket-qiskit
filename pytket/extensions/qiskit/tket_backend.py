@@ -17,6 +17,7 @@ from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
 from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
 from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
 from qiskit.providers import Options  # type: ignore
+from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
 from pytket.extensions.qiskit.qiskit_convert import qiskit_to_tk, _gate_str_2_optype_rev
 from pytket.extensions.qiskit.tket_job import TketJob, JobInfo
 from pytket.backends import Backend
@@ -128,6 +129,8 @@ class TketBackend(QiskitBackend):
         jobinfos = []
         for qc in run_input:
             tk_circ = qiskit_to_tk(qc)
+            if isinstance(self._backend, (AerStateBackend, AerUnitaryBackend)):
+                tk_circ.remove_blank_wires()
             circ_list.append(tk_circ)
             jobinfos.append(JobInfo(qc.name, tk_circ.qubits, tk_circ.bits, n_shots))
         if self._comp_pass:
@@ -140,7 +143,7 @@ class TketBackend(QiskitBackend):
                 final_maps.append(cu.final_map)
             circ_list = compiled_list
         else:
-            final_maps = [None] * len(circ_list)
+            final_maps = [None] * len(circ_list)  # type: ignore
         handles = self._backend.process_circuits(circ_list, n_shots=n_shots)
 
         return TketJob(self, handles, jobinfos, final_maps)

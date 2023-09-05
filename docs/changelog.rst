@@ -1,10 +1,23 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+Unreleased (September 2023)
+---------------------------
 
-* Implement crosstalk noise model for AerBackend.
+* Fix to add include Measure, Reset and Conditional operations to the supported operations of :py:class:`AerStateBackend`.
+* Update qiskit-ibm-runtime version to 0.12.0.
+* Update qiskit-ibm-provider version to 0.7.0.
+* * Implement crosstalk noise model for AerBackend.
+
+0.43.0 (August 2023)
+--------------------
+
+* Update qiskit version to 0.44.
+* Update qiskit-aer version to 0.12.2.
+* Update qiskit-ibm-runtime version to 0.11.3.
+* Update qiskit-ibm-provider version to 0.6.3.
+* Add option to specify the maximum number of qubits supported by Aer backends
+  (defaults to 40).
 
 0.42.0 (August 2023)
 --------------------

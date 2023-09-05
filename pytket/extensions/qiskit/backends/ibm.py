@@ -73,9 +73,7 @@ from pytket.passes import (  # type: ignore
     CliffordSimp,
     SimplifyInitial,
     NaivePlacementPass,
-    RebaseCustom,
 )
-from pytket.passes._decompositions import _TK1_to_X_SX_Rz
 from pytket.predicates import (  # type: ignore
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
@@ -141,20 +139,6 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
             QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
 
 
-# Variables for defining a rebase to the {X, SX, Rz, ECR} gateset
-# See https://github.com/CQCL/pytket-qiskit/issues/112
-_cx_replacement_with_ecr = (
-    Circuit(2).X(0).SX(1).Rz(-0.5, 0).add_gate(OpType.ECR, [0, 1])
-)
-_tk1_replacement_function = _TK1_to_X_SX_Rz
-
-ecr_rebase = RebaseCustom(
-    gateset={OpType.X, OpType.SX, OpType.Rz, OpType.ECR},
-    cx_replacement=_cx_replacement_with_ecr,
-    tk1_replacement=_tk1_replacement_function,
-)
-
-
 def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
     if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
         return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
@@ -199,7 +183,7 @@ class IBMQBackend(Backend):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)  # type: ignore
             if provider is None
             else provider
         )
@@ -303,7 +287,7 @@ class IBMQBackend(Backend):
             all_edge_gate_errors=characterisation["EdgeErrors"],
             all_readout_errors=characterisation["ReadoutErrors"],
             averaged_node_gate_errors=averaged_errors["node_errors"],
-            averaged_edge_gate_errors=averaged_errors["edge_errors"],
+            averaged_edge_gate_errors=averaged_errors["edge_errors"],  # type: ignore
             averaged_readout_errors=averaged_errors["readout_errors"],
             misc={"characterisation": filtered_characterisation},
         )
@@ -409,17 +393,17 @@ class IBMQBackend(Backend):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
+                    self._backend_info.averaged_node_gate_errors,  # type: ignore
+                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                    self._backend_info.averaged_readout_errors,  # type: ignore
                     **placement_options,
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,
-                    self._backend_info.averaged_edge_gate_errors,
-                    self._backend_info.averaged_readout_errors,
+                    self._backend_info.averaged_node_gate_errors,  # type: ignore
+                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                    self._backend_info.averaged_readout_errors,  # type: ignore
                 )
 
             passlist.append(
@@ -456,10 +440,7 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        if self._primitive_gates == {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
-            return ecr_rebase
-        else:
-            return auto_rebase_pass(self._primitive_gates)
+        return auto_rebase_pass(self._primitive_gates)
 
     def process_circuits(
         self,

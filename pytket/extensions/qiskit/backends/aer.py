@@ -34,7 +34,7 @@ from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
-from pytket.architecture import Architecture  # type: ignore
+from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -102,6 +102,12 @@ def _tket_gate_set_from_qiskit_backend(
         gate_set.add(OpType.Unitary1qBox)
         gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
+
+    if qiskit_backend.name() != "aer_simulator_unitary":
+        gate_set.add(OpType.Reset)
+        gate_set.add(OpType.Measure)
+        gate_set.add(OpType.Conditional)
+
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)
     return gate_set
@@ -115,6 +121,7 @@ class _AerBaseBackend(Backend):
     _memory: bool
     _required_predicates: List[Predicate]
     _noise_model: Optional[NoiseModel] = None
+    _has_arch: bool = False
 
     @property
     def required_predicates(self) -> List[Predicate]:
@@ -143,17 +150,17 @@ class _AerBaseBackend(Backend):
         if placement_options is not None:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
                 **placement_options,
             )
         else:
             noise_aware_placement = NoiseAwarePlacement(
                 arch,
-                self._backend_info.averaged_node_gate_errors,
-                self._backend_info.averaged_edge_gate_errors,
-                self._backend_info.averaged_readout_errors,
+                self._backend_info.averaged_node_gate_errors,  # type: ignore
+                self._backend_info.averaged_edge_gate_errors,  # type: ignore
+                self._backend_info.averaged_readout_errors,  # type: ignore
             )
 
         arch_specific_passes = [
@@ -210,9 +217,13 @@ class _AerBaseBackend(Backend):
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
         """
         arch = self._backend_info.architecture
-        if arch.coupling and self._backend_info.get_misc("characterisation"):
+        if (
+            self._has_arch
+            and arch.coupling  # type: ignore
+            and self._backend_info.get_misc("characterisation")
+        ):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level, placement_options=placement_options
+                arch, optimisation_level, placement_options=placement_options  # type: ignore
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)
@@ -403,7 +414,7 @@ class NoiseModelCharacterisation:
     edge_errors: Optional[Dict] = None
     readout_errors: Optional[Dict] = None
     averaged_node_errors: Optional[Dict[Node, float]] = None
-    averaged_edge_errors: Optional[Dict[Node, float]] = None
+    averaged_edge_errors: Optional[Dict[Tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[Dict[Node, float]] = None
     generic_q_errors: Optional[Dict] = None
 
@@ -446,18 +457,20 @@ class AerBackend(_AerBaseBackend):
         noise_model: Optional[NoiseModel] = None,
         simulation_method: str = "automatic",
         crosstalk_params: Optional[CrosstalkParams] = None,
+        n_qubits: int = 40,
     ):
         """Backend for running simulations on the Qiskit Aer QASM simulator.
 
         :param noise_model: Noise model to apply during simulation. Defaults to None.
         :type noise_model: Optional[NoiseModel], optional
         :param simulation_method: Simulation method, see
-         https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
-         for available values. Defaults to "automatic".
+            https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
+            for available values. Defaults to "automatic".
         :type simulation_method: str
         :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
          execution. `noise_model` will be overwritten if this is given. Default to None.
         :type: Optional[`CrosstalkParams`]
+        :param n_qubits: The maximum number of qubits supported by the backend.
         """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
@@ -469,7 +482,6 @@ class AerBackend(_AerBaseBackend):
         )
 
         self._crosstalk_params = crosstalk_params
-
         if self._crosstalk_params is not None:
             self._noise_model = self._crosstalk_params.get_noise_model()
             self._backend_info = BackendInfo(
@@ -484,12 +496,17 @@ class AerBackend(_AerBaseBackend):
             characterisation = _get_characterisation_of_noise_model(
                 self._noise_model, gate_set
             )
+            self._has_arch = bool(characterisation.architecture) and bool(
+                characterisation.architecture.nodes
+            )
 
             self._backend_info = BackendInfo(
                 name=type(self).__name__,
                 device_name=self._qiskit_backend_name,
                 version=__extension_version__,
-                architecture=characterisation.architecture,
+                architecture=characterisation.architecture
+                if self._has_arch
+                else FullyConnected(n_qubits),
                 gate_set=gate_set,
                 supports_midcircuit_measurement=True,  # is this correct?
                 supports_fast_feedforward=True,
@@ -516,6 +533,7 @@ class AerBackend(_AerBaseBackend):
             )
 
         if self._backend_info.architecture.coupling:
+        if self._has_arch:
             # architecture is non-trivial
             self._required_predicates.append(
                 ConnectivityPredicate(self._backend_info.architecture)
@@ -533,8 +551,14 @@ class AerStateBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_statevector"
 
-    def __init__(self) -> None:
-        """Backend for running simulations on the Qiskit Aer Statevector simulator."""
+    def __init__(
+        self,
+        n_qubits: int = 40,
+    ) -> None:
+        """Backend for running simulations on the Qiskit Aer Statevector simulator.
+
+        :param n_qubits: The maximum number of qubits supported by the backend.
+        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -543,14 +567,14 @@ class AerStateBackend(_AerBaseBackend):
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=Architecture([]),
+            architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
-            supports_midcircuit_measurement=True,  # is this correct?
+            supports_midcircuit_measurement=True,
+            supports_reset=True,
+            supports_fast_feedforward=True,
             misc={"characterisation": None},
         )
         self._required_predicates = [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
 
@@ -564,8 +588,11 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_unitary"
 
-    def __init__(self) -> None:
-        """Backend for running simulations on the Qiskit Aer Unitary simulator."""
+    def __init__(self, n_qubits: int = 40) -> None:
+        """Backend for running simulations on the Qiskit Aer Unitary simulator.
+
+        :param n_qubits: The maximum number of qubits supported by the backend.
+        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -574,7 +601,7 @@ class AerUnitaryBackend(_AerBaseBackend):
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=Architecture([]),
+            architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,  # is this correct?
             misc={"characterisation": None},

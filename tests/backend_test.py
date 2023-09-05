@@ -15,6 +15,7 @@ import json
 import os
 from collections import Counter
 from typing import Dict, cast
+from warnings import warn
 import math
 import cmath
 from hypothesis import given, strategies
@@ -29,6 +30,8 @@ from qiskit.providers.aer.noise import ReadoutError  # type: ignore
 from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_aer import Aer  # type: ignore
+from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
@@ -54,6 +57,7 @@ from pytket.extensions.qiskit import (
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
+    tk_to_qiskit,
     process_characterisation,
 )
 from pytket.extensions.qiskit.backends.crosstalk_model import (
@@ -160,7 +164,6 @@ def test_measures() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_noise(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
@@ -203,7 +206,6 @@ def test_noise(manila_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(manila_backend: IBMQBackend) -> None:
-
     char = process_characterisation(manila_backend._backend)
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
@@ -226,7 +228,6 @@ def test_process_characterisation_no_noise_model() -> None:
 
 
 def test_process_characterisation_incomplete_noise_model() -> None:
-
     my_noise_model = NoiseModel()
 
     my_noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cx"], [0, 1])
@@ -246,6 +247,7 @@ def test_process_characterisation_incomplete_noise_model() -> None:
     assert back.valid_circuit(c)
 
     arch = back.backend_info.architecture
+    assert isinstance(arch, Architecture)
     nodes = arch.nodes
     assert set(arch.coupling) == {
         (nodes[0], nodes[1]),
@@ -504,7 +506,6 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
-
     noise_model = NoiseModel.from_backend(manila_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
@@ -527,11 +528,11 @@ def test_routing_measurements() -> None:
     physical_c = qiskit_to_tk(qc)
     sim = AerBackend()
     original_results = sim.run_circuit(physical_c, n_shots=10, seed=4).get_shots()
-    coupling = [[1, 0], [2, 0], [2, 1], [3, 2], [3, 4], [4, 2]]
+    coupling = [(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)]
     arc = Architecture(coupling)
     mm = MappingManager(arc)
     mm.route_circuit(physical_c, [LexiLabellingMethod(), LexiRouteRoutingMethod()])
-    Transform.DecomposeSWAPtoCX().apply(physical_c)
+    Transform.DecomposeSWAPtoCX(arc).apply(physical_c)
     Transform.DecomposeCXDirected(arc).apply(physical_c)
     Transform.OptimisePostRouting().apply(physical_c)
     assert (
@@ -544,7 +545,7 @@ def test_routing_no_cx() -> None:
     circ.H(1)
     circ.Rx(0.2, 0)
     circ.measure_all()
-    coupling = [[1, 0], [2, 0], [2, 1], [3, 2], [3, 4], [4, 2]]
+    coupling = [(1, 0), (2, 0), (2, 1), (3, 2), (3, 4), (4, 2)]
     arc = Architecture(coupling)
     mm = MappingManager(arc)
     mm.route_circuit(circ, [LexiRouteRoutingMethod()])
@@ -1020,8 +1021,8 @@ def test_compilation_correctness(manila_backend: IBMQBackend) -> None:
         fmap = cu.final_map
         c_idx = {c.qubits[i]: i for i in range(5)}
         c1_idx = {c1.qubits[i]: i for i in range(5)}
-        ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}
-        inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}
+        ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
+        inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
         m_ini = lift_perm(ini)
         m_inv_fin = lift_perm(inv_fin)
 
@@ -1134,8 +1135,14 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
     assert len(backend_info_list) > 0
 
-    backend_info_list = IBMQBackend.available_devices()
-    assert len(backend_info_list) > 0
+    try:
+        backend_info_list = IBMQBackend.available_devices()
+        assert len(backend_info_list) > 0
+    except IBMError as e:
+        if "Max retries exceeded" in e.message:
+            warn("`IBMQBackend.available_devices()` timed out.")
+        else:
+            assert not f"Unexpected error: {e.message}"
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
@@ -1310,3 +1317,58 @@ def test_crosstalk_noise_model() -> None:
     h = aer.process_circuit(compiled_circ, n_shots=100)
     res = aer.get_result(h)
     res.get_counts()
+# helper function for testing
+def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
+    """Given a QuantumCircuit, use aer_simulator_statevector to compute its
+    statevector, return the vector with its endianness adjusted"""
+    back = Aer.get_backend("aer_simulator_statevector")
+    qc.save_state()
+    job = back.run(qc)
+    return np.array(job.result().data()["statevector"].reverse_qargs().data)
+
+
+# The three tests below and helper function above relate to this issue.
+# https://github.com/CQCL/pytket-qiskit/issues/99
+def test_statevector_simulator_gateset_deterministic() -> None:
+    sv_backend = AerStateBackend()
+    sv_supported_gates = sv_backend.backend_info.gate_set
+    assert OpType.Reset and OpType.Measure in sv_supported_gates
+    assert OpType.Conditional in sv_supported_gates
+    # This circuit is deterministic in the sense that it prepares a
+    # non-mixed state starting from the "all-0" state.
+    # In general circuits with measures/resets won't be deterministic
+    circ = Circuit(3, 1)
+    circ.CCX(*range(3))
+    circ.U1(1 / 4, 2)
+    circ.H(2)
+    circ.Measure(2, 0)
+    circ.CZ(0, 1, condition_bits=[0], condition_value=1)
+    circ.add_gate(OpType.Reset, [2])
+    compiled_circ = sv_backend.get_compiled_circuit(circ)
+    assert sv_backend.valid_circuit(compiled_circ)
+    tket_statevector = sv_backend.run_circuit(compiled_circ).get_state()
+    qc = tk_to_qiskit(compiled_circ)
+    qiskit_statevector = _get_qiskit_statevector(qc)
+    assert compare_statevectors(tket_statevector, qiskit_statevector)
+
+
+def test_statevector_non_deterministic() -> None:
+    circ = Circuit(2, 1)
+    circ.H(0).H(1)
+    circ.Measure(0, 0)
+    circ.CX(1, 0, condition_bits=[0], condition_value=1)
+    sv_backend = AerStateBackend()
+    statevector = sv_backend.run_circuit(circ).get_state()
+    # Possible results: 1/sqrt(2)(|00>+|01>) or 1/sqrt(2)(|01>+|10>)
+    result1 = 1 / np.sqrt(2) * np.array([1, 1, 0, 0])
+    result2 = 1 / np.sqrt(2) * np.array([0, 1, 1, 0])
+    assert compare_statevectors(statevector, result1) or compare_statevectors(
+        statevector, result2
+    )
+
+
+def test_unitary_sim_gateset() -> None:
+    backend = AerUnitaryBackend()
+    unitary_sim_gateset = backend.backend_info.gate_set
+    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
+    assert unitary_sim_gateset.isdisjoint(unsupported_ops)

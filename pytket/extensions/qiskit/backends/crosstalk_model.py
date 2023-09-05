@@ -131,7 +131,7 @@ class CrosstalkParams:
 class NoisyCircuitBuilder:
     """Builder used to generate a noisy circuit"""
 
-    Ibox = Unitary1qBox(np.eye(2))
+    Ibox = Unitary1qBox(np.eye(2))  # type: ignore
     SUPPORTED_TYPES = {
         OpType.Unitary1qBox,
         OpType.Unitary2qBox,
@@ -388,7 +388,7 @@ def get_gate_times_from_backendinfo(
         or "GateTimes" not in backend_info.misc["characterisation"]
     ):
         raise ValueError("'GateTimes' is not present in the provided 'BackendInfo'")
-    gate_times = {}
+    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float] = {}
     for gt in backend_info.misc["characterisation"]["GateTimes"]:
         # GateTimes are nanoseconds
         gate_times[_gate_str_2_optype[gt[0]], tuple([Node(q) for q in gt[1]])] = (

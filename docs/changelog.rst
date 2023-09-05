@@ -1,6 +1,13 @@
 Changelog
 ~~~~~~~~~
 
+
+0.44.0 (Unreleased)
+-------------------
+
+* Implement crosstalk noise model for AerBackend.
+
+
 0.44.0 (September 2023)
 -----------------------
 

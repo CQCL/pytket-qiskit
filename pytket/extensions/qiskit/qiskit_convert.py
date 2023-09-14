@@ -73,13 +73,7 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
-
-try:
-    from pytket.unit_id import _TEMP_BIT_NAME  # type: ignore
-except (ModuleNotFoundError, ImportError):
-    from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore     # pytket 1.18 and earlier
-
-
+from pytket.unit_id import _TEMP_BIT_NAME  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.architecture import Architecture, FullyConnected  # type: ignore
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit

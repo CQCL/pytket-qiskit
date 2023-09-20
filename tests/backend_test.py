@@ -33,7 +33,7 @@ from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
+from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox, QControlBox, CircBox  # type: ignore
 from pytket.passes import CliffordSimp  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
@@ -1374,3 +1374,25 @@ def test_unitary_sim_gateset() -> None:
     unitary_sim_gateset = backend.backend_info.gate_set
     unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
     assert unitary_sim_gateset.isdisjoint(unsupported_ops)
+
+
+def test_unitary_backend_transpiles() -> None:
+    """regression test for https://github.com/CQCL/pytket-qiskit/issues/142"""
+    backend = AerUnitaryBackend()
+    n_ancillas = 5  # using n_ancillas <=4 doees not raise an error
+    n_spins = 1
+    circ = Circuit(n_ancillas + n_spins)
+    trgt = Circuit(n_spins)
+    trgt.X(0)
+
+    circ.add_qcontrolbox(
+        QControlBox(CircBox(trgt), n_ancillas), list(range(n_ancillas + n_spins))
+    )
+
+    compiled_circ = backend.get_compiled_circuit(circ, optimisation_level=0)
+    # using optimisation_level >= 1 does not raise an error
+    r = backend.run_circuit(compiled_circ)
+    u = r.get_unitary()
+    # check that the lower-right 2x2 submatrix of the unitary is the matrix of
+    # the X gate.
+    assert np.isclose(u[62:64, 62:64], np.asarray(([0.0, 1.0], [1.0, 0.0]))).all()

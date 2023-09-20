@@ -29,6 +29,7 @@ from typing import (
 )
 
 import numpy as np
+from qiskit import transpile  # type: ignore
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
@@ -122,6 +123,7 @@ class _AerBaseBackend(Backend):
     _required_predicates: List[Predicate]
     _noise_model: Optional[NoiseModel] = None
     _has_arch: bool = False
+    _needs_transpile: bool = False
 
     @property
     def required_predicates(self) -> List[Predicate]:
@@ -267,6 +269,9 @@ class _AerBaseBackend(Backend):
                 elif self.supports_unitary:
                     qc.save_unitary()
                 qcs.append(qc)
+
+            if self._needs_transpile:
+                qcs = transpile(qcs, self._qiskit_backend)
 
             seed = cast(Optional[int], kwargs.get("seed"))
             job = self._qiskit_backend.run(
@@ -584,6 +589,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     _memory = False
     _noise_model = None
+    _needs_transpile = True
 
     _qiskit_backend_name = "aer_simulator_unitary"
 

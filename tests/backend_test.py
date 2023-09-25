@@ -33,7 +33,16 @@ from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox, QControlBox, CircBox
+from pytket.circuit import (
+    Circuit,
+    OpType,
+    BasisOrder,
+    Qubit,
+    reg_eq,
+    Unitary2qBox,
+    QControlBox,
+    CircBox,
+)
 from pytket.passes import CliffordSimp
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate

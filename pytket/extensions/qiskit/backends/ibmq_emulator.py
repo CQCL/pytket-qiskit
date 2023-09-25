@@ -41,10 +41,10 @@ from pytket.backends import Backend, CircuitNotRunError, ResultHandle, CircuitSt
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.circuit import Bit, Circuit, OpType  # type: ignore
+from pytket.circuit import Bit, Circuit, OpType
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit
-from pytket.passes import BasePass  # type: ignore
-from pytket.predicates import Predicate  # type: ignore
+from pytket.passes import BasePass
+from pytket.predicates import Predicate
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes

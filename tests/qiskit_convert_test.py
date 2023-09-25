@@ -16,7 +16,7 @@ from collections import Counter
 from typing import List, Set, Union
 from math import pi
 import pytest
-from sympy import Symbol  # type: ignore
+from sympy import Symbol
 import numpy as np
 from qiskit import (  # type: ignore
     QuantumCircuit,
@@ -30,12 +30,12 @@ from qiskit.quantum_info import Pauli  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
-from qiskit.circuit import Parameter  # type: ignore
+from qiskit.circuit import Parameter
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
 from qiskit.extensions import UnitaryGate  # type: ignore
 
-from pytket.circuit import (  # type: ignore
+from pytket.circuit import (
     Circuit,
     CircBox,
     Unitary1qBox,
@@ -52,7 +52,7 @@ from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
-from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass  # type: ignore
+from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass
 from pytket.utils.results import (
     compare_statevectors,
     permute_rows_cols_in_unitary,

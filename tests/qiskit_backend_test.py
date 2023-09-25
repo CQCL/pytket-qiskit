@@ -36,8 +36,8 @@ from pytket.extensions.qiskit import (
     IBMQEmulatorBackend,
 )
 from pytket.extensions.qiskit.tket_backend import TketBackend
-from pytket.circuit import OpType  # type: ignore
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.circuit import OpType
+from pytket.architecture import Architecture, FullyConnected
 
 from .mock_pytket_backend import MockShotBackend
 

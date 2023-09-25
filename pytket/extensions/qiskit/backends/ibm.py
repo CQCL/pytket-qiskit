@@ -50,7 +50,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     RuntimeJob,
 )
 
-from pytket.circuit import Circuit, OpType  # type: ignore
+from pytket.circuit import Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -60,7 +60,7 @@ from pytket.extensions.qiskit.qiskit_convert import (
     get_avg_characterisation,
 )
 from pytket.extensions.qiskit._metadata import __extension_version__
-from pytket.passes import (  # type: ignore
+from pytket.passes import (
     BasePass,
     auto_rebase_pass,
     KAKDecomposition,
@@ -74,7 +74,7 @@ from pytket.passes import (  # type: ignore
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket.predicates import (  # type: ignore
+from pytket.predicates import (
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
     GateSetPredicate,
@@ -84,8 +84,8 @@ from pytket.predicates import (  # type: ignore
     Predicate,
 )
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.architecture import FullyConnected  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
+from pytket.architecture import FullyConnected
+from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
@@ -187,7 +187,7 @@ class IBMQBackend(Backend):
             if provider is None
             else provider
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)  # type: ignore
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 

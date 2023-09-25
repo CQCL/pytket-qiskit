@@ -25,7 +25,7 @@ from qiskit.providers import JobStatus  # type: ignore
 from pytket.backends.status import StatusEnum
 
 if TYPE_CHECKING:
-    from pytket.circuit import Circuit  # type: ignore
+    from pytket.circuit import Circuit
 
 _STATUS_MAP = {
     JobStatus.CANCELLED: StatusEnum.CANCELLED,

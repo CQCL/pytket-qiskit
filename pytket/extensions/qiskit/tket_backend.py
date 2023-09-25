@@ -21,13 +21,13 @@ from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
 from pytket.extensions.qiskit.qiskit_convert import qiskit_to_tk, _gate_str_2_optype_rev
 from pytket.extensions.qiskit.tket_job import TketJob, JobInfo
 from pytket.backends import Backend
-from pytket.passes import BasePass  # type: ignore
-from pytket.predicates import (  # type: ignore
+from pytket.passes import BasePass
+from pytket.predicates import (
     NoClassicalControlPredicate,
     GateSetPredicate,
     CompilationUnit,
 )
-from pytket.architecture import FullyConnected  # type: ignore
+from pytket.architecture import FullyConnected
 
 
 def _extract_basis_gates(backend: Backend) -> List[str]:

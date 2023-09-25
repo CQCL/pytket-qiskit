@@ -14,7 +14,7 @@
 """Module for conversion between IBM Qiskit and tket primitives."""
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__  # type: ignore
+from ._metadata import __extension_version__, __extension_name__
 from .backends import (
     IBMQBackend,
     NoIBMQCredentialsError,

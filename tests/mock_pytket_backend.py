@@ -1,12 +1,27 @@
+# Copyright 2019-2023 Cambridge Quantum Computing
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from typing import Optional, Union, List, Sequence, Set, cast
 import json
 
-from pytket.circuit import Circuit, OpType  # type: ignore
+from pytket.circuit import Circuit, OpType
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backendinfo import BackendInfo
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
-from pytket.predicates import Predicate, GateSetPredicate  # type: ignore
-from pytket.passes import BasePass, CustomPass  # type: ignore
+from pytket.architecture import Architecture, FullyConnected
+from pytket.predicates import Predicate, GateSetPredicate
+from pytket.passes import BasePass, CustomPass
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.backend import KwargTypes, ResultCache

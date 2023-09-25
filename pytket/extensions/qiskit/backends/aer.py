@@ -35,13 +35,13 @@ from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.circuit import Circuit, Node, OpType, Qubit  # type: ignore
-from pytket.passes import (  # type: ignore
+from pytket.circuit import Circuit, Node, OpType, Qubit
+from pytket.passes import (
     BasePass,
     CliffordSimp,
     CXMappingPass,
@@ -52,9 +52,9 @@ from pytket.passes import (  # type: ignore
     auto_rebase_pass,
     NaivePlacementPass,
 )
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
-from pytket.predicates import (  # type: ignore
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.placement import NoiseAwarePlacement
+from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
     NoClassicalControlPredicate,
@@ -247,10 +247,10 @@ class _AerBaseBackend(Backend):
         if valid_check:
             self._check_all_circuits(circuits)
 
-        if hasattr(self, "_crosstalk_params") and self._crosstalk_params is not None:  # type: ignore
+        if hasattr(self, "_crosstalk_params") and self._crosstalk_params is not None:
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)  # type: ignore
+                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits

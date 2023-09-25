@@ -22,7 +22,7 @@ from qiskit_aer.noise.errors.standard_errors import amplitude_damping_error, pha
 import numpy as np
 from scipy.linalg import fractional_matrix_power  # type: ignore
 
-from pytket.circuit import (  # type: ignore
+from pytket.circuit import (
     Circuit,
     Qubit,
     Node,
@@ -170,9 +170,9 @@ class NoisyCircuitBuilder:
     @staticmethod
     def _get_qubits(inst: Instruction) -> List[Qubit]:
         if isinstance(inst, Command):
-            return inst.qubits  # type: ignore
+            return inst.qubits
         else:
-            return inst.cmd.qubits  # type: ignore
+            return inst.cmd.qubits
 
     def _append(
         self,

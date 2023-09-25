@@ -21,7 +21,7 @@ from qiskit.providers.aer.aerprovider import AerProvider  # type: ignore # type:
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 
-from pytket.passes import BasePass  # type: ignore
+from pytket.passes import BasePass
 from pytket.extensions.qiskit import (
     IBMQBackend,
     AerBackend,

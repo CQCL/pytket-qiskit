@@ -33,13 +33,22 @@ from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox, QControlBox, CircBox  # type: ignore
-from pytket.passes import CliffordSimp  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
-from pytket.architecture import Architecture  # type: ignore
-from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod  # type: ignore
-from pytket.transform import Transform  # type: ignore
+from pytket.circuit import (
+    Circuit,
+    OpType,
+    BasisOrder,
+    Qubit,
+    reg_eq,
+    Unitary2qBox,
+    QControlBox,
+    CircBox,
+)
+from pytket.passes import CliffordSimp
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
+from pytket.architecture import Architecture
+from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod
+from pytket.transform import Transform
 from pytket.backends import (
     ResultHandle,
     CircuitNotRunError,

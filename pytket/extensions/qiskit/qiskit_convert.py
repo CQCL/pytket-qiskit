@@ -35,7 +35,7 @@ from uuid import UUID
 
 import numpy as np
 
-import sympy  # type: ignore
+import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
     ClassicalRegister,
@@ -53,11 +53,11 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation  # type: ignore
+from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from qiskit.extensions import Initialize  # type: ignore
-from pytket.circuit import (  # type: ignore
+from pytket.circuit import (
     CircBox,
     Circuit,
     Node,
@@ -73,12 +73,12 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
-from pytket.unit_id import _TEMP_BIT_NAME  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom  # type: ignore
+from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -87,7 +87,7 @@ if TYPE_CHECKING:
         Nduv,
     )
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
-    from pytket.circuit import Op, UnitID  # type: ignore
+    from pytket.circuit import Op, UnitID
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):

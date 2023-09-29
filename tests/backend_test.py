@@ -1003,7 +1003,7 @@ def lift_perm(p: Dict[int, int]) -> np.ndarray:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_compilation_correctness(perth_backend: IBMQBackend) -> None:
-    c = Circuit(6)
+    c = Circuit(7)
     c.H(0).H(1).H(2)
     c.CX(0, 1).CX(1, 2)
     c.Rx(0.25, 1).Ry(0.75, 1).Rz(0.5, 2)
@@ -1028,8 +1028,8 @@ def test_compilation_correctness(perth_backend: IBMQBackend) -> None:
         # Adjust for placement
         imap = cu.initial_map
         fmap = cu.final_map
-        c_idx = {c.qubits[i]: i for i in range(6)}
-        c1_idx = {c1.qubits[i]: i for i in range(6)}
+        c_idx = {c.qubits[i]: i for i in range(7)}
+        c1_idx = {c1.qubits[i]: i for i in range(7)}
         ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
         inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
         m_ini = lift_perm(ini)

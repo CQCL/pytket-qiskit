@@ -117,14 +117,14 @@ def test_cancel() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_qiskit_counts(belem_emulator_backend: IBMQEmulatorBackend) -> None:
+def test_qiskit_counts(nairobi_emulator_backend: IBMQEmulatorBackend) -> None:
     num_qubits = 2
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
     qc.cx(0, 1)
     circfn = CircuitStateFn(qc)
 
-    s = CircuitSampler(TketBackend(belem_emulator_backend))
+    s = CircuitSampler(TketBackend(nairobi_emulator_backend))
 
     res = s.sample_circuits([circfn])
 

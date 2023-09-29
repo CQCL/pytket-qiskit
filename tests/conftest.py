@@ -99,7 +99,7 @@ def ibm_provider() -> IBMProvider:
         return IBMProvider(instance="ibm-q/open/main")
     except:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
-        return IBMProvider(token=token, instance="ibm-q/open/main", overwrite=True)
+        return IBMProvider(token=token, instance="ibm-q/open/main")
 
 
 @pytest.fixture(scope="module")

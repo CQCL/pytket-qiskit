@@ -428,10 +428,6 @@ class IBMQBackend(Backend):
 
         if self._supports_rz:
             passlist.extend([self.rebase_pass(), RemoveRedundancies()])
-        if optimisation_level > 0:
-            passlist.append(
-                SimplifyInitial(allow_classical=False, create_all_qubits=True)
-            )
         return SequencePass(passlist)
 
     @property
@@ -451,7 +447,13 @@ class IBMQBackend(Backend):
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `postprocess`.
+
+        Supported `kwargs`:
+        - `postprocess`: apply end-of-circuit simplifications and classical
+          postprocessing to improve fidelity of results (bool, default False)
+        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+          fidelity of results assuming all qubits initialized to zero (bool, default
+          False)
         """
         circuits = list(circuits)
 
@@ -464,6 +466,9 @@ class IBMQBackend(Backend):
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
+        postprocess = kwargs.get("postprocess", False)
+        simplify_initial = kwargs.get("simplify_initial", False)
+
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             for chunk in itertools.zip_longest(
@@ -475,8 +480,6 @@ class IBMQBackend(Backend):
                 if valid_check:
                     self._check_all_circuits(batch_chunk)
 
-                postprocess = kwargs.get("postprocess", False)
-
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
                     if postprocess:
@@ -484,6 +487,10 @@ class IBMQBackend(Backend):
                         ppcirc_rep = ppcirc.to_dict()
                     else:
                         c0, ppcirc_rep = tkc, None
+                    if simplify_initial:
+                        SimplifyInitial(
+                            allow_classical=False, create_all_qubits=True
+                        ).apply(c0)
                     qcs.append(tk_to_qiskit(c0))
                     ppcirc_strs.append(json.dumps(ppcirc_rep))
                 if self._MACHINE_DEBUG:

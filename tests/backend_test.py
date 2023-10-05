@@ -1035,10 +1035,6 @@ def test_compilation_correctness(perth_backend: IBMQBackend) -> None:
         m_ini = lift_perm(ini)
         m_inv_fin = lift_perm(inv_fin)
 
-        # Note that we do not expect unitary equivalence, because the pass includes
-        # SimplifyInitial which may remove initial gates that do not affect the final
-        # result. However the first columns of the unitaries (i.e. the final
-        # statevectors arising from an initial all-zero state) should match.
         assert compare_statevectors(u[:, 0], (m_inv_fin @ compiled_u @ m_ini)[:, 0])
 
 

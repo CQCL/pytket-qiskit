@@ -2,11 +2,12 @@ Changelog
 ~~~~~~~~~
 
 
-0.44.0 (Unreleased)
--------------------
+Unreleased
+----------
 
 * Implement crosstalk noise model for AerBackend.
-
+* Don't include ``SimplifyInitial`` in default passes; instead make it an option
+  to ``process_circuits()``.
 
 0.44.0 (September 2023)
 -----------------------

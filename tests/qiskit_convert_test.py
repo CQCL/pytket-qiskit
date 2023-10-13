@@ -731,15 +731,15 @@ def test_parameter_equality() -> None:
 # https://github.com/CQCL/pytket-extensions/issues/275
 def test_convert_multi_c_reg() -> None:
     c = Circuit()
-    q0, q1 = c.add_q_register("q", 2)  # type: ignore
+    q0, q1 = c.add_q_register("q", 2)
     c.add_c_register("c", 2)
-    [m0] = c.add_c_register("m", 1)  # type: ignore
-    c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)  # type: ignore
-    c.CX(q0, q1)  # type: ignore
-    c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])  # type: ignore
+    [m0] = c.add_c_register("m", 1)
+    c.add_gate(OpType.X, [], [q1], condition_bits=[m0], condition_value=1)
+    c.CX(q0, q1)
+    c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
-    assert circ.get_commands()[0].args == [m0, q1]  # type: ignore
+    assert circ.get_commands()[0].args == [m0, q1]
 
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy

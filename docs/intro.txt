@@ -164,12 +164,13 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - self.rebase_pass [2]
      - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
    * - 
-     - self.rebase_pass [2]
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
    * -
+     -
      - self.rebase_pass [2]
    * - 
      -

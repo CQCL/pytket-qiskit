@@ -183,7 +183,7 @@ class IBMQBackend(Backend):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)  # type: ignore
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
             if provider is None
             else provider
         )

@@ -170,6 +170,7 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
      - self.rebase_pass [2]
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
    * -
+     -
      - self.rebase_pass [2]
    * - 
      -

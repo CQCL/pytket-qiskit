@@ -394,10 +394,10 @@ class CircuitBuilder:
                 sub_circ = Circuit(n_base_qubits)
                 # use base gate name for the CircBox (shows in renderer)
                 sub_circ.name = instr.base_gate.name.capitalize()
-                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))  # type: ignore
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
-                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)  # type: ignore
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
@@ -421,7 +421,7 @@ class CircuitBuilder:
                         )
                     # Need to reverse qubits here (endian-ness)
                     reversed_qubits = list(reversed(qubits))
-                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)  # type: ignore
+                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
@@ -437,7 +437,7 @@ class CircuitBuilder:
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
-                self.tkc.add_circbox(ccbox, qubits)  # type: ignore
+                self.tkc.add_circbox(ccbox, qubits)
             elif type(instr) == UnitaryGate:
                 # Note reversal of qubits, to account for endianness (pytket unitaries
                 # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
@@ -471,7 +471,7 @@ class CircuitBuilder:
                     )
 
             elif optype == OpType.Barrier:
-                self.tkc.add_barrier(qubits)  # type: ignore
+                self.tkc.add_barrier(qubits)
             elif optype in (OpType.CircBox, OpType.CustomGate):
                 qregs = (
                     [QuantumRegister(instr.num_qubits, "q")]
@@ -502,7 +502,7 @@ class CircuitBuilder:
                     self.tkc.add_gate(
                         optype,
                         [param_to_tk(p) for p in instr.params[:-1]],
-                        qubits,  # type: ignore
+                        qubits,
                         **condition_kwargs,
                     )
                 else:

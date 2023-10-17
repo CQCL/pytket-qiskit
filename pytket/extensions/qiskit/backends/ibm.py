@@ -50,7 +50,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     RuntimeJob,
 )
 
-from pytket.circuit import Circuit, OpType  # type: ignore
+from pytket.circuit import Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -60,7 +60,7 @@ from pytket.extensions.qiskit.qiskit_convert import (
     get_avg_characterisation,
 )
 from pytket.extensions.qiskit._metadata import __extension_version__
-from pytket.passes import (  # type: ignore
+from pytket.passes import (
     BasePass,
     auto_rebase_pass,
     KAKDecomposition,
@@ -74,7 +74,7 @@ from pytket.passes import (  # type: ignore
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket.predicates import (  # type: ignore
+from pytket.predicates import (
     NoMidMeasurePredicate,
     NoSymbolsPredicate,
     GateSetPredicate,
@@ -84,8 +84,8 @@ from pytket.predicates import (  # type: ignore
     Predicate,
 )
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.architecture import FullyConnected  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
+from pytket.architecture import FullyConnected
+from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
@@ -183,11 +183,11 @@ class IBMQBackend(Backend):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)  # type: ignore
+            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
             if provider is None
             else provider
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)  # type: ignore
+        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
         config = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -428,10 +428,6 @@ class IBMQBackend(Backend):
 
         if self._supports_rz:
             passlist.extend([self.rebase_pass(), RemoveRedundancies()])
-        if optimisation_level > 0:
-            passlist.append(
-                SimplifyInitial(allow_classical=False, create_all_qubits=True)
-            )
         return SequencePass(passlist)
 
     @property
@@ -451,7 +447,13 @@ class IBMQBackend(Backend):
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `postprocess`.
+
+        Supported `kwargs`:
+        - `postprocess`: apply end-of-circuit simplifications and classical
+          postprocessing to improve fidelity of results (bool, default False)
+        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+          fidelity of results assuming all qubits initialized to zero (bool, default
+          False)
         """
         circuits = list(circuits)
 
@@ -464,6 +466,9 @@ class IBMQBackend(Backend):
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
+        postprocess = kwargs.get("postprocess", False)
+        simplify_initial = kwargs.get("simplify_initial", False)
+
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             for chunk in itertools.zip_longest(
@@ -475,8 +480,6 @@ class IBMQBackend(Backend):
                 if valid_check:
                     self._check_all_circuits(batch_chunk)
 
-                postprocess = kwargs.get("postprocess", False)
-
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
                     if postprocess:
@@ -484,6 +487,10 @@ class IBMQBackend(Backend):
                         ppcirc_rep = ppcirc.to_dict()
                     else:
                         c0, ppcirc_rep = tkc, None
+                    if simplify_initial:
+                        SimplifyInitial(
+                            allow_classical=False, create_all_qubits=True
+                        ).apply(c0)
                     qcs.append(tk_to_qiskit(c0))
                     ppcirc_strs.append(json.dumps(ppcirc_rep))
                 if self._MACHINE_DEBUG:

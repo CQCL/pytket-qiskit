@@ -33,13 +33,22 @@ from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
-from pytket.circuit import Circuit, OpType, BasisOrder, Qubit, reg_eq, Unitary2qBox  # type: ignore
-from pytket.passes import CliffordSimp  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate  # type: ignore
-from pytket.architecture import Architecture  # type: ignore
-from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod  # type: ignore
-from pytket.transform import Transform  # type: ignore
+from pytket.circuit import (
+    Circuit,
+    OpType,
+    BasisOrder,
+    Qubit,
+    reg_eq,
+    Unitary2qBox,
+    QControlBox,
+    CircBox,
+)
+from pytket.passes import CliffordSimp
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
+from pytket.architecture import Architecture
+from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod
+from pytket.transform import Transform
 from pytket.backends import (
     ResultHandle,
     CircuitNotRunError,
@@ -59,6 +68,11 @@ from pytket.extensions.qiskit import (
     qiskit_to_tk,
     tk_to_qiskit,
     process_characterisation,
+)
+from pytket.extensions.qiskit.backends.crosstalk_model import (
+    CrosstalkParams,
+    NoisyCircuitBuilder,
+    FractionalUnitary,
 )
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
@@ -158,8 +172,8 @@ def test_measures() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_noise(manila_backend: IBMQBackend) -> None:
-    noise_model = NoiseModel.from_backend(manila_backend._backend)
+def test_noise(perth_backend: IBMQBackend) -> None:
+    noise_model = NoiseModel.from_backend(perth_backend._backend)
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
     x_qbs = [2, 0, 4]
@@ -200,16 +214,16 @@ def test_noise(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_process_characterisation(manila_backend: IBMQBackend) -> None:
-    char = process_characterisation(manila_backend._backend)
+def test_process_characterisation(perth_backend: IBMQBackend) -> None:
+    char = process_characterisation(perth_backend._backend)
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
     link_errors: dict = char.get("EdgeErrors", {})
 
-    assert len(arch.nodes) == 5
-    assert len(arch.coupling) == 8
-    assert len(node_errors) == 5
-    assert len(link_errors) == 8
+    assert len(arch.nodes) == 7
+    assert len(arch.coupling) == 12
+    assert len(node_errors) == 7
+    assert len(link_errors) == 12
 
 
 def test_process_characterisation_no_noise_model() -> None:
@@ -381,8 +395,8 @@ def test_cancellation_aer() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_cancellation_ibmq(lima_backend: IBMQBackend) -> None:
-    b = lima_backend
+def test_cancellation_ibmq(lagos_backend: IBMQBackend) -> None:
+    b = lagos_backend
     c = circuit_gen(True)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
@@ -391,8 +405,8 @@ def test_cancellation_ibmq(lima_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_machine_debug(manila_backend: IBMQBackend) -> None:
-    backend = manila_backend
+def test_machine_debug(perth_backend: IBMQBackend) -> None:
+    backend = perth_backend
     backend._MACHINE_DEBUG = True
     try:
         c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
@@ -421,8 +435,8 @@ def test_machine_debug(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_nshots_batching(manila_backend: IBMQBackend) -> None:
-    backend = manila_backend
+def test_nshots_batching(perth_backend: IBMQBackend) -> None:
+    backend = perth_backend
     backend._MACHINE_DEBUG = True
     try:
         c1 = Circuit(2, 2).H(0).CX(0, 1).measure_all()
@@ -450,8 +464,8 @@ def test_nshots_batching(manila_backend: IBMQBackend) -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_nshots(manila_emulator_backend: IBMQEmulatorBackend) -> None:
-    for b in [AerBackend(), manila_emulator_backend]:
+def test_nshots(perth_emulator_backend: IBMQEmulatorBackend) -> None:
+    for b in [AerBackend(), perth_emulator_backend]:
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
@@ -484,8 +498,8 @@ def test_pauli_sim() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_default_pass(manila_backend: IBMQBackend) -> None:
-    b = manila_backend
+def test_default_pass(perth_backend: IBMQBackend) -> None:
+    b = perth_backend
     for ol in range(3):
         comp_pass = b.default_compilation_pass(ol)
         c = Circuit(3, 3)
@@ -500,8 +514,8 @@ def test_default_pass(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_aer_default_pass(manila_backend: IBMQBackend) -> None:
-    noise_model = NoiseModel.from_backend(manila_backend._backend)
+def test_aer_default_pass(perth_backend: IBMQBackend) -> None:
+    noise_model = NoiseModel.from_backend(perth_backend._backend)
     for nm in [None, noise_model]:
         b = AerBackend(nm)
         for ol in range(3):
@@ -764,7 +778,7 @@ def test_mixed_circuit() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_aer_placed_expectation(manila_backend: IBMQBackend) -> None:
+def test_aer_placed_expectation(perth_backend: IBMQBackend) -> None:
     # bug TKET-695
     n_qbs = 3
     c = Circuit(n_qbs, n_qbs)
@@ -782,7 +796,7 @@ def test_aer_placed_expectation(manila_backend: IBMQBackend) -> None:
     )
     assert b.get_operator_expectation_value(c, operator) == (-0.5 + 0j)
 
-    noise_model = NoiseModel.from_backend(manila_backend._backend)
+    noise_model = NoiseModel.from_backend(perth_backend._backend)
 
     noise_b = AerBackend(noise_model)
 
@@ -812,12 +826,12 @@ def test_operator_expectation_value() -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
-    assert manila_emulator_backend._noise_model is not None
-    b_ibm = manila_emulator_backend._ibmq
+def test_ibmq_emulator(perth_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert perth_emulator_backend._noise_model is not None
+    b_ibm = perth_emulator_backend._ibmq
     b_aer = AerBackend()
     for ol in range(3):
-        comp_pass = manila_emulator_backend.default_compilation_pass(ol)
+        comp_pass = perth_emulator_backend.default_compilation_pass(ol)
         c = Circuit(3, 3)
         c.H(0)
         c.CX(0, 1)
@@ -826,7 +840,7 @@ def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
         c_cop = c.copy()
         comp_pass.apply(c_cop)
         c.measure_all()
-        for bac in (manila_emulator_backend, b_ibm):
+        for bac in (perth_emulator_backend, b_ibm):
             assert all(pred.verify(c_cop) for pred in bac.required_predicates)
 
         c_cop_2 = c.copy()
@@ -834,16 +848,16 @@ def test_ibmq_emulator(manila_emulator_backend: IBMQEmulatorBackend) -> None:
         if ol == 0:
             assert not all(
                 pred.verify(c_cop_2)
-                for pred in manila_emulator_backend.required_predicates
+                for pred in perth_emulator_backend.required_predicates
             )
 
     circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     copy_circ = circ.copy()
-    manila_emulator_backend.rebase_pass().apply(copy_circ)
-    assert manila_emulator_backend.required_predicates[1].verify(copy_circ)
-    circ = manila_emulator_backend.get_compiled_circuit(circ)
-    b_noi = AerBackend(noise_model=manila_emulator_backend._noise_model)
-    emu_counts = manila_emulator_backend.run_circuit(
+    perth_emulator_backend.rebase_pass().apply(copy_circ)
+    assert perth_emulator_backend.required_predicates[1].verify(copy_circ)
+    circ = perth_emulator_backend.get_compiled_circuit(circ)
+    b_noi = AerBackend(noise_model=perth_emulator_backend._noise_model)
+    emu_counts = perth_emulator_backend.run_circuit(
         circ, n_shots=10, seed=10
     ).get_counts()
     aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
@@ -931,13 +945,13 @@ def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_ibmq_mid_measure(manila_backend: IBMQBackend) -> None:
+def test_ibmq_mid_measure(perth_backend: IBMQBackend) -> None:
     c = Circuit(3, 3).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
     c.add_barrier([0, 1, 2])
 
     c.CX(1, 0).H(0).Measure(2, 2)
 
-    b = manila_backend
+    b = perth_backend
     ps = b.default_compilation_pass(0)
     ps.apply(c)
     assert not NoMidMeasurePredicate().verify(c)
@@ -945,13 +959,13 @@ def test_ibmq_mid_measure(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_ibmq_conditional(manila_backend: IBMQBackend) -> None:
+def test_ibmq_conditional(perth_backend: IBMQBackend) -> None:
     c = Circuit(3, 2).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
     c.add_barrier([0, 1, 2])
     ar = c.add_c_register("a", 1)
     c.CX(1, 0).H(0).X(2, condition=reg_eq(ar, 0)).Measure(Qubit(2), ar[0])
 
-    b = manila_backend
+    b = perth_backend
     assert b.backend_info.supports_fast_feedforward
     compiled = b.get_compiled_circuit(c)
     assert not NoMidMeasurePredicate().verify(compiled)
@@ -959,9 +973,9 @@ def test_ibmq_conditional(manila_backend: IBMQBackend) -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_compile_x(manila_backend: IBMQBackend) -> None:
+def test_compile_x(perth_backend: IBMQBackend) -> None:
     # TKET-1028
-    b = manila_backend
+    b = perth_backend
     c = Circuit(1).X(0)
     for ol in range(3):
         c1 = c.copy()
@@ -988,8 +1002,8 @@ def lift_perm(p: Dict[int, int]) -> np.ndarray:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_compilation_correctness(manila_backend: IBMQBackend) -> None:
-    c = Circuit(5)
+def test_compilation_correctness(perth_backend: IBMQBackend) -> None:
+    c = Circuit(7)
     c.H(0).H(1).H(2)
     c.CX(0, 1).CX(1, 2)
     c.Rx(0.25, 1).Ry(0.75, 1).Rz(0.5, 2)
@@ -1003,7 +1017,7 @@ def test_compilation_correctness(manila_backend: IBMQBackend) -> None:
     c.CX(0, 3).CX(0, 4)
     u_backend = AerUnitaryBackend()
     u = u_backend.run_circuit(c).get_unitary()
-    ibm_backend = manila_backend
+    ibm_backend = perth_backend
     for ol in range(3):
         p = ibm_backend.default_compilation_pass(optimisation_level=ol)
         cu = CompilationUnit(c)
@@ -1014,17 +1028,13 @@ def test_compilation_correctness(manila_backend: IBMQBackend) -> None:
         # Adjust for placement
         imap = cu.initial_map
         fmap = cu.final_map
-        c_idx = {c.qubits[i]: i for i in range(5)}
-        c1_idx = {c1.qubits[i]: i for i in range(5)}
+        c_idx = {c.qubits[i]: i for i in range(7)}
+        c1_idx = {c1.qubits[i]: i for i in range(7)}
         ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
         inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
         m_ini = lift_perm(ini)
         m_inv_fin = lift_perm(inv_fin)
 
-        # Note that we do not expect unitary equivalence, because the pass includes
-        # SimplifyInitial which may remove initial gates that do not affect the final
-        # result. However the first columns of the unitaries (i.e. the final
-        # statevectors arising from an initial all-zero state) should match.
         assert compare_statevectors(u[:, 0], (m_inv_fin @ compiled_u @ m_ini)[:, 0])
 
 
@@ -1074,8 +1084,8 @@ def test_rebase_phase() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess(lima_backend: IBMQBackend) -> None:
-    b = lima_backend
+def test_postprocess(lagos_backend: IBMQBackend) -> None:
+    b = lagos_backend
     assert b.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.SX(0).SX(1).CX(0, 1).measure_all()
@@ -1090,17 +1100,17 @@ def test_postprocess(lima_backend: IBMQBackend) -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess_emu(manila_emulator_backend: IBMQEmulatorBackend) -> None:
-    assert manila_emulator_backend.supports_contextual_optimisation
+def test_postprocess_emu(perth_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert perth_emulator_backend.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.SX(0).SX(1).CX(0, 1).measure_all()
-    c = manila_emulator_backend.get_compiled_circuit(c)
-    h = manila_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
+    c = perth_emulator_backend.get_compiled_circuit(c)
+    h = perth_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
     ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
-    r = manila_emulator_backend.get_result(h)
+    r = perth_emulator_backend.get_result(h)
     counts = r.get_counts()
     assert sum(counts.values()) == 10
 
@@ -1143,10 +1153,10 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_backendinfo_serialization1(
-    manila_emulator_backend: IBMQEmulatorBackend,
+    perth_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
-    backend_info_json = manila_emulator_backend.backend_info.to_dict()
+    backend_info_json = perth_emulator_backend.backend_info.to_dict()
     s = json.dumps(backend_info_json)
     backend_info_json1 = json.loads(s)
     assert backend_info_json == backend_info_json1
@@ -1197,12 +1207,14 @@ def test_sim_qubit_order() -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> None:
+def test_requrired_predicates(perth_emulator_backend: IBMQEmulatorBackend) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93
-    circ = Circuit(7)  # 7 qubit circuit in IBMQ gateset
-    circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).measure_all()
+    circ = Circuit(8)  # 8 qubit circuit in IBMQ gateset
+    circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).CX(
+        0, 7
+    ).measure_all()
     with pytest.raises(CircuitNotValidError) as errorinfo:
-        manila_emulator_backend.run_circuit(circ, n_shots=100)
+        perth_emulator_backend.run_circuit(circ, n_shots=100)
         assert (
             "pytket.backends.backend_exceptions.CircuitNotValidError:"
             + "Circuit with index 0 in submitted does"
@@ -1213,8 +1225,8 @@ def test_requrired_predicates(manila_emulator_backend: IBMQEmulatorBackend) -> N
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
-    assert ibm_sherbrooke_backend.backend_info.gate_set >= {
+def test_ecr_gate_compilation(ibm_brisbane_backend: IBMQBackend) -> None:
+    assert ibm_brisbane_backend.backend_info.gate_set >= {
         OpType.X,
         OpType.SX,
         OpType.Rz,
@@ -1233,10 +1245,85 @@ def test_ecr_gate_compilation(ibm_sherbrooke_backend: IBMQBackend) -> None:
         .measure_all()
     )
     for optimisation_level in range(3):
-        compiled_circ = ibm_sherbrooke_backend.get_compiled_circuit(
+        compiled_circ = ibm_brisbane_backend.get_compiled_circuit(
             circ, optimisation_level
         )
-        assert ibm_sherbrooke_backend.valid_circuit(compiled_circ)
+        assert ibm_brisbane_backend.valid_circuit(compiled_circ)
+
+
+def test_crosstalk_noise_model() -> None:
+    circ = Circuit(3).X(0).CX(0, 1).CX(1, 2).measure_all()
+    zz_crosstalks = {
+        (Qubit(0), Qubit(1)): 0.0003,
+        (Qubit(0), Qubit(2)): 0.0013,
+        (Qubit(1), Qubit(2)): 0.002,
+    }
+    single_q_phase_errors = {
+        Qubit(0): 0.00498,
+        Qubit(1): 0.0021,
+        Qubit(2): 0.0021,
+    }
+    two_q_induced_phase_errors = {
+        (Qubit(0), Qubit(1)): (Qubit(2), 0.0033),
+        (Qubit(1), Qubit(0)): (Qubit(2), 0.0033),
+        (Qubit(0), Qubit(2)): (Qubit(1), 0.0033),
+        (Qubit(2), Qubit(0)): (Qubit(1), 0.0033),
+        (Qubit(1), Qubit(2)): (Qubit(0), 0.0033),
+        (Qubit(2), Qubit(1)): (Qubit(0), 0.0033),
+    }
+    non_markovian_noise = [
+        (Qubit(0), 0.007, 0.007),
+        (Qubit(1), 0.004, 0.006),
+        (Qubit(2), 0.005, 0.006),
+    ]
+    phase_damping_error = {
+        Qubit(0): 0.05,
+        Qubit(1): 0.05,
+        Qubit(2): 0.05,
+    }
+    amplitude_damping_error = {
+        Qubit(0): 0.05,
+        Qubit(1): 0.05,
+        Qubit(2): 0.05,
+    }
+
+    N = 10
+    gate_times = {}
+    for q in circ.qubits:
+        gate_times[(OpType.X, tuple([q]))] = 0.1
+    for q0 in circ.qubits:
+        for q1 in circ.qubits:
+            if q0 != q1:
+                gate_times[(OpType.CX, (q0, q1))] = 0.5
+
+    ctparams = CrosstalkParams(
+        zz_crosstalks,
+        single_q_phase_errors,
+        two_q_induced_phase_errors,
+        non_markovian_noise,
+        False,
+        N,
+        gate_times,
+        phase_damping_error,
+        amplitude_damping_error,
+    )
+    # test manual construction
+    noisy_circ_builder = NoisyCircuitBuilder(circ, ctparams)
+    noisy_circ_builder.build()
+    slices = noisy_circ_builder.get_slices()
+    n_fractions = 0
+    for s in slices:
+        for inst in s:
+            if isinstance(inst, FractionalUnitary):
+                n_fractions = n_fractions + 1
+    assert n_fractions == 11
+
+    # test processing circuit
+    aer = AerBackend(crosstalk_params=ctparams)
+    compiled_circ = aer.get_compiled_circuit(circ, optimisation_level=0)
+    h = aer.process_circuit(compiled_circ, n_shots=100)
+    res = aer.get_result(h)
+    res.get_counts()
 
 
 # helper function for testing
@@ -1294,3 +1381,25 @@ def test_unitary_sim_gateset() -> None:
     unitary_sim_gateset = backend.backend_info.gate_set
     unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
     assert unitary_sim_gateset.isdisjoint(unsupported_ops)
+
+
+def test_unitary_backend_transpiles() -> None:
+    """regression test for https://github.com/CQCL/pytket-qiskit/issues/142"""
+    backend = AerUnitaryBackend()
+    n_ancillas = 5  # using n_ancillas <=4 doees not raise an error
+    n_spins = 1
+    circ = Circuit(n_ancillas + n_spins)
+    trgt = Circuit(n_spins)
+    trgt.X(0)
+
+    circ.add_qcontrolbox(
+        QControlBox(CircBox(trgt), n_ancillas), list(range(n_ancillas + n_spins))
+    )
+
+    compiled_circ = backend.get_compiled_circuit(circ, optimisation_level=0)
+    # using optimisation_level >= 1 does not raise an error
+    r = backend.run_circuit(compiled_circ)
+    u = r.get_unitary()
+    # check that the lower-right 2x2 submatrix of the unitary is the matrix of
+    # the X gate.
+    assert np.isclose(u[62:64, 62:64], np.asarray(([0.0, 1.0], [1.0, 0.0]))).all()

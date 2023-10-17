@@ -18,7 +18,7 @@ from qiskit.providers import JobStatus, JobV1  # type: ignore
 from qiskit.result import Result  # type: ignore
 from pytket.backends import ResultHandle, StatusEnum
 from pytket.backends.backend import Backend, KwargTypes
-from pytket.circuit import UnitID, Qubit, Bit  # type: ignore
+from pytket.circuit import UnitID, Qubit, Bit
 from pytket.extensions.qiskit.result_convert import (
     backendresult_to_qiskit_resultdata,
     _get_header_info,

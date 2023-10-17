@@ -35,7 +35,7 @@ from uuid import UUID
 
 import numpy as np
 
-import sympy  # type: ignore
+import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
     ClassicalRegister,
@@ -53,11 +53,11 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation  # type: ignore
+from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation
 
 from qiskit.extensions.unitary import UnitaryGate  # type: ignore
 from qiskit.extensions import Initialize  # type: ignore
-from pytket.circuit import (  # type: ignore
+from pytket.circuit import (
     CircBox,
     Circuit,
     Node,
@@ -73,18 +73,12 @@ from pytket.circuit import (  # type: ignore
     QControlBox,
     StatePreparationBox,
 )
-
-try:
-    from pytket.unit_id import _TEMP_BIT_NAME  # type: ignore
-except (ModuleNotFoundError, ImportError):
-    from pytket._tket.circuit import _TEMP_BIT_NAME  # type: ignore     # pytket 1.18 and earlier
-
-
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom  # type: ignore
+from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -93,7 +87,7 @@ if TYPE_CHECKING:
         Nduv,
     )
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
-    from pytket.circuit import Op, UnitID  # type: ignore
+    from pytket.circuit import Op, UnitID
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):
@@ -400,10 +394,10 @@ class CircuitBuilder:
                 sub_circ = Circuit(n_base_qubits)
                 # use base gate name for the CircBox (shows in renderer)
                 sub_circ.name = instr.base_gate.name.capitalize()
-                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))  # type: ignore
+                sub_circ.add_gate(base_tket_gate, params, list(range(n_base_qubits)))
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
-                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)  # type: ignore
+                self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
@@ -427,7 +421,7 @@ class CircuitBuilder:
                         )
                     # Need to reverse qubits here (endian-ness)
                     reversed_qubits = list(reversed(qubits))
-                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)  # type: ignore
+                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
 
                 elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
                     # convert int to a binary string and apply X for |1>
@@ -443,7 +437,7 @@ class CircuitBuilder:
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
-                self.tkc.add_circbox(ccbox, qubits)  # type: ignore
+                self.tkc.add_circbox(ccbox, qubits)
             elif type(instr) == UnitaryGate:
                 # Note reversal of qubits, to account for endianness (pytket unitaries
                 # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
@@ -477,7 +471,7 @@ class CircuitBuilder:
                     )
 
             elif optype == OpType.Barrier:
-                self.tkc.add_barrier(qubits)  # type: ignore
+                self.tkc.add_barrier(qubits)
             elif optype in (OpType.CircBox, OpType.CustomGate):
                 qregs = (
                     [QuantumRegister(instr.num_qubits, "q")]
@@ -508,7 +502,7 @@ class CircuitBuilder:
                     self.tkc.add_gate(
                         optype,
                         [param_to_tk(p) for p in instr.params[:-1]],
-                        qubits,  # type: ignore
+                        qubits,
                         **condition_kwargs,
                     )
                 else:

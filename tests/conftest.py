@@ -37,18 +37,18 @@ def setup_qiskit_account() -> None:
 
 
 @pytest.fixture(scope="module")
-def manila_backend() -> IBMQBackend:
+def perth_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibmq_manila",
+        "ibm_perth",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
-def lima_backend() -> IBMQBackend:
+def lagos_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibmq_lima",
+        "ibm_lagos",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -74,18 +74,18 @@ def simulator_stabilizer_backend() -> IBMQBackend:
 
 
 @pytest.fixture(scope="module")
-def manila_emulator_backend() -> IBMQEmulatorBackend:
+def perth_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibmq_manila",
+        "ibm_perth",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
-def belem_emulator_backend() -> IBMQEmulatorBackend:
+def nairobi_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibmq_belem",
+        "ibm_nairobi",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -99,13 +99,22 @@ def ibm_provider() -> IBMProvider:
         return IBMProvider(instance="ibm-q/open/main")
     except:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
-        return IBMProvider(token=token, instance="ibm-q/open/main", overwrite=True)
+        return IBMProvider(token=token, instance="ibm-q/open/main")
 
 
 @pytest.fixture(scope="module")
-def ibm_sherbrooke_backend() -> IBMQBackend:
+def ibm_perth_backend() -> IBMQBackend:
     return IBMQBackend(
-        backend_name="ibm_sherbrooke",
+        backend_name="ibm_perth",
+        monitor=False,
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def ibm_brisbane_backend() -> IBMQBackend:
+    return IBMQBackend(
+        backend_name="ibm_brisbane",
         monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )

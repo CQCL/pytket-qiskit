@@ -29,18 +29,19 @@ from typing import (
 )
 
 import numpy as np
+from qiskit import transpile  # type: ignore
 from qiskit.providers.aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
-from pytket.architecture import Architecture, FullyConnected  # type: ignore
+from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.circuit import Circuit, Node, OpType, Qubit  # type: ignore
-from pytket.passes import (  # type: ignore
+from pytket.circuit import Circuit, Node, OpType, Qubit
+from pytket.passes import (
     BasePass,
     CliffordSimp,
     CXMappingPass,
@@ -51,14 +52,16 @@ from pytket.passes import (  # type: ignore
     auto_rebase_pass,
     NaivePlacementPass,
 )
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
-from pytket.predicates import (  # type: ignore
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.placement import NoiseAwarePlacement
+from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
     NoClassicalControlPredicate,
+    NoBarriersPredicate,
     NoFastFeedforwardPredicate,
     NoSymbolsPredicate,
+    DefaultRegisterPredicate,
     Predicate,
 )
 from pytket.utils.operators import QubitPauliOperator
@@ -71,6 +74,10 @@ from ..qiskit_convert import (
     _gate_str_2_optype,
 )
 from ..result_convert import qiskit_result_to_backendresult
+from .crosstalk_model import (
+    NoisyCircuitBuilder,
+    CrosstalkParams,
+)
 
 if TYPE_CHECKING:
     from qiskit.providers.aer import AerJob  # type: ignore
@@ -116,6 +123,7 @@ class _AerBaseBackend(Backend):
     _required_predicates: List[Predicate]
     _noise_model: Optional[NoiseModel] = None
     _has_arch: bool = False
+    _needs_transpile: bool = False
 
     @property
     def required_predicates(self) -> List[Predicate]:
@@ -239,6 +247,14 @@ class _AerBaseBackend(Backend):
         if valid_check:
             self._check_all_circuits(circuits)
 
+        if hasattr(self, "_crosstalk_params") and self._crosstalk_params is not None:
+            noisy_circuits = []
+            for c in circuits:
+                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
+                noisy_circ_builder.build()
+                noisy_circuits.append(noisy_circ_builder.get_circuit())
+            circuits = noisy_circuits
+
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
@@ -253,6 +269,9 @@ class _AerBaseBackend(Backend):
                 elif self.supports_unitary:
                     qc.save_unitary()
                 qcs.append(qc)
+
+            if self._needs_transpile:
+                qcs = transpile(qcs, self._qiskit_backend)
 
             seed = cast(Optional[int], kwargs.get("seed"))
             job = self._qiskit_backend.run(
@@ -442,6 +461,7 @@ class AerBackend(_AerBaseBackend):
         self,
         noise_model: Optional[NoiseModel] = None,
         simulation_method: str = "automatic",
+        crosstalk_params: Optional[CrosstalkParams] = None,
         n_qubits: int = 40,
     ):
         """Backend for running simulations on the Qiskit Aer QASM simulator.
@@ -452,6 +472,9 @@ class AerBackend(_AerBaseBackend):
             https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
             for available values. Defaults to "automatic".
         :type simulation_method: str
+        :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
+         execution. `noise_model` will be overwritten if this is given. Default to None.
+        :type: Optional[`CrosstalkParams`]
         :param n_qubits: The maximum number of qubits supported by the backend.
         """
         super().__init__()
@@ -462,41 +485,62 @@ class AerBackend(_AerBaseBackend):
         gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
             self._allowed_special_gates
         )
-        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
-        characterisation = _get_characterisation_of_noise_model(
-            self._noise_model, gate_set
-        )
-        self._has_arch = bool(characterisation.architecture) and bool(
-            characterisation.architecture.nodes
-        )
 
-        self._backend_info = BackendInfo(
-            name=type(self).__name__,
-            device_name=self._qiskit_backend_name,
-            version=__extension_version__,
-            architecture=characterisation.architecture
-            if self._has_arch
-            else FullyConnected(n_qubits),
-            gate_set=gate_set,
-            supports_midcircuit_measurement=True,  # is this correct?
-            supports_fast_feedforward=True,
-            all_node_gate_errors=characterisation.node_errors,
-            all_edge_gate_errors=characterisation.edge_errors,
-            all_readout_errors=characterisation.readout_errors,
-            averaged_node_gate_errors=characterisation.averaged_node_errors,
-            averaged_edge_gate_errors=characterisation.averaged_edge_errors,
-            averaged_readout_errors=characterisation.averaged_readout_errors,
-            misc={"characterisation": characterisation.generic_q_errors},
-        )
+        self._crosstalk_params = crosstalk_params
+        if self._crosstalk_params is not None:
+            self._noise_model = self._crosstalk_params.get_noise_model()
+            self._backend_info = BackendInfo(
+                name=type(self).__name__,
+                device_name=self._qiskit_backend_name,
+                version=__extension_version__,
+                architecture=Architecture([]),
+                gate_set=gate_set,
+            )
+        else:
+            self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+            characterisation = _get_characterisation_of_noise_model(
+                self._noise_model, gate_set
+            )
+            self._has_arch = bool(characterisation.architecture) and bool(
+                characterisation.architecture.nodes
+            )
+
+            self._backend_info = BackendInfo(
+                name=type(self).__name__,
+                device_name=self._qiskit_backend_name,
+                version=__extension_version__,
+                architecture=characterisation.architecture
+                if self._has_arch
+                else FullyConnected(n_qubits),
+                gate_set=gate_set,
+                supports_midcircuit_measurement=True,  # is this correct?
+                supports_fast_feedforward=True,
+                all_node_gate_errors=characterisation.node_errors,
+                all_edge_gate_errors=characterisation.edge_errors,
+                all_readout_errors=characterisation.readout_errors,
+                averaged_node_gate_errors=characterisation.averaged_node_errors,
+                averaged_edge_gate_errors=characterisation.averaged_edge_errors,
+                averaged_readout_errors=characterisation.averaged_readout_errors,
+                misc={"characterisation": characterisation.generic_q_errors},
+            )
 
         self._required_predicates = [
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
+        if self._crosstalk_params is not None:
+            self._required_predicates.extend(
+                [
+                    NoClassicalControlPredicate(),
+                    DefaultRegisterPredicate(),
+                    NoBarriersPredicate(),
+                ]
+            )
+
         if self._has_arch:
             # architecture is non-trivial
             self._required_predicates.append(
-                ConnectivityPredicate(characterisation.architecture)
+                ConnectivityPredicate(self._backend_info.architecture)  # type: ignore
             )
 
 
@@ -545,6 +589,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     _memory = False
     _noise_model = None
+    _needs_transpile = True
 
     _qiskit_backend_name = "aer_simulator_unitary"
 

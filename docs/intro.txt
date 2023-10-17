@@ -164,28 +164,24 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
+     - self.rebase_pass [2]
      - `CliffordSimp(allow_swaps=False) <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.CliffordSimp>`_
    * - 
-     - self.rebase_pass [2]
+     - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_
      - `SynthesiseTket <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SynthesiseTket>`_
    * -
-     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
+     -
      - self.rebase_pass [2]
    * - 
      -
      - `RemoveRedundancies <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.RemoveRedundancies>`_ 
-   * - 
-     - 
-     - `SimplifyInitial <https://cqcl.github.io/tket/pytket/api/passes.html#pytket.passes.SimplifyInitial>`_ [4]
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
 * [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
 * [3] Here :py:class:`CXMappingPass` maps program qubits to the architecture using a `NoiseAwarePlacement <https://cqcl.github.io/tket/pytket/api/placement.html#pytket.placement.NoiseAwarePlacement>`_
-* [4] :py:class:`SimplifyInitial` has arguments ``allow_classical=False`` and ``create_all_qubits=True``.
 
 
-**Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above except it doesn't use :py:class:`SimplifyInitial`.
+**Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above.
 
 
 Backend Predicates

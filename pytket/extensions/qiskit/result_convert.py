@@ -1,3 +1,18 @@
+# Copyright 2019-2023 Cambridge Quantum Computing
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 from typing import (
     List,
     Iterator,
@@ -15,7 +30,7 @@ import numpy as np
 from qiskit.result import Result  # type: ignore
 from qiskit.result.models import ExperimentResult  # type: ignore
 
-from pytket.circuit import Bit, Qubit, UnitID, Circuit  # type: ignore
+from pytket.circuit import Bit, Qubit, UnitID, Circuit
 
 from pytket.backends.backendresult import BackendResult
 from pytket.utils.outcomearray import OutcomeArray
@@ -97,7 +112,7 @@ def qiskit_experimentresult_to_backendresult(
     if _result_is_empty_shots(result):
         n_bits = len(c_bits) if c_bits else 0
         shots = OutcomeArray.from_readouts(
-            np.zeros((result.shots, n_bits), dtype=np.uint8)  #  type: ignore
+            np.zeros((result.shots, n_bits), dtype=np.uint8)
         )
     else:
         if "memory" in datadict:

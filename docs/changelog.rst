@@ -1,10 +1,10 @@
 Changelog
 ~~~~~~~~~
 
+0.45.0 (October 2023)
+---------------------
 
-Unreleased
-----------
-
+* Updated pytket version requirement to 1.21.
 * Implement crosstalk noise model for AerBackend.
 * Don't include ``SimplifyInitial`` in default passes; instead make it an option
   to ``process_circuits()``.

@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+unreleased
+----------
+
+* Add support for circuits with barriers in the Aer simulators.
+
 0.45.0 (October 2023)
 ---------------------
 

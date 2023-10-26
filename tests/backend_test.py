@@ -1421,6 +1421,7 @@ def test_barriers_in_aer_simulators() -> None:
     backends = (state_backend, unitary_backend, shots_backend)
 
     for backend in backends:
+        assert OpType.Barrier in backend.backend_info.gate_set
         assert backend.valid_circuit(circ)
 
     state_result = state_backend.run_circuit(circ).get_state()

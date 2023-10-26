@@ -79,7 +79,7 @@ from pytket.utils.expectations import (
     get_operator_expectation_value,
 )
 from pytket.utils.operators import QubitPauliOperator
-from pytket.utils.results import compare_statevectors
+from pytket.utils.results import compare_statevectors, compare_unitaries
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
@@ -1427,4 +1427,4 @@ def test_barriers_in_aer_simulators() -> None:
     unitary_result = unitary_backend.run_circuit(circ).get_unitary()
 
     assert compare_statevectors(test_state, state_result)
-    assert compare_statevectors(test_unitary, unitary_result)
+    assert compare_unitaries(test_unitary, unitary_result)

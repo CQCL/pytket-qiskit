@@ -1403,3 +1403,28 @@ def test_unitary_backend_transpiles() -> None:
     # check that the lower-right 2x2 submatrix of the unitary is the matrix of
     # the X gate.
     assert np.isclose(u[62:64, 62:64], np.asarray(([0.0, 1.0], [1.0, 0.0]))).all()
+
+
+def test_barriers_in_aer_simulators() -> None:
+    """Test for barrier support in aer simulators
+    https://github.com/CQCL/pytket-qiskit/issues/186"""
+
+    circ = Circuit(2).H(0).CX(0, 1).add_barrier([0, 1])
+
+    state_backend = AerStateBackend()
+    shots_backend = AerBackend()
+    unitary_backend = AerUnitaryBackend()
+
+    test_state = circ.get_statevector()
+    test_unitary = circ.get_unitary()
+
+    backends = (state_backend, unitary_backend, shots_backend)
+
+    for backend in backends:
+        assert backend.valid_circuit(circ)
+
+    state_result = state_backend.run_circuit(circ).get_state()
+    unitary_result = unitary_backend.run_circuit(circ).get_unitary()
+
+    assert compare_statevectors(test_state, state_result)
+    assert compare_statevectors(test_unitary, unitary_result)

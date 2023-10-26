@@ -99,6 +99,9 @@ def _tket_gate_set_from_qiskit_backend(
         for gate_str in config.basis_gates
         if gate_str in _gate_str_2_optype
     }
+
+    gate_set.add(OpType.Barrier)
+
     if "unitary" in config.basis_gates:
         gate_set.add(OpType.Unitary1qBox)
         gate_set.add(OpType.Unitary2qBox)

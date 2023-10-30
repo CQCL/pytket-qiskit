@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 
 from qiskit import QuantumCircuit, execute  # type: ignore
-from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
 from qiskit.primitives import BackendSampler
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
@@ -121,15 +120,15 @@ def test_qiskit_counts(nairobi_emulator_backend: IBMQEmulatorBackend) -> None:
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
     qc.cx(0, 1)
-    circfn = CircuitStateFn(qc)
+    qc.measure_all()
 
-    s = CircuitSampler(TketBackend(nairobi_emulator_backend))
+    s = BackendSampler(TketBackend(nairobi_emulator_backend))
 
-    res = s.sample_circuits([circfn])
+    job = s.run([qc], shots=10)
+    res = job.result()
 
-    res_dictstatefn = res[id(circfn)][0]
-
-    assert res_dictstatefn.num_qubits == num_qubits
+    assert res.metadata[0]["shots"] == 10
+    assert all(n in range(4) for n in res.quasi_dists[0].keys())
 
 
 def test_architectures() -> None:

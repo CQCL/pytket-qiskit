@@ -25,7 +25,6 @@ from qiskit import (  # type: ignore
     execute,
 )
 from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
-from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
 from qiskit.quantum_info import Pauli  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate  # type: ignore

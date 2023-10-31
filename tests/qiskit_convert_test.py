@@ -24,7 +24,6 @@ from qiskit import (  # type: ignore
     ClassicalRegister,
     execute,
 )
-from qiskit.opflow import PauliSumOp, PauliTrotterEvolution  # type: ignore
 from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate  # type: ignore
@@ -83,9 +82,12 @@ def test_classical_barrier_error() -> None:
 
 def test_convert_circuit_with_complex_params() -> None:
     with pytest.raises(ValueError):
-        qiskit_op = PauliSumOp.from_list([("Z", 1j)])
-        evolved_op = qiskit_op.exp_i()
-        evolution_circ = PauliTrotterEvolution(reps=1).convert(evolved_op).to_circuit()
+        qiskit_op = SparsePauliOp(["Z"], coeffs=[1.0j])
+        evolved_op = PauliEvolutionGate(
+            qiskit_op, time=1, synthesis=SuzukiTrotter(reps=1)
+        )
+        evolution_circ = QuantumCircuit(1)
+        evolution_circ.append(evolved_op, [0])
         tk_circ = qiskit_to_tk(evolution_circ)
         DecomposeBoxes().apply(tk_circ)
 
@@ -350,14 +352,10 @@ def test_tketautopass(perth_backend: IBMQBackend) -> None:
 
 def test_instruction() -> None:
     # TKET-446
-    qreg = QuantumRegister(3)
-    op = PauliSumOp.from_list([("XXI", 0.3), ("YYI", 0.5), ("ZZZ", -0.4)])
-    evolved_op = (1.2 * op).exp_i()
-    evo = PauliTrotterEvolution(reps=1)
-    evo_circop = evo.convert(evolved_op)
-    evo_instr = evo_circop.to_instruction()
-    evolution_circ = QuantumCircuit(qreg)
-    evolution_circ.append(evo_instr, qargs=list(qreg))
+    op = SparsePauliOp(["XXI", "YYI", "ZZZ"], [0.3, 0.5, -0.4])
+    evo_instr = PauliEvolutionGate(op, time=1.2, synthesis=SuzukiTrotter(reps=1))
+    evolution_circ = QuantumCircuit(3)
+    evolution_circ.append(evo_instr, [0, 1, 2])
     tk_circ = qiskit_to_tk(evolution_circ)
     cmds = tk_circ.get_commands()
     assert len(cmds) == 1

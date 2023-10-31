@@ -577,16 +577,16 @@ def test_ilo() -> None:
     c.X(1)
     res_s = bs.run_circuit(c)
     res_u = bu.run_circuit(c)
-    assert (res_s.get_state() == np.asarray([0, 1, 0, 0])).all()
-    assert (res_s.get_state(basis=BasisOrder.dlo) == np.asarray([0, 0, 1, 0])).all()
-    assert (
-        res_u.get_unitary()
-        == np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
-    ).all()
-    assert (
-        res_u.get_unitary(basis=BasisOrder.dlo)
-        == np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]])
-    ).all()
+    assert np.allclose(res_s.get_state(), np.asarray([0, 1, 0, 0]))
+    assert np.allclose(res_s.get_state(basis=BasisOrder.dlo), np.asarray([0, 0, 1, 0]))
+    assert np.allclose(
+        res_u.get_unitary(),
+        np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]]),
+    )
+    assert np.allclose(
+        res_u.get_unitary(basis=BasisOrder.dlo),
+        np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]]),
+    )
     c.measure_all()
     res = b.run_circuit(c, n_shots=2)
     assert (res.get_shots() == np.asarray([[0, 1], [0, 1]])).all()
@@ -1374,13 +1374,6 @@ def test_statevector_non_deterministic() -> None:
     assert compare_statevectors(statevector, result1) or compare_statevectors(
         statevector, result2
     )
-
-
-def test_unitary_sim_gateset() -> None:
-    backend = AerUnitaryBackend()
-    unitary_sim_gateset = backend.backend_info.gate_set
-    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
-    assert unitary_sim_gateset.isdisjoint(unsupported_ops)
 
 
 def test_unitary_backend_transpiles() -> None:

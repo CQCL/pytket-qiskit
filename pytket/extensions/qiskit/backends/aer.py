@@ -107,10 +107,9 @@ def _tket_gate_set_from_qiskit_backend(
         gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
 
-    if qiskit_backend.name() != "aer_simulator_unitary":
-        gate_set.add(OpType.Reset)
-        gate_set.add(OpType.Measure)
-        gate_set.add(OpType.Conditional)
+    gate_set.add(OpType.Reset)
+    gate_set.add(OpType.Measure)
+    gate_set.add(OpType.Conditional)
 
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)

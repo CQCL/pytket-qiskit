@@ -96,7 +96,7 @@ class TketAutoPass(TketPass):
         :type token: Optional[str]
         """
         if isinstance(backend._provider, AerProvider):
-            tk_backend = self._aer_backend_map[backend.name()]()
+            tk_backend = self._aer_backend_map[backend.name]()
         elif isinstance(backend._provider, IBMProvider):
             tk_backend = IBMQBackend(backend.name, token=token)
         else:

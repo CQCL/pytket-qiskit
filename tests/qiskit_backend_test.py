@@ -19,11 +19,10 @@ import numpy as np
 import pytest
 
 from qiskit import QuantumCircuit, execute  # type: ignore
-from qiskit.opflow import CircuitStateFn, CircuitSampler  # type: ignore
+from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
-from qiskit.utils import QuantumInstance  # type: ignore
-from qiskit.algorithms import Grover, AmplificationProblem  # type: ignore
-from qiskit.transpiler.exceptions import TranspilerError  # type: ignore
+from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
+from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.transpiler.passes import Unroller  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
@@ -81,7 +80,6 @@ def test_state() -> None:
     b = AerStateBackend()
     for comp in (None, b.default_compilation_pass()):
         tb = TketBackend(b, comp)
-        assert QuantumInstance(tb).is_statevector
         job = execute(qc, tb)
         state = job.result().get_statevector()
         qb = Aer.get_backend("aer_simulator_statevector")
@@ -122,15 +120,15 @@ def test_qiskit_counts(nairobi_emulator_backend: IBMQEmulatorBackend) -> None:
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
     qc.cx(0, 1)
-    circfn = CircuitStateFn(qc)
+    qc.measure_all()
 
-    s = CircuitSampler(TketBackend(nairobi_emulator_backend))
+    s = BackendSampler(TketBackend(nairobi_emulator_backend))
 
-    res = s.sample_circuits([circfn])
+    job = s.run([qc], shots=10)
+    res = job.result()
 
-    res_dictstatefn = res[id(circfn)][0]
-
-    assert res_dictstatefn.num_qubits == num_qubits
+    assert res.metadata[0]["shots"] == 10
+    assert all(n in range(4) for n in res.quasi_dists[0].keys())
 
 
 def test_architectures() -> None:
@@ -152,7 +150,7 @@ def test_grover() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/15
     b = MockShotBackend()
     backend = TketBackend(b, b.default_compilation_pass())
-    qinstance = QuantumInstance(backend)
+    sampler = BackendSampler(backend)
     oracle = QuantumCircuit(2)
     oracle.cz(0, 1)
 
@@ -160,17 +158,17 @@ def test_grover() -> None:
         return sum(map(int, bitstr)) == 2
 
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
-    grover = Grover(quantum_instance=qinstance)
+    grover = Grover(sampler=sampler)
     result = grover.amplify(problem)
     assert result.top_measurement == "11"
 
 
 def test_unsupported_gateset() -> None:
     # Working with gatesets that are unsupported by qiskit requires
-    # providing QuantumInstance with a custom pass manager.
+    # providing a custom pass manager.
     b = MockShotBackend(gate_set={OpType.Rz, OpType.PhasedX, OpType.ZZMax})
     backend = TketBackend(b, b.default_compilation_pass())
-    qinstance = QuantumInstance(backend)
+    sampler = BackendSampler(backend)
     oracle = QuantumCircuit(2)
     oracle.cz(0, 1)
 
@@ -178,20 +176,19 @@ def test_unsupported_gateset() -> None:
         return sum(map(int, bitstr)) == 2
 
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
-    grover = Grover(quantum_instance=qinstance)
+    grover = Grover(sampler=sampler)
     # Qiskit will attempt to rebase a Grover op into the MockShotBackend gateset.
     # However, Rz, PhasedX and ZZMax gateset isn't supported by qiskit.
-    # (tested with qiskit 0.39.1)
-    with pytest.raises(TranspilerError) as e:
+    # (tested with qiskit 0.44.1)
+    with pytest.raises(AlgorithmError) as e:
         result = grover.amplify(problem)
     err_msg = "Unable to translate"
-    assert err_msg in str(e.value)
+    assert err_msg in str(e.getrepr())
 
-    # By providing an Unroller pass, the QuantumInstance will rebase the Grover op into
-    # the u3, CX gateset instead.
-    unroll_pass = Unroller(["u3", "cx"])
-    qinstance = QuantumInstance(backend, pass_manager=unroll_pass)
-    grover = Grover(quantum_instance=qinstance)
+    # By skipping transpilation we can rely on the backend's default compilation pass to
+    # rebase.
+    sampler = BackendSampler(backend, skip_transpilation=True)
+    grover = Grover(sampler=sampler)
     problem = AmplificationProblem(oracle=oracle, is_good_state=is_good_state)
     result = grover.amplify(problem)
     assert result.top_measurement == "11"

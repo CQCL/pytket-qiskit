@@ -577,16 +577,16 @@ def test_ilo() -> None:
     c.X(1)
     res_s = bs.run_circuit(c)
     res_u = bu.run_circuit(c)
-    assert (res_s.get_state() == np.asarray([0, 1, 0, 0])).all()
-    assert (res_s.get_state(basis=BasisOrder.dlo) == np.asarray([0, 0, 1, 0])).all()
-    assert (
-        res_u.get_unitary()
-        == np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
-    ).all()
-    assert (
-        res_u.get_unitary(basis=BasisOrder.dlo)
-        == np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]])
-    ).all()
+    assert np.allclose(res_s.get_state(), np.asarray([0, 1, 0, 0]))
+    assert np.allclose(res_s.get_state(basis=BasisOrder.dlo), np.asarray([0, 0, 1, 0]))
+    assert np.allclose(
+        res_u.get_unitary(),
+        np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]]),
+    )
+    assert np.allclose(
+        res_u.get_unitary(basis=BasisOrder.dlo),
+        np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]]),
+    )
     c.measure_all()
     res = b.run_circuit(c, n_shots=2)
     assert (res.get_shots() == np.asarray([[0, 1], [0, 1]])).all()

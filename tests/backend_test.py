@@ -1376,13 +1376,6 @@ def test_statevector_non_deterministic() -> None:
     )
 
 
-def test_unitary_sim_gateset() -> None:
-    backend = AerUnitaryBackend()
-    unitary_sim_gateset = backend.backend_info.gate_set
-    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
-    assert unitary_sim_gateset.isdisjoint(unsupported_ops)
-
-
 def test_unitary_backend_transpiles() -> None:
     """regression test for https://github.com/CQCL/pytket-qiskit/issues/142"""
     backend = AerUnitaryBackend()

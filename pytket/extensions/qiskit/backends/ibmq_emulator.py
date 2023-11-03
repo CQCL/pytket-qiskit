@@ -125,7 +125,7 @@ class IBMQEmulatorBackend(Backend):
         circuits: Sequence[Circuit],
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
-        **kwargs: KwargTypes,
+        **kwargs: Union[int, float, str, None, Sequence[Optional[int]]],
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
@@ -139,10 +139,12 @@ class IBMQEmulatorBackend(Backend):
         )
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
-        circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
+        circuit_batches, batch_order = _batch_circuits(
+            circuits, n_shots_list, kwargs.get("seed")
+        )
 
         batch_id = 0  # identify batches for debug purposes only
-        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, seed, batch), indices in zip(circuit_batches, batch_order):
             for chunk in itertools.zip_longest(
                 *([iter(zip(batch, indices))] * self._ibmq._max_per_job)
             ):
@@ -173,7 +175,7 @@ class IBMQEmulatorBackend(Backend):
                 options.resilience_level = 0
                 options.execution.shots = n_shots
                 options.simulator.noise_model = self._noise_model
-                options.seed_simulator = kwargs.get("seed")
+                options.seed_simulator = seed
                 sampler = Sampler(session=self._session, options=options)
                 job = sampler.run(circuits=qcs)
                 job_id = job.job_id()

@@ -237,7 +237,7 @@ class _AerBaseBackend(Backend):
         circuits: Sequence[Circuit],
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
-        **kwargs: KwargTypes,
+        **kwargs: Union[int, float, str, None, Sequence[Optional[int]]],
     ) -> List[ResultHandle]:
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
@@ -258,11 +258,13 @@ class _AerBaseBackend(Backend):
             circuits = noisy_circuits
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
-        circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
+        circuit_batches, batch_order = _batch_circuits(
+            circuits, n_shots_list, kwargs.get("seed")
+        )
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
 
-        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, seed, batch), indices in zip(circuit_batches, batch_order):
             qcs = []
             for tkc in batch:
                 qc = tk_to_qiskit(tkc, replace_implicit_swaps)
@@ -275,7 +277,6 @@ class _AerBaseBackend(Backend):
             if self._needs_transpile:
                 qcs = transpile(qcs, self._qiskit_backend)
 
-            seed = cast(Optional[int], kwargs.get("seed"))
             job = self._qiskit_backend.run(
                 qcs,
                 shots=n_shots,

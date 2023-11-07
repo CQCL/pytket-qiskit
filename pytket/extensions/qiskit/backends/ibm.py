@@ -443,7 +443,7 @@ class IBMQBackend(Backend):
         circuits: Sequence[Circuit],
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
-        **kwargs: Union[int, float, str, None, Sequence[Optional[int]]],
+        **kwargs: Union[bool, int, float, str, None],
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
@@ -464,15 +464,13 @@ class IBMQBackend(Backend):
         )
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
-        circuit_batches, batch_order = _batch_circuits(
-            circuits, n_shots_list, kwargs.get("seed")
-        )
+        circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         postprocess = kwargs.get("postprocess", False)
         simplify_initial = kwargs.get("simplify_initial", False)
 
         batch_id = 0  # identify batches for debug purposes only
-        for (n_shots, _, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             for chunk in itertools.zip_longest(
                 *([iter(zip(batch, indices))] * self._max_per_job)
             ):

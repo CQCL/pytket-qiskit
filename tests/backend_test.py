@@ -473,9 +473,10 @@ def test_nshots_nseeds_batching(perth_backend: IBMQBackend) -> None:
         c4 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).CX(1, 0).measure_all()
         cs = [c1, c2, c3, c4]
         n_shots = [10, 12, 10, 13]
-        n_seeds = [10, 10, 10, 10]
         cs = backend.get_compiled_circuits(cs)
-        handles = backend.process_circuits(cs, n_shots=n_shots, seed=n_seeds)
+        handles = backend.process_circuits(
+            cs, n_shots=n_shots, seed=10, seed_auto_increase=False
+        )
 
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
@@ -502,9 +503,10 @@ def test_nshots_nseeds_batching_ii(perth_backend: IBMQBackend) -> None:
         c4 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).CX(1, 0).measure_all()
         cs = [c1, c2, c3, c4]
         n_shots = [10, 12, 10, 13]
-        n_seeds = [10, 11, 12, 13]
         cs = backend.get_compiled_circuits(cs)
-        handles = backend.process_circuits(cs, n_shots=n_shots, seed=n_seeds)
+        handles = backend.process_circuits(
+            cs, n_shots=n_shots, seed=10, seed_auto_increase=True
+        )
 
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
@@ -512,7 +514,7 @@ def test_nshots_nseeds_batching_ii(perth_backend: IBMQBackend) -> None:
             cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
             for hand, suffix in zip(
                 handles,
-                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 2)}", f"{(13, 3)}"],
+                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
             )
         )
     finally:

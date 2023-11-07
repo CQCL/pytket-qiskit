@@ -41,8 +41,7 @@ _STATUS_MAP = {
 def _batch_circuits(
     circuits: Sequence["Circuit"],
     n_shots: Sequence[Optional[int]],
-    seed: Union[int, float, str, None, Sequence[Optional[int]]],
-) -> Tuple[List[Tuple[Optional[int], Optional[int], List["Circuit"]]], List[List[int]]]:
+) -> Tuple[List[Tuple[Optional[int], List["Circuit"]]], List[List[int]]]:
     """
     Groups circuits into sets of circuits with the same number of shots.
 
@@ -52,47 +51,22 @@ def _batch_circuits(
     :type circuits: Sequence[Circuit]
     :param n_shots: Number of shots for each circuit.
     :type n_shots: Sequence[int]
-    :param seed: RNG Seed for each circuit.
-    :type seed: Union[int, None, Sequence[Optional[int]]]
     """
 
-    n_seeds: list[Optional[int]] = []
-    if type(seed) == list:
-        n_seeds = seed
-    elif type(seed) == int:
-        n_seeds = [seed for _ in range(len(circuits))]
-    elif seed == None:
-        n_seeds = [None for _ in range(len(circuits))]
-    else:
-        raise ValueError(
-            f"""unknown seed type, type should be None,
-int, or list[int], type found {type(seed)}"""
-        )
+    assert len(n_shots) == len(circuits)
 
-    assert len(n_seeds) == len(n_shots)
-    assert len(n_seeds) == len(circuits)
+    # take care of None entries
+    n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
 
-    batches: List[Tuple[Optional[int], Optional[int], List["Circuit"]]] = []
-    batch_order: List[List[int]] = []
+    order: Collection[int] = np.argsort(n_shots_int)
 
-    if all(seed == n_seeds[0] for seed in n_seeds):
-        # take care of None entries
-        n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
-
-        order: Collection[int] = np.argsort(n_shots_int)
-
-        batches = [
-            (n, n_seeds[0], [circuits[i] for i in indices])
-            for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
-        ]
-        batch_order = [
-            list(indices)
-            for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
-        ]
-    else:
-
-        for i in range(len(circuits)):
-            batches.append((n_shots[i], n_seeds[i], [circuits[i]]))
-            batch_order.append([i])
+    batches: List[Tuple[Optional[int], List["Circuit"]]] = [
+        (n, [circuits[i] for i in indices])
+        for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
+    ]
+    batch_order: List[List[int]] = [
+        list(indices)
+        for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
+    ]
 
     return batches, batch_order

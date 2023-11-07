@@ -237,8 +237,14 @@ class _AerBaseBackend(Backend):
         circuits: Sequence[Circuit],
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
-        **kwargs: Union[int, float, str, None, Sequence[Optional[int]]],
+        **kwargs: Union[bool, int, float, str, None],
     ) -> List[ResultHandle]:
+        """
+        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        Supported kwargs: `seed`, `postprocess`, `seed_auto_increase`.
+        seed_auto_increase=True will automatically increase the seed by one for the
+        different batches when more than one circuit is submitted
+        """
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
@@ -258,13 +264,12 @@ class _AerBaseBackend(Backend):
             circuits = noisy_circuits
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
-        circuit_batches, batch_order = _batch_circuits(
-            circuits, n_shots_list, kwargs.get("seed")
-        )
+        seed = kwargs.get("seed")
+        circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
 
-        for (n_shots, seed, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             qcs = []
             for tkc in batch:
                 qc = tk_to_qiskit(tkc, replace_implicit_swaps)
@@ -284,6 +289,8 @@ class _AerBaseBackend(Backend):
                 seed_simulator=seed,
                 noise_model=self._noise_model,
             )
+            if kwargs.get("seed_auto_increase") and type(seed) is int:
+                seed += 1
             jobid = job.job_id()
             for i, ind in enumerate(indices):
                 handle = ResultHandle(jobid, i)

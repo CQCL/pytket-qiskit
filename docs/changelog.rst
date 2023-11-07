@@ -9,7 +9,7 @@ unreleased
 * Update qiskit-ibm-runtime version to 0.13.0.
 * Update qiskit-aer version to 0.13.0.
 * Introduce dependency on qiskit-algorithms.
-* Add possibility to submit list of seeds to backend in batch submission 
+* Add option for automatic incrementing seed on ``process_circuits()``.
 
 0.45.0 (October 2023)
 ---------------------

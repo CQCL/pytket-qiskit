@@ -443,7 +443,7 @@ class IBMQBackend(Backend):
         circuits: Sequence[Circuit],
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
-        **kwargs: Union[bool, int, float, str, None],
+        **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.

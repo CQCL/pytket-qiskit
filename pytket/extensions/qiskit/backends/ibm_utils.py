@@ -16,7 +16,7 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, Tuple, List, TYPE_CHECKING, Union
+from typing import Collection, Optional, Sequence, Tuple, List, TYPE_CHECKING
 
 import numpy as np
 
@@ -52,14 +52,10 @@ def _batch_circuits(
     :param n_shots: Number of shots for each circuit.
     :type n_shots: Sequence[int]
     """
-
-    assert len(n_shots) == len(circuits)
-
     # take care of None entries
     n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
 
     order: Collection[int] = np.argsort(n_shots_int)
-
     batches: List[Tuple[Optional[int], List["Circuit"]]] = [
         (n, [circuits[i] for i in indices])
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
@@ -68,5 +64,4 @@ def _batch_circuits(
         list(indices)
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]
-
     return batches, batch_order

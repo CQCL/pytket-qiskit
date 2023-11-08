@@ -462,66 +462,6 @@ def test_nshots_batching(perth_backend: IBMQBackend) -> None:
         backend._MACHINE_DEBUG = False
 
 
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_nshots_nseeds_batching(perth_backend: IBMQBackend) -> None:
-    backend = perth_backend
-    backend._MACHINE_DEBUG = True
-    try:
-        c1 = Circuit(2, 2).H(0).CX(0, 1).measure_all()
-        c2 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).measure_all()
-        c3 = Circuit(2, 2).H(1).CX(0, 1).measure_all()
-        c4 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).CX(1, 0).measure_all()
-        cs = [c1, c2, c3, c4]
-        n_shots = [10, 12, 10, 13]
-        cs = backend.get_compiled_circuits(cs)
-        handles = backend.process_circuits(
-            cs, n_shots=n_shots, seed=10, seed_auto_increase=False
-        )
-
-        from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
-
-        assert all(
-            cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
-            for hand, suffix in zip(
-                handles,
-                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
-            )
-        )
-    finally:
-        # ensure shared backend is reset for other tests
-        backend._MACHINE_DEBUG = False
-
-
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_nshots_nseeds_batching_ii(perth_backend: IBMQBackend) -> None:
-    backend = perth_backend
-    backend._MACHINE_DEBUG = True
-    try:
-        c1 = Circuit(2, 2).H(0).CX(0, 1).measure_all()
-        c2 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).measure_all()
-        c3 = Circuit(2, 2).H(1).CX(0, 1).measure_all()
-        c4 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).CX(1, 0).measure_all()
-        cs = [c1, c2, c3, c4]
-        n_shots = [10, 12, 10, 13]
-        cs = backend.get_compiled_circuits(cs)
-        handles = backend.process_circuits(
-            cs, n_shots=n_shots, seed=10, seed_auto_increase=True
-        )
-
-        from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
-
-        assert all(
-            cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
-            for hand, suffix in zip(
-                handles,
-                [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
-            )
-        )
-    finally:
-        # ensure shared backend is reset for other tests
-        backend._MACHINE_DEBUG = False
-
-
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(perth_emulator_backend: IBMQEmulatorBackend) -> None:

@@ -9,7 +9,8 @@ unreleased
 * Update qiskit-ibm-runtime version to 0.13.0.
 * Update qiskit-aer version to 0.13.0.
 * Introduce dependency on qiskit-algorithms.
-* Add option for automatic incrementing seed on ``process_circuits()``.
+* Seed given to ``process_circuits()`` will be automaticly incremented
+  for the different circuit batches submitted.
 
 0.45.0 (October 2023)
 ---------------------

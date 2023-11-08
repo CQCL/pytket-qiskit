@@ -241,9 +241,7 @@ class _AerBaseBackend(Backend):
     ) -> List[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `seed`, `postprocess`, `seed_auto_increase`.
-        seed_auto_increase=True will automatically increase the seed by one for the
-        different batches when more than one circuit is submitted
+        Supported kwargs: `seed`, `postprocess`.
         """
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
@@ -289,7 +287,7 @@ class _AerBaseBackend(Backend):
                 seed_simulator=seed,
                 noise_model=self._noise_model,
             )
-            if kwargs.get("seed_auto_increase") and type(seed) is int:
+            if type(seed) is int:
                 seed += 1
             jobid = job.job_id()
             for i, ind in enumerate(indices):

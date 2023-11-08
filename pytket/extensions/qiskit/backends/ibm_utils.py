@@ -39,7 +39,8 @@ _STATUS_MAP = {
 
 
 def _batch_circuits(
-    circuits: Sequence["Circuit"], n_shots: Sequence[Optional[int]]
+    circuits: Sequence["Circuit"],
+    n_shots: Sequence[Optional[int]],
 ) -> Tuple[List[Tuple[Optional[int], List["Circuit"]]], List[List[int]]]:
     """
     Groups circuits into sets of circuits with the same number of shots.

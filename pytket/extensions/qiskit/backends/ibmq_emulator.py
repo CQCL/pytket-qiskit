@@ -139,6 +139,7 @@ class IBMQEmulatorBackend(Backend):
         )
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
+        seed = kwargs.get("seed")
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         batch_id = 0  # identify batches for debug purposes only
@@ -173,7 +174,9 @@ class IBMQEmulatorBackend(Backend):
                 options.resilience_level = 0
                 options.execution.shots = n_shots
                 options.simulator.noise_model = self._noise_model
-                options.seed_simulator = kwargs.get("seed")
+                options.seed_simulator = seed
+                if type(seed) is int:
+                    seed += 1
                 sampler = Sampler(session=self._session, options=options)
                 job = sampler.run(circuits=qcs)
                 job_id = job.job_id()

@@ -826,9 +826,13 @@ def tk_to_qiskit(
     for p in qcirc.parameters:
         name_spl = p.name.split("_UUID:", 2)
         if len(name_spl) == 2:
-            p_name, uuid = name_spl
-            new_p = Parameter.__new__(Parameter, p_name, UUID(uuid))
-            new_p.__init__(p_name)
+            p_name, uuid_str = name_spl
+            uuid = UUID(uuid_str)
+            # See Parameter.__init__() in qiskit/circuit/parameter.py.
+            new_p = Parameter(p_name)
+            new_p._uuid = uuid
+            new_p._parameter_keys = frozenset(((p_name, uuid),))
+            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

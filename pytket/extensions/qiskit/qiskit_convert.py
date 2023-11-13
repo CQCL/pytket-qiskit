@@ -59,8 +59,8 @@ from qiskit.circuit.library import (
     PauliEvolutionGate,
     StatePreparation,
     UnitaryGate,
+    Initialize,
 )
-from qiskit.extensions import Initialize  # type: ignore
 from pytket.circuit import (
     CircBox,
     Circuit,

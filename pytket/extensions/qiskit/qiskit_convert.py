@@ -358,18 +358,18 @@ class CircuitBuilder:
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if isinstance(instr, ControlledGate):
-                if type(instr) in _known_qiskit_gate:
+                if instr.base_class in _known_qiskit_gate:
                     # First we check if the gate is in _known_qiskit_gate
                     # this avoids CZ being converted to CnZ
-                    optype = _known_qiskit_gate[type(instr)]
-                elif type(instr.base_gate) == qiskit_gates.RYGate:
+                    optype = _known_qiskit_gate[instr.base_class]
+                elif instr.base_gate.base_class is qiskit_gates.RYGate:
                     optype = OpType.CnRy
-                elif type(instr.base_gate) == qiskit_gates.YGate:
+                elif instr.base_gate.base_class is qiskit_gates.YGate:
                     optype = OpType.CnY
-                elif type(instr.base_gate) == qiskit_gates.ZGate:
+                elif instr.base_gate.base_class is qiskit_gates.ZGate:
                     optype = OpType.CnZ
                 else:
-                    if type(instr.base_gate) in _known_qiskit_gate:
+                    if instr.base_gate.base_class in _known_qiskit_gate:
                         optype = OpType.QControlBox  # QControlBox case handled below
                     else:
                         raise NotImplementedError(
@@ -380,7 +380,7 @@ class CircuitBuilder:
                 pass  # Special handling below
             else:
                 try:
-                    optype = _known_qiskit_gate[type(instr)]
+                    optype = _known_qiskit_gate[instr.base_class]
                 except KeyError:
                     raise NotImplementedError(
                         f"Conversion of qiskit's {instr.name} instruction is "
@@ -392,7 +392,7 @@ class CircuitBuilder:
             bits = [self.cbmap[bit] for bit in cargs]
 
             if optype == OpType.QControlBox:
-                base_tket_gate = _known_qiskit_gate[type(instr.base_gate)]
+                base_tket_gate = _known_qiskit_gate[instr.base_gate.base_class]
                 params = [param_to_tk(p) for p in instr.base_gate.params]
                 n_base_qubits = instr.base_gate.num_qubits
                 sub_circ = Circuit(n_base_qubits)

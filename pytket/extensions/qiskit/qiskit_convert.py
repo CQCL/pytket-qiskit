@@ -53,9 +53,13 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation
-
-from qiskit.extensions.unitary import UnitaryGate  # type: ignore
+from qiskit.circuit.library import (
+    CRYGate,
+    RYGate,
+    PauliEvolutionGate,
+    StatePreparation,
+    UnitaryGate,
+)
 from qiskit.extensions import Initialize  # type: ignore
 from pytket.circuit import (
     CircBox,

@@ -26,13 +26,12 @@ from qiskit import (  # type: ignore
 )
 from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
-from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (
     Circuit,

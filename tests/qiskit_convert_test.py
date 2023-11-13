@@ -719,10 +719,12 @@ def test_parameter_equality() -> None:
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
 
+    assert final_circ.parameters == circ.parameters
+
     param_dict = dict(zip([param_a, param_b], [1, 2]))
     final_circ.assign_parameters(param_dict, inplace=True)
 
-    assert final_circ.parameters == circ.parameters
+    assert len(final_circ.parameters) == 0
 
 
 # https://github.com/CQCL/pytket-extensions/issues/275

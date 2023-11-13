@@ -496,7 +496,16 @@ class CircuitBuilder:
                     gate_def = CustomGateDef.define(
                         instr.name, subc, list(subc.free_symbols())
                     )
-                    self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
+                    try:
+                        self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
+                    except RuntimeError:
+                        raise (
+                            NotImplementedError(
+                                f"Conversion of {instr.name}"
+                                + " instructions to TKET is unsupported."
+                            )
+                        )
+
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(

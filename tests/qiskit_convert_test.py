@@ -715,12 +715,12 @@ def test_parameter_equality() -> None:
     circ.cx(0, 1)
     # fails with preserve_param_uuid=False
     # as Parameter uuid attribute is not preserved
-    # and so fails equality check at bind_parameters
+    # and so fails equality check at assign_parameters
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
 
     param_dict = dict(zip([param_a, param_b], [1, 2]))
-    final_circ.bind_parameters(param_dict)
+    final_circ.assign_parameters(param_dict, inplace=True)
 
     assert final_circ.parameters == circ.parameters
 

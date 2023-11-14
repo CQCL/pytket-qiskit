@@ -26,7 +26,7 @@ from qiskit import (  # type: ignore
 )
 from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
@@ -1013,3 +1013,25 @@ def test_failed_conversion_error() -> None:
         NotImplementedError, match=r"Conversion of qiskit's xx_plus_yy instruction"
     ):
         qiskit_to_tk(qc)
+
+from pytket.circuit.display import view_browser
+
+def test_RealAmplitudes_conversion() -> None:
+    qc = QuantumCircuit(3)
+
+    params = [np.pi / 2] * 9
+    real_amps1 = RealAmplitudes(3, reps=2)
+
+    real_amps2 = real_amps1.assign_parameters(params)
+    qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
+
+    converted_tkc = qiskit_to_tk(qc)
+    view_browser(converted_tkc)
+    assert converted_tkc.n_gates == 1
+    assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
+    DecomposeBoxes().apply(converted_tkc)
+    view_browser(converted_tkc)
+    print(converted_tkc.name)
+    assert converted_tkc.name == "RealAmplitudes"
+    assert converted_tkc.n_gates_of_type(OpType.CX) == 4
+    assert converted_tkc.n_gates_of_type(OpType.Ry) == 9

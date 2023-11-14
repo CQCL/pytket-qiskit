@@ -116,7 +116,7 @@ def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:
     qc.cy(qr[0], qr[1])
     qc.cz(qr[1], qr[2])
     qc.ecr(qr[0], qr[1])
-    qc.i(qr[2])
+    qc.id(qr[2])
     qc.iswap(qr[3], qr[0])
     qc.mcx([qr[0], qr[1], qr[2]], qr[3])
     qc.mcx([qr[1], qr[2], qr[3]], qr[0])
@@ -718,6 +718,8 @@ def test_parameter_equality() -> None:
     # and so fails equality check at assign_parameters
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
+
+    assert final_circ.parameters == circ.parameters
 
     param_dict = dict(zip([param_a, param_b], [1, 2]))
     final_circ.assign_parameters(param_dict, inplace=True)

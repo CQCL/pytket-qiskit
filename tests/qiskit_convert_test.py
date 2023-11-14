@@ -1014,7 +1014,6 @@ def test_failed_conversion_error() -> None:
     ):
         qiskit_to_tk(qc)
 
-from pytket.circuit.display import view_browser
 
 def test_RealAmplitudes_conversion() -> None:
     qc = QuantumCircuit(3)
@@ -1026,12 +1025,9 @@ def test_RealAmplitudes_conversion() -> None:
     qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
 
     converted_tkc = qiskit_to_tk(qc)
-    view_browser(converted_tkc)
     assert converted_tkc.n_gates == 1
     assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
     DecomposeBoxes().apply(converted_tkc)
-    view_browser(converted_tkc)
-    print(converted_tkc.name)
     assert converted_tkc.name == "RealAmplitudes"
     assert converted_tkc.n_gates_of_type(OpType.CX) == 4
     assert converted_tkc.n_gates_of_type(OpType.Ry) == 9

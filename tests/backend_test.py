@@ -1084,8 +1084,12 @@ def test_rebase_phase() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess(lagos_backend: IBMQBackend) -> None:
-    b = lagos_backend
+def test_postprocess() -> None:
+    b = IBMQBackend(
+        "ibm_lagos",
+        instance="ibm-q/open/main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
     assert b.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.SX(0).SX(1).CX(0, 1).measure_all()

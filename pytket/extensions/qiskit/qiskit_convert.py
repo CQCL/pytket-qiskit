@@ -491,8 +491,7 @@ class CircuitBuilder:
                 builder.add_qiskit_data(instr.definition)
                 subc = builder.circuit()
                 subc.name = instr.name
-                cbox = CircBox(subc)
-                self.tkc.add_circbox(cbox, qubits + bits, **condition_kwargs)  # type: ignore
+                self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
 
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
                 if instr.params[-1] == 0:

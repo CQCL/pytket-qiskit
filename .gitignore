@@ -11,4 +11,5 @@ dist
 obj
 docs/extensions
 .ipynb_checkpoints
+*.ipynb
 pytket/extensions/qiskit/_metadata.py

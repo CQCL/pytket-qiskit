@@ -26,13 +26,12 @@ from qiskit import (  # type: ignore
 )
 from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, RealAmplitudes  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
-from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (
     Circuit,
@@ -119,7 +118,7 @@ def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:
     qc.ecr(qr[0], qr[1])
     qc.i(qr[2])
     qc.iswap(qr[3], qr[0])
-    qc.mct([qr[0], qr[1], qr[2]], qr[3])
+    qc.mcx([qr[0], qr[1], qr[2]], qr[3])
     qc.mcx([qr[1], qr[2], qr[3]], qr[0])
     qc.p(pi / 4, qr[1])
     qc.r(pi / 5, pi / 6, qr[2])
@@ -716,14 +715,14 @@ def test_parameter_equality() -> None:
     circ.cx(0, 1)
     # fails with preserve_param_uuid=False
     # as Parameter uuid attribute is not preserved
-    # and so fails equality check at bind_parameters
+    # and so fails equality check at assign_parameters
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
 
     param_dict = dict(zip([param_a, param_b], [1, 2]))
-    final_circ.bind_parameters(param_dict)
+    final_circ.assign_parameters(param_dict, inplace=True)
 
-    assert final_circ.parameters == circ.parameters
+    assert len(final_circ.parameters) == 0
 
 
 # https://github.com/CQCL/pytket-extensions/issues/275
@@ -1013,14 +1012,15 @@ def test_failed_conversion_error() -> None:
     ):
         qiskit_to_tk(qc)
 
+
 def test_custom_gate_error() -> None:
     qc = QuantumCircuit(3)
 
-    params = [np.pi/2]*9
+    params = [np.pi / 2] * 9
     real_amps1 = RealAmplitudes(3, reps=2)
-    
+
     real_amps2 = real_amps1.assign_parameters(params)
-    qc.compose(real_amps2, qubits = [0, 1, 2], inplace=True)
+    qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
 
     with pytest.raises(
         NotImplementedError, match=r"Conversion of qiskit's RealAmplitudes instruction"

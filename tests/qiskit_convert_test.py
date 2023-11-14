@@ -26,13 +26,12 @@ from qiskit import (  # type: ignore
 )
 from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.quantum_info import Statevector
-from qiskit.extensions import UnitaryGate  # type: ignore
 
 from pytket.circuit import (
     Circuit,
@@ -117,9 +116,9 @@ def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:
     qc.cy(qr[0], qr[1])
     qc.cz(qr[1], qr[2])
     qc.ecr(qr[0], qr[1])
-    qc.i(qr[2])
+    qc.id(qr[2])
     qc.iswap(qr[3], qr[0])
-    qc.mct([qr[0], qr[1], qr[2]], qr[3])
+    qc.mcx([qr[0], qr[1], qr[2]], qr[3])
     qc.mcx([qr[1], qr[2], qr[3]], qr[0])
     qc.p(pi / 4, qr[1])
     qc.r(pi / 5, pi / 6, qr[2])
@@ -716,14 +715,16 @@ def test_parameter_equality() -> None:
     circ.cx(0, 1)
     # fails with preserve_param_uuid=False
     # as Parameter uuid attribute is not preserved
-    # and so fails equality check at bind_parameters
+    # and so fails equality check at assign_parameters
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
 
-    param_dict = dict(zip([param_a, param_b], [1, 2]))
-    final_circ.bind_parameters(param_dict)
-
     assert final_circ.parameters == circ.parameters
+
+    param_dict = dict(zip([param_a, param_b], [1, 2]))
+    final_circ.assign_parameters(param_dict, inplace=True)
+
+    assert len(final_circ.parameters) == 0
 
 
 # https://github.com/CQCL/pytket-extensions/issues/275

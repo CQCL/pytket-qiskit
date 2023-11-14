@@ -503,11 +503,11 @@ class CircuitBuilder:
                     try:
                         self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
                     except RuntimeError:
-                        raise (
-                            NotImplementedError(
-                                f"Conversion of {instr.name}"
-                                + " instructions to TKET is unsupported."
-                            )
+                        raise NotImplementedError(
+                            f"Conversion of qiskit's {instr.name} instruction is "
+                            + "currently unsupported by qiskit_to_tk. Consider "
+                            + "using QuantumCircuit.decompose() before attempting "
+                            + "conversion."
                         )
 
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:

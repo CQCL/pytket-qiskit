@@ -31,7 +31,7 @@ import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit.quantum_info import Statevector
+from qiskit.quantum_info import Statevector, Operator
 
 from pytket.circuit import (
     Circuit,
@@ -1023,7 +1023,9 @@ def test_RealAmplitudes_numeric_params() -> None:
 
     real_amps2 = real_amps1.assign_parameters(params)
     qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
-
+    # Unitary operator of the qiskit circuit. Order reversed from little -> big endian.
+    # The reversal means we can check it for equivalence with a tket unitary
+    qiskit_unitary = Operator(qc.reverse_bits()).data
     converted_tkc = qiskit_to_tk(qc)
     assert converted_tkc.n_gates == 1
     assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
@@ -1037,4 +1039,5 @@ def test_RealAmplitudes_numeric_params() -> None:
     qc2 = tk_to_qiskit(converted_tkc)
     tkc2 = qiskit_to_tk(qc2)
     unitary2 = tkc2.get_unitary()
+    assert compare_unitaries(qiskit_unitary, unitary1)
     assert compare_unitaries(unitary1, unitary2)

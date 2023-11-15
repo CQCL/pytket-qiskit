@@ -1015,6 +1015,7 @@ def test_failed_conversion_error() -> None:
         qiskit_to_tk(qc)
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/200
 def test_RealAmplitudes_numeric_params() -> None:
     qc = QuantumCircuit(3)
 

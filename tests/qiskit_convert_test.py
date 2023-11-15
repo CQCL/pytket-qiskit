@@ -1028,6 +1028,7 @@ def test_RealAmplitudes_numeric_params() -> None:
     assert converted_tkc.n_gates == 1
     assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
     circbox_op = converted_tkc.get_commands()[0].op
+    assert isinstance(circbox_op, CircBox)
     assert circbox_op.get_circuit().name == "RealAmplitudes"
     DecomposeBoxes().apply(converted_tkc)
     assert converted_tkc.n_gates_of_type(OpType.CX) == 4

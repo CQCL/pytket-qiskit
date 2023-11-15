@@ -1018,10 +1018,8 @@ def test_failed_conversion_error() -> None:
 # https://github.com/CQCL/pytket-qiskit/issues/200
 def test_RealAmplitudes_numeric_params() -> None:
     qc = QuantumCircuit(3)
-
     params = [np.pi / 2] * 9
     real_amps1 = RealAmplitudes(3, reps=2)
-
     real_amps2 = real_amps1.assign_parameters(params)
     qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
     # Unitary operator of the qiskit circuit. Order reversed from little -> big endian.

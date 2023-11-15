@@ -154,7 +154,7 @@ _qiskit_gates_other = {
     # Special types:
     Barrier: OpType.Barrier,
     Instruction: OpType.CircBox,
-    Gate: OpType.CustomGate,
+    Gate: OpType.CircBox,
     Measure: OpType.Measure,
     Reset: OpType.Reset,
     Initialize: OpType.StatePreparationBox,
@@ -476,7 +476,7 @@ class CircuitBuilder:
 
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
-            elif optype in (OpType.CircBox, OpType.CustomGate):
+            elif optype == OpType.CircBox:
                 qregs = (
                     [QuantumRegister(instr.num_qubits, "q")]
                     if instr.num_qubits > 0
@@ -490,17 +490,9 @@ class CircuitBuilder:
                 builder = CircuitBuilder(qregs, cregs)
                 builder.add_qiskit_data(instr.definition)
                 subc = builder.circuit()
-                if optype == OpType.CircBox:
-                    cbox = CircBox(subc)
-                    self.tkc.add_circbox(cbox, qubits + bits, **condition_kwargs)  # type: ignore
-                else:
-                    # warning, this will catch all `Gate` instances
-                    # that were not picked up as a subclass in _known_qiskit_gate
-                    params = [param_to_tk(p) for p in instr.params]
-                    gate_def = CustomGateDef.define(
-                        instr.name, subc, list(subc.free_symbols())
-                    )
-                    self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
+                subc.name = instr.name
+                self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
+
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
@@ -744,6 +736,7 @@ _protected_tket_gates = (
     _supported_tket_gates
     | _additional_multi_controlled_gates
     | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
+    | {OpType.CustomGate}
 )
 
 

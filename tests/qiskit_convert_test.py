@@ -16,7 +16,7 @@ from collections import Counter
 from typing import List, Set, Union
 from math import pi
 import pytest
-from sympy import Symbol, symbols
+from sympy import Symbol
 import numpy as np
 from qiskit import (  # type: ignore
     QuantumCircuit,
@@ -24,7 +24,7 @@ from qiskit import (  # type: ignore
     ClassicalRegister,
     execute,
 )
-from qiskit.quantum_info import Pauli, SparsePauliOp  # type: ignore
+from qiskit.quantum_info import SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore

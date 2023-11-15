@@ -1032,3 +1032,8 @@ def test_RealAmplitudes_numeric_params() -> None:
     DecomposeBoxes().apply(converted_tkc)
     assert converted_tkc.n_gates_of_type(OpType.CX) == 4
     assert converted_tkc.n_gates_of_type(OpType.Ry) == 9
+    unitary1 = converted_tkc.get_unitary()
+    qc2 = tk_to_qiskit(converted_tkc)
+    tkc2 = qiskit_to_tk(qc2)
+    unitary2 = tkc2.get_unitary()
+    assert compare_unitaries(unitary1, unitary2)

@@ -16,7 +16,7 @@ from collections import Counter
 from typing import List, Set, Union
 from math import pi
 import pytest
-from sympy import Symbol
+from sympy import Symbol, symbols
 import numpy as np
 from qiskit import (  # type: ignore
     QuantumCircuit,
@@ -1015,7 +1015,7 @@ def test_failed_conversion_error() -> None:
         qiskit_to_tk(qc)
 
 
-def test_RealAmplitudes_conversion() -> None:
+def test_RealAmplitudes_numeric_params() -> None:
     qc = QuantumCircuit(3)
 
     params = [np.pi / 2] * 9
@@ -1027,7 +1027,8 @@ def test_RealAmplitudes_conversion() -> None:
     converted_tkc = qiskit_to_tk(qc)
     assert converted_tkc.n_gates == 1
     assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
+    circbox_op = converted_tkc.get_commands()[0].op
+    assert circbox_op.get_circuit().name == "RealAmplitudes"
     DecomposeBoxes().apply(converted_tkc)
-    assert converted_tkc.name == "RealAmplitudes"
     assert converted_tkc.n_gates_of_type(OpType.CX) == 4
     assert converted_tkc.n_gates_of_type(OpType.Ry) == 9

@@ -12,6 +12,7 @@ unreleased
 * Introduce dependency on qiskit-algorithms.
 * Seed given to ``process_circuits()`` will be automatically incremented
   for the different circuit batches submitted.
+* Fix :py:class:`RuntimeError` caused by the use of custom gates in ``qiskit_to_tk`` `#200 <https://github.com/CQCL/pytket-qiskit/issues/200>`_.
 
 0.45.0 (October 2023)
 ---------------------

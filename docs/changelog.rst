@@ -6,7 +6,7 @@ unreleased
 
 * Add support for circuits with barriers in the Aer simulators.
 * Update qiskit version to 0.45.0.
-* Update qiskit-ibm-runtime version to 0.14.0.
+* Update qiskit-ibm-runtime version to 0.15.1.
 * Update qiskit-aer version to 0.13.0.
 * Update qiskit-ibm-provider version to 0.7.2.
 * Introduce dependency on qiskit-algorithms.

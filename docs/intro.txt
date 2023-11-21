@@ -191,7 +191,7 @@ Circuits must satisfy certain conditions before they can be processed on a devic
 
 All ``pytket-qiskit`` backends have the following two predicates.
 
-* `GateSetPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the :py:class`Backend`. To view supported Ops run ``BACKENDNAME.backend_info.gate_set``.
+* `GateSetPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the :py:class:`Backend`. To view supported Ops run ``Backend.backend_info.gate_set``.
 * `NoSymbolsPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.NoSymbolsPredicate>`_ - Parameterised gates must have numerical values when the circuit is executed.
 
 The :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend` may also have the following predicates depending on the capabilities of the specified device.

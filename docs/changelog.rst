@@ -1,9 +1,10 @@
 Changelog
 ~~~~~~~~~
 
-unreleased
-----------
+0.46.0 (November 2023)
+----------------------
 
+* Updated pytket version requirement to 1.22.
 * Add support for circuits with barriers in the Aer simulators.
 * Update qiskit version to 0.45.0.
 * Update qiskit-ibm-runtime version to 0.15.1.

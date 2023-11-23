@@ -928,7 +928,7 @@ def test_aer_expanded_gates() -> None:
     assert backend.valid_circuit(c)
 
 
-@pytest.mark.skipif(True, reason=REASON) # disable not working test for release
+@pytest.mark.skipif(True, reason=REASON)  # disable not working test for release
 def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
     c = Circuit(3).CX(0, 1)
     c.add_gate(OpType.ZZPhase, 0.1, [0, 1])
@@ -1120,7 +1120,7 @@ def test_postprocess_emu(perth_emulator_backend: IBMQEmulatorBackend) -> None:
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
-@pytest.mark.skipif(True, reason=REASON) # disable not working test for release
+@pytest.mark.skipif(True, reason=REASON)  # disable not working test for release
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
     c.H(0).SX(1).CX(0, 1).measure_all()

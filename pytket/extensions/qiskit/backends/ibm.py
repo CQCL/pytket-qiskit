@@ -510,7 +510,6 @@ class IBMQBackend(Backend):
                     sampler = Sampler(session=self._session, options=options)
                     job = sampler.run(
                         circuits=qcs,
-                        dynamic=self.backend_info.supports_fast_feedforward,
                     )
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):

@@ -1,6 +1,20 @@
 Changelog
 ~~~~~~~~~
 
+0.46.0 (November 2023)
+----------------------
+
+* Updated pytket version requirement to 1.22.
+* Add support for circuits with barriers in the Aer simulators.
+* Update qiskit version to 0.45.0.
+* Update qiskit-ibm-runtime version to 0.15.1.
+* Update qiskit-aer version to 0.13.0.
+* Update qiskit-ibm-provider version to 0.7.2.
+* Introduce dependency on qiskit-algorithms.
+* Seed given to ``process_circuits()`` will be automatically incremented
+  for the different circuit batches submitted.
+* Fix :py:class:`RuntimeError` caused by the use of custom gates in ``qiskit_to_tk`` `#200 <https://github.com/CQCL/pytket-qiskit/issues/200>`_.
+
 0.45.0 (October 2023)
 ---------------------
 
@@ -43,7 +57,7 @@ Changelog
 0.40.0 (June 2023)
 ------------------
 
-* IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through ``pytket-qiskit``. See the updated documentation on `credentials <https://cqcl.github.io/pytket-qiskit/api/index.html#access-and-credentials>`_.
+* IBM devices are now accessed using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_ instead of the deprecated :py:class:`IBMQ`. This allows the newest IBM devices and simulators to be accessed through ``pytket-qiskit``. See the updated documentation on `credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/api/index.html#access-and-credentials>`_.
 * The parameters ``hub``, ``group`` and ``project`` are no longer handled as separate arguments in :py:class:`IBMQBackend` and :py:meth:`IBMQBackend.available_devices`. Use ``"instance=f"{hub}/{group}/{project}"`` instead.
 * Added support for the {X, SX, Rz, ECR} in the default compilation pass for :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.
 * Fix to the :py:meth:`tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.

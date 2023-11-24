@@ -375,7 +375,7 @@ class IBMQBackend(Backend):
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
         # then please update this page accordingly
-        # https://cqcl.github.io/pytket-qiskit/api/index.html#default-compilation
+        # https://tket.quantinuum.com/extensions/pytket-qiskit/api/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
             if self._supports_rz:
@@ -510,7 +510,6 @@ class IBMQBackend(Backend):
                     sampler = Sampler(session=self._session, options=options)
                     job = sampler.run(
                         circuits=qcs,
-                        dynamic=self.backend_info.supports_fast_feedforward,
                     )
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):

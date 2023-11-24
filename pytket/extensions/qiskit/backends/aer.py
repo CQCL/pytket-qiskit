@@ -99,15 +99,17 @@ def _tket_gate_set_from_qiskit_backend(
         for gate_str in config.basis_gates
         if gate_str in _gate_str_2_optype
     }
+
+    gate_set.add(OpType.Barrier)
+
     if "unitary" in config.basis_gates:
         gate_set.add(OpType.Unitary1qBox)
         gate_set.add(OpType.Unitary2qBox)
         gate_set.add(OpType.Unitary3qBox)
 
-    if qiskit_backend.name() != "aer_simulator_unitary":
-        gate_set.add(OpType.Reset)
-        gate_set.add(OpType.Measure)
-        gate_set.add(OpType.Conditional)
+    gate_set.add(OpType.Reset)
+    gate_set.add(OpType.Measure)
+    gate_set.add(OpType.Conditional)
 
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)
@@ -237,6 +239,10 @@ class _AerBaseBackend(Backend):
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
+        """
+        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        Supported kwargs: `seed`, `postprocess`.
+        """
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
@@ -256,6 +262,7 @@ class _AerBaseBackend(Backend):
             circuits = noisy_circuits
 
         handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
+        seed = kwargs.get("seed")
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
@@ -273,7 +280,6 @@ class _AerBaseBackend(Backend):
             if self._needs_transpile:
                 qcs = transpile(qcs, self._qiskit_backend)
 
-            seed = cast(Optional[int], kwargs.get("seed"))
             job = self._qiskit_backend.run(
                 qcs,
                 shots=n_shots,
@@ -281,6 +287,8 @@ class _AerBaseBackend(Backend):
                 seed_simulator=seed,
                 noise_model=self._noise_model,
             )
+            if type(seed) is int:
+                seed += 1
             jobid = job.job_id()
             for i, ind in enumerate(indices):
                 handle = ResultHandle(jobid, i)

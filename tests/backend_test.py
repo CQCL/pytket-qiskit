@@ -79,7 +79,7 @@ from pytket.utils.expectations import (
     get_operator_expectation_value,
 )
 from pytket.utils.operators import QubitPauliOperator
-from pytket.utils.results import compare_statevectors
+from pytket.utils.results import compare_statevectors, compare_unitaries
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
@@ -577,16 +577,16 @@ def test_ilo() -> None:
     c.X(1)
     res_s = bs.run_circuit(c)
     res_u = bu.run_circuit(c)
-    assert (res_s.get_state() == np.asarray([0, 1, 0, 0])).all()
-    assert (res_s.get_state(basis=BasisOrder.dlo) == np.asarray([0, 0, 1, 0])).all()
-    assert (
-        res_u.get_unitary()
-        == np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
-    ).all()
-    assert (
-        res_u.get_unitary(basis=BasisOrder.dlo)
-        == np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]])
-    ).all()
+    assert np.allclose(res_s.get_state(), np.asarray([0, 1, 0, 0]))
+    assert np.allclose(res_s.get_state(basis=BasisOrder.dlo), np.asarray([0, 0, 1, 0]))
+    assert np.allclose(
+        res_u.get_unitary(),
+        np.asarray([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]]),
+    )
+    assert np.allclose(
+        res_u.get_unitary(basis=BasisOrder.dlo),
+        np.asarray([[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]]),
+    )
     c.measure_all()
     res = b.run_circuit(c, n_shots=2)
     assert (res.get_shots() == np.asarray([[0, 1], [0, 1]])).all()
@@ -1084,8 +1084,12 @@ def test_rebase_phase() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess(lagos_backend: IBMQBackend) -> None:
-    b = lagos_backend
+def test_postprocess() -> None:
+    b = IBMQBackend(
+        "ibm_lagos",
+        instance="ibm-q/open/main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
     assert b.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.SX(0).SX(1).CX(0, 1).measure_all()
@@ -1376,13 +1380,6 @@ def test_statevector_non_deterministic() -> None:
     )
 
 
-def test_unitary_sim_gateset() -> None:
-    backend = AerUnitaryBackend()
-    unitary_sim_gateset = backend.backend_info.gate_set
-    unsupported_ops = {OpType.Reset, OpType.Measure, OpType.Conditional}
-    assert unitary_sim_gateset.isdisjoint(unsupported_ops)
-
-
 def test_unitary_backend_transpiles() -> None:
     """regression test for https://github.com/CQCL/pytket-qiskit/issues/142"""
     backend = AerUnitaryBackend()
@@ -1403,3 +1400,29 @@ def test_unitary_backend_transpiles() -> None:
     # check that the lower-right 2x2 submatrix of the unitary is the matrix of
     # the X gate.
     assert np.isclose(u[62:64, 62:64], np.asarray(([0.0, 1.0], [1.0, 0.0]))).all()
+
+
+def test_barriers_in_aer_simulators() -> None:
+    """Test for barrier support in aer simulators
+    https://github.com/CQCL/pytket-qiskit/issues/186"""
+
+    circ = Circuit(2).H(0).CX(0, 1).add_barrier([0, 1])
+
+    state_backend = AerStateBackend()
+    shots_backend = AerBackend()
+    unitary_backend = AerUnitaryBackend()
+
+    test_state = circ.get_statevector()
+    test_unitary = circ.get_unitary()
+
+    backends = (state_backend, unitary_backend, shots_backend)
+
+    for backend in backends:
+        assert OpType.Barrier in backend.backend_info.gate_set
+        assert backend.valid_circuit(circ)
+
+    state_result = state_backend.run_circuit(circ).get_state()
+    unitary_result = unitary_backend.run_circuit(circ).get_unitary()
+
+    assert compare_statevectors(test_state, state_result)
+    assert compare_unitaries(test_unitary, unitary_result)

@@ -53,10 +53,14 @@ from qiskit.circuit import (
     ParameterExpression,
     Reset,
 )
-from qiskit.circuit.library import CRYGate, RYGate, PauliEvolutionGate, StatePreparation
-
-from qiskit.extensions.unitary import UnitaryGate  # type: ignore
-from qiskit.extensions import Initialize  # type: ignore
+from qiskit.circuit.library import (
+    CRYGate,
+    RYGate,
+    PauliEvolutionGate,
+    StatePreparation,
+    UnitaryGate,
+    Initialize,
+)
 from pytket.circuit import (
     CircBox,
     Circuit,
@@ -150,7 +154,7 @@ _qiskit_gates_other = {
     # Special types:
     Barrier: OpType.Barrier,
     Instruction: OpType.CircBox,
-    Gate: OpType.CustomGate,
+    Gate: OpType.CircBox,
     Measure: OpType.Measure,
     Reset: OpType.Reset,
     Initialize: OpType.StatePreparationBox,
@@ -354,18 +358,18 @@ class CircuitBuilder:
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if isinstance(instr, ControlledGate):
-                if type(instr) in _known_qiskit_gate:
+                if instr.base_class in _known_qiskit_gate:
                     # First we check if the gate is in _known_qiskit_gate
                     # this avoids CZ being converted to CnZ
-                    optype = _known_qiskit_gate[type(instr)]
-                elif type(instr.base_gate) == qiskit_gates.RYGate:
+                    optype = _known_qiskit_gate[instr.base_class]
+                elif instr.base_gate.base_class is qiskit_gates.RYGate:
                     optype = OpType.CnRy
-                elif type(instr.base_gate) == qiskit_gates.YGate:
+                elif instr.base_gate.base_class is qiskit_gates.YGate:
                     optype = OpType.CnY
-                elif type(instr.base_gate) == qiskit_gates.ZGate:
+                elif instr.base_gate.base_class is qiskit_gates.ZGate:
                     optype = OpType.CnZ
                 else:
-                    if type(instr.base_gate) in _known_qiskit_gate:
+                    if instr.base_gate.base_class in _known_qiskit_gate:
                         optype = OpType.QControlBox  # QControlBox case handled below
                     else:
                         raise NotImplementedError(
@@ -376,7 +380,7 @@ class CircuitBuilder:
                 pass  # Special handling below
             else:
                 try:
-                    optype = _known_qiskit_gate[type(instr)]
+                    optype = _known_qiskit_gate[instr.base_class]
                 except KeyError:
                     raise NotImplementedError(
                         f"Conversion of qiskit's {instr.name} instruction is "
@@ -388,7 +392,7 @@ class CircuitBuilder:
             bits = [self.cbmap[bit] for bit in cargs]
 
             if optype == OpType.QControlBox:
-                base_tket_gate = _known_qiskit_gate[type(instr.base_gate)]
+                base_tket_gate = _known_qiskit_gate[instr.base_gate.base_class]
                 params = [param_to_tk(p) for p in instr.base_gate.params]
                 n_base_qubits = instr.base_gate.num_qubits
                 sub_circ = Circuit(n_base_qubits)
@@ -472,7 +476,7 @@ class CircuitBuilder:
 
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
-            elif optype in (OpType.CircBox, OpType.CustomGate):
+            elif optype == OpType.CircBox:
                 qregs = (
                     [QuantumRegister(instr.num_qubits, "q")]
                     if instr.num_qubits > 0
@@ -486,17 +490,9 @@ class CircuitBuilder:
                 builder = CircuitBuilder(qregs, cregs)
                 builder.add_qiskit_data(instr.definition)
                 subc = builder.circuit()
-                if optype == OpType.CircBox:
-                    cbox = CircBox(subc)
-                    self.tkc.add_circbox(cbox, qubits + bits, **condition_kwargs)  # type: ignore
-                else:
-                    # warning, this will catch all `Gate` instances
-                    # that were not picked up as a subclass in _known_qiskit_gate
-                    params = [param_to_tk(p) for p in instr.params]
-                    gate_def = CustomGateDef.define(
-                        instr.name, subc, list(subc.free_symbols())
-                    )
-                    self.tkc.add_custom_gate(gate_def, params, qubits + bits)  # type: ignore
+                subc.name = instr.name
+                self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
+
             elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
@@ -740,6 +736,7 @@ _protected_tket_gates = (
     _supported_tket_gates
     | _additional_multi_controlled_gates
     | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
+    | {OpType.CustomGate}
 )
 
 
@@ -822,9 +819,13 @@ def tk_to_qiskit(
     for p in qcirc.parameters:
         name_spl = p.name.split("_UUID:", 2)
         if len(name_spl) == 2:
-            p_name, uuid = name_spl
-            new_p = Parameter.__new__(Parameter, p_name, UUID(uuid))
-            new_p.__init__(p_name)
+            p_name, uuid_str = name_spl
+            uuid = UUID(uuid_str)
+            # See Parameter.__init__() in qiskit/circuit/parameter.py.
+            new_p = Parameter(p_name)
+            new_p._uuid = uuid
+            new_p._parameter_keys = frozenset(((p_name, uuid),))
+            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

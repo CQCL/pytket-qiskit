@@ -24,16 +24,14 @@ from qiskit import (  # type: ignore
     ClassicalRegister,
     execute,
 )
-from qiskit.opflow import PauliOp, PauliSumOp, PauliTrotterEvolution, Suzuki  # type: ignore
-from qiskit.opflow.primitive_ops import PauliSumOp  # type: ignore
-from qiskit.quantum_info import Pauli  # type: ignore
+from qiskit.quantum_info import SparsePauliOp  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate  # type: ignore
+from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
+from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit.quantum_info import Statevector
-from qiskit.extensions import UnitaryGate  # type: ignore
+from qiskit.quantum_info import Statevector, Operator
 
 from pytket.circuit import (
     Circuit,
@@ -83,9 +81,12 @@ def test_classical_barrier_error() -> None:
 
 def test_convert_circuit_with_complex_params() -> None:
     with pytest.raises(ValueError):
-        qiskit_op = PauliSumOp.from_list([("Z", 1j)])
-        evolved_op = qiskit_op.exp_i()
-        evolution_circ = PauliTrotterEvolution(reps=1).convert(evolved_op).to_circuit()
+        qiskit_op = SparsePauliOp(["Z"], coeffs=[1.0j])
+        evolved_op = PauliEvolutionGate(
+            qiskit_op, time=1, synthesis=SuzukiTrotter(reps=1)
+        )
+        evolution_circ = QuantumCircuit(1)
+        evolution_circ.append(evolved_op, [0])
         tk_circ = qiskit_to_tk(evolution_circ)
         DecomposeBoxes().apply(tk_circ)
 
@@ -115,9 +116,9 @@ def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:
     qc.cy(qr[0], qr[1])
     qc.cz(qr[1], qr[2])
     qc.ecr(qr[0], qr[1])
-    qc.i(qr[2])
+    qc.id(qr[2])
     qc.iswap(qr[3], qr[0])
-    qc.mct([qr[0], qr[1], qr[2]], qr[3])
+    qc.mcx([qr[0], qr[1], qr[2]], qr[3])
     qc.mcx([qr[1], qr[2], qr[3]], qr[0])
     qc.p(pi / 4, qr[1])
     qc.r(pi / 5, pi / 6, qr[2])
@@ -350,14 +351,10 @@ def test_tketautopass(perth_backend: IBMQBackend) -> None:
 
 def test_instruction() -> None:
     # TKET-446
-    qreg = QuantumRegister(3)
-    op = PauliSumOp.from_list([("XXI", 0.3), ("YYI", 0.5), ("ZZZ", -0.4)])
-    evolved_op = (1.2 * op).exp_i()
-    evo = PauliTrotterEvolution(reps=1)
-    evo_circop = evo.convert(evolved_op)
-    evo_instr = evo_circop.to_instruction()
-    evolution_circ = QuantumCircuit(qreg)
-    evolution_circ.append(evo_instr, qargs=list(qreg))
+    op = SparsePauliOp(["XXI", "YYI", "ZZZ"], [0.3, 0.5, -0.4])
+    evo_instr = PauliEvolutionGate(op, time=1.2, synthesis=SuzukiTrotter(reps=1))
+    evolution_circ = QuantumCircuit(3)
+    evolution_circ.append(evo_instr, [0, 1, 2])
     tk_circ = qiskit_to_tk(evolution_circ)
     cmds = tk_circ.get_commands()
     assert len(cmds) == 1
@@ -718,14 +715,16 @@ def test_parameter_equality() -> None:
     circ.cx(0, 1)
     # fails with preserve_param_uuid=False
     # as Parameter uuid attribute is not preserved
-    # and so fails equality check at bind_parameters
+    # and so fails equality check at assign_parameters
     pytket_circ = qiskit_to_tk(circ, preserve_param_uuid=True)
     final_circ = tk_to_qiskit(pytket_circ)
 
-    param_dict = dict(zip([param_a, param_b], [1, 2]))
-    final_circ.bind_parameters(param_dict)
-
     assert final_circ.parameters == circ.parameters
+
+    param_dict = dict(zip([param_a, param_b], [1, 2]))
+    final_circ.assign_parameters(param_dict, inplace=True)
+
+    assert len(final_circ.parameters) == 0
 
 
 # https://github.com/CQCL/pytket-extensions/issues/275
@@ -770,13 +769,14 @@ def test_rebased_conversion() -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/24
+@pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")
 def test_parametrized_evolution() -> None:
-    pauli_blocks = [PauliOp(Pauli("XXZ"), coeff=1.0), PauliOp(Pauli("YXY"), coeff=0.5)]
-    operator: PauliSumOp = sum(pauli_blocks) * Parameter("x")
-    evolved_circ_op = PauliTrotterEvolution(
-        trotter_mode=Suzuki(reps=2, order=4)
-    ).convert(operator.exp_i())
-    qc: QuantumCircuit = evolved_circ_op.primitive
+    operator = SparsePauliOp(["XXZ", "YXY"], coeffs=[1.0, 0.5]) * Parameter("x")
+    evolved_circ_op = PauliEvolutionGate(
+        operator, time=1, synthesis=SuzukiTrotter(reps=2, order=4)
+    )
+    qc = QuantumCircuit(3)
+    qc.append(evolved_circ_op, [0, 1, 2])
     tk_qc: Circuit = qiskit_to_tk(qc)
     assert len(tk_qc.free_symbols()) == 1
 
@@ -1013,3 +1013,30 @@ def test_failed_conversion_error() -> None:
         NotImplementedError, match=r"Conversion of qiskit's xx_plus_yy instruction"
     ):
         qiskit_to_tk(qc)
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/200
+def test_RealAmplitudes_numeric_params() -> None:
+    qc = QuantumCircuit(3)
+    params = [np.pi / 2] * 9
+    real_amps1 = RealAmplitudes(3, reps=2)
+    real_amps2 = real_amps1.assign_parameters(params)
+    qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
+    # Unitary operator of the qiskit circuit. Order reversed from little -> big endian.
+    # The reversal means we can check it for equivalence with a tket unitary
+    qiskit_unitary = Operator(qc.reverse_bits()).data
+    converted_tkc = qiskit_to_tk(qc)
+    assert converted_tkc.n_gates == 1
+    assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
+    circbox_op = converted_tkc.get_commands()[0].op
+    assert isinstance(circbox_op, CircBox)
+    assert circbox_op.get_circuit().name == "RealAmplitudes"
+    DecomposeBoxes().apply(converted_tkc)
+    assert converted_tkc.n_gates_of_type(OpType.CX) == 4
+    assert converted_tkc.n_gates_of_type(OpType.Ry) == 9
+    unitary1 = converted_tkc.get_unitary()
+    qc2 = tk_to_qiskit(converted_tkc)
+    tkc2 = qiskit_to_tk(qc2)
+    unitary2 = tkc2.get_unitary()
+    assert compare_unitaries(qiskit_unitary, unitary1)
+    assert compare_unitaries(unitary1, unitary2)

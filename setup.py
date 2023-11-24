@@ -32,7 +32,7 @@ setup(
     author_email="tket-support@cambridgequantum.com",
     python_requires=">=3.9",
     project_urls={
-        "Documentation": "https://cqcl.github.io/pytket-qiskit/api/index.html",
+        "Documentation": "https://tket.quantinuum.com/extensions/pytket-qiskit/api/index.html",
         "Source": "https://github.com/CQCL/pytket-qiskit",
         "Tracker": "https://github.com/CQCL/pytket-qiskit/issues",
     },
@@ -44,11 +44,12 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket ~= 1.21",
-        "qiskit ~= 0.44.0",
-        "qiskit-ibm-runtime ~= 0.12.0",
-        "qiskit-aer ~= 0.12.2",
-        "qiskit-ibm-provider ~= 0.7.0",
+        "pytket ~= 1.22",
+        "qiskit ~= 0.45.0",
+        "qiskit-algorithms ~= 0.2.1",
+        "qiskit-ibm-runtime ~= 0.15.1",
+        "qiskit-aer ~= 0.13.0",
+        "qiskit-ibm-provider ~= 0.7.2",
         "numpy",
     ],
     classifiers=[

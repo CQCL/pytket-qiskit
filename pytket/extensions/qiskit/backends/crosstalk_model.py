@@ -87,7 +87,7 @@ class CrosstalkParams:
     :type non_markovian_noise: `List[Tuple[Qubit, float, float]]`
     :param virtual_z: If True, then don't break any single qubit Z gate into
         unitary fractions, instead add the full unitary.
-    :type bool
+    :type: bool
     :param N: hyperparameter specifies splices per second.
         1/N must divide all gate times.
     :type: float

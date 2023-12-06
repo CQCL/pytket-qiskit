@@ -40,7 +40,8 @@ from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 @dataclass
 class FractionalUnitary:
     """
-    Wrapper for a fractional unitary gate
+    Wrapper for a fractional unitary gate.
+
     :param cmd: the fractional UnitaryBox wrapped in a pytket Command
     :param n_fractions: the number of fractional gates
         used to compose the original unitary gate.

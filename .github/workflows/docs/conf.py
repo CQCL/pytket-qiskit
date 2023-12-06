@@ -39,7 +39,7 @@ pytketdoc_base = "https://tket.quantinuum.com/api-docs/"
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "pytket": (pytketdoc_base, None),
-    "qiskit": ("https://docs.quantum.ibm.com/", None),
+    "qiskit": ("https://docs.quantum.ibm.com/api/qiskit", None),
     "qulacs": ("http://docs.qulacs.org/en/latest/", None),
 }
 

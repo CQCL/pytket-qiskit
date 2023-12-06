@@ -454,8 +454,8 @@ class IBMQBackend(Backend):
                 postprocessing to improve fidelity of results (bool, default False)
             * `simplify_initial`:
                 apply the pytket ``SimplifyInitial`` pass to improve
-                fidelity of results assuming all qubits initialized to zero (bool, default
-                False)
+                fidelity of results assuming all qubits initialized to zero
+                (bool, default False)
 
         """
         circuits = list(circuits)

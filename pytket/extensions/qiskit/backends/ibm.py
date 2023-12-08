@@ -392,7 +392,7 @@ class IBMQBackend(Backend):
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
-                    arch,
+                    arch,  # type: ignore
                     self._backend_info.averaged_node_gate_errors,  # type: ignore
                     self._backend_info.averaged_edge_gate_errors,  # type: ignore
                     self._backend_info.averaged_readout_errors,  # type: ignore
@@ -400,7 +400,7 @@ class IBMQBackend(Backend):
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
-                    arch,
+                    arch,  # type: ignore
                     self._backend_info.averaged_node_gate_errors,  # type: ignore
                     self._backend_info.averaged_edge_gate_errors,  # type: ignore
                     self._backend_info.averaged_readout_errors,  # type: ignore
@@ -408,13 +408,13 @@ class IBMQBackend(Backend):
 
             passlist.append(
                 CXMappingPass(
-                    arch,
+                    arch,  # type: ignore
                     noise_aware_placement,
                     directed_cx=False,
                     delay_measures=(not mid_measure),
                 )
             )
-            passlist.append(NaivePlacementPass(arch))
+            passlist.append(NaivePlacementPass(arch))  # type: ignore
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:

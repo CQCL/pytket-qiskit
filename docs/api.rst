@@ -2,25 +2,30 @@ API documentation
 ~~~~~~~~~~~~~~~~~
 
 .. autoclass:: pytket.extensions.qiskit.IBMQBackend
-    :special-members:
+    :special-members: __init__
+    :show-inheritance:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.IBMQEmulatorBackend
     :special-members: __init__
+    :show-inheritance:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.AerBackend
     :special-members: __init__
+    :show-inheritance:
     :inherited-members:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.AerStateBackend
     :special-members: __init__
     :inherited-members:
+    :show-inheritance:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.AerUnitaryBackend
     :special-members: __init__
+    :show-inheritance:
     :inherited-members:
     :members:
 
@@ -28,8 +33,12 @@ API documentation
     :members: qiskit_to_tk, tk_to_qiskit, process_characterisation
 
 .. automodule:: pytket.extensions.qiskit.tket_backend
+    :show-inheritance:
     :members:
     :special-members: __init__
+
+.. automodule:: pytket.extensions.qiskit.backends.crosstalk_model
+    :members: CrosstalkParams
 
 
 .. automodule:: pytket.extensions.qiskit.tket_pass

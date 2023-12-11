@@ -389,6 +389,7 @@ class IBMQBackend(Backend):
             passlist.append(FullPeepholeOptimise())
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
+        assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(

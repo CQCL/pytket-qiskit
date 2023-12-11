@@ -328,6 +328,9 @@ def test_process_characterisation_complete_noise_model() -> None:
     node_errors = cast(Dict, back.backend_info.all_node_gate_errors)
     link_errors = cast(Dict, back.backend_info.all_edge_gate_errors)
     arch = back.backend_info.architecture
+    assert node_errors is not None
+    assert link_errors is not None
+    assert arch is not None
 
     gqe2 = {tuple(qs): errs for qs, errs in char["GenericTwoQubitQErrors"]}
     gqe1 = {q: errs for q, errs in char["GenericOneQubitQErrors"]}
@@ -340,17 +343,17 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert gqe1[0][1][1][1] == 0.65
     assert gqe1[0][2][1][0] == 0.35
     assert gqe1[0][2][1][1] == 0.65
-    assert node_errors[arch.nodes[0]][OpType.U3] == 0.375  # type: ignore
-    assert round(link_errors[(arch.nodes[0], arch.nodes[1])][OpType.CX], 4) == 0.5625  # type: ignore
+    assert node_errors[arch.nodes[0]][OpType.U3] == 0.375
+    assert round(link_errors[(arch.nodes[0], arch.nodes[1])][OpType.CX], 4) == 0.5625
     assert (
-        round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375  # type: ignore
+        round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375
     )
     readout_errors = cast(Dict, back.backend_info.all_readout_errors)
-    assert readout_errors[arch.nodes[0]] == [  # type: ignore
+    assert readout_errors[arch.nodes[0]] == [
         [0.8, 0.2],
         [0.2, 0.8],
     ]
-    assert readout_errors[arch.nodes[1]] == [  # type: ignore
+    assert readout_errors[arch.nodes[1]] == [
         [0.7, 0.3],
         [0.3, 0.7],
     ]

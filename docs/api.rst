@@ -38,7 +38,7 @@ API documentation
     :special-members: __init__
 
 .. automodule:: pytket.extensions.qiskit.backends.crosstalk_model
-    :members: CrosstalkParams, NoisyCircuitBuilder, FractionalUnitary
+    :members: CrosstalkParams
 
 
 .. automodule:: pytket.extensions.qiskit.tket_pass

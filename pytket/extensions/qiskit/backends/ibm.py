@@ -415,7 +415,7 @@ class IBMQBackend(Backend):
                     delay_measures=(not mid_measure),
                 )
             )
-            passlist.append(NaivePlacementPass(arch))  # type: ignore
+            passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:

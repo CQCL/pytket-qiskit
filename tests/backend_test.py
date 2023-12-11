@@ -377,7 +377,8 @@ def test_process_model() -> None:
 
     # check basic information has been captured
     b = AerBackend(noise_model)
-    nodes = b.backend_info.architecture.nodes  # type: ignore
+    assert b.backend_info.architecture is not None
+    nodes = b.backend_info.architecture.nodes
     assert len(nodes) == 9
     assert "characterisation" in b.backend_info.misc
     assert "GenericOneQubitQErrors" in b.backend_info.misc["characterisation"]

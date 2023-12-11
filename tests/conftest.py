@@ -37,18 +37,9 @@ def setup_qiskit_account() -> None:
 
 
 @pytest.fixture(scope="module")
-def perth_backend() -> IBMQBackend:
+def brisbane_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibm_perth",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-
-
-@pytest.fixture(scope="module")
-def lagos_backend() -> IBMQBackend:
-    return IBMQBackend(
-        "ibm_lagos",
+        "ibm_brisbane",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -74,9 +65,9 @@ def simulator_stabilizer_backend() -> IBMQBackend:
 
 
 @pytest.fixture(scope="module")
-def perth_emulator_backend() -> IBMQEmulatorBackend:
+def brisbane_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibm_perth",
+        "ibm_brisbane",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -85,7 +76,7 @@ def perth_emulator_backend() -> IBMQEmulatorBackend:
 @pytest.fixture(scope="module")
 def nairobi_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibm_nairobi",
+        "ibm_brisbane",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
@@ -100,15 +91,6 @@ def ibm_provider() -> IBMProvider:
     except:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         return IBMProvider(token=token, instance="ibm-q/open/main")
-
-
-@pytest.fixture(scope="module")
-def ibm_perth_backend() -> IBMQBackend:
-    return IBMQBackend(
-        backend_name="ibm_perth",
-        monitor=False,
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
 
 
 @pytest.fixture(scope="module")

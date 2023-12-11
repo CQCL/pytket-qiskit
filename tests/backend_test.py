@@ -43,7 +43,7 @@ from pytket.circuit import (
     QControlBox,
     CircBox,
 )
-from pytket.passes import CliffordSimp
+from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
 from pytket.architecture import Architecture
@@ -1016,20 +1016,23 @@ def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
     c.SX(3).Rz(0.125, 3).SX(3)
     c.CX(0, 3).CX(0, 4)
     u_backend = AerUnitaryBackend()
+    c.remove_blank_wires()
+    FlattenRelabelRegistersPass().apply(c)
     u = u_backend.run_circuit(c).get_unitary()
-    ibm_backend = AerUnitaryBackend()
+    ibm_backend = brisbane_backend
     for ol in range(3):
         p = ibm_backend.default_compilation_pass(optimisation_level=ol)
         cu = CompilationUnit(c)
         p.apply(cu)
+        FlattenRelabelRegistersPass().apply(cu)
         c1 = cu.circuit
         compiled_u = u_backend.run_circuit(c1).get_unitary()
 
         # Adjust for placement
         imap = cu.initial_map
         fmap = cu.final_map
-        c_idx = {c.qubits[i]: i for i in range(7)}
-        c1_idx = {c1.qubits[i]: i for i in range(7)}
+        c_idx = {c.qubits[i]: i for i in range(5)}
+        c1_idx = {c1.qubits[i]: i for i in range(5)}
         ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
         inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
         m_ini = lift_perm(ini)

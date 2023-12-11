@@ -389,10 +389,11 @@ class IBMQBackend(Backend):
             passlist.append(FullPeepholeOptimise())
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
+        assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
-                    arch,  # type: ignore
+                    arch,
                     self._backend_info.averaged_node_gate_errors,  # type: ignore
                     self._backend_info.averaged_edge_gate_errors,  # type: ignore
                     self._backend_info.averaged_readout_errors,  # type: ignore
@@ -400,7 +401,7 @@ class IBMQBackend(Backend):
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
-                    arch,  # type: ignore
+                    arch,
                     self._backend_info.averaged_node_gate_errors,  # type: ignore
                     self._backend_info.averaged_edge_gate_errors,  # type: ignore
                     self._backend_info.averaged_readout_errors,  # type: ignore
@@ -408,7 +409,7 @@ class IBMQBackend(Backend):
 
             passlist.append(
                 CXMappingPass(
-                    arch,  # type: ignore
+                    arch,
                     noise_aware_placement,
                     directed_cx=False,
                     delay_measures=(not mid_measure),

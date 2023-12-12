@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.47.0 (unreleased)
+-------------------
+
+* Update qiskit-ibm-runtime version to 0.17.0.
+
 0.46.0 (November 2023)
 ----------------------
 

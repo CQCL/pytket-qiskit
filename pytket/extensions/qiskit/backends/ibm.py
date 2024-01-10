@@ -375,7 +375,7 @@ class IBMQBackend(Backend):
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
         # then please update this page accordingly
-        # https://tket.quantinuum.com/extensions/pytket-qiskit/api/index.html#default-compilation
+        # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
             if self._supports_rz:
@@ -389,6 +389,7 @@ class IBMQBackend(Backend):
             passlist.append(FullPeepholeOptimise())
         mid_measure = self._backend_info.supports_midcircuit_measurement
         arch = self._backend_info.architecture
+        assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
@@ -448,12 +449,15 @@ class IBMQBackend(Backend):
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
 
-        Supported `kwargs`:
-        - `postprocess`: apply end-of-circuit simplifications and classical
-          postprocessing to improve fidelity of results (bool, default False)
-        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
-          fidelity of results assuming all qubits initialized to zero (bool, default
-          False)
+        :Keyword Arguments:
+            * `postprocess`:
+                apply end-of-circuit simplifications and classical
+                postprocessing to improve fidelity of results (bool, default False)
+            * `simplify_initial`:
+                apply the pytket ``SimplifyInitial`` pass to improve
+                fidelity of results assuming all qubits initialized to zero
+                (bool, default False)
+
         """
         circuits = list(circuits)
 

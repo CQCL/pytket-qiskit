@@ -35,7 +35,7 @@ jobs:
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
     - name: Set up Python 3.9
       if: github.event_name == 'push' || github.event_name == 'schedule'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     - name: Build and test (3.9)
@@ -44,7 +44,7 @@ jobs:
       run: |
         ./.github/workflows/build-test nomypy
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     - name: Build and test including remote checks (3.10) mypy
@@ -61,7 +61,7 @@ jobs:
         ./.github/workflows/build-test nomypy
     - name: Set up Python 3.11
       if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'schedule'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Build and test (3.11)
@@ -69,10 +69,10 @@ jobs:
       shell: bash
       run: |
         ./.github/workflows/build-test nomypy
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel')
       with:
-        name: artefacts
+        name: artefact-${{ matrix.os }}
         path: wheelhouse/
     - name: Install docs dependencies
       if:  (matrix.os == 'ubuntu-22.04') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
@@ -92,9 +92,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Download all wheels
-      uses: actions/download-artifact@v3
+      # downloading all three files into the wheelhouse
+      # all files are identical, so there will only be one file
+      uses: actions/download-artifact@v4
       with:
         path: wheelhouse
+        pattern: artefact-*
+        merge-multiple: true
     - name: Put them all in the dist folder
       run: |
         mkdir dist
@@ -116,11 +120,11 @@ jobs:
       with:
         fetch-depth: '0'
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     - name: Download all wheels
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: wheelhouse
     - name: Install pip, wheel
@@ -137,7 +141,7 @@ jobs:
         mkdir extensions
         ./build-docs -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions/api
     - name: Upload docs as artefact
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3
       with:
         path: .github/workflows/docs/extensions
 
@@ -155,4 +159,4 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v2
+      uses: actions/deploy-pages@v4.0.1

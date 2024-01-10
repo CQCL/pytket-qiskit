@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-0.47.0 (unreleased)
--------------------
+0.47.0 (January 2024)
+---------------------
 
 * Update qiskit-ibm-runtime version to 0.17.0.
 * Update qiskit-ibm-provider version to 0.8.0.

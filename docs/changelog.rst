@@ -5,6 +5,8 @@ Changelog
 -------------------
 
 * Update qiskit-ibm-runtime version to 0.17.0.
+* Update qiskit-ibm-provider version to 0.8.0.
+* Updated pytket version requirement to 1.23.
 
 0.46.0 (November 2023)
 ----------------------

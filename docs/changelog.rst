@@ -1,6 +1,14 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+General:
+
+* Python 3.12 support added; 3.9 dropped.
+
+
 0.47.0 (January 2024)
 ---------------------
 

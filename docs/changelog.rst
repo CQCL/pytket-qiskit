@@ -6,7 +6,8 @@ Unreleased
 
 General:
 
-* Python 3.12 support added; 3.9 dropped.
+* Python 3.12 support added, 3.9 dropped.
+* pytket dependency updated to 1.24.
 
 
 0.47.0 (January 2024)

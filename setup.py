@@ -30,7 +30,7 @@ setup(
     version=metadata["__extension_version__"],
     author="TKET development team",
     author_email="tket-support@cambridgequantum.com",
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     project_urls={
         "Documentation": "https://tket.quantinuum.com/extensions/pytket-qiskit/index.html",
         "Source": "https://github.com/CQCL/pytket-qiskit",
@@ -44,7 +44,7 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket ~= 1.23",
+        "pytket ~= 1.24",
         "qiskit ~= 0.45.0",
         "qiskit-algorithms ~= 0.2.1",
         "qiskit-ibm-runtime ~= 0.17.0",
@@ -54,9 +54,9 @@ setup(
     ],
     classifiers=[
         "Environment :: Console",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",

@@ -9,7 +9,7 @@ representations.
 
 ## Getting started
 
-`pytket-qiskit` is available for Python 3.10, 3.10 and 3.12, on Linux, MacOS
+`pytket-qiskit` is available for Python 3.10, 3.11 and 3.12, on Linux, MacOS
 and Windows. To install, run:
 
 ```shell

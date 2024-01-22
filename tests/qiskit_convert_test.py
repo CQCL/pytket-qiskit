@@ -440,7 +440,7 @@ def test_condition_errors() -> None:
         c = Circuit(2, 2)
         c.X(0, condition_bits=[1, 0], condition_value=1)
         tk_to_qiskit(c)
-    assert "OpenQASM conditions must be an entire register in\n order" in str(
+    assert "OpenQASM conditions must be an entire register in order" in str(
         errorinfo.value
     )
 

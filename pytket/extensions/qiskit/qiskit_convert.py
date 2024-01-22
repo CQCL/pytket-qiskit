@@ -742,7 +742,7 @@ order or only one bit of one register"""
     params = _get_params(op, symb_map)
     g = gatetype(*params)
     if type(phase) == float:
-        qcirc.global_phase += float(phase * sympy.pi)
+        qcirc.global_phase += phase * np.pi
     else:
         qcirc.global_phase += phase * sympy.pi
     return qcirc.append(g, qargs=qargs)

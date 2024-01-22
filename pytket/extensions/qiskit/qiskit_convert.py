@@ -668,9 +668,7 @@ def append_tk_command_to_qiskit(
         regname = args[0].reg_name
         for i, a in enumerate(args[:width]):
             if a.reg_name != regname:
-                raise NotImplementedError(
-                    "OpenQASM conditions can only use a single register"
-                )
+                raise NotImplementedError("Conditions can only use a single register")
         instruction = append_tk_command_to_qiskit(
             op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds  # type: ignore
         )
@@ -678,7 +676,7 @@ def append_tk_command_to_qiskit(
             for i, a in enumerate(args[:width]):
                 if a.index != [i]:
                     raise NotImplementedError(
-                        """OpenQASM conditions must be an entire register in\
+                        """Conditions must be an entire register in\
  order or only one bit of one register"""
                     )
 
@@ -687,7 +685,7 @@ def append_tk_command_to_qiskit(
             instruction.c_if(cregmap[regname][args[0].index[0]], value)
         else:
             raise NotImplementedError(
-                """OpenQASM conditions must be an entire register in\
+                """Conditions must be an entire register in\
 order or only one bit of one register"""
             )
 

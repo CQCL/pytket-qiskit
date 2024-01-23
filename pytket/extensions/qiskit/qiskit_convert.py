@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Cambridge Quantum Computing
+# Copyright 2019-2024 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ from qiskit.circuit import (
     Parameter,
     ParameterExpression,
     Reset,
+    Clbit,
 )
 from qiskit.circuit.library import (
     CRYGate,
@@ -342,11 +343,23 @@ class CircuitBuilder:
         for instr, qargs, cargs in data:
             condition_kwargs = {}
             if instr.condition is not None:
-                cond_reg = self.cregmap[instr.condition[0]]
-                condition_kwargs = {
-                    "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
-                    "condition_value": instr.condition[1],
-                }
+                if type(instr.condition[0]) == ClassicalRegister:
+                    cond_reg = self.cregmap[instr.condition[0]]
+                    condition_kwargs = {
+                        "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
+                        "condition_value": instr.condition[1],
+                    }
+                elif type(instr.condition[0]) == Clbit:
+                    cond_reg = self.cregmap[instr.condition[0].register]
+                    condition_kwargs = {
+                        "condition_bits": [cond_reg[instr.condition[0].index]],
+                        "condition_value": instr.condition[1],
+                    }
+                else:
+                    raise NotImplementedError(
+                        "condition must contain classical bit or register"
+                    )
+
             # Controlled operations may be controlled on values other than all-1. Handle
             # this by prepending and appending X gates on the control qubits.
             ctrl_state, num_ctrl_qubits = None, None
@@ -653,22 +666,29 @@ def append_tk_command_to_qiskit(
             width = op.width  # type: ignore
             value = op.value  # type: ignore
         regname = args[0].reg_name
-        if len(cregmap[regname]) != width:
-            raise NotImplementedError("OpenQASM conditions must be an entire register")
         for i, a in enumerate(args[:width]):
             if a.reg_name != regname:
-                raise NotImplementedError(
-                    "OpenQASM conditions can only use a single register"
-                )
-            if a.index != [i]:
-                raise NotImplementedError(
-                    "OpenQASM conditions must be an entire register in order"
-                )
+                raise NotImplementedError("Conditions can only use a single register")
         instruction = append_tk_command_to_qiskit(
             op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds  # type: ignore
         )
+        if len(cregmap[regname]) == width:
+            for i, a in enumerate(args[:width]):
+                if a.index != [i]:
+                    raise NotImplementedError(
+                        """Conditions must be an entire register in\
+ order or only one bit of one register"""
+                    )
 
-        instruction.c_if(cregmap[regname], value)
+            instruction.c_if(cregmap[regname], value)
+        elif width == 1:
+            instruction.c_if(cregmap[regname][args[0].index[0]], value)
+        else:
+            raise NotImplementedError(
+                """Conditions must be an entire register in\
+order or only one bit of one register"""
+            )
+
         return instruction
     # normal gates
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
@@ -719,7 +739,10 @@ def append_tk_command_to_qiskit(
         ) from error
     params = _get_params(op, symb_map)
     g = gatetype(*params)
-    qcirc.global_phase += phase * sympy.pi
+    if type(phase) == float:
+        qcirc.global_phase += phase * np.pi
+    else:
+        qcirc.global_phase += phase * sympy.pi
     return qcirc.append(g, qargs=qargs)
 
 

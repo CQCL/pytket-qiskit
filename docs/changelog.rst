@@ -1,6 +1,14 @@
 Changelog
 ~~~~~~~~~
 
+0.48.0 (January 2024)
+---------------------
+
+* Updated pytket version requirement to 1.24.
+* Python 3.12 support added, 3.9 dropped.
+* fix conditional bit in pytket to qiskit conversion
+* fix symbolic conversion of parameter in conversion
+
 0.47.0 (January 2024)
 ---------------------
 

@@ -4,7 +4,7 @@
     ],
     "language": {
         "name": "python",
-        "versions": ["3.9"]
+        "versions": ["3.10"]
     },
     "tests_command": [
         "/bin/bash -ec 'cd tests && pytest'"

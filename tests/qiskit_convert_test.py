@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Cambridge Quantum Computing
+# Copyright 2019-2024 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,17 @@ from qiskit import (  # type: ignore
     ClassicalRegister,
     execute,
 )
-from qiskit.quantum_info import SparsePauliOp  # type: ignore
+from qiskit.quantum_info import SparsePauliOp, Statevector, Operator  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
 from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit.quantum_info import Statevector, Operator
+from qiskit.transpiler.passes import BasisTranslator  # type: ignore
+from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
+from qiskit.providers.fake_provider import FakeGuadalupe  # type: ignore
+from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 
 from pytket.circuit import (
     Circuit,
@@ -50,7 +53,14 @@ from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
-from pytket.passes import RebaseTket, DecomposeBoxes, FullPeepholeOptimise, SequencePass
+from pytket.passes import (
+    RebaseTket,
+    DecomposeBoxes,
+    FullPeepholeOptimise,
+    SequencePass,
+    CliffordSimp,
+)
+
 from pytket.utils.results import (
     compare_statevectors,
     permute_rows_cols_in_unitary,
@@ -70,6 +80,28 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     qc.save_state()
     job = back.run(qc)
     return np.array(job.result().data()["statevector"].reverse_qargs().data)
+
+
+def test_parameterised_circuit_global_phase() -> None:
+    pass_1 = BasisTranslator(
+        StandardEquivalenceLibrary,
+        target_basis=FakeGuadalupe().configuration().basis_gates,
+    )
+    pass_2 = CliffordSimp()
+
+    qc = QuantumCircuit(2)
+    qc.ryy(Parameter("MyParam"), 0, 1)
+
+    pm = PassManager(pass_1)
+    qc = pm.run(qc)
+
+    tket_qc = qiskit_to_tk(qc)
+
+    pass_2.apply(tket_qc)
+
+    qc_2 = tk_to_qiskit(tket_qc)
+
+    assert type(qc_2.global_phase) == ParameterExpression
 
 
 def test_classical_barrier_error() -> None:
@@ -400,22 +432,15 @@ def test_conditions() -> None:
 def test_condition_errors() -> None:
     with pytest.raises(Exception) as errorinfo:
         c = Circuit(2, 2)
-        c.X(0, condition_bits=[0], condition_value=1)
-        tk_to_qiskit(c)
-    assert "OpenQASM conditions must be an entire register" in str(errorinfo.value)
-    with pytest.raises(Exception) as errorinfo:
-        c = Circuit(2, 2)
         b = c.add_c_register("b", 2)
         c.X(Qubit(0), condition_bits=[b[0], Bit(0)], condition_value=1)
         tk_to_qiskit(c)
-    assert "OpenQASM conditions can only use a single register" in str(errorinfo.value)
+    assert "Conditions can only use a single register" in str(errorinfo.value)
     with pytest.raises(Exception) as errorinfo:
         c = Circuit(2, 2)
         c.X(0, condition_bits=[1, 0], condition_value=1)
         tk_to_qiskit(c)
-    assert "OpenQASM conditions must be an entire register in order" in str(
-        errorinfo.value
-    )
+    assert "Conditions must be an entire register in order" in str(errorinfo.value)
 
 
 def test_correction() -> None:
@@ -855,6 +880,26 @@ def test_ccx_conversion() -> None:
         qiskit_to_tk(c11).get_unitary(),
         Circuit(3).CCX(0, 1, 2).get_unitary(),
     )
+
+
+def test_conditional_conversion() -> None:
+    c = Circuit(1, 2, "conditional_circ")
+    c.X(0, condition_bits=[0], condition_value=1)
+
+    c_qiskit = tk_to_qiskit(c)
+    c_tket = qiskit_to_tk(c_qiskit)
+
+    assert c_tket.to_dict() == c.to_dict()
+
+
+def test_conditional_conversion_2() -> None:
+    c = Circuit(1, 2, "conditional_circ_2")
+    c.X(0, condition_bits=[1], condition_value=1)
+
+    c_qiskit = tk_to_qiskit(c)
+    c_tket = qiskit_to_tk(c_qiskit)
+
+    assert c_tket.to_dict() == c.to_dict()
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/100

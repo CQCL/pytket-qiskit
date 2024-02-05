@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.48.1rc1
+---------
+
+* Fix: use correct ``instance`` with ``IBMQEmulatorBackend``.
+
 0.48.0 (January 2024)
 ---------------------
 

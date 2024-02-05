@@ -85,7 +85,9 @@ class IBMQEmulatorBackend(Backend):
             token=token,
         )
 
-        self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
+        self._service = QiskitRuntimeService(
+            channel="ibm_quantum", instance=instance, token=token
+        )
         self._session = Session(service=self._service, backend="ibmq_qasm_simulator")
 
         # Get noise model:

@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.48.1rc1
+---------
 
 * Fix: use correct ``instance`` with ``IBMQEmulatorBackend``.
 

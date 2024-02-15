@@ -122,15 +122,15 @@ and several types of simulator.
 
    * - Backend
      - Type
-   * - `IBMQBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQBackend>`_
+   * - `IBMQBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.IBMQBackend>`_
      - Interface to an IBM quantum computer.
-   * - `IBMQEmulatorBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
+   * - `IBMQEmulatorBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
      - Emulator for a chosen ``IBMBackend`` (Device specific).
-   * - `AerBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerBackend>`_
+   * - `AerBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerBackend>`_
      - A noiseless, shots-based simulator for quantum circuits [1]
-   * - `AerStateBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerStateBackend>`_
+   * - `AerStateBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerStateBackend>`_
      - Statevector simulator.
-   * - `AerUnitaryBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
+   * - `AerUnitaryBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
      - Unitary simulator
 
 * [1] :py:class:`AerBackend` is noiseless by default and has no architecture. However it can accept a user defined :py:class:`NoiseModel` and :py:class:`Architecture`.

@@ -62,6 +62,18 @@ Converting circuits between pytket and qiskit
     qc2 = tk_to_qiskit(tkc)
     print(qc2)
 
+.. jupyter-execute::
+
+    import numpy as np
+
+    werner_state =  1 / np.sqrt(3) * np.array([0, 1, 1, 0, 1, 0, 0, 0])
+
+    qc_state_circ = QuantumCircuit(3)
+    qc_state_circ.initialize(werner_state, [0, 1, 2])
+
+    tkc_state_circ = qiskit_to_tk(qc_state_circ)
+    render_circuit_jupyter(tkc_state_circ)
+
 
 Using TKET directly on qiskit circuits
 --------------------------------------

@@ -103,8 +103,8 @@ Using TKET directly on qiskit circuits
 
     TketJob
 
-Additional methods and classes
-------------------------------
+Noise Modelling
+---------------
 
 .. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
 
@@ -115,6 +115,13 @@ Additional methods and classes
 
 .. currentmodule:: pytket.extensions.qiskit.backends.config
 
+IBM Credential Configuration
+----------------------------
+
+See also the docs on `Access and Credentials <file:///Users/callum/work_projects/pytket-qiskit/docs/build/index.html#access-and-credentials>`_.
+
+.. currentmodule:: pytket.extensions.qiskit.backends.config
+    
 .. autosummary::
     :nosignatures:
 

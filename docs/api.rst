@@ -16,7 +16,7 @@ Available IBM backends
     AerStateBackend
     AerUnitaryBackend
 
-Example usage of :py:class:`IBMQBackend`
+Example usage of :py:class:`IBMQBackend`. Note that using :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend` require IBM credentials. See the docs on `access and credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/#access-and-credentials>`_.
 
 ::
 
@@ -98,6 +98,7 @@ For usage of :py:class:`TketBackend` see the `qiskit integration notebook exampl
     :nosignatures:
 
     TketPass
+    TketAutoPass
 
 .. currentmodule:: pytket.extensions.qiskit.tket_job
 

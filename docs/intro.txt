@@ -112,7 +112,7 @@ To see which devices you can access you can use the ``available_devices`` method
 
 Backends Available Through pytket-qiskit
 ========================================
-See `this page <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#available-ibm-backends>`.
+See `this page <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#available-ibm-backends>`_ .
 
 
 Default Compilation

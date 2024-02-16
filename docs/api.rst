@@ -35,6 +35,9 @@ Example usage of :py:class:`IBMQBackend`
 Converting circuits between pytket and qiskit
 ---------------------------------------------
 
+Users may wish to port quantum circuits between pytket and qiskit. This allows the features of both libraries to be used.
+For instance those familiar with qiskit may wish to convert their circuits to pytket and use the available compilation passes to optimise circuits.
+
 .. autosummary::
     :nosignatures:
 
@@ -61,6 +64,8 @@ Converting circuits between pytket and qiskit
 
     qc2 = tk_to_qiskit(tkc)
     print(qc2)
+
+The circuit converters can also handle some higher level operations. Below we show an example of using the qiskit ``Initialize`` instruction. This is handled as a :py:class:`StatePreparationBox` with reset operations.
 
 .. jupyter-execute::
 
@@ -98,6 +103,23 @@ Using TKET directly on qiskit circuits
 
     TketJob
 
+Additional methods and classes
+------------------------------
+
+.. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
+
+.. autosummary::
+    :nosignatures:
+
+    CrosstalkParams
+
+.. currentmodule:: pytket.extensions.qiskit.backends.config
+
+.. autosummary::
+    :nosignatures:
+
+    QiskitConfig
+    set_ibmq_config
 
 
 

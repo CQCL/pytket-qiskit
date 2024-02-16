@@ -82,6 +82,9 @@ The circuit converters can also handle some higher level operations. Below we sh
 
 Using TKET directly on qiskit circuits
 --------------------------------------
+
+For usage of :py:class:`TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+
 .. currentmodule:: pytket.extensions.qiskit.tket_backend
 
 .. autosummary::
@@ -121,7 +124,7 @@ IBM Credential Configuration
 See also the docs on `Access and Credentials <file:///Users/callum/work_projects/pytket-qiskit/docs/build/index.html#access-and-credentials>`_.
 
 .. currentmodule:: pytket.extensions.qiskit.backends.config
-    
+
 .. autosummary::
     :nosignatures:
 

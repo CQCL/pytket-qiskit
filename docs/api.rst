@@ -16,22 +16,6 @@ Available IBM backends
     AerStateBackend
     AerUnitaryBackend
 
-Example usage of :py:class:`IBMQBackend`. Note that using :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend` require IBM credentials. See the docs on `access and credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/#access-and-credentials>`_.
-
-::
-
-    from pytket.extensions.qiskit import IBMQBackend
-    from pytket import Circuit
-
-    circ = Circuit(3).H(0).CCX(0, 1, 2).H(0).measure_all() # Define Circuit
-    
-    backend = IBMQBackend("ibm_hanoi") # Initalise Backend
-
-    compiled_circ = backend.get_compiled_circuit(circ) # Compile
-    handle = backend.process_circuit(compiled_circ, n_shots=500) # Execute circuit
-    result = backend.get_result(handle) # Retrieve result
-
-
 Converting circuits between pytket and qiskit
 ---------------------------------------------
 
@@ -44,40 +28,6 @@ For instance those familiar with qiskit may wish to convert their circuits to py
     qiskit_to_tk
     tk_to_qiskit
 
-.. jupyter-execute::
-
-    from qiskit import QuantumCircuit
-    from pytket.extensions.qiskit import qiskit_to_tk
-    from pytket.circuit.display import render_circuit_jupyter
-
-    qc = QuantumCircuit(2)
-    qc.h(0)
-    qc.cx(0, 1)
-
-    tkc = qiskit_to_tk(qc)
-    render_circuit_jupyter(tkc)
-
-
-.. jupyter-execute::
-
-    from pytket.extensions.qiskit import tk_to_qiskit
-
-    qc2 = tk_to_qiskit(tkc)
-    print(qc2)
-
-The circuit converters can also handle some higher level operations. Below we show an example of using the qiskit ``Initialize`` instruction. This is handled as a :py:class:`StatePreparationBox` with reset operations.
-
-.. jupyter-execute::
-
-    import numpy as np
-
-    werner_state =  1 / np.sqrt(3) * np.array([0, 1, 1, 0, 1, 0, 0, 0])
-
-    qc_state_circ = QuantumCircuit(3)
-    qc_state_circ.initialize(werner_state, [0, 1, 2])
-
-    tkc_state_circ = qiskit_to_tk(qc_state_circ)
-    render_circuit_jupyter(tkc_state_circ)
 
 
 Using TKET directly on qiskit circuits

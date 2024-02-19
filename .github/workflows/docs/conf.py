@@ -11,7 +11,6 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
-    "jupyter_sphinx",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
     "sphinx_copybutton",
@@ -20,7 +19,6 @@ extensions = [
 html_theme = "sphinx_book_theme"
 
 html_theme_options = {
-    "show_toc_level": 2,
     "repository_url": "https://github.com/CQCL/pytket-qiskit",
     "use_repository_button": True,
     "use_issues_button": True,

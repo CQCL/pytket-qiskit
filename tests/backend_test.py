@@ -63,6 +63,7 @@ from pytket.extensions.qiskit import (
     AerStateBackend,
     AerUnitaryBackend,
     IBMQEmulatorBackend,
+    IBMQLocalEmulatorBackend,
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
@@ -1433,3 +1434,18 @@ def test_barriers_in_aer_simulators() -> None:
 
     assert compare_statevectors(test_state, state_result)
     assert compare_unitaries(test_unitary, unitary_result)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ibmq_local_emulator(
+    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+) -> None:
+    b = brisbane_local_emulator_backend
+    assert not b.supports_contextual_optimisation
+    circ = Circuit(2).H(0).CX(0, 1).measure_all()
+    circ1 = b.get_compiled_circuit(circ)
+    h = b.process_circuit(circ1, n_shots=100)
+    r = b.get_result(h)
+    counts = r.get_counts()
+    # Most results should be (0,0) or (1,1):
+    assert sum(c0 != c1 for c0, c1 in counts) < 25

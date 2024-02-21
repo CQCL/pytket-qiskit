@@ -16,7 +16,11 @@ import os
 import pytest
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
-from pytket.extensions.qiskit import IBMQBackend, IBMQEmulatorBackend
+from pytket.extensions.qiskit import (
+    IBMQBackend,
+    IBMQEmulatorBackend,
+    IBMQLocalEmulatorBackend,
+)
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -76,6 +80,15 @@ def brisbane_emulator_backend() -> IBMQEmulatorBackend:
 @pytest.fixture(scope="module")
 def nairobi_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
+        "ibm_brisbane",
+        instance="ibm-q/open/main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
+def brisbane_local_emulator_backend() -> IBMQLocalEmulatorBackend:
+    return IBMQLocalEmulatorBackend(
         "ibm_brisbane",
         instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),

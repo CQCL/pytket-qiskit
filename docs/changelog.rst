@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Add ``IBMQLocalEmulatorBackend`` for running local emulation of
+  ``IBMQBackend`` using ``AerBackend`` with a noise model.
+
 0.48.1rc1
 ---------
 

@@ -6,7 +6,7 @@ Unreleased
 
 * Update pytket version requirement to 1.25.
 * Update qiskit version requirement to 0.46.
-* Update qiskit-ibm-provider version requirement to 0.9.
+* Update qiskit-ibm-provider version requirement to 0.10.
 
 0.48.1rc1
 ---------

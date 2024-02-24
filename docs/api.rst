@@ -41,6 +41,16 @@ See also the docs on `Access and Credentials <https://tket.quantinuum.com/extens
     QiskitConfig
     set_ibmq_config
 
+Noise Modelling
+---------------
+
+.. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
+
+.. autosummary::
+    :nosignatures:
+
+    CrosstalkParams
+
 Using TKET directly on qiskit circuits
 --------------------------------------
 
@@ -68,15 +78,6 @@ For usage of :py:class:`TketBackend` see the `qiskit integration notebook exampl
 
     TketJob
 
-Noise Modelling
----------------
-
-.. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
-
-.. autosummary::
-    :nosignatures:
-
-    CrosstalkParams
 
 
 .. autoclass:: pytket.extensions.qiskit.IBMQBackend

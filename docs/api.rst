@@ -78,7 +78,6 @@ Noise Modelling
 
     CrosstalkParams
 
-.. currentmodule:: pytket.extensions.qiskit.backends.config
 
 .. autoclass:: pytket.extensions.qiskit.IBMQBackend
     :special-members: __init__

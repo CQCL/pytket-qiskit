@@ -72,7 +72,7 @@ Noise Modelling
 IBM Credential Configuration
 ----------------------------
 
-See also the docs on `Access and Credentials <file:///Users/callum/work_projects/pytket-qiskit/docs/build/index.html#access-and-credentials>`_.
+See also the docs on `Access and Credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/#access-and-credentials>`_.
 
 .. currentmodule:: pytket.extensions.qiskit.backends.config
 

@@ -28,7 +28,18 @@ For instance those familiar with qiskit may wish to convert their circuits to py
     qiskit_to_tk
     tk_to_qiskit
 
+IBM Credential Configuration
+----------------------------
 
+See also the docs on `Access and Credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/#access-and-credentials>`_.
+
+.. currentmodule:: pytket.extensions.qiskit.backends.config
+
+.. autosummary::
+    :nosignatures:
+
+    QiskitConfig
+    set_ibmq_config
 
 Using TKET directly on qiskit circuits
 --------------------------------------
@@ -68,21 +79,6 @@ Noise Modelling
     CrosstalkParams
 
 .. currentmodule:: pytket.extensions.qiskit.backends.config
-
-IBM Credential Configuration
-----------------------------
-
-See also the docs on `Access and Credentials <https://tket.quantinuum.com/extensions/pytket-qiskit/#access-and-credentials>`_.
-
-.. currentmodule:: pytket.extensions.qiskit.backends.config
-
-.. autosummary::
-    :nosignatures:
-
-    QiskitConfig
-    set_ibmq_config
-
-
 
 .. autoclass:: pytket.extensions.qiskit.IBMQBackend
     :special-members: __init__

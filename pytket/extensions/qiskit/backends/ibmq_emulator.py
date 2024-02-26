@@ -73,10 +73,6 @@ class IBMQEmulatorBackend(Backend):
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
-        """Construct an IBMQEmulatorBackend. Identical to :py:class:`IBMQBackend`
-        constructor, except there is no `monitor` parameter. See :py:class:`IBMQBackend`
-        docs for more details.
-        """
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,

@@ -55,7 +55,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 class IBMQEmulatorBackend(Backend):
     """A Backend which uses the AerBackend simulator to emulate the behaviour of
-    IBMQBackend. Identical to :py:class:`IBMQBackend`  except there is no `monitor`
+    IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
     parameter. Performs the same compilation and predicate checks as IBMQBackend.
     Requires a valid IBM account.
     """

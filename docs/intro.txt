@@ -65,7 +65,7 @@ In this section we are assuming that you have set the following variables with t
     group = '<your_group_here>'
     project = '<your_project_here>'
 
-.. note:: The documentation below is correct as of pytket-qiskit version 0.40.0 and newer. In the 0.40.0 release pytket-qiskit moved to using the `qiskit-ibm-provider <https://qiskit.org/ecosystem/ibm-provider/tutorials/Migration_Guide_from_qiskit-ibmq-provider.html>`_. In pytket-qiskit versions 0.39.0 and older the parameters ``hub``, ``group`` and ``project`` were handled separately instead of a single ``instance`` string as in 0.40.0 and newer.
+.. note:: The documentation below is correct as of pytket-qiskit version 0.40.0 and newer. In the 0.40.0 release pytket-qiskit moved to using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_. In pytket-qiskit versions 0.39.0 and older the parameters ``hub``, ``group`` and ``project`` were handled separately instead of a single ``instance`` string as in 0.40.0 and newer.
 
 ::
 

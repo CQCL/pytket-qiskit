@@ -1,5 +1,5 @@
 pytket-qiskit
-==================================
+#############
 
 IBM's `Qiskit <https://qiskit.org>`_ is an open-source framework for quantum
 computation, ranging from high-level algorithms to low-level circuit
@@ -18,6 +18,21 @@ Windows. To install, run:
 
 This will install ``pytket`` if it isn't already installed, and add new classes
 and methods into the ``pytket.extensions`` namespace.
+
+Available IBM Backends
+======================
+
+.. currentmodule:: pytket.extensions.qiskit
+
+.. autosummary::
+    :nosignatures:
+
+    IBMQBackend
+    IBMQEmulatorBackend
+    AerBackend
+    AerStateBackend
+    AerUnitaryBackend
+
 
 An example using the shots-based :py:class:`AerBackend` simulator is shown below. 
 
@@ -110,9 +125,29 @@ To see which devices you can access you can use the ``available_devices`` method
     print([backend.device_name for backend in backendinfo_list])
 
 
-Backends Available Through pytket-qiskit
-========================================
-See `this page <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#available-ibm-backends>`_ .
+.. currentmodule:: pytket.extensions.qiskit.backends.config
+
+.. autosummary::
+    :nosignatures:
+
+    QiskitConfig
+    set_ibmq_config
+
+
+Converting circuits between pytket and qiskit
+=============================================
+
+Users may wish to port quantum circuits between pytket and qiskit. This allows the features of both libraries to be used.
+For instance those familiar with qiskit may wish to convert their circuits to pytket and use the available compilation passes to optimise circuits.
+
+.. currentmodule:: pytket.extensions.qiskit
+
+
+.. autosummary::
+    :nosignatures:
+
+    qiskit_to_tk
+    tk_to_qiskit
 
 
 Default Compilation
@@ -161,6 +196,45 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
 
 
 **Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above.
+
+
+Noise Modelling
+===============
+
+.. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
+
+.. autosummary::
+    :nosignatures:
+
+    CrosstalkParams
+
+
+Using TKET directly on qiskit circuits
+======================================
+
+For usage of :py:class:`TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+
+.. currentmodule:: pytket.extensions.qiskit.tket_backend
+
+.. autosummary::
+    :nosignatures:
+
+    TketBackend
+
+.. currentmodule:: pytket.extensions.qiskit.tket_pass
+
+.. autosummary::
+    :nosignatures:
+
+    TketPass
+    TketAutoPass
+
+.. currentmodule:: pytket.extensions.qiskit.tket_job
+
+.. autosummary::
+    :nosignatures:
+
+    TketJob
 
 
 .. toctree::

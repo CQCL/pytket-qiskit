@@ -339,7 +339,8 @@ class CircuitBuilder:
                 if ((c >> i) & 1) == 0:
                     self.tkc.X(self.qbmap[qargs[i]])
 
-    def add_qiskit_data(self, data: "QuantumCircuitData") -> None:
+    def add_qiskit_data(self, circuit: QuantumCircuit, data: Optional["QuantumCircuitData"] = None) -> None:
+        data = data or circuit.data
         for instr, qargs, cargs in data:
             condition_kwargs = {}
             if instr.condition is not None:
@@ -350,9 +351,13 @@ class CircuitBuilder:
                         "condition_value": instr.condition[1],
                     }
                 elif type(instr.condition[0]) == Clbit:
-                    cond_reg = self.cregmap[instr.condition[0].register]
+                    # .find_bit() returns tuple[index, list[tuple[ ClassicalRegister, index]]]
+                    # We assume each bit belongs to exactly one register.
+                    index = circuit.find_bit(instr.condition[0])[0]
+                    register = circuit.find_bit(instr.condition[0])[1][0][0]
+                    cond_reg = self.cregmap[register]
                     condition_kwargs = {
-                        "condition_bits": [cond_reg[instr.condition[0].index]],
+                        "condition_bits": [cond_reg[index]],
                         "condition_value": instr.condition[1],
                     }
                 else:
@@ -501,7 +506,7 @@ class CircuitBuilder:
                     else []
                 )
                 builder = CircuitBuilder(qregs, cregs)
-                builder.add_qiskit_data(instr.definition)
+                builder.add_qiskit_data(circuit, instr.definition)
                 subc = builder.circuit()
                 subc.name = instr.name
                 self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
@@ -551,7 +556,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
         name=circ_name,
         phase=param_to_tk(qcirc.global_phase),
     )
-    builder.add_qiskit_data(qcirc.data)
+    builder.add_qiskit_data(qcirc)
     return builder.circuit()
 
 

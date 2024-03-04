@@ -81,6 +81,9 @@ In this section we are assuming that you have set the following variables with t
     group = '<your_group_here>'
     project = '<your_project_here>'
 
+Method 1:
+---------
+
 ::
 
     from pytket.extensions.qiskit import set_ibmq_config
@@ -104,6 +107,9 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 
     QiskitConfig
     set_ibmq_config
+
+Method 2:
+---------
 
 Alternatively you can use the following qiskit commands to save your credentials
 locally without saving the token in pytket config:

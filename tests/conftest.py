@@ -74,6 +74,15 @@ def brisbane_emulator_backend() -> IBMQEmulatorBackend:
 
 
 @pytest.fixture(scope="module")
+def ibmq_qasm_emulator_backend() -> IBMQEmulatorBackend:
+    return IBMQEmulatorBackend(
+        "ibmq_qasm_simulator",
+        instance="ibm-q/open/main",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
 def nairobi_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibm_brisbane",

@@ -23,7 +23,6 @@ from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit import QuantumCircuit  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 

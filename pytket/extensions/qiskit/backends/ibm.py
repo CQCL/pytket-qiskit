@@ -194,7 +194,9 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(self._backend)
         self._backend_info = self._get_backend_info(self._backend)
 
-        self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
+        self._service = QiskitRuntimeService(
+            channel="ibm_quantum", token=token, instance=instance
+        )
         self._session = Session(service=self._service, backend=backend_name)
 
         self._primitive_gates = _get_primitive_gates(gate_set)

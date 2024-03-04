@@ -1,9 +1,10 @@
 Changelog
 ~~~~~~~~~
 
-0.49.0
-------
+Unreleased
+----------
 
+* Update pytket version requirement to 1.25.
 * Update qiskit version to 1.0
 * Update qiskit-ibm-runtime to 0.20.0
 * Update qiskit-ibm-provider to 0.10.0

@@ -13,19 +13,16 @@ API documentation
 
 .. autoclass:: pytket.extensions.qiskit.AerBackend
     :special-members: __init__
-    :show-inheritance:
     :inherited-members:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.AerStateBackend
     :special-members: __init__
     :inherited-members:
-    :show-inheritance:
     :members:
 
 .. autoclass:: pytket.extensions.qiskit.AerUnitaryBackend
     :special-members: __init__
-    :show-inheritance:
     :inherited-members:
     :members:
 

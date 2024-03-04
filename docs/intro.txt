@@ -1,5 +1,5 @@
 pytket-qiskit
-==================================
+#############
 
 IBM's `Qiskit <https://qiskit.org>`_ is an open-source framework for quantum
 computation, ranging from high-level algorithms to low-level circuit
@@ -18,6 +18,21 @@ Windows. To install, run:
 
 This will install ``pytket`` if it isn't already installed, and add new classes
 and methods into the ``pytket.extensions`` namespace.
+
+Available IBM Backends
+======================
+
+.. currentmodule:: pytket.extensions.qiskit
+
+.. autosummary::
+    :nosignatures:
+
+    IBMQBackend
+    IBMQEmulatorBackend
+    AerBackend
+    AerStateBackend
+    AerUnitaryBackend
+
 
 An example using the shots-based :py:class:`AerBackend` simulator is shown below. 
 
@@ -110,31 +125,30 @@ To see which devices you can access you can use the ``available_devices`` method
     print([backend.device_name for backend in backendinfo_list])
 
 
-Backends Available Through pytket-qiskit
-========================================
+.. currentmodule:: pytket.extensions.qiskit.backends.config
 
-The ``pytket-qiskit`` extension has several types of available :py:class:`Backend`. These are the :py:class:`IBMQBackend`
-and several types of simulator.
+.. autosummary::
+    :nosignatures:
 
-.. list-table:: 
-   :widths: 25 25
-   :header-rows: 1
+    QiskitConfig
+    set_ibmq_config
 
-   * - Backend
-     - Type
-   * - `IBMQBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.IBMQBackend>`_
-     - Interface to an IBM quantum computer.
-   * - `IBMQEmulatorBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.IBMQEmulatorBackend>`_
-     - Emulator for a chosen ``IBMBackend`` (Device specific).
-   * - `AerBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerBackend>`_
-     - A noiseless, shots-based simulator for quantum circuits [1]
-   * - `AerStateBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerStateBackend>`_
-     - Statevector simulator.
-   * - `AerUnitaryBackend <https://tket.quantinuum.com/extensions/pytket-qiskit/api.html#pytket.extensions.qiskit.AerUnitaryBackend>`_ 
-     - Unitary simulator
 
-* [1] :py:class:`AerBackend` is noiseless by default and has no architecture. However it can accept a user defined :py:class:`NoiseModel` and :py:class:`Architecture`.
-* In addition to the backends above the ``pytket-qiskit`` extension also has the :py:class:`TketBackend`. This allows a tket :py:class:`Backend` to be used directly through qiskit. see the `notebook example <https://github.com/CQCL/pytket/blob/main/examples/qiskit_integration.ipynb>`_ on qiskit integration.
+Converting circuits between pytket and qiskit
+=============================================
+
+Users may wish to port quantum circuits between pytket and qiskit. This allows the features of both libraries to be used.
+For instance those familiar with qiskit may wish to convert their circuits to pytket and use the available compilation passes to optimise circuits.
+
+.. currentmodule:: pytket.extensions.qiskit
+
+
+.. autosummary::
+    :nosignatures:
+
+    qiskit_to_tk
+    tk_to_qiskit
+
 
 Default Compilation
 ===================
@@ -184,21 +198,44 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
 **Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above.
 
 
-Backend Predicates
-==================
+Noise Modelling
+===============
 
-Circuits must satisfy certain conditions before they can be processed on a device or simulator. In pytket these conditions are called predicates.
+.. currentmodule:: pytket.extensions.qiskit.backends.crosstalk_model
 
-All ``pytket-qiskit`` backends have the following two predicates.
+.. autosummary::
+    :nosignatures:
 
-* `GateSetPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.GateSetPredicate>`_ - The circuit must contain only operations supported by the :py:class`Backend`. To view supported Ops run ``BACKENDNAME.backend_info.gate_set``.
-* `NoSymbolsPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.NoSymbolsPredicate>`_ - Parameterised gates must have numerical values when the circuit is executed.
+    CrosstalkParams
 
-The :py:class:`IBMQBackend` and :py:class:`IBMQEmulatorBackend` may also have the following predicates depending on the capabilities of the specified device.
 
-* `NoClassicalControlPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.NoClassicalControlPredicate>`_
-* `NoMidMeasurePredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.NoMidMeasurePredicatePredicate>`_
-* `NoFastFeedforwardPredicate <https://tket.quantinuum.com/api-docs/predicates.html#pytket.predicates.NoFastFeedforwardPredicate>`_
+Using TKET directly on qiskit circuits
+======================================
+
+For usage of :py:class:`TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+
+.. currentmodule:: pytket.extensions.qiskit.tket_backend
+
+.. autosummary::
+    :nosignatures:
+
+    TketBackend
+
+.. currentmodule:: pytket.extensions.qiskit.tket_pass
+
+.. autosummary::
+    :nosignatures:
+
+    TketPass
+    TketAutoPass
+
+.. currentmodule:: pytket.extensions.qiskit.tket_job
+
+.. autosummary::
+    :nosignatures:
+
+    TketJob
+
 
 .. toctree::
     api.rst

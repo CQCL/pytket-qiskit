@@ -100,8 +100,6 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 Alternatively you can use the following qiskit commands to save your credentials
 locally without saving the token in pytket config:
 
-.. note:: If using pytket-qiskit 0.39.0 or older you will have to use the deprecated :py:meth:`IBMQ.save_account` instead of :py:meth:`IBMProvider.save_account` in the code below.
-
 ::
 
     from qiskit_ibm_provider import IBMProvider

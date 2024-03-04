@@ -1,6 +1,14 @@
 Changelog
 ~~~~~~~~~
 
+0.49.0
+------
+
+* Update qiskit version to 1.0
+* Update qiskit-ibm-runtime to 0.20.0
+* Update qiskit-ibm-provider to 0.10.0
+* Update qiskit-aer to 0.13.3
+
 0.48.1rc1
 ---------
 

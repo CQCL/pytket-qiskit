@@ -8,6 +8,8 @@ Unreleased
 * Update qiskit version requirement to 0.46.
 * Update qiskit-ibm-provider version requirement to 0.10.
 * Update qiskit-ibm-runtime version requirement to 0.19.
+* Add ``IBMQLocalEmulatorBackend`` for running local emulation of
+  ``IBMQBackend`` using ``AerBackend`` with a noise model.
 
 0.48.1rc1
 ---------

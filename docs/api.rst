@@ -11,6 +11,11 @@ API documentation
     :show-inheritance:
     :members:
 
+.. autoclass:: pytket.extensions.qiskit.IBMQLocalEmulatorBackend
+    :special-members: __init__
+    :show-inheritance:
+    :members:
+
 .. autoclass:: pytket.extensions.qiskit.AerBackend
     :special-members: __init__
     :inherited-members:

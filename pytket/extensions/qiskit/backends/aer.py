@@ -80,7 +80,7 @@ from .crosstalk_model import (
 )
 
 if TYPE_CHECKING:
-    from qiskit_aer import AerJob  # type: ignore
+    from qiskit_aer import AerJob
     from qiskit_aer.backends.aerbackend import AerBackend as QiskitAerBackend  # type: ignore
 
 

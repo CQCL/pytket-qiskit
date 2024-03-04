@@ -57,7 +57,7 @@ class IBMQEmulatorBackend(Backend):
     """A Backend which uses the ibmq_qasm_simulator to emulate the behaviour of
     IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
     parameter. Performs the same compilation and predicate checks as IBMQBackend.
-    Requires a valid IBM account.
+    Requires a valid IBMQ account.
     """
 
     _supports_shots = False

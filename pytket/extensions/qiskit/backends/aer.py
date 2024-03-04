@@ -449,6 +449,21 @@ def _get_characterisation_of_noise_model(
 
 
 class AerBackend(_AerBaseBackend):
+    """
+    Backend for running simulations on the Qiskit Aer QASM simulator.
+
+    :param noise_model: Noise model to apply during simulation. Defaults to None.
+    :type noise_model: Optional[NoiseModel], optional
+    :param simulation_method: Simulation method, see
+        https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
+        for available values. Defaults to "automatic".
+    :type simulation_method: str
+    :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
+        execution. `noise_model` will be overwritten if this is given. Default to None.
+    :type: Optional[`CrosstalkParams`]
+    :param n_qubits: The maximum number of qubits supported by the backend.
+    """
+
     _persistent_handles = False
     _supports_shots = True
     _supports_counts = True
@@ -472,19 +487,6 @@ class AerBackend(_AerBaseBackend):
         crosstalk_params: Optional[CrosstalkParams] = None,
         n_qubits: int = 40,
     ):
-        """Backend for running simulations on the Qiskit Aer QASM simulator.
-
-        :param noise_model: Noise model to apply during simulation. Defaults to None.
-        :type noise_model: Optional[NoiseModel], optional
-        :param simulation_method: Simulation method, see
-            https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
-            for available values. Defaults to "automatic".
-        :type simulation_method: str
-        :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
-         execution. `noise_model` will be overwritten if this is given. Default to None.
-        :type: Optional[`CrosstalkParams`]
-        :param n_qubits: The maximum number of qubits supported by the backend.
-        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -517,9 +519,11 @@ class AerBackend(_AerBaseBackend):
                 name=type(self).__name__,
                 device_name=self._qiskit_backend_name,
                 version=__extension_version__,
-                architecture=characterisation.architecture
-                if self._has_arch
-                else FullyConnected(n_qubits),
+                architecture=(
+                    characterisation.architecture
+                    if self._has_arch
+                    else FullyConnected(n_qubits)
+                ),
                 gate_set=gate_set,
                 supports_midcircuit_measurement=True,  # is this correct?
                 supports_fast_feedforward=True,
@@ -553,6 +557,12 @@ class AerBackend(_AerBaseBackend):
 
 
 class AerStateBackend(_AerBaseBackend):
+    """
+    Backend for running simulations on the Qiskit Aer Statevector simulator.
+
+    :param n_qubits: The maximum number of qubits supported by the backend.
+    """
+
     _persistent_handles = False
     _supports_state = True
     _supports_expectation = True
@@ -567,10 +577,6 @@ class AerStateBackend(_AerBaseBackend):
         self,
         n_qubits: int = 40,
     ) -> None:
-        """Backend for running simulations on the Qiskit Aer Statevector simulator.
-
-        :param n_qubits: The maximum number of qubits supported by the backend.
-        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name
@@ -592,6 +598,11 @@ class AerStateBackend(_AerBaseBackend):
 
 
 class AerUnitaryBackend(_AerBaseBackend):
+    """Backend for running simulations on the Qiskit Aer Unitary simulator.
+
+    :param n_qubits: The maximum number of qubits supported by the backend.
+    """
+
     _persistent_handles = False
     _supports_unitary = True
 
@@ -602,10 +613,6 @@ class AerUnitaryBackend(_AerBaseBackend):
     _qiskit_backend_name = "aer_simulator_unitary"
 
     def __init__(self, n_qubits: int = 40) -> None:
-        """Backend for running simulations on the Qiskit Aer Unitary simulator.
-
-        :param n_qubits: The maximum number of qubits supported by the backend.
-        """
         super().__init__()
         self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
             self._qiskit_backend_name

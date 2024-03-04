@@ -97,6 +97,14 @@ If you are a member of an IBM hub then you can add this information to ``set_ibm
 
     set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
 
+.. currentmodule:: pytket.extensions.qiskit.backends.config
+
+.. autosummary::
+    :nosignatures:
+
+    QiskitConfig
+    set_ibmq_config
+
 Alternatively you can use the following qiskit commands to save your credentials
 locally without saving the token in pytket config:
 
@@ -121,15 +129,6 @@ To see which devices you can access you can use the ``available_devices`` method
 
     backendinfo_list = backend.available_devices(instance=my_instance, provider=ibm_provider) 
     print([backend.device_name for backend in backendinfo_list])
-
-
-.. currentmodule:: pytket.extensions.qiskit.backends.config
-
-.. autosummary::
-    :nosignatures:
-
-    QiskitConfig
-    set_ibmq_config
 
 
 Converting circuits between pytket and qiskit

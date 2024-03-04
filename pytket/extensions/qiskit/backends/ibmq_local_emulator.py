@@ -44,10 +44,10 @@ from .ibm import IBMQBackend
 
 
 class IBMQLocalEmulatorBackend(Backend):
-    """A backend which uses the AerBackend to locally emulate the behaviour of
-    IBMQBackend. Performs the same compilation and predicate checks as IBMQBackend.
-    Requires a valid IBMQ account.
-
+    """A backend which uses the AerBackend to loaclly emulate the behaviour of
+    IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
+    parameter. Performs the same compilation and predicate checks as IBMQBackend.
+    Requires a valid IBM account.
     """
 
     _supports_shots = False
@@ -63,10 +63,6 @@ class IBMQLocalEmulatorBackend(Backend):
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
-        """Construct an IBMQLocalEmulatorBackend. Identical to :py:class:`IBMQBackend`
-        constructor, except there is no `monitor` parameter. See :py:class:`IBMQBackend`
-        docs for more details.
-        """
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,

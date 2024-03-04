@@ -118,6 +118,7 @@ To see which devices you can access you can use the ``available_devices`` method
     my_instance=f"{hub}/{group}/{project}"
     ibm_provider = IBMProvider(instance=my_instance)
     backend = IBMQBackend("ibmq_nairobi") # Initialise backend for an IBM device
+    
     backendinfo_list = backend.available_devices(instance=my_instance, provider=ibm_provider) 
     print([backend.device_name for backend in backendinfo_list])
 

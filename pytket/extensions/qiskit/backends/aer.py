@@ -30,7 +30,7 @@ from typing import (
 
 import numpy as np
 from qiskit import transpile  # type: ignore
-from qiskit.providers.aer.noise import NoiseModel  # type: ignore
+from qiskit_aer.noise import NoiseModel  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
 from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
@@ -80,8 +80,8 @@ from .crosstalk_model import (
 )
 
 if TYPE_CHECKING:
-    from qiskit.providers.aer import AerJob  # type: ignore
-    from qiskit.providers.aer.backends.aerbackend import AerBackend as QiskitAerBackend  # type: ignore
+    from qiskit_aer import AerJob  # type: ignore
+    from qiskit_aer.backends.aerbackend import AerBackend as QiskitAerBackend  # type: ignore
 
 
 def _default_q_index(q: Qubit) -> int:
@@ -477,7 +477,7 @@ class AerBackend(_AerBaseBackend):
         :param noise_model: Noise model to apply during simulation. Defaults to None.
         :type noise_model: Optional[NoiseModel], optional
         :param simulation_method: Simulation method, see
-            https://qiskit.org/documentation/stubs/qiskit.providers.aer.AerSimulator.html
+            https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
             for available values. Defaults to "automatic".
         :type simulation_method: str
         :param crosstalk_params: Apply crosstalk noise simulation to the circuits before

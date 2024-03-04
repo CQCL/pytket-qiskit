@@ -18,7 +18,7 @@ from typing import Optional, Any
 import numpy as np
 import pytest
 
-from qiskit import QuantumCircuit, execute  # type: ignore
+from qiskit import QuantumCircuit  # type: ignore
 from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
@@ -66,7 +66,7 @@ def test_samples() -> None:
     b = AerBackend()
     for comp in (None, b.default_compilation_pass()):
         tb = TketBackend(b, comp)
-        job = execute(qc, tb, shots=100, memory=True)
+        job = tb.run(qc, shots=100, memory=True)
         shots = job.result().get_memory()
         assert all(((r[0] == "1" and r[1] == r[2]) for r in shots))
         counts = job.result().get_counts()
@@ -78,12 +78,12 @@ def test_state() -> None:
     b = AerStateBackend()
     for comp in (None, b.default_compilation_pass()):
         tb = TketBackend(b, comp)
-        job = execute(qc, tb)
+        job = tb.run(qc)
         state = job.result().get_statevector()
         qb = Aer.get_backend("aer_simulator_statevector")
         qc1 = qc.copy()
         qc1.save_state()
-        job2 = execute(qc1, qb)
+        job2 = qb.run(qc1)
         state2 = job2.result().get_statevector()
         assert np.allclose(state, state2)
 
@@ -93,12 +93,12 @@ def test_unitary() -> None:
     b = AerUnitaryBackend()
     for comp in (None, b.default_compilation_pass()):
         tb = TketBackend(b, comp)
-        job = execute(qc, tb)
+        job = tb.run(qc)
         u = job.result().get_unitary()
         qb = Aer.get_backend("aer_simulator_unitary")
         qc1 = qc.copy()
         qc1.save_unitary()
-        job2 = execute(qc1, qb)
+        job2 = qb.run(qc1)
         u2 = job2.result().get_unitary()
         assert np.allclose(u, u2)
 
@@ -107,7 +107,7 @@ def test_cancel() -> None:
     b = AerBackend()
     tb = TketBackend(b)
     qc = circuit_gen()
-    job = execute(qc, tb, shots=1024)
+    job = tb.run(qc, shots=1024)
     job.cancel()
     assert job.status() in [JobStatus.CANCELLED, JobStatus.DONE]
 
@@ -137,7 +137,7 @@ def test_architectures() -> None:
         # without architecture
         b = MockShotBackend(arch=arch)
         tb = TketBackend(b, b.default_compilation_pass())
-        job = execute(qc, tb, shots=100, memory=True)
+        job = tb.run(qc, shots=100, memory=True)
         shots = job.result().get_memory()
         assert all(((r[0] == "1" and r[1] == r[2]) for r in shots))
         counts = job.result().get_counts()

@@ -25,9 +25,9 @@ import pytest
 
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
-from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
-from qiskit.providers.aer.noise import ReadoutError  # type: ignore
-from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer.noise import ReadoutError  # type: ignore
+from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore

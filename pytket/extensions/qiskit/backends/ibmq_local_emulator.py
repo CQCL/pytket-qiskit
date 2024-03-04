@@ -22,7 +22,7 @@ from typing import (
     Union,
 )
 
-from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 

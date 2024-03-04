@@ -22,7 +22,7 @@ from qiskit import (  # type: ignore
     QuantumCircuit,
     QuantumRegister,
     ClassicalRegister,
-    execute,
+    transpile,
 )
 from qiskit.quantum_info import SparsePauliOp, Statevector, Operator  # type: ignore
 from qiskit.transpiler import PassManager  # type: ignore
@@ -33,7 +33,7 @@ from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
 from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
-from qiskit.providers.fake_provider import FakeGuadalupe  # type: ignore
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupe  # type: ignore
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 
 from pytket.circuit import (
@@ -188,10 +188,12 @@ def test_convert() -> None:
     backend = Aer.get_backend("aer_simulator_statevector")
 
     qc.save_state()
-    job = execute([qc], backend)
+    qc = transpile(qc, backend)
+    job = backend.run([qc])
     state0 = job.result().get_statevector(qc)
     qc1.save_state()
-    job1 = execute([qc1], backend)
+    qc1 = transpile(qc1, backend)
+    job1 = backend.run([qc1])
     state1 = job1.result().get_statevector(qc1)
     assert np.allclose(state0, state1, atol=1e-10)
 
@@ -214,7 +216,7 @@ def test_symbolic() -> None:
     qc = tk_to_qiskit(tkc2)
     assert qc.name == tkc.name
     qc.save_state()
-    job = execute([qc], backend)
+    job = backend.run([qc])
     state1 = job.result().get_statevector(qc)
     state0 = np.array(
         [
@@ -234,11 +236,13 @@ def test_symbolic() -> None:
 def test_measures() -> None:
     qc = get_test_circuit(True)
     backend = Aer.get_backend("aer_simulator")
-    job = execute([qc], backend, seed_simulator=7)
+    qc = transpile(qc, backend)
+    job = backend.run([qc], seed_simulator=7)
     counts0 = job.result().get_counts(qc)
     tkc = qiskit_to_tk(qc)
     qc = tk_to_qiskit(tkc)
-    job = execute([qc], backend, seed_simulator=7)
+    qc = transpile(qc, backend)
+    job = backend.run([qc], seed_simulator=7)
     counts1 = job.result().get_counts(qc)
     for result, count in counts1.items():
         result_str = result.replace(" ", "")
@@ -276,7 +280,7 @@ def test_Unitary1qBox() -> None:
     # Verify that unitary from simulator is correct
     back = Aer.get_backend("aer_simulator_unitary")
     qc.save_unitary()
-    job = execute(qc, back).result()
+    job = back.run(qc).result()
     a = job.get_unitary(qc)
     u1 = np.asarray(a)
     assert np.allclose(u1, u)
@@ -292,7 +296,7 @@ def test_Unitary2qBox() -> None:
     # Verify that unitary from simulator is correct
     back = Aer.get_backend("aer_simulator_unitary")
     qc.save_unitary()
-    job = execute(qc, back).result()
+    job = back.run(qc).result()
     a = job.get_unitary(qc)
     u1 = permute_rows_cols_in_unitary(np.asarray(a), (1, 0))  # correct for endianness
     assert np.allclose(u1, u)
@@ -319,7 +323,7 @@ def test_Unitary3qBox() -> None:
     # Verify that unitary from simulator is correct
     back = Aer.get_backend("aer_simulator_unitary")
     qc.save_unitary()
-    job = execute(qc, back).result()
+    job = back.run(qc).result()
     a = job.get_unitary(qc)
     u1 = permute_rows_cols_in_unitary(
         np.asarray(a), (2, 1, 0)
@@ -351,13 +355,13 @@ def test_tketpass() -> None:
         tkpass.apply(tkc)
     qc1 = tk_to_qiskit(tkc)
     qc1.save_unitary()
-    res = execute(qc1, back).result()
+    res = back.run(qc1).result()
     u1 = res.get_unitary(qc1)
     qispass = TketPass(tkpass)
     pm = PassManager(qispass)
     qc2 = pm.run(qc)
     qc2.save_unitary()
-    res = execute(qc2, back).result()
+    res = back.run(qc2).result()
     u2 = res.get_unitary(qc2)
     assert np.allclose(u1, u2)
 
@@ -517,7 +521,8 @@ def test_customgate() -> None:
     states = []
     for qc in (qc1, qc2, correct_qc):
         qc.save_state()
-        job = execute([qc], backend)
+        qc = transpile(qc, backend)
+        job = backend.run([qc])
         states.append(job.result().get_statevector(qc))
 
     assert compare_statevectors(states[0], states[1])
@@ -538,7 +543,7 @@ def test_convert_result() -> None:
     simulator = Aer.get_backend("aer_simulator_statevector")
     qc1 = qc.copy()
     qc1.save_state()
-    qisk_result = execute(qc1, simulator, shots=10).result()
+    qisk_result = simulator.run(qc1, shots=10).result()
 
     tk_res = next(qiskit_result_to_backendresult(qisk_result))
 
@@ -552,7 +557,7 @@ def test_convert_result() -> None:
     qc.measure(qr2[1], cr2[0])
 
     simulator = Aer.get_backend("aer_simulator")
-    qisk_result = execute(qc, simulator, shots=10).result()
+    qisk_result = simulator.run(qc, shots=10).result()
 
     tk_res = next(qiskit_result_to_backendresult(qisk_result))
     one_bits = [Bit("z", 0), Bit("b", 0)]
@@ -652,7 +657,8 @@ def assert_equivalence(
         assert isinstance(circ, QuantumCircuit)
         circ1 = circ.copy()
         circ1.save_unitary()
-        job = execute(circ1, backend)
+        circ1 = transpile(circ1, backend)
+        job = backend.run(circ1)
         unitaries.append(job.result().get_unitary(circ1))
     for nn in range(1, len(circuits)):
         # Default np.allclose is very lax here, so use strict tolerances

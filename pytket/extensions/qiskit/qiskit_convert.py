@@ -72,7 +72,6 @@ from pytket.circuit import (
     Unitary2qBox,
     Unitary3qBox,
     UnitType,
-    CustomGateDef,
     Bit,
     Qubit,
     QControlBox,
@@ -339,7 +338,9 @@ class CircuitBuilder:
                 if ((c >> i) & 1) == 0:
                     self.tkc.X(self.qbmap[qargs[i]])
 
-    def add_qiskit_data(self, circuit: QuantumCircuit, data: Optional["QuantumCircuitData"] = None) -> None:
+    def add_qiskit_data(
+        self, circuit: QuantumCircuit, data: Optional["QuantumCircuitData"] = None
+    ) -> None:
         data = data or circuit.data
         for instr, qargs, cargs in data:
             condition_kwargs = {}
@@ -351,7 +352,8 @@ class CircuitBuilder:
                         "condition_value": instr.condition[1],
                     }
                 elif type(instr.condition[0]) == Clbit:
-                    # .find_bit() returns tuple[index, list[tuple[ ClassicalRegister, index]]]
+                    # .find_bit() returns type:
+                    #    tuple[index, list[tuple[ClassicalRegister, index]]]
                     # We assume each bit belongs to exactly one register.
                     index = circuit.find_bit(instr.condition[0])[0]
                     register = circuit.find_bit(instr.condition[0])[1][0][0]

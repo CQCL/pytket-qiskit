@@ -111,7 +111,7 @@ To see which devices you can access you can use the ``available_devices`` method
 
 
 
-Method 2: Saving Credentials in a local pytket config file
+Method 2: Saving credentials in a local pytket config file
 ----------------------------------------------------------
 Alternatively, you can store your credentials in local pytket config using the :py:meth:`set_ibmq_config` method.
 

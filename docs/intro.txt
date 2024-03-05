@@ -81,28 +81,11 @@ In this section we are assuming that you have set the following variables with t
     group = '<your_group_here>'
     project = '<your_project_here>'
 
-.. note:: The documentation below is correct as of pytket-qiskit version 0.40.0 and newer. In the 0.40.0 release pytket-qiskit moved to using the `qiskit-ibm-provider <https://github.com/Qiskit/qiskit-ibm-provider>`_. In pytket-qiskit versions 0.39.0 and older the parameters ``hub``, ``group`` and ``project`` were handled separately instead of a single ``instance`` string as in 0.40.0 and newer.
+Method 1: Using :py:class:`IBMProvider`
+---------------------------------------
 
-::
-
-    from pytket.extensions.qiskit import set_ibmq_config
-    
-    set_ibmq_config(ibmq_api_token=ibm_token)
-
-After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
-
-If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
-
-::
-
-    from pytket.extensions.qiskit import set_ibmq_config
-
-    set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
-
-Alternatively you can use the following qiskit commands to save your credentials
-locally without saving the token in pytket config:
-
-.. note:: If using pytket-qiskit 0.39.0 or older you will have to use the deprecated :py:meth:`IBMQ.save_account` instead of :py:meth:`IBMProvider.save_account` in the code below.
+You can use the following qiskit commands to save your IBM credentials
+to disk:
 
 ::
 
@@ -122,9 +105,31 @@ To see which devices you can access you can use the ``available_devices`` method
     my_instance=f"{hub}/{group}/{project}"
     ibm_provider = IBMProvider(instance=my_instance)
     backend = IBMQBackend("ibmq_nairobi") # Initialise backend for an IBM device
+
     backendinfo_list = backend.available_devices(instance=my_instance, provider=ibm_provider) 
     print([backend.device_name for backend in backendinfo_list])
 
+
+
+Method 2: Saving credentials in a local pytket config file
+----------------------------------------------------------
+Alternatively, you can store your credentials in local pytket config using the :py:meth:`set_ibmq_config` method.
+
+::
+
+    from pytket.extensions.qiskit import set_ibmq_config
+    
+    set_ibmq_config(ibmq_api_token=ibm_token)
+
+After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
+
+If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
+
+::
+
+    from pytket.extensions.qiskit import set_ibmq_config
+
+    set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
 
 .. currentmodule:: pytket.extensions.qiskit.backends.config
 
@@ -133,7 +138,6 @@ To see which devices you can access you can use the ``available_devices`` method
 
     QiskitConfig
     set_ibmq_config
-
 
 Converting circuits between pytket and qiskit
 =============================================
@@ -192,7 +196,7 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
      - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
-* [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices that is {X, SX, Rz, CX}.
+* [2] self.rebase_pass is a rebase to the gateset supported by the backend. For IBM quantum devices and emulators that is either {X, SX, Rz, CX} or {X, SX, Rz, ECR}. The more idealised Aer simulators have a much broader range of supported gates.
 * [3] Here :py:class:`CXMappingPass` maps program qubits to the architecture using a `NoiseAwarePlacement <https://tket.quantinuum.com/api-docs/placement.html#pytket.placement.NoiseAwarePlacement>`_
 
 

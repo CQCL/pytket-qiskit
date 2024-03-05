@@ -196,7 +196,7 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
      - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
-* [2] self.rebase_pass is a rebase to the gateset supported by the backend, For IBM quantum devices and emulators that is either {X, SX, Rz, CX} or {X, SX, Rz, ECR}. The more idealised Aer simulators have a much broader range of supported gates.
+* [2] self.rebase_pass is a rebase to the gateset supported by the backend. For IBM quantum devices and emulators that is either {X, SX, Rz, CX} or {X, SX, Rz, ECR}. The more idealised Aer simulators have a much broader range of supported gates.
 * [3] Here :py:class:`CXMappingPass` maps program qubits to the architecture using a `NoiseAwarePlacement <https://tket.quantinuum.com/api-docs/placement.html#pytket.placement.NoiseAwarePlacement>`_
 
 

@@ -81,10 +81,10 @@ In this section we are assuming that you have set the following variables with t
     group = '<your_group_here>'
     project = '<your_project_here>'
 
-Method 1: Using :py:meth:`IBMProvider.save_account`
----------------------------------------------------
+Method 1: Using :py:class:`IBMProvider`
+---------------------------------------
 
-You can use the following qiskit commands to save your credentials
+You can use the following qiskit commands to save your IBM credentials
 to disk:
 
 ::

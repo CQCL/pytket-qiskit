@@ -27,7 +27,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,

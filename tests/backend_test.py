@@ -25,9 +25,9 @@ import pytest
 
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
-from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
-from qiskit.providers.aer.noise import ReadoutError  # type: ignore
-from qiskit.providers.aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer.noise import ReadoutError  # type: ignore
+from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
@@ -1114,17 +1114,17 @@ def test_postprocess() -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
-    assert brisbane_emulator_backend.supports_contextual_optimisation
+def test_postprocess_emu(ibmq_qasm_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert ibmq_qasm_emulator_backend.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.X(0).X(1).measure_all()
-    c = brisbane_emulator_backend.get_compiled_circuit(c)
-    h = brisbane_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
+    c = ibmq_qasm_emulator_backend.get_compiled_circuit(c)
+    h = ibmq_qasm_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
     ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
-    r = brisbane_emulator_backend.get_result(h)
+    r = ibmq_qasm_emulator_backend.get_result(h)
     counts = r.get_counts()
     assert sum(counts.values()) == 10
 

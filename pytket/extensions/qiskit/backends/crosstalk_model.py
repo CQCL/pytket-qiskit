@@ -16,7 +16,7 @@
 from typing import List, Tuple, Union, Dict, Optional
 from dataclasses import dataclass
 
-from qiskit.providers.aer.noise import NoiseModel  # type: ignore
+from qiskit_aer.noise import NoiseModel  # type: ignore
 from qiskit_aer.noise.errors.standard_errors import amplitude_damping_error, phase_damping_error  # type: ignore
 
 import numpy as np

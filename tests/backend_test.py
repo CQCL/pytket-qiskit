@@ -857,8 +857,6 @@ def test_ibmq_emulator(
 
             c_cop_2 = c.copy()
             c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
-            # if ol == 0:
-            #    assert not all(pred.verify(c_cop_2) for pred in b.required_predicates)
 
         circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         copy_circ = circ.copy()

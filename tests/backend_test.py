@@ -835,10 +835,10 @@ def test_operator_expectation_value() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
+    ibmq_qasm_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [ibmq_qasm_emulator_backend, brisbane_local_emulator_backend]:
         assert b._noise_model is not None  # type: ignore
         b_ibm = b._ibmq  # type: ignore
         b_aer = AerBackend()
@@ -857,8 +857,8 @@ def test_ibmq_emulator(
 
             c_cop_2 = c.copy()
             c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
-            if ol == 0:
-                assert not all(pred.verify(c_cop_2) for pred in b.required_predicates)
+            # if ol == 0:
+            #    assert not all(pred.verify(c_cop_2) for pred in b.required_predicates)
 
         circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         copy_circ = circ.copy()

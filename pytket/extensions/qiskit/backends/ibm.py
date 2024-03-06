@@ -518,6 +518,13 @@ class IBMQBackend(Backend):
                     options.transpilation.skip_transpilation = True
                     options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
+                    print(qcs)
+                    for g in qcs:
+                        print(g)
+                    for g in qcs[0]:
+                        print(g)
+                    # assert 1 == 2
+                    # print(qcs[0].qasm())
                     job = sampler.run(
                         circuits=qcs,
                     )

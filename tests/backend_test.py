@@ -470,10 +470,9 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
-    for b in [AerBackend(), brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [AerBackend(), brisbane_local_emulator_backend]:
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
@@ -835,10 +834,9 @@ def test_operator_expectation_value() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(
-    ibmq_qasm_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
-    for b in [ibmq_qasm_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         assert b._noise_model is not None  # type: ignore
         b_ibm = b._ibmq  # type: ignore
         b_aer = AerBackend()

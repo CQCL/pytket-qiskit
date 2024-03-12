@@ -1130,7 +1130,7 @@ def test_postprocess_emu(ibmq_qasm_emulator_backend: IBMQEmulatorBackend) -> Non
 
 # https://github.com/CQCL/pytket-qiskit/issues/278
 # @pytest.mark.flaky(reruns=3, reruns_delay=10)
-# @pytest.mark.xfail(reason="Qiskit rejecting cx")
+@pytest.mark.xfail(reason="Qiskit rejecting cx")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
@@ -1145,7 +1145,8 @@ def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/278
-# @pytest.mark.xfail(reason="Qiskit rejecting cx")
+# @pytest.mark.flaky(reruns=3, reruns_delay=10)
+@pytest.mark.xfail(reason="Qiskit rejecting cx")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser_0() -> None:
     num_qubits = 2

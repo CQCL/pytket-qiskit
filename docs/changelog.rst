@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-0.49.0rc0 (March 2024)
-----------------------
+0.49.0 (March 2024)
+-------------------
 
 * Update pytket version requirement to 1.25.
 * Update qiskit version requirement to 1.0.

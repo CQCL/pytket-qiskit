@@ -856,6 +856,8 @@ def test_ibmq_emulator(
 
             c_cop_2 = c.copy()
             c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
+            if ol == 0:
+                assert not all(pred.verify(c_cop_2) for pred in b.required_predicates)
 
         circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         copy_circ = circ.copy()
@@ -1128,7 +1130,7 @@ def test_postprocess_emu(ibmq_qasm_emulator_backend: IBMQEmulatorBackend) -> Non
 
 # https://github.com/CQCL/pytket-qiskit/issues/278
 # @pytest.mark.flaky(reruns=3, reruns_delay=10)
-@pytest.mark.xfail(reason="Qiskit rejecting cx")
+# @pytest.mark.xfail(reason="Qiskit rejecting cx")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
     c = Circuit(2, 2)
@@ -1143,7 +1145,7 @@ def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/278
-@pytest.mark.xfail(reason="Qiskit rejecting cx")
+# @pytest.mark.xfail(reason="Qiskit rejecting cx")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_cloud_stabiliser_0() -> None:
     num_qubits = 2
@@ -1189,11 +1191,10 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_backendinfo_serialization1(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         backend_info_json = b.backend_info.to_dict()  # type: ignore
         s = json.dumps(backend_info_json)
         backend_info_json1 = json.loads(s)
@@ -1246,11 +1247,10 @@ def test_sim_qubit_order() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_required_predicates(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         circ = Circuit(8)  # 8 qubit circuit in IBMQ gateset
         circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).CX(
             0, 7

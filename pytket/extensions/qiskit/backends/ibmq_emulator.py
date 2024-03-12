@@ -89,11 +89,13 @@ class IBMQEmulatorBackend(Backend):
         # Get noise model:
         self._noise_model = NoiseModel.from_backend(self._ibmq._backend)
 
-        if self._ibmq._backend._backend_info.n_nodes > 32:
-            raise ValueError("ibmq_qasm_simulator only supports 32 qubits, \
-devices with more than 32 qubtis can't be simulated")
+        if self._ibmq._backend_info.n_nodes > 32:
+            raise ValueError(
+                "ibmq_qasm_simulator only supports 32 qubits, \
+devices with more than 32 qubtis can't be simulated"
+            )
 
-        if OpType.ECR in self._ibmq._backend._primitive_gates:
+        if OpType.ECR in self._ibmq._primitive_gates:
             raise ValueError("ibmq_qasm_simulator does not support ECR in gateset")
 
         # cache of results keyed by job id and circuit index

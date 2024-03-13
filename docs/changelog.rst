@@ -1,6 +1,16 @@
 Changelog
 ~~~~~~~~~
 
+0.49.0 (March 2024)
+-------------------
+
+* Update pytket version requirement to 1.25.
+* Update qiskit version requirement to 1.0.
+* Update qiskit-ibm-provider version requirement to 0.10.
+* Update qiskit-ibm-runtime version requirement to 0.21.
+* Add ``IBMQLocalEmulatorBackend`` for running local emulation of
+  ``IBMQBackend`` using ``AerBackend`` with a noise model.
+
 0.48.1rc1
 ---------
 

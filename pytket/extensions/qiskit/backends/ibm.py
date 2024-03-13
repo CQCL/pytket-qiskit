@@ -149,6 +149,26 @@ def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
 
 
 class IBMQBackend(Backend):
+    """A backend for running circuits on remote IBMQ devices.
+
+    The provider arguments of `hub`, `group` and `project` can
+    be specified here as parameters or set in the config file
+    using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
+    This function can also be used to set the IBMQ API token.
+
+    :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
+    :type backend_name: str
+    :param instance: String containing information about the hub/group/project.
+    :type instance: str, optional
+    :param monitor: Use the IBM job monitor. Defaults to True.
+    :type monitor: bool, optional
+    :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
+    :param provider: An IBMProvider
+    :type provider: Optional[IBMProvider]
+    :param token: Authentication token to use the `QiskitRuntimeService`.
+    :type token: Optional[str]
+    """
+
     _supports_shots = False
     _supports_counts = True
     _supports_contextual_optimisation = True
@@ -162,24 +182,6 @@ class IBMQBackend(Backend):
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
-        """A backend for running circuits on remote IBMQ devices.
-        The provider arguments of `hub`, `group` and `project` can
-        be specified here as parameters or set in the config file
-        using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
-        This function can also be used to set the IBMQ API token.
-
-        :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
-        :type backend_name: str
-        :param instance: String containing information about the hub/group/project.
-        :type instance: str, optional
-        :param monitor: Use the IBM job monitor. Defaults to True.
-        :type monitor: bool, optional
-        :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-        :param provider: An IBMProvider
-        :type provider: Optional[IBMProvider]
-        :param token: Authentication token to use the `QiskitRuntimeService`.
-        :type token: Optional[str]
-        """
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
         self._provider = (
@@ -194,7 +196,9 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(self._backend)
         self._backend_info = self._get_backend_info(self._backend)
 
-        self._service = QiskitRuntimeService(channel="ibm_quantum", token=token)
+        self._service = QiskitRuntimeService(
+            channel="ibm_quantum", token=token, instance=instance
+        )
         self._session = Session(service=self._service, backend=backend_name)
 
         self._primitive_gates = _get_primitive_gates(gate_set)
@@ -272,14 +276,16 @@ class IBMQBackend(Backend):
             backend.name,
             __extension_version__,
             arch,
-            gate_set.union(
-                {
-                    OpType.RangePredicate,
-                    OpType.Conditional,
-                }
-            )
-            if supports_fast_feedforward
-            else gate_set,
+            (
+                gate_set.union(
+                    {
+                        OpType.RangePredicate,
+                        OpType.Conditional,
+                    }
+                )
+                if supports_fast_feedforward
+                else gate_set
+            ),
             supports_midcircuit_measurement=supports_mid_measure,
             supports_fast_feedforward=supports_fast_feedforward,
             supports_reset=supports_reset,

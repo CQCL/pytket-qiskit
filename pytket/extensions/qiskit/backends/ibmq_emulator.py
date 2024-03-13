@@ -27,7 +27,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,
@@ -54,10 +54,10 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 
 class IBMQEmulatorBackend(Backend):
-    """A backend which uses the AerBackend simulator to emulate the behaviour of
-    IBMQBackend. Performs the same compilation and predicate checks as IBMQBackend.
+    """A Backend which uses the ibmq_qasm_simulator to emulate the behaviour of
+    IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
+    parameter. Performs the same compilation and predicate checks as IBMQBackend.
     Requires a valid IBMQ account.
-
     """
 
     _supports_shots = False
@@ -73,10 +73,6 @@ class IBMQEmulatorBackend(Backend):
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
     ):
-        """Construct an IBMQEmulatorBackend. Identical to :py:class:`IBMQBackend`
-        constructor, except there is no `monitor` parameter. See :py:class:`IBMQBackend`
-        docs for more details.
-        """
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,

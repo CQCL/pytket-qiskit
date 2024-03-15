@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.50.0 (March 2024)
+-------------------
+
+* Update qiskit-algorithms version requirement to 0.3.
+
 0.49.0 (March 2024)
 -------------------
 

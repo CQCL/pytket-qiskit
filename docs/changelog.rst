@@ -1,8 +1,13 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.50.0
+------
+
+* Update qiskit-algorithms version requirement to 0.3.
+
+0.49.0 (March 2024)
+-------------------
 
 * Update pytket version requirement to 1.25.
 * Update qiskit version requirement to 1.0.

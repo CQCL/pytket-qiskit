@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Update qiskit-ibm-runtime version requirement to 0.22.
+
 0.50.0 (March 2024)
 -------------------
 

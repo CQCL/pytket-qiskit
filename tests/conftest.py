@@ -58,16 +58,6 @@ def qasm_simulator_backend() -> IBMQBackend:
 
 
 @pytest.fixture(scope="module")
-def simulator_stabilizer_backend() -> IBMQBackend:
-    return IBMQBackend(
-        "simulator_stabilizer",
-        instance="ibm-q/open/main",
-        monitor=False,
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-
-
-@pytest.fixture(scope="module")
 def brisbane_local_emulator_backend() -> IBMQLocalEmulatorBackend:
     return IBMQLocalEmulatorBackend(
         "ibm_brisbane",

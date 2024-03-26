@@ -1110,45 +1110,6 @@ def test_postprocess() -> None:
     b.cancel(h)
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/278
-# @pytest.mark.flaky(reruns=3, reruns_delay=10)
-@pytest.mark.xfail(reason="Qiskit rejecting cx")
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_cloud_stabiliser(simulator_stabilizer_backend: IBMQBackend) -> None:
-    c = Circuit(2, 2)
-    c.H(0).SX(1).CX(0, 1).measure_all()
-    c = simulator_stabilizer_backend.get_compiled_circuit(c, 0)
-    h = simulator_stabilizer_backend.process_circuit(c, n_shots=10)
-    assert sum(simulator_stabilizer_backend.get_result(h).get_counts().values()) == 10
-
-    c = Circuit(2, 2)
-    c.H(0).SX(1).Rz(0.1, 0).CX(0, 1).measure_all()
-    assert not simulator_stabilizer_backend.valid_circuit(c)
-
-
-# https://github.com/CQCL/pytket-qiskit/issues/278
-@pytest.mark.xfail(reason="Qiskit rejecting cx")
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_cloud_stabiliser_0() -> None:
-    num_qubits = 2
-    qc = QuantumCircuit(num_qubits)
-    qc.h(0)
-    qc.sx(1)
-    qc.cx(0, 1)
-    qc.measure_all()
-
-    _service = QiskitRuntimeService(
-        channel="ibm_quantum",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-    _session = Session(service=_service, backend="simulator_stabilizer")
-
-    sampler = Sampler(session=_session)
-    job = sampler.run(circuits=qc)
-    job.result()
-
-
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")

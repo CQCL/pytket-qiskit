@@ -6,11 +6,6 @@ API documentation
     :show-inheritance:
     :members:
 
-.. autoclass:: pytket.extensions.qiskit.IBMQEmulatorBackend
-    :special-members: __init__
-    :show-inheritance:
-    :members:
-
 .. autoclass:: pytket.extensions.qiskit.IBMQLocalEmulatorBackend
     :special-members: __init__
     :show-inheritance:

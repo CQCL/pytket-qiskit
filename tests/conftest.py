@@ -18,7 +18,6 @@ import pytest
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from pytket.extensions.qiskit import (
     IBMQBackend,
-    IBMQEmulatorBackend,
     IBMQLocalEmulatorBackend,
 )
 
@@ -64,33 +63,6 @@ def simulator_stabilizer_backend() -> IBMQBackend:
         "simulator_stabilizer",
         instance="ibm-q/open/main",
         monitor=False,
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-
-
-@pytest.fixture(scope="module")
-def brisbane_emulator_backend() -> IBMQEmulatorBackend:
-    return IBMQEmulatorBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-
-
-@pytest.fixture(scope="module")
-def ibmq_qasm_emulator_backend() -> IBMQEmulatorBackend:
-    return IBMQEmulatorBackend(
-        "ibmq_qasm_simulator",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-
-
-@pytest.fixture(scope="module")
-def nairobi_emulator_backend() -> IBMQEmulatorBackend:
-    return IBMQEmulatorBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 

@@ -30,7 +30,7 @@ from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    IBMQEmulatorBackend,
+    IBMQLocalEmulatorBackend,
 )
 from pytket.extensions.qiskit.tket_backend import TketBackend
 from pytket.circuit import OpType
@@ -115,14 +115,14 @@ def test_cancel() -> None:
 # https://github.com/CQCL/pytket-qiskit/issues/272
 @pytest.mark.xfail(reason="Qiskit sampler not working")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_qiskit_counts(ibmq_qasm_emulator_backend: IBMQEmulatorBackend) -> None:
+def test_qiskit_counts(brisbane_local_emulator_backend: IBMQLocalEmulatorBackend) -> None:
     num_qubits = 2
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
     qc.cx(0, 1)
     qc.measure_all()
 
-    s = BackendSampler(TketBackend(ibmq_qasm_emulator_backend))
+    s = BackendSampler(TketBackend(brisbane_local_emulator_backend))
 
     job = s.run([qc], shots=10)
     res = job.result()

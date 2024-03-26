@@ -21,7 +21,6 @@ from .backends import (
     AerBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    IBMQEmulatorBackend,
     IBMQLocalEmulatorBackend,
 )
 from .backends.config import set_ibmq_config

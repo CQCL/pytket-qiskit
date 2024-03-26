@@ -63,7 +63,6 @@ from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    IBMQEmulatorBackend,
     IBMQLocalEmulatorBackend,
 )
 from pytket.extensions.qiskit import (
@@ -471,10 +470,9 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
-    for b in [AerBackend(), brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [AerBackend(), brisbane_local_emulator_backend]:
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
@@ -836,10 +834,9 @@ def test_operator_expectation_value() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         assert b._noise_model is not None  # type: ignore
         b_ibm = b._ibmq  # type: ignore
         b_aer = AerBackend()
@@ -1115,17 +1112,17 @@ def test_postprocess() -> None:
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_postprocess_emu(ibmq_qasm_emulator_backend: IBMQEmulatorBackend) -> None:
-    assert ibmq_qasm_emulator_backend.supports_contextual_optimisation
+def test_postprocess_emu(brisbane_local_emulator_backend: IBMQLocalEmulatorBackend) -> None:
+    assert brisbane_local_emulator_backend.supports_contextual_optimisation
     c = Circuit(2, 2)
     c.X(0).X(1).measure_all()
-    c = ibmq_qasm_emulator_backend.get_compiled_circuit(c)
-    h = ibmq_qasm_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
+    c = brisbane_local_emulator_backend.get_compiled_circuit(c)
+    h = brisbane_local_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
     ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
-    r = ibmq_qasm_emulator_backend.get_result(h)
+    r = brisbane_local_emulator_backend.get_result(h)
     counts = r.get_counts()
     assert sum(counts.values()) == 10
 
@@ -1193,11 +1190,10 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_backendinfo_serialization1(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         backend_info_json = b.backend_info.to_dict()  # type: ignore
         s = json.dumps(backend_info_json)
         backend_info_json1 = json.loads(s)
@@ -1250,11 +1246,10 @@ def test_sim_qubit_order() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_required_predicates(
-    brisbane_emulator_backend: IBMQEmulatorBackend,
     brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93
-    for b in [brisbane_emulator_backend, brisbane_local_emulator_backend]:
+    for b in [brisbane_local_emulator_backend]:
         circ = Circuit(8)  # 8 qubit circuit in IBMQ gateset
         circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).CX(
             0, 7

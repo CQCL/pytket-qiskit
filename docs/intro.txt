@@ -28,7 +28,7 @@ Available IBM Backends
     :nosignatures:
 
     IBMQBackend
-    IBMQLocalEmulatorBackend
+    IBMQEmulatorBackend
     AerBackend
     AerStateBackend
     AerUnitaryBackend
@@ -159,7 +159,7 @@ Default Compilation
 
 Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the :py:class:`Backend`. The passes applied by different levels of optimisation are specified in the table below.
 
-.. list-table:: **Default compilation pass for the IBMQBackend and IBMQLocalEmulatorBackend**
+.. list-table:: **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
    :widths: 25 25 25
    :header-rows: 1
 

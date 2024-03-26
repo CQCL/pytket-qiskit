@@ -63,7 +63,7 @@ from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    IBMQLocalEmulatorBackend,
+    IBMQEmulatorBackend,
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
@@ -470,7 +470,7 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots(
-    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+    brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     for b in [AerBackend(), brisbane_local_emulator_backend]:
         circuit = Circuit(1).X(0)
@@ -834,7 +834,7 @@ def test_operator_expectation_value() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_emulator(
-    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+    brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     for b in [brisbane_local_emulator_backend]:
         assert b._noise_model is not None  # type: ignore
@@ -1134,7 +1134,7 @@ def test_available_devices(ibm_provider: IBMProvider) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_backendinfo_serialization1(
-    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+    brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
     for b in [brisbane_local_emulator_backend]:
@@ -1190,7 +1190,7 @@ def test_sim_qubit_order() -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_required_predicates(
-    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+    brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93
     for b in [brisbane_local_emulator_backend]:
@@ -1411,7 +1411,7 @@ def test_barriers_in_aer_simulators() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_local_emulator(
-    brisbane_local_emulator_backend: IBMQLocalEmulatorBackend,
+    brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     b = brisbane_local_emulator_backend
     assert not b.supports_contextual_optimisation

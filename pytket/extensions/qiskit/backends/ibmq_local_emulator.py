@@ -43,7 +43,7 @@ from .aer import AerBackend
 from .ibm import IBMQBackend
 
 
-class IBMQLocalEmulatorBackend(Backend):
+class IBMQEmulatorBackend(Backend):
     """A backend which uses the AerBackend to loaclly emulate the behaviour of
     IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
     parameter. Performs the same compilation and predicate checks as IBMQBackend.

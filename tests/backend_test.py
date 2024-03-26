@@ -837,8 +837,8 @@ def test_ibmq_emulator(
     brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     for b in [brisbane_local_emulator_backend]:
-        assert b._noise_model is not None  # type: ignore
-        b_ibm = b._ibmq  # type: ignore
+        assert b._noise_model is not None
+        b_ibm = b._ibmq
         b_aer = AerBackend()
         for ol in range(3):
             comp_pass = b.default_compilation_pass(ol)
@@ -863,7 +863,7 @@ def test_ibmq_emulator(
         b.rebase_pass().apply(copy_circ)
         assert b.required_predicates[1].verify(copy_circ)
         circ = b.get_compiled_circuit(circ)
-        b_noi = AerBackend(noise_model=b._noise_model)  # type: ignore
+        b_noi = AerBackend(noise_model=b._noise_model)
         emu_counts = b.run_circuit(circ, n_shots=10, seed=10).get_counts()
         aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
         # Even with the same seed, the results may differ.
@@ -1138,7 +1138,7 @@ def test_backendinfo_serialization1(
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
     for b in [brisbane_local_emulator_backend]:
-        backend_info_json = b.backend_info.to_dict()  # type: ignore
+        backend_info_json = b.backend_info.to_dict()
         s = json.dumps(backend_info_json)
         backend_info_json1 = json.loads(s)
         assert backend_info_json == backend_info_json1

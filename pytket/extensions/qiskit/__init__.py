@@ -22,7 +22,6 @@ from .backends import (
     AerStateBackend,
     AerUnitaryBackend,
     IBMQEmulatorBackend,
-    IBMQLocalEmulatorBackend,
 )
 from .backends.config import set_ibmq_config
 from .qiskit_convert import qiskit_to_tk, tk_to_qiskit, process_characterisation

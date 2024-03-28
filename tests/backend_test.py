@@ -836,38 +836,37 @@ def test_operator_expectation_value() -> None:
 def test_ibmq_emulator(
     brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
-    for b in [brisbane_local_emulator_backend]:
-        assert b._noise_model is not None
-        b_ibm = b._ibmq
-        b_aer = AerBackend()
-        for ol in range(3):
-            comp_pass = b.default_compilation_pass(ol)
-            c = Circuit(3, 3)
-            c.H(0)
-            c.CX(0, 1)
-            c.CSWAP(1, 0, 2)
-            c.ZZPhase(0.84, 2, 0)
-            c_cop = c.copy()
-            comp_pass.apply(c_cop)
-            c.measure_all()
-            for bac in (b, b_ibm):
-                assert all(pred.verify(c_cop) for pred in bac.required_predicates)
+    assert brisbane_local_emulator_backend._noise_model is not None
+    b_ibm = brisbane_local_emulator_backend._ibmq
+    b_aer = AerBackend()
+    for ol in range(3):
+        comp_pass = brisbane_local_emulator_backend.default_compilation_pass(ol)
+        c = Circuit(3, 3)
+        c.H(0)
+        c.CX(0, 1)
+        c.CSWAP(1, 0, 2)
+        c.ZZPhase(0.84, 2, 0)
+        c_cop = c.copy()
+        comp_pass.apply(c_cop)
+        c.measure_all()
+        for bac in (brisbane_local_emulator_backend, b_ibm):
+            assert all(pred.verify(c_cop) for pred in bac.required_predicates)
 
-            c_cop_2 = c.copy()
-            c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
-            if ol == 0:
-                assert not all(pred.verify(c_cop_2) for pred in b.required_predicates)
+        c_cop_2 = c.copy()
+        c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
+        if ol == 0:
+            assert not all(pred.verify(c_cop_2) for pred in brisbane_local_emulator_backend.required_predicates)
 
-        circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
-        copy_circ = circ.copy()
-        b.rebase_pass().apply(copy_circ)
-        assert b.required_predicates[1].verify(copy_circ)
-        circ = b.get_compiled_circuit(circ)
-        b_noi = AerBackend(noise_model=b._noise_model)
-        emu_counts = b.run_circuit(circ, n_shots=10, seed=10).get_counts()
-        aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
-        # Even with the same seed, the results may differ.
-        assert sum(emu_counts.values()) == sum(aer_counts.values())
+    circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
+    copy_circ = circ.copy()
+    brisbane_local_emulator_backend.rebase_pass().apply(copy_circ)
+    assert brisbane_local_emulator_backend.required_predicates[1].verify(copy_circ)
+    circ = brisbane_local_emulator_backend.get_compiled_circuit(circ)
+    b_noi = AerBackend(noise_model=brisbane_local_emulator_backend._noise_model)
+    emu_counts = brisbane_local_emulator_backend.run_circuit(circ, n_shots=10, seed=10).get_counts()
+    aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
+    # Even with the same seed, the results may differ.
+    assert sum(emu_counts.values()) == sum(aer_counts.values())
 
 
 @given(
@@ -1137,11 +1136,10 @@ def test_backendinfo_serialization1(
     brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/tket/issues/192
-    for b in [brisbane_local_emulator_backend]:
-        backend_info_json = b.backend_info.to_dict()
-        s = json.dumps(backend_info_json)
-        backend_info_json1 = json.loads(s)
-        assert backend_info_json == backend_info_json1
+    backend_info_json = brisbane_local_emulator_backend.backend_info.to_dict()
+    s = json.dumps(backend_info_json)
+    backend_info_json1 = json.loads(s)
+    assert backend_info_json == backend_info_json1
 
 
 def test_backendinfo_serialization2() -> None:
@@ -1193,19 +1191,18 @@ def test_required_predicates(
     brisbane_local_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/93
-    for b in [brisbane_local_emulator_backend]:
-        circ = Circuit(8)  # 8 qubit circuit in IBMQ gateset
-        circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).CX(
-            0, 7
-        ).measure_all()
-        with pytest.raises(CircuitNotValidError) as errorinfo:
-            b.run_circuit(circ, n_shots=100)
-            assert (
-                "pytket.backends.backend_exceptions.CircuitNotValidError:"
-                + "Circuit with index 0 in submitted does"
-                + "not satisfy MaxNQubitsPredicate(5)"
-                in str(errorinfo)
-            )
+    circ = Circuit(8)  # 8 qubit circuit in IBMQ gateset
+    circ.X(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4).CX(0, 5).CX(0, 6).CX(
+        0, 7
+    ).measure_all()
+    with pytest.raises(CircuitNotValidError) as errorinfo:
+        brisbane_local_emulator_backend.run_circuit(circ, n_shots=100)
+        assert (
+            "pytket.backends.backend_exceptions.CircuitNotValidError:"
+            + "Circuit with index 0 in submitted does"
+            + "not satisfy MaxNQubitsPredicate(5)"
+            in str(errorinfo)
+        )
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)

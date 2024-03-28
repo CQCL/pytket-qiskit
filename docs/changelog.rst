@@ -7,6 +7,7 @@ Unreleased
 * Update qiskit-ibm-runtime version requirement to 0.22.
 * remove all remote simulators
 * rename ``IBMQLocalEmulatorBackend`` to ``IBMQEmulatorBackend``
+* ``IBMQEmulatorBackend`` will now run locally
 
 0.50.0 (March 2024)
 -------------------

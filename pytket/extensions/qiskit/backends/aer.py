@@ -15,6 +15,7 @@
 import itertools
 from collections import defaultdict
 from dataclasses import dataclass
+import json
 from logging import warning
 from typing import (
     Dict,
@@ -66,6 +67,7 @@ from pytket.predicates import (
 )
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
+from pytket.utils import prepare_circuit
 
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .._metadata import __extension_version__
@@ -133,7 +135,7 @@ class _AerBaseBackend(Backend):
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
-        return (str, int)
+        return (str, int, int, str)
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -243,6 +245,8 @@ class _AerBaseBackend(Backend):
         See :py:meth:`pytket.backends.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.
         """
+        postprocess = kwargs.get("postprocess", False)
+
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
             n_shots,
@@ -268,14 +272,22 @@ class _AerBaseBackend(Backend):
         replace_implicit_swaps = self.supports_state or self.supports_unitary
 
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
-            qcs = []
+            qcs, ppcirc_strs, tkc_qubits_count = [], [], []
             for tkc in batch:
-                qc = tk_to_qiskit(tkc, replace_implicit_swaps)
+                if postprocess:
+                    c0, ppcirc = prepare_circuit(tkc, allow_classical=False)
+                    ppcirc_rep = ppcirc.to_dict()
+                else:
+                    c0, ppcirc_rep = tkc, None
+
+                qc = tk_to_qiskit(c0, replace_implicit_swaps)
                 if self.supports_state:
                     qc.save_state()
                 elif self.supports_unitary:
                     qc.save_unitary()
                 qcs.append(qc)
+                tkc_qubits_count.append(c0.n_qubits)
+                ppcirc_strs.append(json.dumps(ppcirc_rep))
 
             if self._needs_transpile:
                 qcs = transpile(qcs, self._qiskit_backend)
@@ -291,7 +303,7 @@ class _AerBaseBackend(Backend):
                 seed += 1
             jobid = job.job_id()
             for i, ind in enumerate(indices):
-                handle = ResultHandle(jobid, i)
+                handle = ResultHandle(jobid, i, tkc_qubits_count[i], ppcirc_strs[i])
                 handle_list[ind] = handle
                 self._cache[handle] = {"job": job}
         return cast(List[ResultHandle], handle_list)
@@ -312,7 +324,7 @@ class _AerBaseBackend(Backend):
         try:
             return super().get_result(handle)
         except CircuitNotRunError:
-            jobid, _ = handle
+            jobid, _, qubit_n, ppc = handle
             try:
                 job: "AerJob" = self._cache[handle]["job"]
             except KeyError:
@@ -321,7 +333,9 @@ class _AerBaseBackend(Backend):
             res = job.result()
             backresults = qiskit_result_to_backendresult(res)
             for circ_index, backres in enumerate(backresults):
-                self._cache[ResultHandle(jobid, circ_index)]["result"] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
+                    "result"
+                ] = backres
 
             return cast(BackendResult, self._cache[handle]["result"])
 

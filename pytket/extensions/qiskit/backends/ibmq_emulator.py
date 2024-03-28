@@ -52,7 +52,7 @@ class IBMQEmulatorBackend(Backend):
 
     _supports_shots = False
     _supports_counts = True
-    _supports_contextual_optimisation = False
+    _supports_contextual_optimisation = True
     _persistent_handles = False
     _supports_expectation = False
 
@@ -116,6 +116,7 @@ class IBMQEmulatorBackend(Backend):
         See :py:meth:`pytket.backends.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.
         """
+
         if valid_check:
             self._ibmq._check_all_circuits(circuits)
         return self._aer.process_circuits(

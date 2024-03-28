@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.51.0rc0 (March 2024)
+----------------------
 
 * Update qiskit-ibm-runtime version requirement to 0.22.
 * remove all remote simulators

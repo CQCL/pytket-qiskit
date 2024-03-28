@@ -58,7 +58,7 @@ def qasm_simulator_backend() -> IBMQBackend:
 
 
 @pytest.fixture(scope="module")
-def brisbane_local_emulator_backend() -> IBMQEmulatorBackend:
+def brisbane_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibm_brisbane",
         instance="ibm-q/open/main",

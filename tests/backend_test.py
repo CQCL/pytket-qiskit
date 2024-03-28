@@ -855,7 +855,10 @@ def test_ibmq_emulator(
         c_cop_2 = c.copy()
         c_cop_2 = b_aer.get_compiled_circuit(c_cop_2, ol)
         if ol == 0:
-            assert not all(pred.verify(c_cop_2) for pred in brisbane_emulator_backend.required_predicates)
+            assert not all(
+                pred.verify(c_cop_2)
+                for pred in brisbane_emulator_backend.required_predicates
+            )
 
     circ = Circuit(2, 2).H(0).CX(0, 1).measure_all()
     copy_circ = circ.copy()
@@ -863,7 +866,9 @@ def test_ibmq_emulator(
     assert brisbane_emulator_backend.required_predicates[1].verify(copy_circ)
     circ = brisbane_emulator_backend.get_compiled_circuit(circ)
     b_noi = AerBackend(noise_model=brisbane_emulator_backend._noise_model)
-    emu_counts = brisbane_emulator_backend.run_circuit(circ, n_shots=10, seed=10).get_counts()
+    emu_counts = brisbane_emulator_backend.run_circuit(
+        circ, n_shots=10, seed=10
+    ).get_counts()
     aer_counts = b_noi.run_circuit(circ, n_shots=10, seed=10).get_counts()
     # Even with the same seed, the results may differ.
     assert sum(emu_counts.values()) == sum(aer_counts.values())

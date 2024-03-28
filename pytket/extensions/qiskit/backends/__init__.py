@@ -15,4 +15,4 @@
 
 from .ibm import IBMQBackend, NoIBMQCredentialsError
 from .aer import AerBackend, AerStateBackend, AerUnitaryBackend
-from .ibmq_local_emulator import IBMQEmulatorBackend
+from .ibmq_emulator import IBMQEmulatorBackend

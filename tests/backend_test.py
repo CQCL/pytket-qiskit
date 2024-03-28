@@ -712,7 +712,7 @@ def test_aer_result_handle() -> None:
 
     handles = b.process_circuits([c, c.copy()], n_shots=2)
 
-    ids, indices = zip(*(han for han in handles))
+    ids, indices, _, _ = zip(*(han for han in handles))
 
     assert all(isinstance(idval, str) for idval in ids)
     assert indices == (0, 1)
@@ -725,7 +725,7 @@ def test_aer_result_handle() -> None:
         errorinfo.value
     )
 
-    wronghandle = ResultHandle("asdf", 3)
+    wronghandle = ResultHandle("asdf", 3, 0, "jsonstr")
 
     with pytest.raises(CircuitNotRunError) as errorinfoCirc:
         _ = b.get_result(wronghandle)
@@ -1114,6 +1114,23 @@ def test_postprocess() -> None:
     b.cancel(h)
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=10)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
+    assert brisbane_emulator_backend.supports_contextual_optimisation
+    c = Circuit(2, 2)
+    c.X(0).X(1).measure_all()
+    c = brisbane_emulator_backend.get_compiled_circuit(c)
+    h = brisbane_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
+    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
+    ppcmds = ppcirc.get_commands()
+    assert len(ppcmds) > 0
+    assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
+    r = brisbane_emulator_backend.get_result(h)
+    counts = r.get_counts()
+    assert sum(counts.values()) == 10
+
+
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_available_devices(ibm_provider: IBMProvider) -> None:
     backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
@@ -1416,7 +1433,6 @@ def test_ibmq_local_emulator(
     brisbane_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
     b = brisbane_emulator_backend
-    assert not b.supports_contextual_optimisation
     circ = Circuit(2).H(0).CX(0, 1).measure_all()
     circ1 = b.get_compiled_circuit(circ)
     h = b.process_circuit(circ1, n_shots=100)

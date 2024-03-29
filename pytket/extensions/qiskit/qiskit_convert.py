@@ -873,8 +873,24 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     """
 
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    properties = cast("BackendProperties", backend.properties())
+    config = backend.configuration()
+    props = cast(BackendProperties, backend.properties())
+    return process_characterisation_from_config(config, props)
 
+
+def process_characterisation_from_config(
+    config: QasmBackendConfiguration, properties: BackendProperties
+) -> Dict[str, Any]:
+    """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary
+     containing device Characteristics
+
+    :param backend: A backend to be converted
+    :type backend: Backendv1
+    :return: A dictionary containing device characteristics
+    :rtype: dict
+    """
+
+    # TODO explicitly check for and separate 1 and 2 qubit gates
     def return_value_if_found(iterator: Iterable["Nduv"], name: str) -> Optional[Any]:
         try:
             first_found = next(filter(lambda item: item.name == name, iterator))
@@ -884,7 +900,6 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
             return first_found.value
         return None
 
-    config = backend.configuration()
     coupling_map = config.coupling_map
     n_qubits = config.n_qubits
     if coupling_map is None:

@@ -82,6 +82,7 @@ from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 from pytket.passes import RebaseCustom
 
@@ -90,7 +91,6 @@ if TYPE_CHECKING:
     from qiskit.providers.models.backendproperties import Nduv  # type: ignore
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
-    from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):

@@ -36,7 +36,7 @@ from uuid import UUID
 import numpy as np
 from symengine import sympify  # type: ignore
 
-from qiskit.providers.models import BackendConfiguration, QasmBackendConfiguration
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (

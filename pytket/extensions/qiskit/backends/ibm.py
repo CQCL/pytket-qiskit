@@ -32,7 +32,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.models import QasmBackendConfiguration
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
@@ -57,8 +57,8 @@ from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from ..qiskit_convert import (
-    process_characterisation,
     get_avg_characterisation,
+    process_characterisation_from_config,
 )
 from .._metadata import __extension_version__
 from pytket.passes import (
@@ -195,7 +195,8 @@ class IBMQBackend(Backend):
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
-        self._backend_info = self._get_backend_info(self._backend)
+        props: BackendProperties = cast(BackendProperties, self._backend.properties())
+        self._backend_info = self._get_backend_info(backend_name, config, props)
 
         self._service = QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance=instance
@@ -240,9 +241,13 @@ class IBMQBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def _get_backend_info(cls, backend: "_QiskIBMBackend") -> BackendInfo:
-        config = backend.configuration()
-        characterisation = process_characterisation(backend)
+    def _get_backend_info(
+        cls,
+        backend_name: str,
+        config: QasmBackendConfiguration,
+        props: BackendProperties,
+    ) -> BackendInfo:
+        characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
         characterisation_keys = [
             "t1times",
@@ -274,7 +279,7 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(config)
         backend_info = BackendInfo(
             cls.__name__,
-            backend.name,
+            backend_name,
             __extension_version__,
             arch,
             (
@@ -311,9 +316,14 @@ class IBMQBackend(Backend):
             else:
                 provider = IBMProvider()
 
-        backend_info_list = [
-            cls._get_backend_info(backend) for backend in provider.backends()
-        ]
+        backend_info_list = []
+        for backend in provider.backends():
+            config = backend.configuration()
+            props = backend.properties()
+            if not props:
+                continue
+            backend_info_list.append(cls._get_backend_info(backend.name, config, props))
+
         return backend_info_list
 
     @property

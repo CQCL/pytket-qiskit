@@ -32,7 +32,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore

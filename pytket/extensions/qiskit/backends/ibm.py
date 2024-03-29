@@ -32,6 +32,7 @@ from typing import (
 )
 from warnings import warn
 
+from qiskit.providers.models import QasmBackendConfiguration
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
@@ -55,11 +56,11 @@ from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHa
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.qiskit.qiskit_convert import (
+from ..qiskit_convert import (
     process_characterisation,
     get_avg_characterisation,
 )
-from pytket.extensions.qiskit._metadata import __extension_version__
+from .._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -83,7 +84,7 @@ from pytket.predicates import (
     MaxNQubitsPredicate,
     Predicate,
 )
-from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
+from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
 from pytket.architecture import FullyConnected
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
@@ -190,10 +191,10 @@ class IBMQBackend(Backend):
             else provider
         )
         self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
-        config = self._backend.configuration()
+        config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
-        gate_set = _tk_gate_set(self._backend)
+        gate_set = _tk_gate_set(config)
         self._backend_info = self._get_backend_info(self._backend)
 
         self._service = QiskitRuntimeService(
@@ -270,7 +271,7 @@ class IBMQBackend(Backend):
             hasattr(config, "supported_instructions")
             and "reset" in config.supported_instructions
         )
-        gate_set = _tk_gate_set(backend)
+        gate_set = _tk_gate_set(config)
         backend_info = BackendInfo(
             cls.__name__,
             backend.name,

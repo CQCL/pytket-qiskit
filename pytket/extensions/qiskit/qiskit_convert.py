@@ -36,6 +36,7 @@ from uuid import UUID
 import numpy as np
 from symengine import sympify  # type: ignore
 
+from qiskit.providers.models import BackendConfiguration, QasmBackendConfiguration
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
@@ -209,9 +210,8 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> Set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
-    config = backend.configuration()
     if config.simulator:
         gate_set = {
             _gate_str_2_optype[gate_str]

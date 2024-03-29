@@ -88,6 +88,8 @@ from pytket.predicates import (
     MaxNQubitsPredicate,
     Predicate,
 )
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+
 from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
 from pytket.architecture import FullyConnected
 from pytket.placement import NoiseAwarePlacement
@@ -99,7 +101,6 @@ from .config import QiskitConfig
 
 if TYPE_CHECKING:
     from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend  # type: ignore
-    from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 

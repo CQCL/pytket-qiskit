@@ -52,7 +52,13 @@ from qiskit_ibm_runtime import (  # type: ignore
 )
 
 from pytket.circuit import Circuit, OpType
-from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
+from pytket.backends import (
+    Backend,
+    CircuitNotRunError,
+    CircuitStatus,
+    ResultHandle,
+    backend,
+)
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
@@ -387,6 +393,25 @@ class IBMQBackend(Backend):
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass
         """
+        backend_name = self._backend.name
+        config: QasmBackendConfiguration = self._backend.configuration()
+        props: BackendProperties = cast(BackendProperties, self._backend.properties())
+        return IBMQBackend.default_compilation_pass_static(
+            backend_name, config, props, optimisation_level, placement_options
+        )
+
+    @staticmethod
+    def default_compilation_pass_static(
+        backend_name: str,
+        config: QasmBackendConfiguration,
+        props: BackendProperties,
+        optimisation_level: int = 2,
+        placement_options: Optional[Dict] = None,
+    ) -> BasePass:
+        backend_info = IBMQBackend._get_backend_info(backend_name, config, props)
+        primitive_gates = _get_primitive_gates(_tk_gate_set(config))
+        supports_rz = OpType.Rz in primitive_gates
+
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
@@ -394,33 +419,33 @@ class IBMQBackend(Backend):
         # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._supports_rz:
+            if supports_rz:
                 # If the Rz gate is unsupported then the rebase should be skipped
                 # This prevents an error when compiling to the stabilizer backend
                 # where no TK1 replacement can be found for the rebase.
-                passlist.append(self.rebase_pass())
+                passlist.append(IBMQBackend.rebase_pass_static(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
-        mid_measure = self._backend_info.supports_midcircuit_measurement
-        arch = self._backend_info.architecture
+        mid_measure = backend_info.supports_midcircuit_measurement
+        arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                     **placement_options,
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                 )
 
             passlist.append(
@@ -443,8 +468,10 @@ class IBMQBackend(Backend):
                 ]
             )
 
-        if self._supports_rz:
-            passlist.extend([self.rebase_pass(), RemoveRedundancies()])
+        if supports_rz:
+            passlist.extend(
+                [IBMQBackend.rebase_pass_static(primitive_gates), RemoveRedundancies()]
+            )
         return SequencePass(passlist)
 
     @property
@@ -453,7 +480,11 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(self._primitive_gates)
+        return IBMQBackend.rebase_pass_static(self._primitive_gates)
+
+    @staticmethod
+    def rebase_pass_static(primitive_gates: set[OpType]) -> BasePass:
+        return auto_rebase_pass(primitive_gates)
 
     def process_circuits(
         self,

@@ -35,7 +35,6 @@ from uuid import UUID
 
 import numpy as np
 
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
@@ -87,12 +86,10 @@ from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
-    from qiskit.providers.models.backendproperties import (  # type: ignore
-        BackendProperties,
-        Nduv,
-    )
+    from qiskit.providers.models.backendproperties import Nduv  # type: ignore
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
+    from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):

@@ -32,7 +32,6 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
@@ -57,16 +56,15 @@ from pytket.backends import (
     CircuitNotRunError,
     CircuitStatus,
     ResultHandle,
-    backend,
 )
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from ..qiskit_convert import (
+from pytket.extensions.qiskit.qiskit_convert import (
     get_avg_characterisation,
     process_characterisation_from_config,
 )
-from .._metadata import __extension_version__
+from pytket.extensions.qiskit._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -90,7 +88,7 @@ from pytket.predicates import (
     MaxNQubitsPredicate,
     Predicate,
 )
-from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
+from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
 from pytket.architecture import FullyConnected
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
@@ -101,6 +99,7 @@ from .config import QiskitConfig
 
 if TYPE_CHECKING:
     from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend  # type: ignore
+    from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 

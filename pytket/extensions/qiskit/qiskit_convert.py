@@ -55,7 +55,6 @@ from qiskit.circuit import (
     Clbit,
 )
 
-from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import (
     CRYGate,
     RYGate,

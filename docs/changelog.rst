@@ -1,6 +1,15 @@
 Changelog
 ~~~~~~~~~
 
+0.51.0 (March 2024)
+-------------------
+
+* Update qiskit-ibm-runtime version requirement to 0.22.
+* remove all remote simulators
+* rename ``IBMQLocalEmulatorBackend`` to ``IBMQEmulatorBackend``
+* ``IBMQEmulatorBackend`` will now run locally
+* add support for contextual optimisation on local emulator
+
 0.50.0 (March 2024)
 -------------------
 

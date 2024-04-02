@@ -629,7 +629,9 @@ def append_tk_command_to_qiskit(
         n_controls = op.get_n_controls()
         base_circuit_pytket = base_op.get_circuit()
         base_circuit_qiskit = tk_to_qiskit(base_circuit_pytket)
-        qiskit_gate = base_circuit_qiskit
+        qiskit_gate = (
+            base_circuit_qiskit.to_gate()
+        )  # possible issue -> qiskit doesn't seem to convert to a gate always - "circuit-166" is not a gate instruction
         # add control state to .control()
         qiskit_controlled_gate = qiskit_gate.control(n_controls)
         return qcirc.append(qiskit_controlled_gate, qargs=list(reversed(qargs)))

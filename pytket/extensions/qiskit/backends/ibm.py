@@ -60,11 +60,11 @@ from pytket.backends import (
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.qiskit.qiskit_convert import (
+from ..qiskit_convert import (
     get_avg_characterisation,
     process_characterisation_from_config,
 )
-from pytket.extensions.qiskit._metadata import __extension_version__
+from .._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -90,7 +90,7 @@ from pytket.predicates import (
 )
 from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
-from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
+from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
 from pytket.architecture import FullyConnected
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
@@ -202,7 +202,7 @@ class IBMQBackend(Backend):
 
         gate_set = _tk_gate_set(config)
         props: BackendProperties = cast(BackendProperties, self._backend.properties())
-        self._backend_info = self._get_backend_info(backend_name, config, props)
+        self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance=instance
@@ -249,7 +249,6 @@ class IBMQBackend(Backend):
     @classmethod
     def _get_backend_info(
         cls,
-        backend_name: str,
         config: QasmBackendConfiguration,
         props: BackendProperties,
     ) -> BackendInfo:
@@ -285,7 +284,7 @@ class IBMQBackend(Backend):
         gate_set = _tk_gate_set(config)
         backend_info = BackendInfo(
             cls.__name__,
-            backend_name,
+            config.backend_name,
             __extension_version__,
             arch,
             (
@@ -328,7 +327,7 @@ class IBMQBackend(Backend):
             props = backend.properties()
             if not props:
                 continue
-            backend_info_list.append(cls._get_backend_info(backend.name, config, props))
+            backend_info_list.append(cls._get_backend_info(config, props))
 
         return backend_info_list
 
@@ -397,18 +396,17 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration = self._backend.configuration()
         props: BackendProperties = cast(BackendProperties, self._backend.properties())
         return IBMQBackend.default_compilation_pass_static(
-            backend_name, config, props, optimisation_level, placement_options
+            config, props, optimisation_level, placement_options
         )
 
     @staticmethod
     def default_compilation_pass_static(
-        backend_name: str,
         config: QasmBackendConfiguration,
         props: BackendProperties,
         optimisation_level: int = 2,
         placement_options: Optional[Dict] = None,
     ) -> BasePass:
-        backend_info = IBMQBackend._get_backend_info(backend_name, config, props)
+        backend_info = IBMQBackend._get_backend_info(config, props)
         primitive_gates = _get_primitive_gates(_tk_gate_set(config))
         supports_rz = OpType.Rz in primitive_gates
 

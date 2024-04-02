@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Update pytket version requirement to 1.26.
+* Update qiskit-aer version requirement to 0.14.
+
 0.51.0 (March 2024)
 -------------------
 

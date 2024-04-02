@@ -54,6 +54,8 @@ from qiskit.circuit import (
     Reset,
     Clbit,
 )
+
+from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import (
     CRYGate,
     RYGate,
@@ -76,13 +78,14 @@ from pytket.circuit import (
     Qubit,
     QControlBox,
     StatePreparationBox,
+    PauliExpBox,
 )
 from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 
-from pytket.passes import RebaseCustom
+from pytket.passes import RebaseCustom, DecomposeBoxes
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
@@ -206,6 +209,14 @@ for gate, optype in _known_qiskit_gate.items():
 _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 # the aliasing of the name is ok in the reverse map
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
+
+
+def _get_circuit_from_pauliexpbox(pauli_exp: PauliExpBox) -> Circuit:
+    n_qubits = len(pauli_exp.get_paulis())
+    circuit = Circuit(n_qubits)
+    circuit.add_gate(pauli_exp, list(range(n_qubits)))
+    DecomposeBoxes().apply(circuit)
+    return circuit
 
 
 def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
@@ -589,6 +600,9 @@ def _get_params(
     return [param_to_qiskit(p, symb_map) for p in op.params]  # type: ignore
 
 
+from pytket.circuit.display import view_browser
+
+
 def append_tk_command_to_qiskit(
     op: "Op",
     args: List["UnitID"],
@@ -610,7 +624,25 @@ def append_tk_command_to_qiskit(
         qb = qregmap[args[0].reg_name][args[0].index[0]]
         return qcirc.reset(qb)
 
-    if optype in [OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate]:
+    if optype == OpType.QControlBox:
+        base_op: Op = op.get_op()
+        qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
+        n_controls = op.get_n_controls()
+        base_circuit_pytket = base_op.get_circuit()
+        base_circuit_qiskit = tk_to_qiskit(base_circuit_pytket)
+        qiskit_gate = base_circuit_qiskit
+        # add control state to .control()
+        qiskit_controlled_gate = qiskit_gate.control(n_controls)
+        return qcirc.append(qiskit_controlled_gate, qargs=list(reversed(qargs)))
+
+    if optype == OpType.PauliExpBox:
+        qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
+        pauli_circ: Circuit = _get_circuit_from_pauliexpbox(op)
+        subc = tk_to_qiskit(pauli_circ)
+        pauli_instr = subc.to_instruction()
+        return qcirc.append(pauli_instr, qargs=list(reversed(qargs)))
+
+    if optype in [OpType.CircBox, OpType.ExpBox, OpType.CustomGate]:
         subcircuit = op.get_circuit()  # type: ignore
         subqc = tk_to_qiskit(subcircuit)
         qargs = []
@@ -767,6 +799,7 @@ _protected_tket_gates = (
     | _additional_multi_controlled_gates
     | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
     | {OpType.CustomGate}
+    | {OpType.QControlBox, OpType.PauliExpBox}
 )
 
 

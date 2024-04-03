@@ -392,7 +392,6 @@ class IBMQBackend(Backend):
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass
         """
-        backend_name = self._backend.name
         config: QasmBackendConfiguration = self._backend.configuration()
         props: BackendProperties = cast(BackendProperties, self._backend.properties())
         return IBMQBackend.default_compilation_pass_static(

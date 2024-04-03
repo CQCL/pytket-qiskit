@@ -201,7 +201,7 @@ class IBMQBackend(Backend):
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
-        props: BackendProperties = cast(BackendProperties, self._backend.properties())
+        props: Optional[BackendProperties] = self._backend.properties()
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(

@@ -872,7 +872,7 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
 
     # TODO explicitly check for and separate 1 and 2 qubit gates
     config = backend.configuration()
-    props = cast(BackendProperties, backend.properties())
+    props = backend.properties()
     return process_characterisation_from_config(config, props)
 
 

@@ -48,6 +48,8 @@ from pytket.circuit import (
     CustomGateDef,
     reg_eq,
     StatePreparationBox,
+    QControlBox,
+    Op,
 )
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
@@ -121,6 +123,20 @@ def test_convert_circuit_with_complex_params() -> None:
         evolution_circ.append(evolved_op, [0])
         tk_circ = qiskit_to_tk(evolution_circ)
         DecomposeBoxes().apply(tk_circ)
+
+
+def test_convert_circuit_with_qcontrolbox() -> None:
+    c0 = Circuit(2).CY(1, 0)
+    cbox = CircBox(c0)
+    op = Op.create(OpType.Y)
+    qcbox = QControlBox(op, 1)
+    c = Circuit(2)
+    c.add_circbox(cbox, [1, 0])
+    c.add_qcontrolbox(qcbox, [0, 1])    
+
+    qc1 = tk_to_qiskit(c)
+    print(qc1)
+    # DecomposeBoxes().apply(tk_circ)
 
 
 def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:

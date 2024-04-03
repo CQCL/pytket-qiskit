@@ -139,6 +139,28 @@ def test_convert_circuit_with_qcontrolbox() -> None:
     # DecomposeBoxes().apply(tk_circ)
 
 
+
+def test_convert_circuit_with_qcontrolbox_ii() -> None:
+    c = Circuit(2)
+    qc1 = tk_to_qiskit(c)
+    print(qc1)
+
+    # DecomposeBoxes().apply(tk_circ)
+
+    c_u_circ = Circuit(1)
+    c_u_circ.Y(0)
+
+    c_u_box = QControlBox(CircBox(c_u_circ), 1)
+
+    c.add_qcontrolbox(
+                    c_u_box, [0,1]
+            )   
+
+    print(c) 
+    qc1 = tk_to_qiskit(c)
+    print(qc1)
+    
+
 def get_test_circuit(measure: bool, reset: bool = True) -> QuantumCircuit:
     qr = QuantumRegister(4)
     cr = ClassicalRegister(4)

@@ -625,9 +625,14 @@ def append_tk_command_to_qiskit(
 
     if optype == OpType.QControlBox:
         base_op: Op = op.get_op()
+        base_op_type = base_op.type
+        print(base_op_type)
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         n_controls = op.get_n_controls()
+        print(type(base_op))
+        print(base_op)
         base_circuit_pytket = base_op.get_circuit()
+
         base_circuit_qiskit = tk_to_qiskit(base_circuit_pytket)
         qiskit_gate = (
             base_circuit_qiskit.to_gate()

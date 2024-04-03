@@ -877,7 +877,7 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
 
 
 def process_characterisation_from_config(
-    config: QasmBackendConfiguration, properties: BackendProperties
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
 ) -> Dict[str, Any]:
     """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary
      containing device Characteristics

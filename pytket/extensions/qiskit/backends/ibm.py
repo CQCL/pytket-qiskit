@@ -250,7 +250,7 @@ class IBMQBackend(Backend):
     def _get_backend_info(
         cls,
         config: QasmBackendConfiguration,
-        props: BackendProperties,
+        props: Optional[BackendProperties],
     ) -> BackendInfo:
         characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
@@ -325,8 +325,6 @@ class IBMQBackend(Backend):
         for backend in provider.backends():
             config = backend.configuration()
             props = backend.properties()
-            if not props:
-                continue
             backend_info_list.append(cls._get_backend_info(config, props))
 
         return backend_info_list

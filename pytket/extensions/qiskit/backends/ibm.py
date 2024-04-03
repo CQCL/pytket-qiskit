@@ -391,7 +391,7 @@ class IBMQBackend(Backend):
         :rtype: BasePass
         """
         config: QasmBackendConfiguration = self._backend.configuration()
-        props: BackendProperties = cast(BackendProperties, self._backend.properties())
+        props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_static(
             config, props, optimisation_level, placement_options
         )
@@ -399,7 +399,7 @@ class IBMQBackend(Backend):
     @staticmethod
     def default_compilation_pass_static(
         config: QasmBackendConfiguration,
-        props: BackendProperties,
+        props: Optional[BackendProperties],
         optimisation_level: int = 2,
         placement_options: Optional[Dict] = None,
     ) -> BasePass:

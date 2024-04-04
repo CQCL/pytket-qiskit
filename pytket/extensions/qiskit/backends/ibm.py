@@ -392,12 +392,12 @@ class IBMQBackend(Backend):
         """
         config: QasmBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
-        return IBMQBackend.default_compilation_pass_static(
+        return IBMQBackend.default_compilation_pass_offline(
             config, props, optimisation_level, placement_options
         )
 
     @staticmethod
-    def default_compilation_pass_static(
+    def default_compilation_pass_offline(
         config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
@@ -418,7 +418,7 @@ class IBMQBackend(Backend):
                 # If the Rz gate is unsupported then the rebase should be skipped
                 # This prevents an error when compiling to the stabilizer backend
                 # where no TK1 replacement can be found for the rebase.
-                passlist.append(IBMQBackend.rebase_pass_static(primitive_gates))
+                passlist.append(IBMQBackend.rebase_pass_offline(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
@@ -465,7 +465,7 @@ class IBMQBackend(Backend):
 
         if supports_rz:
             passlist.extend(
-                [IBMQBackend.rebase_pass_static(primitive_gates), RemoveRedundancies()]
+                [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
             )
         return SequencePass(passlist)
 
@@ -475,10 +475,10 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return IBMQBackend.rebase_pass_static(self._primitive_gates)
+        return IBMQBackend.rebase_pass_offline(self._primitive_gates)
 
     @staticmethod
-    def rebase_pass_static(primitive_gates: set[OpType]) -> BasePass:
+    def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
         return auto_rebase_pass(primitive_gates)
 
     def process_circuits(

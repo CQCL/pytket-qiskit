@@ -869,8 +869,6 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     :return: A dictionary containing device characteristics
     :rtype: dict
     """
-
-    # TODO explicitly check for and separate 1 and 2 qubit gates
     config = backend.configuration()
     props = backend.properties()
     return process_characterisation_from_config(config, props)
@@ -879,11 +877,12 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
 def process_characterisation_from_config(
     config: QasmBackendConfiguration, properties: Optional[BackendProperties]
 ) -> Dict[str, Any]:
-    """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary
-     containing device Characteristics
+    """Obtain a dictionary containing device Characteristics given config and props.
 
-    :param backend: A backend to be converted
-    :type backend: Backendv1
+    :param config: A IBMQ configuration object
+    :type config: QasmBackendConfiguration
+    :param properties: An optional IBMQ properties object
+    :type properties: Optional[BackendProperties]
     :return: A dictionary containing device characteristics
     :rtype: dict
     """

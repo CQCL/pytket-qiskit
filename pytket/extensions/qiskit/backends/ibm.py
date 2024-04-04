@@ -247,6 +247,15 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
     ) -> BackendInfo:
+        """Construct a BackendInfo from data returned by the IBMQ API.
+
+        :param config: The configuration of this backend.
+        :type config: QasmBackendConfiguration
+        :param props: The measured properties of this backend (not required).
+        :type props: Optional[BackendProperties]
+        :return: Information about the backend.
+        :rtype: BackendInfo
+        """
         characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
         characterisation_keys = [

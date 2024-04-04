@@ -51,12 +51,7 @@ from qiskit_ibm_runtime import (  # type: ignore
 )
 
 from pytket.circuit import Circuit, OpType
-from pytket.backends import (
-    Backend,
-    CircuitNotRunError,
-    CircuitStatus,
-    ResultHandle,
-)
+from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple

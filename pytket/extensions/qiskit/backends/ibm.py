@@ -167,8 +167,8 @@ class IBMQBackend(Backend):
     :type provider: Optional[IBMProvider]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
-    :param options: A dictionary to specify qiskit API options, 
-        `resilience_level` and `optimization_level`. Passed to the qiskit 
+    :param options: A dictionary to specify qiskit API options,
+        `resilience_level` and `optimization_level`. Passed to the qiskit
         sampler submission during process_circuit (process_circuits).
     :type options: Dict[str, int]
     """
@@ -185,7 +185,7 @@ class IBMQBackend(Backend):
         monitor: bool = True,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
-        options: Dict[str, int] = {}
+        options: Dict[str, int] = None,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -215,6 +215,8 @@ class IBMQBackend(Backend):
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
 
+        if options is None:
+            options = {"optimization_level": 0, "resilience_level": 0}
         self._sampler_options = options
 
         self._MACHINE_DEBUG = False
@@ -470,12 +472,12 @@ class IBMQBackend(Backend):
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
             * `options`:
-                Specify `resilience_level` and `optimization_level` 
-                within a dictionary. This enables application of 
-                error-mitigation and remote transpilation of circuits on 
-                IBMQ Cloud. Values for `resilience_level` can be found 
+                Specify `resilience_level` and `optimization_level`
+                within a dictionary. This enables application of
+                error-mitigation and remote transpilation of circuits on
+                IBMQ Cloud. Values for `resilience_level` can be found
                 here: https://docs.quantum.ibm.com/run/configure-error-mitigation.
-                Values for `optimization_level` can be found here: 
+                Values for `optimization_level` can be found here:
                 https://docs.quantum.ibm.com/run/configure-runtime-compilation
         """
         circuits = list(circuits)
@@ -494,7 +496,7 @@ class IBMQBackend(Backend):
 
         options_dict = kwargs.get("options", {})
         if not bool(options_dict):
-            options_dict = self._sampler_options 
+            options_dict = self._sampler_options
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
@@ -531,7 +533,7 @@ class IBMQBackend(Backend):
                 else:
                     options = Options(
                         optimization_level=options_dict.get("optimization_level", 0),
-                        resilience_level=options_dict.get("resilience_level", 0)
+                        resilience_level=options_dict.get("resilience_level", 0),
                     )
                     options.optimization_level = 0
                     options.resilience_level = 0

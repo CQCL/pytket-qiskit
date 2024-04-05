@@ -462,7 +462,14 @@ class IBMQBackend(Backend):
                 apply the pytket ``SimplifyInitial`` pass to improve
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
-
+            * `options`:
+                Specify `resilience_level` and `optimization_level` 
+                within a dictionary. This enables application of 
+                error-mitigation and remote transpilation of circuits on 
+                IBMQ Cloud. Values for `resilience_level` can be found 
+                here: https://docs.quantum.ibm.com/run/configure-error-mitigation.
+                Values for `optimization_level` can be found here: 
+                https://docs.quantum.ibm.com/run/configure-runtime-compilation
         """
         circuits = list(circuits)
 
@@ -477,6 +484,8 @@ class IBMQBackend(Backend):
 
         postprocess = kwargs.get("postprocess", False)
         simplify_initial = kwargs.get("simplify_initial", False)
+
+        options_dict = kwargs.get("options", {})
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
@@ -511,7 +520,10 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    options = Options()
+                    options = Options(
+                        optimization_level=options_dict.get("optimization_level", 0),
+                        resilience_level=options_dict.get("resilience_level", 0)
+                    )
                     options.optimization_level = 0
                     options.resilience_level = 0
                     options.transpilation.skip_transpilation = True

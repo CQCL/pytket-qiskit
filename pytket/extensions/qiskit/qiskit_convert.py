@@ -34,6 +34,7 @@ from inspect import signature
 from uuid import UUID
 
 import numpy as np
+from symengine import sympify
 
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
@@ -580,7 +581,7 @@ def param_to_qiskit(
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
     else:
-        return ParameterExpression(symb_map, ppi)
+        return ParameterExpression(symb_map, sympify(ppi))
 
 
 def _get_params(
@@ -724,7 +725,7 @@ order or only one bit of one register"""
 
     if optype == OpType.TK1:
         params = _get_params(op, symb_map)
-        half = ParameterExpression(symb_map, sympy.pi / 2)
+        half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
         return qcirc.append(
             qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
@@ -749,7 +750,7 @@ order or only one bit of one register"""
     if type(phase) == float:
         qcirc.global_phase += phase * np.pi
     else:
-        qcirc.global_phase += phase * sympy.pi
+        qcirc.global_phase += sympify(phase * sympy.pi)
     return qcirc.append(g, qargs=qargs)
 
 

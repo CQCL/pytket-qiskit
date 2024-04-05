@@ -1,11 +1,12 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.51.1rc0 (April 2024)
+----------------------
 
 * Update pytket version requirement to 1.26.
 * Update qiskit-aer version requirement to 0.14.
+* Update conversion to qiskit to use symengine for symbolic circuits
 
 0.51.0 (March 2024)
 -------------------

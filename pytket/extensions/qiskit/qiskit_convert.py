@@ -34,7 +34,7 @@ from inspect import signature
 from uuid import UUID
 
 import numpy as np
-from symengine import sympify
+from symengine import sympify  # type: ignore
 
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore

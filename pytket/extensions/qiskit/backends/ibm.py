@@ -167,6 +167,10 @@ class IBMQBackend(Backend):
     :type provider: Optional[IBMProvider]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
+    :param options: A dictionary to specify qiskit API options, 
+        `resilience_level` and `optimization_level`. Passed to the qiskit 
+        sampler submission during process_circuit (process_circuits).
+    :type options: Dict[str, int]
     """
 
     _supports_shots = False
@@ -181,6 +185,7 @@ class IBMQBackend(Backend):
         monitor: bool = True,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
+        options: Dict[str, int] = {}
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -209,6 +214,8 @@ class IBMQBackend(Backend):
 
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
+
+        self._sampler_options = options
 
         self._MACHINE_DEBUG = False
 
@@ -486,6 +493,8 @@ class IBMQBackend(Backend):
         simplify_initial = kwargs.get("simplify_initial", False)
 
         options_dict = kwargs.get("options", {})
+        if not bool(options_dict):
+            options_dict = self._sampler_options 
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):

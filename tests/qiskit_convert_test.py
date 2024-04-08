@@ -35,6 +35,9 @@ from qiskit.transpiler.passes import BasisTranslator  # type: ignore
 from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupe  # type: ignore
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
+from pytket.extensions.qiskit import qiskit_to_tk, tk_to_qiskit
+from qiskit.circuit.library import TwoLocal
+from qiskit import transpile
 
 from pytket.circuit import (
     Circuit,
@@ -1091,3 +1094,24 @@ def test_RealAmplitudes_numeric_params() -> None:
     unitary2 = tkc2.get_unitary()
     assert compare_unitaries(qiskit_unitary, unitary1)
     assert compare_unitaries(unitary1, unitary2)
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/256
+def test_symbolic_param_conv() -> None:
+    qc = TwoLocal(1, "ry", "cz", reps=1, entanglement="linear")
+    qc_transpiled = transpile(
+        qc, basis_gates=["sx", "rz", "cx", "x"], optimization_level=3
+    )
+
+    tket_qc = qiskit_to_tk(qc_transpiled)
+    CliffordSimp().apply(tket_qc)
+    transformed_qc = tk_to_qiskit(tket_qc)
+
+    qc_transpiled_again = transpile(transformed_qc, basis_gates=["sx", "rz", "cx", "x"])
+
+    qc_transpiled_again = qc_transpiled_again.assign_parameters(
+        {
+            qc_transpiled_again.parameters[i]: 0
+            for i in range(len(qc_transpiled_again.parameters))
+        }
+    )

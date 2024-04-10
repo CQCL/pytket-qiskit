@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Add `IBMQBackend.default_compilation_pass_static` for offline compilation given config and props objects.
+
 0.51.1rc0 (April 2024)
 ----------------------
 

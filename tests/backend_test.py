@@ -1330,6 +1330,22 @@ def test_crosstalk_noise_model() -> None:
     res.get_counts()
 
 
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ecr(ibm_kyoto_backend: IBMQBackend) -> None:
+    ghz5 = Circuit(5)
+    ghz5.H(0).CX(0,1).CX(0,2).CX(0,3).CX(0,4)
+    ghz5.measure_all()
+    ibm_backend = ibm_kyoto_backend
+    ibm_ghz5 = ibm_backend.get_compiled_circuit(ghz5)
+
+    compiled_ghz5 = ibm_backend.get_compiled_circuit(ibm_ghz5)
+
+    ibm_backend.valid_circuit(compiled_ghz5)
+
+    handle = ibm_backend.process_circuit(compiled_ghz5, n_shots=1000)
+    ibm_backend.cancel(handle)
+
+
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
     """Given a QuantumCircuit, use aer_simulator_statevector to compute its

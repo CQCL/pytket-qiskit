@@ -416,7 +416,7 @@ class IBMQBackend(Backend):
                 CXMappingPass(
                     arch,
                     noise_aware_placement,
-                    directed_cx=False,
+                    directed_cx=True,
                     delay_measures=(not mid_measure),
                 )
             )

@@ -82,15 +82,13 @@ from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
-    from qiskit.providers.models.backendproperties import (  # type: ignore
-        BackendProperties,
-        Nduv,
-    )
+    from qiskit.providers.models.backendproperties import Nduv  # type: ignore
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
 
@@ -209,9 +207,8 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> Set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
-    config = backend.configuration()
     if config.simulator:
         gate_set = {
             _gate_str_2_optype[gate_str]
@@ -872,10 +869,25 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
     :return: A dictionary containing device characteristics
     :rtype: dict
     """
+    config = backend.configuration()
+    props = backend.properties()
+    return process_characterisation_from_config(config, props)
+
+
+def process_characterisation_from_config(
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
+) -> Dict[str, Any]:
+    """Obtain a dictionary containing device Characteristics given config and props.
+
+    :param config: A IBMQ configuration object
+    :type config: QasmBackendConfiguration
+    :param properties: An optional IBMQ properties object
+    :type properties: Optional[BackendProperties]
+    :return: A dictionary containing device characteristics
+    :rtype: dict
+    """
 
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    properties = cast("BackendProperties", backend.properties())
-
     def return_value_if_found(iterator: Iterable["Nduv"], name: str) -> Optional[Any]:
         try:
             first_found = next(filter(lambda item: item.name == name, iterator))
@@ -885,7 +897,6 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
             return first_found.value
         return None
 
-    config = backend.configuration()
     coupling_map = config.coupling_map
     n_qubits = config.n_qubits
     if coupling_map is None:

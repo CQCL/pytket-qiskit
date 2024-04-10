@@ -417,7 +417,9 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         with pytest.raises(CircuitNotValidError) as errorinfo:
             handles = backend.process_circuits([c, c.copy()], n_shots=2)
-        assert "in submitted does not satisfy GateSetPredicate" in str(errorinfo.value)
+        assert "in submitted does not satisfy DirectednessPredicate" in str(
+            errorinfo.value
+        )
         c = backend.get_compiled_circuit(c)
         handles = backend.process_circuits([c, c.copy()], n_shots=4)
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
@@ -476,7 +478,8 @@ def test_nshots(
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
-        results = b.get_results(b.process_circuits([circuit] * 3, n_shots=n_shots))
+        circ_comp = b.get_compiled_circuit(circuit)
+        results = b.get_results(b.process_circuits([circ_comp] * 3, n_shots=n_shots))
         assert [sum(r.get_counts().values()) for r in results] == n_shots
 
 
@@ -1328,6 +1331,21 @@ def test_crosstalk_noise_model() -> None:
     h = aer.process_circuit(compiled_circ, n_shots=100)
     res = aer.get_result(h)
     res.get_counts()
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ecr(ibm_brisbane_backend: IBMQBackend) -> None:
+    ghz5 = Circuit(5)
+    ghz5.H(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4)
+    ghz5.measure_all()
+    ibm_ghz5 = ibm_brisbane_backend.get_compiled_circuit(ghz5)
+
+    compiled_ghz5 = ibm_brisbane_backend.get_compiled_circuit(ibm_ghz5)
+
+    ibm_brisbane_backend.valid_circuit(compiled_ghz5)
+
+    handle = ibm_brisbane_backend.process_circuit(compiled_ghz5, n_shots=1000)
+    ibm_brisbane_backend.cancel(handle)
 
 
 # helper function for testing

@@ -82,11 +82,12 @@ from pytket.predicates import (
     NoFastFeedforwardPredicate,
     MaxNQubitsPredicate,
     Predicate,
+    DirectednessPredicate,
 )
 from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.architecture import FullyConnected
+from pytket.architecture import FullyConnected, Architecture
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
@@ -346,6 +347,11 @@ class IBMQBackend(Backend):
                 )
             ),
         ]
+        if type(self.backend_info.architecture) == Architecture:
+            predicates = [
+                DirectednessPredicate(self.backend_info.architecture),
+            ] + predicates
+
         mid_measure = self._backend_info.supports_midcircuit_measurement
         fast_feedforward = self._backend_info.supports_fast_feedforward
         if not mid_measure:
@@ -451,7 +457,7 @@ class IBMQBackend(Backend):
                 CXMappingPass(
                     arch,
                     noise_aware_placement,
-                    directed_cx=False,
+                    directed_cx=True,
                     delay_measures=(not mid_measure),
                 )
             )

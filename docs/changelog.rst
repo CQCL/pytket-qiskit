@@ -5,6 +5,8 @@ Unreleased
 ----------
 
 * Add `IBMQBackend.default_compilation_pass_static` for offline compilation given config and props objects.
+* Add `DirectednessPredicate` to IBMQBackend
+* Default compilationpass of IBMQBackend will keep ECR gates in the direction required by the backend.
 
 0.51.1rc0 (April 2024)
 ----------------------

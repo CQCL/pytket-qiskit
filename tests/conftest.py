@@ -67,6 +67,15 @@ def brisbane_emulator_backend() -> IBMQEmulatorBackend:
 
 
 @pytest.fixture(scope="module")
+def ibm_kyoto_backend() -> IBMQBackend:
+    return IBMQBackend(
+        "ibm_kyoto",
+        instance="partner-cqc/internal/default",
+        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+    )
+
+
+@pytest.fixture(scope="module")
 def ibm_provider() -> IBMProvider:
     token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
 

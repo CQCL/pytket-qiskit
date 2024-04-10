@@ -250,6 +250,9 @@ class IBMQBackend(Backend):
             "GateTimes",
         ]
         arch = characterisation["Architecture"]
+        print(arch)
+        # print(characterisation["Architecture"])
+        # print(characterisation)
         # filter entries to keep
         filtered_characterisation = {
             k: v for k, v in characterisation.items() if k in characterisation_keys

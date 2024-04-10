@@ -887,12 +887,14 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
 
     config = backend.configuration()
     coupling_map = config.coupling_map
+    print(coupling_map)
+    # assert 1 == 2
     n_qubits = config.n_qubits
     if coupling_map is None:
         # Assume full connectivity
         arc: Union[FullyConnected, Architecture] = FullyConnected(n_qubits)
     else:
-        arc = Architecture(coupling_map)
+        arc = Architecture(coupling_map)        
 
     link_errors: dict = defaultdict(dict)
     node_errors: dict = defaultdict(dict)

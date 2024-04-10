@@ -31,6 +31,7 @@ from pytket.extensions.qiskit import (
     AerStateBackend,
     AerUnitaryBackend,
     IBMQEmulatorBackend,
+    IBMQBackend,
 )
 from pytket.extensions.qiskit.tket_backend import TketBackend
 from pytket.circuit import OpType
@@ -129,6 +130,27 @@ def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
 
     assert res.metadata[0]["shots"] == 10
     assert all(n in range(4) for n in res.quasi_dists[0].keys())
+
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ecr(ibm_kyoto_backend: IBMQBackend) -> None:
+    from pytket import Circuit
+    from pytket.extensions.qiskit import IBMQBackend
+
+    ghz5 = Circuit(5)
+    ghz5.H(0).CX(0,1).CX(0,2).CX(0,3).CX(0,4)
+    ghz5.measure_all()
+    ibm_backend = ibm_kyoto_backend
+    ibm_ghz5 = ibm_backend.get_compiled_circuit(ghz5)
+
+    
+
+    compiled_ghz3 = ibm_backend.get_compiled_circuit(ibm_ghz5)
+
+    ibm_backend.valid_circuit(compiled_ghz3)
+
+    handle = ibm_backend.process_circuit(compiled_ghz3, n_shots=1000)
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/272

@@ -1333,7 +1333,7 @@ def test_crosstalk_noise_model() -> None:
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ecr(ibm_kyoto_backend: IBMQBackend) -> None:
     ghz5 = Circuit(5)
-    ghz5.H(0).CX(0,1).CX(0,2).CX(0,3).CX(0,4)
+    ghz5.H(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4)
     ghz5.measure_all()
     ibm_backend = ibm_kyoto_backend
     ibm_ghz5 = ibm_backend.get_compiled_circuit(ghz5)

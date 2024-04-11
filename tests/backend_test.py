@@ -417,9 +417,7 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         with pytest.raises(CircuitNotValidError) as errorinfo:
             handles = backend.process_circuits([c, c.copy()], n_shots=2)
-        assert "in submitted does not satisfy DirectednessPredicate" in str(
-            errorinfo.value
-        )
+        assert "in submitted does not satisfy GateSetPredicate" in str(errorinfo.value)
         c = backend.get_compiled_circuit(c)
         handles = backend.process_circuits([c, c.copy()], n_shots=4)
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX

@@ -347,7 +347,7 @@ class IBMQBackend(Backend):
                 )
             ),
         ]
-        if type(self.backend_info.architecture) == Architecture:
+        if isinstance(self.backend_info.architecture, Architecture):
             predicates = [
                 DirectednessPredicate(self.backend_info.architecture),
             ] + predicates

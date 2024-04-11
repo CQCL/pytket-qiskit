@@ -348,21 +348,15 @@ class IBMQBackend(Backend):
             ),
         ]
         if isinstance(self.backend_info.architecture, Architecture):
-            predicates = [
-                DirectednessPredicate(self.backend_info.architecture),
-            ] + predicates
+            predicates.append(DirectednessPredicate(self.backend_info.architecture))
 
         mid_measure = self._backend_info.supports_midcircuit_measurement
         fast_feedforward = self._backend_info.supports_fast_feedforward
         if not mid_measure:
-            predicates = [
-                NoClassicalControlPredicate(),
-                NoMidMeasurePredicate(),
-            ] + predicates
+            predicates.append(NoClassicalControlPredicate())
+            predicates.append(NoMidMeasurePredicate())
         if not fast_feedforward:
-            predicates = [
-                NoFastFeedforwardPredicate(),
-            ] + predicates
+            predicates.append(NoFastFeedforwardPredicate())
         return predicates
 
     def default_compilation_pass(

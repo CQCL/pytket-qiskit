@@ -1,19 +1,15 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
-
-* Add `IBMQBackend.default_compilation_pass_static` for offline compilation given config and props objects.
-* Add `DirectednessPredicate` to IBMQBackend
-* Default compilation pass of IBMQBackend will keep ECR gates in the direction required by the backend.
-
-0.51.1rc0 (April 2024)
-----------------------
+0.52.0 (April 2024)
+-------------------
 
 * Update pytket version requirement to 1.26.
 * Update qiskit-aer version requirement to 0.14.
 * Update conversion to qiskit to use symengine for symbolic circuits
+* Add `IBMQBackend.default_compilation_pass_offline` for offline compilation given config and props objects.
+* Add `DirectednessPredicate` to IBMQBackend
+* Default compilation pass of IBMQBackend will keep ECR gates in the direction required by the backend.
 
 0.51.0 (March 2024)
 -------------------

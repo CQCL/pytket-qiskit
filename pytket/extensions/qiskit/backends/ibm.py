@@ -167,9 +167,12 @@ class IBMQBackend(Backend):
     :type provider: Optional[IBMProvider]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
-    :param options: A dictionary to specify qiskit API options,
-        `resilience_level` and `optimization_level`. Passed to the qiskit
-        sampler submission during process_circuit (process_circuits).
+    :param options: A customised `qiskit_ibm_runtime` `Options` instance.
+        Passed to the qiskit sampler submission during
+        `process_circuit` (`process_circuits`). If the `Options` instance is not
+        specified, both `optimization_level` and `resilience_level` are set to 0,
+        and `skip_transpilation` is set to True. These default values can be customised
+        by using the `options` keyword argument.
     :type options: Dict[str, int]
     """
 
@@ -185,7 +188,7 @@ class IBMQBackend(Backend):
         monitor: bool = True,
         provider: Optional["IBMProvider"] = None,
         token: Optional[str] = None,
-        options: Dict[str, int] = None,
+        options: Options = None,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -216,7 +219,10 @@ class IBMQBackend(Backend):
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
 
         if options is None:
-            options = {"optimization_level": 0, "resilience_level": 0}
+            options = Options()
+            options.optimization_level = 0
+            options.resilience_level = 0
+            options.transpilation.skip_transpilation = True
         self._sampler_options = options
 
         self._MACHINE_DEBUG = False
@@ -472,8 +478,7 @@ class IBMQBackend(Backend):
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
             * `options`:
-                Specify `resilience_level` and `optimization_level`
-                within a dictionary. This enables application of
+                Use a custom qiskit Options instance. This enables application of
                 error-mitigation and remote transpilation of circuits on
                 IBMQ Cloud. Values for `resilience_level` can be found
                 here: https://docs.quantum.ibm.com/run/configure-error-mitigation.
@@ -494,9 +499,10 @@ class IBMQBackend(Backend):
         postprocess = kwargs.get("postprocess", False)
         simplify_initial = kwargs.get("simplify_initial", False)
 
-        options_dict = kwargs.get("options", {})
-        if not bool(options_dict):
-            options_dict = self._sampler_options
+        options: Options = kwargs.get("options")
+        if options is None:
+            options = self._sampler_options
+        options.execution.shots = n_shots
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
@@ -531,14 +537,6 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    options = Options(
-                        optimization_level=options_dict.get("optimization_level", 0),
-                        resilience_level=options_dict.get("resilience_level", 0),
-                    )
-                    options.optimization_level = 0
-                    options.resilience_level = 0
-                    options.transpilation.skip_transpilation = True
-                    options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
                     job = sampler.run(
                         circuits=qcs,

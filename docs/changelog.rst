@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+0.53.0 (April 2024)
+-------------------
+
+* Updated pytket version requirement to 1.27.
+* Update qiskit-ibm-runtime version requirement to 0.23.
+
 0.52.0 (April 2024)
 -------------------
 

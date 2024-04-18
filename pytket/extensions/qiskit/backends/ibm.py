@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,11 +55,11 @@ from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHa
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.qiskit.qiskit_convert import (
-    process_characterisation,
+from ..qiskit_convert import (
     get_avg_characterisation,
+    process_characterisation_from_config,
 )
-from pytket.extensions.qiskit._metadata import __extension_version__
+from .._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -82,9 +82,12 @@ from pytket.predicates import (
     NoFastFeedforwardPredicate,
     MaxNQubitsPredicate,
     Predicate,
+    DirectednessPredicate,
 )
-from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.architecture import FullyConnected
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+
+from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
+from pytket.architecture import FullyConnected, Architecture
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
@@ -198,11 +201,12 @@ class IBMQBackend(Backend):
             else provider
         )
         self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
-        config = self._backend.configuration()
+        config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
-        gate_set = _tk_gate_set(self._backend)
-        self._backend_info = self._get_backend_info(self._backend)
+        gate_set = _tk_gate_set(config)
+        props: Optional[BackendProperties] = self._backend.properties()
+        self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance=instance
@@ -254,9 +258,21 @@ class IBMQBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def _get_backend_info(cls, backend: "_QiskIBMBackend") -> BackendInfo:
-        config = backend.configuration()
-        characterisation = process_characterisation(backend)
+    def _get_backend_info(
+        cls,
+        config: QasmBackendConfiguration,
+        props: Optional[BackendProperties],
+    ) -> BackendInfo:
+        """Construct a BackendInfo from data returned by the IBMQ API.
+
+        :param config: The configuration of this backend.
+        :type config: QasmBackendConfiguration
+        :param props: The measured properties of this backend (not required).
+        :type props: Optional[BackendProperties]
+        :return: Information about the backend.
+        :rtype: BackendInfo
+        """
+        characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
         characterisation_keys = [
             "t1times",
@@ -285,10 +301,10 @@ class IBMQBackend(Backend):
             hasattr(config, "supported_instructions")
             and "reset" in config.supported_instructions
         )
-        gate_set = _tk_gate_set(backend)
+        gate_set = _tk_gate_set(config)
         backend_info = BackendInfo(
             cls.__name__,
-            backend.name,
+            config.backend_name,
             __extension_version__,
             arch,
             (
@@ -325,9 +341,12 @@ class IBMQBackend(Backend):
             else:
                 provider = IBMProvider()
 
-        backend_info_list = [
-            cls._get_backend_info(backend) for backend in provider.backends()
-        ]
+        backend_info_list = []
+        for backend in provider.backends():
+            config = backend.configuration()
+            props = backend.properties()
+            backend_info_list.append(cls._get_backend_info(config, props))
+
         return backend_info_list
 
     @property
@@ -343,17 +362,16 @@ class IBMQBackend(Backend):
                 )
             ),
         ]
+        if isinstance(self.backend_info.architecture, Architecture):
+            predicates.append(DirectednessPredicate(self.backend_info.architecture))
+
         mid_measure = self._backend_info.supports_midcircuit_measurement
         fast_feedforward = self._backend_info.supports_fast_feedforward
         if not mid_measure:
-            predicates = [
-                NoClassicalControlPredicate(),
-                NoMidMeasurePredicate(),
-            ] + predicates
+            predicates.append(NoClassicalControlPredicate())
+            predicates.append(NoMidMeasurePredicate())
         if not fast_feedforward:
-            predicates = [
-                NoFastFeedforwardPredicate(),
-            ] + predicates
+            predicates.append(NoFastFeedforwardPredicate())
         return predicates
 
     def default_compilation_pass(
@@ -391,6 +409,23 @@ class IBMQBackend(Backend):
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass
         """
+        config: QasmBackendConfiguration = self._backend.configuration()
+        props: Optional[BackendProperties] = self._backend.properties()
+        return IBMQBackend.default_compilation_pass_offline(
+            config, props, optimisation_level, placement_options
+        )
+
+    @staticmethod
+    def default_compilation_pass_offline(
+        config: QasmBackendConfiguration,
+        props: Optional[BackendProperties],
+        optimisation_level: int = 2,
+        placement_options: Optional[Dict] = None,
+    ) -> BasePass:
+        backend_info = IBMQBackend._get_backend_info(config, props)
+        primitive_gates = _get_primitive_gates(_tk_gate_set(config))
+        supports_rz = OpType.Rz in primitive_gates
+
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
@@ -398,40 +433,40 @@ class IBMQBackend(Backend):
         # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._supports_rz:
+            if supports_rz:
                 # If the Rz gate is unsupported then the rebase should be skipped
                 # This prevents an error when compiling to the stabilizer backend
                 # where no TK1 replacement can be found for the rebase.
-                passlist.append(self.rebase_pass())
+                passlist.append(IBMQBackend.rebase_pass_offline(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
-        mid_measure = self._backend_info.supports_midcircuit_measurement
-        arch = self._backend_info.architecture
+        mid_measure = backend_info.supports_midcircuit_measurement
+        arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                     **placement_options,
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                 )
 
             passlist.append(
                 CXMappingPass(
                     arch,
                     noise_aware_placement,
-                    directed_cx=False,
+                    directed_cx=True,
                     delay_measures=(not mid_measure),
                 )
             )
@@ -447,8 +482,10 @@ class IBMQBackend(Backend):
                 ]
             )
 
-        if self._supports_rz:
-            passlist.extend([self.rebase_pass(), RemoveRedundancies()])
+        if supports_rz:
+            passlist.extend(
+                [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
+            )
         return SequencePass(passlist)
 
     @property
@@ -457,7 +494,11 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(self._primitive_gates)
+        return IBMQBackend.rebase_pass_offline(self._primitive_gates)
+
+    @staticmethod
+    def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
+        return auto_rebase_pass(primitive_gates)
 
     def process_circuits(
         self,

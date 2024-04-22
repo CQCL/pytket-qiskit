@@ -5,8 +5,8 @@ Unreleased
 ----------
 
 * User can pass an `Options` instance (from `qiskit-ibm-runtime`)
-via a keyword argument to both an `IBMQBackend` constructor and 
-an instance method `IBMQBackend.process_circuits`.
+  via a keyword argument to both an `IBMQBackend` constructor and 
+  an instance method `IBMQBackend.process_circuits`.
 
 0.53.0 (April 2024)
 -------------------

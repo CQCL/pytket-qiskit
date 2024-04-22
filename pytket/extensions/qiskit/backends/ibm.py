@@ -543,7 +543,6 @@ class IBMQBackend(Backend):
         options: Options = kwargs.get("options")
         if options is None:
             options = self._sampler_options
-        options.execution.shots = n_shots
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
@@ -578,6 +577,7 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
+                    options.execution.shots = n_shots
                     sampler = Sampler(session=self._session, options=options)
                     job = sampler.run(
                         circuits=qcs,

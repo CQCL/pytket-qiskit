@@ -46,7 +46,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,
     Options,
-    Sampler,
+    SamplerV2 as Sampler,
     RuntimeJob,
 )
 

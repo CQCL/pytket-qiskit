@@ -32,8 +32,6 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit_ibm_provider import IBMProvider  # type: ignore
-from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
 from qiskit.primitives import SamplerResult  # type: ignore
 
 
@@ -96,7 +94,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
 if TYPE_CHECKING:
-    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend  # type: ignore
+    from qiskit.providers.backend import BackendV1  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -125,21 +123,10 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    try:
-        if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
-        else:
-            IBMProvider()
-    except:
-        if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
-        else:
-            raise NoIBMQCredentialsError()
-    if not QiskitRuntimeService.saved_accounts():
-        if token is not None:
-            QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
+    if token is not None and not QiskitRuntimeService.saved_accounts():
+        QiskitRuntimeService.save_account(
+            channel="ibm_quantum", token=token, overwrite=True
+        )
 
 
 def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
@@ -166,8 +153,8 @@ class IBMQBackend(Backend):
     :param monitor: Use the IBM job monitor. Defaults to True.
     :type monitor: bool, optional
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-    :param provider: An IBMProvider
-    :type provider: Optional[IBMProvider]
+    :param service: A QiskitRuntimeService
+    :type service: Optional[QiskitRuntimeService]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
     :param options: A customised `qiskit_ibm_runtime` `Options` instance.
@@ -189,18 +176,18 @@ class IBMQBackend(Backend):
         backend_name: str,
         instance: Optional[str] = None,
         monitor: bool = True,
-        provider: Optional["IBMProvider"] = None,
+        service: Optional[QiskitRuntimeService] = None,
         token: Optional[str] = None,
         options: Options = None,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
-        self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
-            if provider is None
-            else provider
+        self._service = (
+            self._get_service(instance=instance, qiskit_config=self._pytket_config)
+            if service is None
+            else service
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
+        self._backend: "BackendV1" = self._service.get_backend(backend_name)
         config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -232,26 +219,15 @@ class IBMQBackend(Backend):
         self._MACHINE_DEBUG = False
 
     @staticmethod
-    def _get_provider(
+    def _get_service(
         instance: Optional[str],
         qiskit_config: Optional[QiskitConfig],
-    ) -> "IBMProvider":
+    ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
-        try:
-            if instance is not None:
-                provider = IBMProvider(instance=instance)
-            else:
-                provider = IBMProvider()
-        except IBMProviderError as err:
-            logging.warn(
-                (
-                    "Provider was not specified enough, specify hub,"
-                    "group and project correctly (check your IBMQ account)."
-                )
-            )
-            raise err
-
-        return provider
+        if instance is not None:
+            return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
+        else:
+            return QiskitRuntimeService(channel="ibm_quantum")
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -332,17 +308,16 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider: Optional["IBMProvider"] = kwargs.get("provider")
-        if provider is None:
-            if kwargs.get("instance") is not None:
-                provider = cls._get_provider(
-                    instance=kwargs.get("instance"), qiskit_config=None
-                )
+        service: Optional[QiskitRuntimeService] = kwargs.get("service")
+        if service is None:
+            instance = kwargs.get("instance")
+            if instance is not None:
+                service = cls._get_service(instance=instance, qiskit_config=None)
             else:
-                provider = IBMProvider()
+                service = QiskitRuntimeService(channel="ibm_quantum")
 
         backend_info_list = []
-        for backend in provider.backends():
+        for backend in service.backends():
             config = backend.configuration()
             props = backend.properties()
             backend_info_list.append(cls._get_backend_info(config, props))

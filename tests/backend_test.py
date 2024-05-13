@@ -30,9 +30,7 @@ from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
 
-from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import (
     Circuit,
@@ -1133,24 +1131,17 @@ def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_available_devices(ibm_provider: IBMProvider) -> None:
+def test_available_devices(qiskit_runtime_service: QiskitRuntimeService) -> None:
     backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
     assert len(backend_info_list) > 0
 
-    # Check consistency with pytket-qiskit and qiskit provider
-    assert len(backend_info_list) == len(ibm_provider.backends())
+    # Check consistency with pytket-qiskit and qiskit runtime service
+    assert len(backend_info_list) == len(qiskit_runtime_service.backends())
 
-    backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
+    backend_info_list = IBMQBackend.available_devices(service=qiskit_runtime_service)
     assert len(backend_info_list) > 0
-
-    try:
-        backend_info_list = IBMQBackend.available_devices()
-        assert len(backend_info_list) > 0
-    except IBMError as e:
-        if "Max retries exceeded" in e.message:
-            warn("`IBMQBackend.available_devices()` timed out.")
-        else:
-            assert not f"Unexpected error: {e.message}"
+    backend_info_list = IBMQBackend.available_devices()
+    assert len(backend_info_list) > 0
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)

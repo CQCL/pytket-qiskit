@@ -103,8 +103,6 @@ def test_cancel() -> None:
     assert job.status() in [JobStatus.CANCELLED, JobStatus.DONE]
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/272
-@pytest.mark.xfail(reason="Qiskit sampler not working")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
     num_qubits = 2
@@ -113,7 +111,14 @@ def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
     qc.cx(0, 1)
     qc.measure_all()
 
-    s = BackendSampler(TketBackend(brisbane_emulator_backend))
+    s = BackendSampler(
+        TketBackend(
+            brisbane_emulator_backend,
+            comp_pass=brisbane_emulator_backend.default_compilation_pass(
+                optimisation_level=0
+            ),
+        )
+    )
 
     job = s.run([qc], shots=10)
     res = job.result()

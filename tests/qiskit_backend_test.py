@@ -122,28 +122,6 @@ def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
     assert all(n in range(4) for n in res.quasi_dists[0].keys())
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/272
-@pytest.mark.xfail(reason="Qiskit sampler not working")
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_qiskit_counts_0() -> None:
-    num_qubits = 32
-    qc = QuantumCircuit(num_qubits)
-    qc.h(0)
-    qc.cx(0, 1)
-    qc.measure_all()
-
-    _service = QiskitRuntimeService(
-        channel="ibm_quantum",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-    _session = Session(service=_service, backend="ibmq_qasm_simulator")
-
-    sampler = SamplerV2(session=_session)
-    job = sampler.run([qc])
-    job.result()
-
-
 def test_architectures() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/14
     arch_list = [None, Architecture([(0, 1), (1, 2)]), FullyConnected(3)]

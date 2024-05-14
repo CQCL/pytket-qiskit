@@ -937,22 +937,6 @@ def test_aer_expanded_gates() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
-    c = Circuit(3).CX(0, 1)
-    c.add_gate(OpType.ZZPhase, 0.1, [0, 1])
-    c.add_gate(OpType.CY, [0, 1])
-    c.add_gate(OpType.CCX, [0, 1, 2])
-    c.measure_all()
-
-    assert qasm_simulator_backend.valid_circuit(c)
-
-    assert (
-        sum(qasm_simulator_backend.run_circuit(c, n_shots=10).get_counts().values())
-        == 10
-    )
-
-
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_mid_measure(brisbane_backend: IBMQBackend) -> None:
     c = Circuit(3, 3).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
     c.add_barrier([0, 1, 2])

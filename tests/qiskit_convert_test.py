@@ -802,7 +802,6 @@ def test_rebased_conversion() -> None:
     assert compare_unitaries(u1, u2)
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/24
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")
 def test_parametrized_evolution() -> None:
     operator = SparsePauliOp(["XXZ", "YXY"], coeffs=[1.0, 0.5]) * Parameter("x")

@@ -32,7 +32,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
+from qiskit.primitives import SamplerResult  # type: ignore
 
 
 # RuntimeJob has no queue_position attribute, which is referenced
@@ -614,17 +614,11 @@ class IBMQBackend(Backend):
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
-            if isinstance(res, SamplerResult):
-                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                    )
-            else:
-                assert isinstance(res, PrimitiveResult)
-                for circ_index, r in enumerate(res):
-                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                        r.data.c.get_int_counts()
-                    )
+            assert isinstance(res, SamplerResult)
+            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                )
 
         counts = self._ibm_res_cache[cache_key]  # Counter[int]
         # Convert to `OutcomeArray`:

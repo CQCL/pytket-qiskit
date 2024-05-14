@@ -32,7 +32,7 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.primitives import SamplerResult  # type: ignore
+from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
 
 
 # RuntimeJob has no queue_position attribute, which is referenced
@@ -43,8 +43,8 @@ from qiskit.result.distributions import QuasiDistribution  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,
-    Options,
-    Sampler,
+    SamplerOptions,
+    SamplerV2,
     RuntimeJob,
 )
 
@@ -157,13 +157,11 @@ class IBMQBackend(Backend):
     :type service: Optional[QiskitRuntimeService]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
-    :param options: A customised `qiskit_ibm_runtime` `Options` instance.
-        Passed to the qiskit sampler submission during
-        `process_circuit` (`process_circuits`). If the `Options` instance is not
-        specified, both `optimization_level` and `resilience_level` are set to 0,
-        and `skip_transpilation` is set to True. These default values can be customised
-        by using the `options` keyword argument.
-    :type options: Dict[str, int]
+    :param sampler_options: A customised `qiskit_ibm_runtime` `SamplerOptions` instance.
+        See the Qiskit documentation at
+        https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
+        for details and default values.
+    :type sampler_options: Optional[SamplerOptions]
     """
 
     _supports_shots = False
@@ -178,7 +176,7 @@ class IBMQBackend(Backend):
         monitor: bool = True,
         service: Optional[QiskitRuntimeService] = None,
         token: Optional[str] = None,
-        options: Options = None,
+        sampler_options: SamplerOptions = None,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -209,12 +207,9 @@ class IBMQBackend(Backend):
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
 
-        if options is None:
-            options = Options()
-            options.optimization_level = 0
-            options.resilience_level = 0
-            options.transpilation.skip_transpilation = True
-        self._sampler_options = options
+        if sampler_options is None:
+            sampler_options = SamplerOptions()
+        self._sampler_options = sampler_options
 
         self._MACHINE_DEBUG = False
 
@@ -493,13 +488,11 @@ class IBMQBackend(Backend):
                 apply the pytket ``SimplifyInitial`` pass to improve
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
-            * `options`:
-                Use a custom qiskit Options instance. This enables application of
-                error-mitigation and remote transpilation of circuits on
-                IBMQ Cloud. Values for `resilience_level` can be found
-                here: https://docs.quantum.ibm.com/run/configure-error-mitigation.
-                Values for `optimization_level` can be found here:
-                https://docs.quantum.ibm.com/run/configure-runtime-compilation
+            * `sampler_options`:
+                A customised `qiskit_ibm_runtime` `SamplerOptions` instance. See
+                the Qiskit documentation at
+                https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
+                for details and default values.
         """
         circuits = list(circuits)
 
@@ -515,9 +508,9 @@ class IBMQBackend(Backend):
         postprocess = kwargs.get("postprocess", False)
         simplify_initial = kwargs.get("simplify_initial", False)
 
-        options: Options = kwargs.get("options")
-        if options is None:
-            options = self._sampler_options
+        sampler_options: SamplerOptions = kwargs.get("sampler_options")
+        if sampler_options is None:
+            sampler_options = self._sampler_options
 
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
@@ -552,11 +545,8 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    options.execution.shots = n_shots
-                    sampler = Sampler(session=self._session, options=options)
-                    job = sampler.run(
-                        circuits=qcs,
-                    )
+                    sampler = SamplerV2(session=self._session, options=sampler_options)
+                    job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
@@ -624,10 +614,17 @@ class IBMQBackend(Backend):
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
-            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                )
+            if isinstance(res, SamplerResult):
+                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                    )
+            else:
+                assert isinstance(res, PrimitiveResult)
+                for circ_index, r in enumerate(res):
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        r.data.c.get_int_counts()
+                    )
 
         counts = self._ibm_res_cache[cache_key]  # Counter[int]
         # Convert to `OutcomeArray`:

@@ -23,7 +23,7 @@ from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService, Session, SamplerV2  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -139,8 +139,8 @@ def test_qiskit_counts_0() -> None:
     )
     _session = Session(service=_service, backend="ibmq_qasm_simulator")
 
-    sampler = Sampler(session=_session)
-    job = sampler.run(circuits=qc)
+    sampler = SamplerV2(session=_session)
+    job = sampler.run([qc])
     job.result()
 
 

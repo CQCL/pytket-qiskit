@@ -17,8 +17,8 @@ from qiskit.dagcircuit import DAGCircuit  # type: ignore
 from qiskit.providers import BackendV1  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
-from qiskit_aer.aerprovider import AerProvider  # type: ignore # type: ignore
-from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_aer.aerprovider import AerProvider  # type: ignore
+from qiskit_aer.backends import AerSimulator  # type: ignore
 
 
 from pytket.passes import BasePass
@@ -95,10 +95,8 @@ class TketAutoPass(TketPass):
         :param token: Authentication token to use the `QiskitRuntimeService`.
         :type token: Optional[str]
         """
-        if isinstance(backend._provider, AerProvider):
+        if isinstance(backend, AerSimulator):
             tk_backend = self._aer_backend_map[backend.name]()
-        elif isinstance(backend._provider, IBMProvider):
-            tk_backend = IBMQBackend(backend.name, token=token)
         else:
-            raise NotImplementedError("This backend provider is not supported.")
+            tk_backend = IBMQBackend(backend.name, token=token)
         super().__init__(tk_backend.default_compilation_pass(optimisation_level))

@@ -23,8 +23,7 @@ from typing import (
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
-
-from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 from pytket.backends import (
     Backend,
@@ -60,14 +59,14 @@ class IBMQEmulatorBackend(Backend):
         self,
         backend_name: str,
         instance: Optional[str] = None,
-        provider: Optional["IBMProvider"] = None,
+        service: Optional["QiskitRuntimeService"] = None,
         token: Optional[str] = None,
     ):
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,
             instance=instance,
-            provider=provider,
+            service=service,
             token=token,
         )
 

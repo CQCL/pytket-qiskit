@@ -15,7 +15,7 @@
 import os
 import pytest
 
-from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 from pytket.extensions.qiskit import (
     IBMQBackend,
     IBMQEmulatorBackend,
@@ -30,13 +30,12 @@ def setup_qiskit_account() -> None:
         # to enable one using the token in the env variable:
         # PYTKET_REMOTE_QISKIT_TOKEN
         # Note: The IBMQ account will only be enabled for the current session
-        try:
-            IBMProvider()
-        except:
+        if not QiskitRuntimeService.saved_accounts():
             token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
             if token:
-                IBMProvider.save_account(token, overwrite=True)
-                IBMProvider()
+                QiskitRuntimeService.save_account(
+                    channel="ibm_quantum", token=token, overwrite=True
+                )
 
 
 @pytest.fixture(scope="module")
@@ -67,14 +66,16 @@ def brisbane_emulator_backend() -> IBMQEmulatorBackend:
 
 
 @pytest.fixture(scope="module")
-def ibm_provider() -> IBMProvider:
+def qiskit_runtime_service() -> QiskitRuntimeService:
     token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
 
     try:
-        return IBMProvider(instance="ibm-q/open/main")
+        return QiskitRuntimeService(channel="ibm_quantum", instance="ibm-q/open/main")
     except:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
-        return IBMProvider(token=token, instance="ibm-q/open/main")
+        return QiskitRuntimeService(
+            channel="ibm_quantum", token=token, instance="ibm-q/open/main"
+        )
 
 
 @pytest.fixture(scope="module")

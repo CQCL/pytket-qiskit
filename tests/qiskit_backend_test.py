@@ -24,7 +24,6 @@ from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
-from qiskit_ibm_provider import IBMProvider  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -41,14 +40,6 @@ from .mock_pytket_backend import MockShotBackend
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
-
-
-@pytest.fixture
-def provider() -> Optional["IBMProvider"]:
-    if skip_remote_tests:
-        return None
-    else:
-        return IBMProvider(instance="ibm-q")
 
 
 def circuit_gen(measure: bool = False) -> QuantumCircuit:

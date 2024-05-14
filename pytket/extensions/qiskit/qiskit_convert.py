@@ -87,7 +87,7 @@ from qiskit.providers.models import BackendProperties, QasmBackendConfiguration 
 from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
-    from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
+    from qiskit.providers.backend import BackendV1  # type: ignore
     from qiskit.providers.models.backendproperties import Nduv  # type: ignore
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
@@ -860,12 +860,12 @@ def tk_to_qiskit(
     return qcirc
 
 
-def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
-    """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary
+def process_characterisation(backend: "BackendV1") -> Dict[str, Any]:
+    """Convert a :py:class:`qiskit.providers.backend.BackendV1` to a dictionary
      containing device Characteristics
 
     :param backend: A backend to be converted
-    :type backend: Backendv1
+    :type backend: BackendV1
     :return: A dictionary containing device characteristics
     :rtype: dict
     """

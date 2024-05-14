@@ -28,7 +28,7 @@ from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService, Session  # type: ignore
 
 from qiskit_aer import Aer  # type: ignore
 
@@ -934,22 +934,6 @@ def test_aer_expanded_gates() -> None:
 
     backend = AerBackend()
     assert backend.valid_circuit(c)
-
-
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
-    c = Circuit(3).CX(0, 1)
-    c.add_gate(OpType.ZZPhase, 0.1, [0, 1])
-    c.add_gate(OpType.CY, [0, 1])
-    c.add_gate(OpType.CCX, [0, 1, 2])
-    c.measure_all()
-
-    assert qasm_simulator_backend.valid_circuit(c)
-
-    assert (
-        sum(qasm_simulator_backend.run_circuit(c, n_shots=10).get_counts().values())
-        == 10
-    )
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)

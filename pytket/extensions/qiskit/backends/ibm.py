@@ -32,7 +32,9 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.primitives import SamplerResult  # type: ignore
+import numpy as np
+
+from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
 
 
 # RuntimeJob has no queue_position attribute, which is referenced
@@ -136,6 +138,12 @@ def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
         return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
     else:
         return gateset
+
+
+def _int_from_readout(readout: np.ndarray) -> int:
+    # Weird mixture of big- and little-endian here.
+    n_bytes = len(readout)
+    return sum(int(x) << (8 * (n_bytes - 1 - i)) for i, x in enumerate(readout))
 
 
 class IBMQBackend(Backend):
@@ -614,11 +622,19 @@ class IBMQBackend(Backend):
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
-            assert isinstance(res, SamplerResult)
-            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                )
+            if isinstance(res, SamplerResult):
+                # TODO Is this code still reachable?
+                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                    )
+            else:
+                assert isinstance(res, PrimitiveResult)
+                for circ_index, pub_result in enumerate(res._pub_results):
+                    readouts = pub_result.data.c.array
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        _int_from_readout(readout) for readout in readouts
+                    )
 
         counts = self._ibm_res_cache[cache_key]  # Counter[int]
         # Convert to `OutcomeArray`:

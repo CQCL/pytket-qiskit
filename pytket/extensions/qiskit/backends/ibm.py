@@ -50,7 +50,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     RuntimeJob,
 )
 
-from pytket.circuit import Circuit, OpType
+from pytket.circuit import Bit, Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -533,11 +533,14 @@ class IBMQBackend(Backend):
 
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
+                    tkc1 = tkc.copy()
+                    # Flatten bits to default register in lexicographic order:
+                    tkc1.rename_units({bit: Bit(i) for i, bit in enumerate(tkc1.bits)})
                     if postprocess:
-                        c0, ppcirc = prepare_circuit(tkc, allow_classical=False)
+                        c0, ppcirc = prepare_circuit(tkc1, allow_classical=False)
                         ppcirc_rep = ppcirc.to_dict()
                     else:
-                        c0, ppcirc_rep = tkc, None
+                        c0, ppcirc_rep = tkc1, None
                     if simplify_initial:
                         SimplifyInitial(
                             allow_classical=False, create_all_qubits=True

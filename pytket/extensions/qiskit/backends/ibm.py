@@ -32,7 +32,9 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit.primitives import SamplerResult  # type: ignore
+import numpy as np
+
+from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
 
 
 # RuntimeJob has no queue_position attribute, which is referenced
@@ -48,7 +50,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     RuntimeJob,
 )
 
-from pytket.circuit import Circuit, OpType
+from pytket.circuit import Bit, Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -136,6 +138,12 @@ def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
         return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
     else:
         return gateset
+
+
+def _int_from_readout(readout: np.ndarray) -> int:
+    # Weird mixture of big- and little-endian here.
+    n_bytes = len(readout)
+    return sum(int(x) << (8 * (n_bytes - 1 - i)) for i, x in enumerate(readout))
 
 
 class IBMQBackend(Backend):
@@ -525,11 +533,14 @@ class IBMQBackend(Backend):
 
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
+                    tkc1 = tkc.copy()
+                    # Flatten bits to default register in lexicographic order:
+                    tkc1.rename_units({bit: Bit(i) for i, bit in enumerate(tkc1.bits)})
                     if postprocess:
-                        c0, ppcirc = prepare_circuit(tkc, allow_classical=False)
+                        c0, ppcirc = prepare_circuit(tkc1, allow_classical=False)
                         ppcirc_rep = ppcirc.to_dict()
                     else:
-                        c0, ppcirc_rep = tkc, None
+                        c0, ppcirc_rep = tkc1, None
                     if simplify_initial:
                         SimplifyInitial(
                             allow_classical=False, create_all_qubits=True
@@ -614,11 +625,19 @@ class IBMQBackend(Backend):
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
-            assert isinstance(res, SamplerResult)
-            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                )
+            if isinstance(res, SamplerResult):
+                # TODO Is this code still reachable?
+                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                    )
+            else:
+                assert isinstance(res, PrimitiveResult)
+                for circ_index, pub_result in enumerate(res._pub_results):
+                    readouts = pub_result.data.c.array
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        _int_from_readout(readout) for readout in readouts
+                    )
 
         counts = self._ibm_res_cache[cache_key]  # Counter[int]
         # Convert to `OutcomeArray`:

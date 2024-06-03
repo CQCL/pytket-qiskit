@@ -810,26 +810,20 @@ def tk_to_qiskit(
             raise NotImplementedError("Qiskit registers must use a single index")
         if (qb.reg_name not in qreg_sizes) or (qb.index[0] >= qreg_sizes[qb.reg_name]):
             qreg_sizes.update({qb.reg_name: qb.index[0] + 1})
-    creg_sizes: Dict[str, int] = {}
-    for b in tkc.bits:
-        if len(b.index) != 1:
-            raise NotImplementedError("Qiskit registers must use a single index")
-        # names with underscore not supported, and _TEMP_BIT_NAME should not be needed
-        # for qiskit compatible classical control circuits
-        if b.reg_name != _TEMP_BIT_NAME and (
-            (b.reg_name not in creg_sizes) or (b.index[0] >= creg_sizes[b.reg_name])
-        ):
-            creg_sizes.update({b.reg_name: b.index[0] + 1})
+    c_regs = tkcirc.c_registers
+    if set(bit for reg in c_regs for bit in reg) != set(tkcirc.bits):
+        raise NotImplementedError("Bit registers must be singly indexed from zero")
     qregmap = {}
     for reg_name, size in qreg_sizes.items():
         qis_reg = QuantumRegister(size, reg_name)
         qregmap.update({reg_name: qis_reg})
         qcirc.add_register(qis_reg)
     cregmap = {}
-    for reg_name, size in creg_sizes.items():
-        qis_reg = ClassicalRegister(size, reg_name)
-        cregmap.update({reg_name: qis_reg})
-        qcirc.add_register(qis_reg)
+    for c_reg in c_regs:
+        if c_reg.name != _TEMP_BIT_NAME:
+            qis_reg = ClassicalRegister(c_reg.size, c_reg.name)
+            cregmap.update({c_reg.name: qis_reg})
+            qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
     range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
 

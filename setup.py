@@ -29,7 +29,7 @@ setup(
     name="pytket-qiskit",
     version=metadata["__extension_version__"],
     author="TKET development team",
-    author_email="tket-support@cambridgequantum.com",
+    author_email="tket-support@quantinuum.com",
     python_requires=">=3.10",
     project_urls={
         "Documentation": "https://tket.quantinuum.com/extensions/pytket-qiskit/index.html",
@@ -49,7 +49,6 @@ setup(
         "qiskit-algorithms ~= 0.3.0",
         "qiskit-ibm-runtime ~= 0.23.0",
         "qiskit-aer ~= 0.14.0",
-        "qiskit-ibm-provider ~= 0.10.0",
         "numpy",
     ],
     classifiers=[

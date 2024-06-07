@@ -23,8 +23,7 @@ from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
-from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService, Session, SamplerV2  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -41,14 +40,6 @@ from .mock_pytket_backend import MockShotBackend
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
-
-
-@pytest.fixture
-def provider() -> Optional["IBMProvider"]:
-    if skip_remote_tests:
-        return None
-    else:
-        return IBMProvider(instance="ibm-q")
 
 
 def circuit_gen(measure: bool = False) -> QuantumCircuit:
@@ -112,8 +103,6 @@ def test_cancel() -> None:
     assert job.status() in [JobStatus.CANCELLED, JobStatus.DONE]
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/272
-@pytest.mark.xfail(reason="Qiskit sampler not working")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
     num_qubits = 2
@@ -122,35 +111,20 @@ def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
     qc.cx(0, 1)
     qc.measure_all()
 
-    s = BackendSampler(TketBackend(brisbane_emulator_backend))
+    s = BackendSampler(
+        TketBackend(
+            brisbane_emulator_backend,
+            comp_pass=brisbane_emulator_backend.default_compilation_pass(
+                optimisation_level=0
+            ),
+        )
+    )
 
     job = s.run([qc], shots=10)
     res = job.result()
 
     assert res.metadata[0]["shots"] == 10
     assert all(n in range(4) for n in res.quasi_dists[0].keys())
-
-
-# https://github.com/CQCL/pytket-qiskit/issues/272
-@pytest.mark.xfail(reason="Qiskit sampler not working")
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_qiskit_counts_0() -> None:
-    num_qubits = 32
-    qc = QuantumCircuit(num_qubits)
-    qc.h(0)
-    qc.cx(0, 1)
-    qc.measure_all()
-
-    _service = QiskitRuntimeService(
-        channel="ibm_quantum",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
-    )
-    _session = Session(service=_service, backend="ibmq_qasm_simulator")
-
-    sampler = Sampler(session=_session)
-    job = sampler.run(circuits=qc)
-    job.result()
 
 
 def test_architectures() -> None:

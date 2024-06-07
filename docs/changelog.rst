@@ -1,6 +1,16 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* User can pass a `SamplerOptions` instance (from `qiskit-ibm-runtime`)
+  via a keyword argument to both an `IBMQBackend` constructor and 
+  an instance method `IBMQBackend.process_circuits`.
+* Remove dependency on deprecated qiskit-ibm-provider.
+* Remove support for deprecated "ibmq_qasm_simulator" backend.
+* Forbid circuits with incomplete classical registers in ``tk_to_qiskit()``.
+
 0.53.0 (April 2024)
 -------------------
 

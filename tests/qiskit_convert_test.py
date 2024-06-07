@@ -802,7 +802,6 @@ def test_rebased_conversion() -> None:
     assert compare_unitaries(u1, u2)
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/24
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")
 def test_parametrized_evolution() -> None:
     operator = SparsePauliOp(["XXZ", "YXY"], coeffs=[1.0, 0.5]) * Parameter("x")
@@ -1115,3 +1114,11 @@ def test_symbolic_param_conv() -> None:
             for i in range(len(qc_transpiled_again.parameters))
         }
     )
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/337
+def test_nonregister_bits() -> None:
+    c = Circuit(1).X(0).measure_all()
+    c.rename_units({Bit(0): Bit(1)})
+    with pytest.raises(NotImplementedError):
+        tk_to_qiskit(c)

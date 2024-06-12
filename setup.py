@@ -47,7 +47,7 @@ setup(
         "pytket ~= 1.27",
         "qiskit ~= 1.0",
         "qiskit-algorithms ~= 0.3.0",
-        "qiskit-ibm-runtime ~= 0.23.0",
+        "qiskit-ibm-runtime >= 0.23,< 0.25",
         "qiskit-aer ~= 0.14.0",
         "numpy",
     ],

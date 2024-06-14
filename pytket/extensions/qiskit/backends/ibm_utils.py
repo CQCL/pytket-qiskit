@@ -35,6 +35,13 @@ _STATUS_MAP = {
     JobStatus.VALIDATING: StatusEnum.SUBMITTED,
     JobStatus.QUEUED: StatusEnum.QUEUED,
     JobStatus.RUNNING: StatusEnum.RUNNING,
+    'CANCELLED': StatusEnum.CANCELLED,
+    'ERROR': StatusEnum.ERROR,
+    'DONE': StatusEnum.COMPLETED,
+    'INITIALIZING': StatusEnum.SUBMITTED,
+    'VALIDATING': StatusEnum.SUBMITTED,
+    'QUEUED': StatusEnum.QUEUED,
+    'RUNNING': StatusEnum.RUNNING,
 }
 
 

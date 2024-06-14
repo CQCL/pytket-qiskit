@@ -586,7 +586,7 @@ class IBMQBackend(Backend):
         jobid = cast(str, handle[0])
         job = self._service.job(jobid)
         ibmstatus = job.status()
-        return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus.value)
+        return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus)
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """

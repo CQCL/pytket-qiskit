@@ -28,13 +28,13 @@ if TYPE_CHECKING:
     from pytket.circuit import Circuit
 
 _STATUS_MAP = {
-    JobStatus.CANCELLED: StatusEnum.CANCELLED,
-    JobStatus.ERROR: StatusEnum.ERROR,
-    JobStatus.DONE: StatusEnum.COMPLETED,
-    JobStatus.INITIALIZING: StatusEnum.SUBMITTED,
-    JobStatus.VALIDATING: StatusEnum.SUBMITTED,
-    JobStatus.QUEUED: StatusEnum.QUEUED,
-    JobStatus.RUNNING: StatusEnum.RUNNING,
+    "CANCELLED": StatusEnum.CANCELLED,
+    "ERROR": StatusEnum.ERROR,
+    "DONE": StatusEnum.COMPLETED,
+    "INITIALIZING": StatusEnum.SUBMITTED,
+    "VALIDATING": StatusEnum.SUBMITTED,
+    "QUEUED": StatusEnum.QUEUED,
+    "RUNNING": StatusEnum.RUNNING,
 }
 
 

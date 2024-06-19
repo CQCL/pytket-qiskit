@@ -12,6 +12,10 @@ Unreleased
 * Forbid circuits with incomplete classical registers in ``tk_to_qiskit()``.
 * When constructing an Aer backend with a name for which more than one is
   available, emit a warning and pick the first in the list.
+* Update pytket version requirement to 1.29.
+* Update qiskit version requirement to 1.1.
+* Update qiskit-ibm-runtime version requirement to 0.24.1.
+* Update qiskit-aer version requirement to 0.14.2.
 
 0.53.0 (April 2024)
 -------------------

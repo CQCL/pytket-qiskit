@@ -10,6 +10,8 @@ Unreleased
 * Remove dependency on deprecated qiskit-ibm-provider.
 * Remove support for deprecated "ibmq_qasm_simulator" backend.
 * Forbid circuits with incomplete classical registers in ``tk_to_qiskit()``.
+* When constructing an Aer backend with a name for which more than one is
+  available, emit a warning and pick the first in the list.
 
 0.53.0 (April 2024)
 -------------------

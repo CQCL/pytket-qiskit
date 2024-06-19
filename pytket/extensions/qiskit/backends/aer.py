@@ -146,6 +146,9 @@ class _AerBaseBackend(Backend):
             self._backend_info.gate_set,
         )
 
+    def set_backend(self, backend_name: str) -> None:
+        self._qiskit_backend = Aer.get_backend(backend_name)
+
     def _arch_dependent_default_compilation_pass(
         self,
         arch: Architecture,
@@ -502,9 +505,7 @@ class AerBackend(_AerBaseBackend):
         n_qubits: int = 40,
     ):
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self.set_backend(self._qiskit_backend_name)
         self._qiskit_backend.set_options(method=simulation_method)
         gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
             self._allowed_special_gates
@@ -592,9 +593,7 @@ class AerStateBackend(_AerBaseBackend):
         n_qubits: int = 40,
     ) -> None:
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self.set_backend(self._qiskit_backend_name)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
@@ -628,9 +627,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     def __init__(self, n_qubits: int = 40) -> None:
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self.set_backend(self._qiskit_backend_name)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,

@@ -10,9 +10,10 @@ Unreleased
 * Remove dependency on deprecated qiskit-ibm-provider.
 * Remove support for deprecated "ibmq_qasm_simulator" backend.
 * Forbid circuits with incomplete classical registers in ``tk_to_qiskit()``.
-* Updated pytket version requirement to 1.28.
-* Update qiskit-ibm-runtime version requirement to 0.24.
+* Updated pytket version requirement to 1.29.
+* Update qiskit-ibm-runtime version requirement to 0.24.1.
 * Update qiskit version requirement to 1.1.
+* Update qiskit-aer version requirement to 0.14.2.
 * When constructing an Aer backend with a name for which more than one is
   available, emit a warning and pick the first in the list.
 

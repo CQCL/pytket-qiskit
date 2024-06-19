@@ -13,6 +13,8 @@ Unreleased
 * Updated pytket version requirement to 1.28.
 * Update qiskit-ibm-runtime version requirement to 0.24.
 * Update qiskit version requirement to 1.1.
+* When constructing an Aer backend with a name for which more than one is
+  available, emit a warning and pick the first in the list.
 
 0.53.0 (April 2024)
 -------------------

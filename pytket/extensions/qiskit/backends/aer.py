@@ -28,6 +28,7 @@ from typing import (
     TYPE_CHECKING,
     Set,
 )
+import warnings
 
 import numpy as np
 from qiskit import transpile  # type: ignore
@@ -93,9 +94,9 @@ def _default_q_index(q: Qubit) -> int:
 
 
 def _tket_gate_set_from_qiskit_backend(
-    qiskit_backend: "QiskitAerBackend",
+    qiskit_aer_backend: "QiskitAerBackend",
 ) -> Set[OpType]:
-    config = qiskit_backend.configuration()
+    config = qiskit_aer_backend.configuration()
     gate_set = {
         _gate_str_2_optype[gate_str]
         for gate_str in config.basis_gates
@@ -116,6 +117,23 @@ def _tket_gate_set_from_qiskit_backend(
     # special case mapping TK1 to U
     gate_set.add(OpType.TK1)
     return gate_set
+
+
+def qiskit_aer_backend(backend_name: str) -> "QiskitAerBackend":
+    """Find a qiskit backend with the given name.
+
+    If more than one backend with the given name is available, emit a warning
+    and return the first one in the list returned by `Aer.backends()`.
+    """
+    candidates = [b for b in Aer.backends() if b.name == backend_name]
+    n_candidates = len(candidates)
+    if n_candidates == 0:
+        raise ValueError(f"No backend with name '{backend_name}' is available.")
+    if n_candidates > 1:
+        warnings.warn(
+            f"More than one backend with name '{backend_name}' is available. Picking one."
+        )
+    return candidates[0]
 
 
 class _AerBaseBackend(Backend):
@@ -502,9 +520,7 @@ class AerBackend(_AerBaseBackend):
         n_qubits: int = 40,
     ):
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
         self._qiskit_backend.set_options(method=simulation_method)
         gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
             self._allowed_special_gates
@@ -592,9 +608,7 @@ class AerStateBackend(_AerBaseBackend):
         n_qubits: int = 40,
     ) -> None:
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
@@ -628,9 +642,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
     def __init__(self, n_qubits: int = 40) -> None:
         super().__init__()
-        self._qiskit_backend: "QiskitAerBackend" = Aer.get_backend(
-            self._qiskit_backend_name
-        )
+        self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,

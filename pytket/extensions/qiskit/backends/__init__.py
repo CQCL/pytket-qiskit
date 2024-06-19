@@ -14,5 +14,5 @@
 """Backends for connecting to IBM devices and simulators directly from pytket"""
 
 from .ibm import IBMQBackend, NoIBMQCredentialsError
-from .aer import AerBackend, AerStateBackend, AerUnitaryBackend
+from .aer import AerBackend, AerStateBackend, AerUnitaryBackend, qiskit_aer_backend
 from .ibmq_emulator import IBMQEmulatorBackend

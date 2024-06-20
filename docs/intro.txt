@@ -66,7 +66,7 @@ The :py:class:`AerBackend` also supports GPU simulation which can be configured 
 Access and Credentials
 ======================
 
-With the exception of the Aer simulators, accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBM account. An account can be set up here: https://quantum-computing.ibm.com/login.
+With the exception of the Aer simulators, accessing devices and simulators through the ``pytket-qiskit`` extension requires an IBM account. An account can be set up here: https://quantum.ibm.com/.
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
@@ -105,6 +105,7 @@ To see which devices you can access you can use the ``available_devices`` method
     backendinfo_list = backend.available_devices(instance=my_instance) 
     print([backend.device_name for backend in backendinfo_list])
 
+For more information see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`.
 
 
 Method 2: Saving credentials in a local pytket config file

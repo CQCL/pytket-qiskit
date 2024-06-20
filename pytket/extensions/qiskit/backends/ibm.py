@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ from typing import (
 )
 from warnings import warn
 
-from qiskit_ibm_provider import IBMProvider  # type: ignore
-from qiskit_ibm_provider.exceptions import IBMProviderError  # type: ignore
-from qiskit.primitives import SamplerResult  # type: ignore
+import numpy as np
+
+from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
 
 
 # RuntimeJob has no queue_position attribute, which is referenced
@@ -45,21 +45,21 @@ from qiskit.result.distributions import QuasiDistribution  # type: ignore
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
     Session,
-    Options,
-    Sampler,
+    SamplerOptions,
+    SamplerV2,
     RuntimeJob,
 )
 
-from pytket.circuit import Circuit, OpType
+from pytket.circuit import Bit, Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.qiskit.qiskit_convert import (
-    process_characterisation,
+from ..qiskit_convert import (
     get_avg_characterisation,
+    process_characterisation_from_config,
 )
-from pytket.extensions.qiskit._metadata import __extension_version__
+from .._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -82,9 +82,12 @@ from pytket.predicates import (
     NoFastFeedforwardPredicate,
     MaxNQubitsPredicate,
     Predicate,
+    DirectednessPredicate,
 )
-from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit, _tk_gate_set
-from pytket.architecture import FullyConnected
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+
+from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
+from pytket.architecture import FullyConnected, Architecture
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
@@ -93,7 +96,7 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
 
 if TYPE_CHECKING:
-    from qiskit_ibm_provider.ibm_backend import IBMBackend as _QiskIBMBackend  # type: ignore
+    from qiskit.providers.backend import BackendV1  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -122,21 +125,10 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
-    try:
-        if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
-        else:
-            IBMProvider()
-    except:
-        if token is not None:
-            IBMProvider.save_account(token, overwrite=True)
-            IBMProvider()
-        else:
-            raise NoIBMQCredentialsError()
-    if not QiskitRuntimeService.saved_accounts():
-        if token is not None:
-            QiskitRuntimeService.save_account(channel="ibm_quantum", token=token)
+    if token is not None and not QiskitRuntimeService.saved_accounts():
+        QiskitRuntimeService.save_account(
+            channel="ibm_quantum", token=token, overwrite=True
+        )
 
 
 def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
@@ -146,6 +138,12 @@ def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
         return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
     else:
         return gateset
+
+
+def _int_from_readout(readout: np.ndarray) -> int:
+    # Weird mixture of big- and little-endian here.
+    n_bytes = len(readout)
+    return sum(int(x) << (8 * (n_bytes - 1 - i)) for i, x in enumerate(readout))
 
 
 class IBMQBackend(Backend):
@@ -163,10 +161,15 @@ class IBMQBackend(Backend):
     :param monitor: Use the IBM job monitor. Defaults to True.
     :type monitor: bool, optional
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-    :param provider: An IBMProvider
-    :type provider: Optional[IBMProvider]
+    :param service: A QiskitRuntimeService
+    :type service: Optional[QiskitRuntimeService]
     :param token: Authentication token to use the `QiskitRuntimeService`.
     :type token: Optional[str]
+    :param sampler_options: A customised `qiskit_ibm_runtime` `SamplerOptions` instance.
+        See the Qiskit documentation at
+        https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
+        for details and default values.
+    :type sampler_options: Optional[SamplerOptions]
     """
 
     _supports_shots = False
@@ -179,22 +182,24 @@ class IBMQBackend(Backend):
         backend_name: str,
         instance: Optional[str] = None,
         monitor: bool = True,
-        provider: Optional["IBMProvider"] = None,
+        service: Optional[QiskitRuntimeService] = None,
         token: Optional[str] = None,
+        sampler_options: SamplerOptions = None,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
-        self._provider = (
-            self._get_provider(instance=instance, qiskit_config=self._pytket_config)
-            if provider is None
-            else provider
+        self._service = (
+            self._get_service(instance=instance, qiskit_config=self._pytket_config)
+            if service is None
+            else service
         )
-        self._backend: "_QiskIBMBackend" = self._provider.get_backend(backend_name)
-        config = self._backend.configuration()
+        self._backend: "BackendV1" = self._service.get_backend(backend_name)
+        config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
-        gate_set = _tk_gate_set(self._backend)
-        self._backend_info = self._get_backend_info(self._backend)
+        gate_set = _tk_gate_set(config)
+        props: Optional[BackendProperties] = self._backend.properties()
+        self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance=instance
@@ -210,38 +215,43 @@ class IBMQBackend(Backend):
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
 
+        if sampler_options is None:
+            sampler_options = SamplerOptions()
+        self._sampler_options = sampler_options
+
         self._MACHINE_DEBUG = False
 
     @staticmethod
-    def _get_provider(
+    def _get_service(
         instance: Optional[str],
         qiskit_config: Optional[QiskitConfig],
-    ) -> "IBMProvider":
+    ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
-        try:
-            if instance is not None:
-                provider = IBMProvider(instance=instance)
-            else:
-                provider = IBMProvider()
-        except IBMProviderError as err:
-            logging.warn(
-                (
-                    "Provider was not specified enough, specify hub,"
-                    "group and project correctly (check your IBMQ account)."
-                )
-            )
-            raise err
-
-        return provider
+        if instance is not None:
+            return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
+        else:
+            return QiskitRuntimeService(channel="ibm_quantum")
 
     @property
     def backend_info(self) -> BackendInfo:
         return self._backend_info
 
     @classmethod
-    def _get_backend_info(cls, backend: "_QiskIBMBackend") -> BackendInfo:
-        config = backend.configuration()
-        characterisation = process_characterisation(backend)
+    def _get_backend_info(
+        cls,
+        config: QasmBackendConfiguration,
+        props: Optional[BackendProperties],
+    ) -> BackendInfo:
+        """Construct a BackendInfo from data returned by the IBMQ API.
+
+        :param config: The configuration of this backend.
+        :type config: QasmBackendConfiguration
+        :param props: The measured properties of this backend (not required).
+        :type props: Optional[BackendProperties]
+        :return: Information about the backend.
+        :rtype: BackendInfo
+        """
+        characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
         characterisation_keys = [
             "t1times",
@@ -270,10 +280,10 @@ class IBMQBackend(Backend):
             hasattr(config, "supported_instructions")
             and "reset" in config.supported_instructions
         )
-        gate_set = _tk_gate_set(backend)
+        gate_set = _tk_gate_set(config)
         backend_info = BackendInfo(
             cls.__name__,
-            backend.name,
+            config.backend_name,
             __extension_version__,
             arch,
             (
@@ -301,18 +311,20 @@ class IBMQBackend(Backend):
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
-        provider: Optional["IBMProvider"] = kwargs.get("provider")
-        if provider is None:
-            if kwargs.get("instance") is not None:
-                provider = cls._get_provider(
-                    instance=kwargs.get("instance"), qiskit_config=None
-                )
+        service: Optional[QiskitRuntimeService] = kwargs.get("service")
+        if service is None:
+            instance = kwargs.get("instance")
+            if instance is not None:
+                service = cls._get_service(instance=instance, qiskit_config=None)
             else:
-                provider = IBMProvider()
+                service = QiskitRuntimeService(channel="ibm_quantum")
 
-        backend_info_list = [
-            cls._get_backend_info(backend) for backend in provider.backends()
-        ]
+        backend_info_list = []
+        for backend in service.backends():
+            config = backend.configuration()
+            props = backend.properties()
+            backend_info_list.append(cls._get_backend_info(config, props))
+
         return backend_info_list
 
     @property
@@ -328,17 +340,16 @@ class IBMQBackend(Backend):
                 )
             ),
         ]
+        if isinstance(self.backend_info.architecture, Architecture):
+            predicates.append(DirectednessPredicate(self.backend_info.architecture))
+
         mid_measure = self._backend_info.supports_midcircuit_measurement
         fast_feedforward = self._backend_info.supports_fast_feedforward
         if not mid_measure:
-            predicates = [
-                NoClassicalControlPredicate(),
-                NoMidMeasurePredicate(),
-            ] + predicates
+            predicates.append(NoClassicalControlPredicate())
+            predicates.append(NoMidMeasurePredicate())
         if not fast_feedforward:
-            predicates = [
-                NoFastFeedforwardPredicate(),
-            ] + predicates
+            predicates.append(NoFastFeedforwardPredicate())
         return predicates
 
     def default_compilation_pass(
@@ -376,6 +387,23 @@ class IBMQBackend(Backend):
         :return: Compilation pass guaranteeing required predicates.
         :rtype: BasePass
         """
+        config: QasmBackendConfiguration = self._backend.configuration()
+        props: Optional[BackendProperties] = self._backend.properties()
+        return IBMQBackend.default_compilation_pass_offline(
+            config, props, optimisation_level, placement_options
+        )
+
+    @staticmethod
+    def default_compilation_pass_offline(
+        config: QasmBackendConfiguration,
+        props: Optional[BackendProperties],
+        optimisation_level: int = 2,
+        placement_options: Optional[Dict] = None,
+    ) -> BasePass:
+        backend_info = IBMQBackend._get_backend_info(config, props)
+        primitive_gates = _get_primitive_gates(_tk_gate_set(config))
+        supports_rz = OpType.Rz in primitive_gates
+
         assert optimisation_level in range(3)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
@@ -383,40 +411,40 @@ class IBMQBackend(Backend):
         # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
-            if self._supports_rz:
+            if supports_rz:
                 # If the Rz gate is unsupported then the rebase should be skipped
                 # This prevents an error when compiling to the stabilizer backend
                 # where no TK1 replacement can be found for the rebase.
-                passlist.append(self.rebase_pass())
+                passlist.append(IBMQBackend.rebase_pass_offline(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
-        mid_measure = self._backend_info.supports_midcircuit_measurement
-        arch = self._backend_info.architecture
+        mid_measure = backend_info.supports_midcircuit_measurement
+        arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
             if placement_options is not None:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                     **placement_options,
                 )
             else:
                 noise_aware_placement = NoiseAwarePlacement(
                     arch,
-                    self._backend_info.averaged_node_gate_errors,  # type: ignore
-                    self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                    self._backend_info.averaged_readout_errors,  # type: ignore
+                    backend_info.averaged_node_gate_errors,  # type: ignore
+                    backend_info.averaged_edge_gate_errors,  # type: ignore
+                    backend_info.averaged_readout_errors,  # type: ignore
                 )
 
             passlist.append(
                 CXMappingPass(
                     arch,
                     noise_aware_placement,
-                    directed_cx=False,
+                    directed_cx=True,
                     delay_measures=(not mid_measure),
                 )
             )
@@ -432,8 +460,10 @@ class IBMQBackend(Backend):
                 ]
             )
 
-        if self._supports_rz:
-            passlist.extend([self.rebase_pass(), RemoveRedundancies()])
+        if supports_rz:
+            passlist.extend(
+                [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
+            )
         return SequencePass(passlist)
 
     @property
@@ -442,7 +472,11 @@ class IBMQBackend(Backend):
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(self._primitive_gates)
+        return IBMQBackend.rebase_pass_offline(self._primitive_gates)
+
+    @staticmethod
+    def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
+        return auto_rebase_pass(primitive_gates)
 
     def process_circuits(
         self,
@@ -462,7 +496,11 @@ class IBMQBackend(Backend):
                 apply the pytket ``SimplifyInitial`` pass to improve
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
-
+            * `sampler_options`:
+                A customised `qiskit_ibm_runtime` `SamplerOptions` instance. See
+                the Qiskit documentation at
+                https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
+                for details and default values.
         """
         circuits = list(circuits)
 
@@ -478,6 +516,10 @@ class IBMQBackend(Backend):
         postprocess = kwargs.get("postprocess", False)
         simplify_initial = kwargs.get("simplify_initial", False)
 
+        sampler_options: SamplerOptions = kwargs.get("sampler_options")
+        if sampler_options is None:
+            sampler_options = self._sampler_options
+
         batch_id = 0  # identify batches for debug purposes only
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             for chunk in itertools.zip_longest(
@@ -491,11 +533,14 @@ class IBMQBackend(Backend):
 
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
+                    tkc1 = tkc.copy()
+                    # Flatten bits to default register in lexicographic order:
+                    tkc1.rename_units({bit: Bit(i) for i, bit in enumerate(tkc1.bits)})
                     if postprocess:
-                        c0, ppcirc = prepare_circuit(tkc, allow_classical=False)
+                        c0, ppcirc = prepare_circuit(tkc1, allow_classical=False)
                         ppcirc_rep = ppcirc.to_dict()
                     else:
-                        c0, ppcirc_rep = tkc, None
+                        c0, ppcirc_rep = tkc1, None
                     if simplify_initial:
                         SimplifyInitial(
                             allow_classical=False, create_all_qubits=True
@@ -511,15 +556,8 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    options = Options()
-                    options.optimization_level = 0
-                    options.resilience_level = 0
-                    options.transpilation.skip_transpilation = True
-                    options.execution.shots = n_shots
-                    sampler = Sampler(session=self._session, options=options)
-                    job = sampler.run(
-                        circuits=qcs,
-                    )
+                    sampler = SamplerV2(session=self._session, options=sampler_options)
+                    job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
@@ -548,7 +586,7 @@ class IBMQBackend(Backend):
         jobid = cast(str, handle[0])
         job = self._service.job(jobid)
         ibmstatus = job.status()
-        return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus.value)
+        return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus)
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
@@ -587,10 +625,19 @@ class IBMQBackend(Backend):
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout", None))
-            for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                    {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                )
+            if isinstance(res, SamplerResult):
+                # TODO Is this code still reachable?
+                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
+                    )
+            else:
+                assert isinstance(res, PrimitiveResult)
+                for circ_index, pub_result in enumerate(res._pub_results):
+                    readouts = pub_result.data.c.array
+                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
+                        _int_from_readout(readout) for readout in readouts
+                    )
 
         counts = self._ibm_res_cache[cache_key]  # Counter[int]
         # Convert to `OutcomeArray`:

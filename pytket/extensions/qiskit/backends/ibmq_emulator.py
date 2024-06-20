@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,7 @@ from typing import (
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
-
-from qiskit_ibm_provider import IBMProvider  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 from pytket.backends import (
     Backend,
@@ -60,14 +59,14 @@ class IBMQEmulatorBackend(Backend):
         self,
         backend_name: str,
         instance: Optional[str] = None,
-        provider: Optional["IBMProvider"] = None,
+        service: Optional["QiskitRuntimeService"] = None,
         token: Optional[str] = None,
     ):
         super().__init__()
         self._ibmq = IBMQBackend(
             backend_name=backend_name,
             instance=instance,
-            provider=provider,
+            service=service,
             token=token,
         )
 

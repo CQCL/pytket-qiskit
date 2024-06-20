@@ -1,11 +1,37 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.54.0 (June 2024)
+------------------
+
+* User can pass a `SamplerOptions` instance (from `qiskit-ibm-runtime`)
+  via a keyword argument to both an `IBMQBackend` constructor and 
+  an instance method `IBMQBackend.process_circuits`.
+* Remove dependency on deprecated qiskit-ibm-provider.
+* Remove support for deprecated "ibmq_qasm_simulator" backend.
+* Forbid circuits with incomplete classical registers in ``tk_to_qiskit()``.
+* Updated pytket version requirement to 1.29.
+* Update qiskit-ibm-runtime version requirement to 0.24.1.
+* Update qiskit version requirement to 1.1.
+* Update qiskit-aer version requirement to 0.14.2.
+* When constructing an Aer backend with a name for which more than one is
+  available, emit a warning and pick the first in the list.
+
+0.53.0 (April 2024)
+-------------------
+
+* Updated pytket version requirement to 1.27.
+* Update qiskit-ibm-runtime version requirement to 0.23.
+
+0.52.0 (April 2024)
+-------------------
 
 * Update pytket version requirement to 1.26.
 * Update qiskit-aer version requirement to 0.14.
+* Update conversion to qiskit to use symengine for symbolic circuits
+* Add `IBMQBackend.default_compilation_pass_offline` for offline compilation given config and props objects.
+* Add `DirectednessPredicate` to IBMQBackend
+* Default compilation pass of IBMQBackend will keep ECR gates in the direction required by the backend.
 
 0.51.0 (March 2024)
 -------------------

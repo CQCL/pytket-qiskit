@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,11 +28,9 @@ from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, Sampler  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService, Session  # type: ignore
 
-from qiskit_ibm_provider import IBMProvider  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_ibm_provider.exceptions import IBMError  # type: ignore
 
 from pytket.circuit import (
     Circuit,
@@ -476,7 +474,8 @@ def test_nshots(
         circuit = Circuit(1).X(0)
         circuit.measure_all()
         n_shots = [1, 2, 3]
-        results = b.get_results(b.process_circuits([circuit] * 3, n_shots=n_shots))
+        circ_comp = b.get_compiled_circuit(circuit)
+        results = b.get_results(b.process_circuits([circ_comp] * 3, n_shots=n_shots))
         assert [sum(r.get_counts().values()) for r in results] == n_shots
 
 
@@ -938,22 +937,6 @@ def test_aer_expanded_gates() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_remote_simulator(qasm_simulator_backend: IBMQBackend) -> None:
-    c = Circuit(3).CX(0, 1)
-    c.add_gate(OpType.ZZPhase, 0.1, [0, 1])
-    c.add_gate(OpType.CY, [0, 1])
-    c.add_gate(OpType.CCX, [0, 1, 2])
-    c.measure_all()
-
-    assert qasm_simulator_backend.valid_circuit(c)
-
-    assert (
-        sum(qasm_simulator_backend.run_circuit(c, n_shots=10).get_counts().values())
-        == 10
-    )
-
-
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_mid_measure(brisbane_backend: IBMQBackend) -> None:
     c = Circuit(3, 3).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
     c.add_barrier([0, 1, 2])
@@ -1132,24 +1115,17 @@ def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_available_devices(ibm_provider: IBMProvider) -> None:
+def test_available_devices(qiskit_runtime_service: QiskitRuntimeService) -> None:
     backend_info_list = IBMQBackend.available_devices(instance="ibm-q/open/main")
     assert len(backend_info_list) > 0
 
-    # Check consistency with pytket-qiskit and qiskit provider
-    assert len(backend_info_list) == len(ibm_provider.backends())
+    # Check consistency with pytket-qiskit and qiskit runtime service
+    assert len(backend_info_list) == len(qiskit_runtime_service.backends())
 
-    backend_info_list = IBMQBackend.available_devices(provider=ibm_provider)
+    backend_info_list = IBMQBackend.available_devices(service=qiskit_runtime_service)
     assert len(backend_info_list) > 0
-
-    try:
-        backend_info_list = IBMQBackend.available_devices()
-        assert len(backend_info_list) > 0
-    except IBMError as e:
-        if "Max retries exceeded" in e.message:
-            warn("`IBMQBackend.available_devices()` timed out.")
-        else:
-            assert not f"Unexpected error: {e.message}"
+    backend_info_list = IBMQBackend.available_devices()
+    assert len(backend_info_list) > 0
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
@@ -1328,6 +1304,21 @@ def test_crosstalk_noise_model() -> None:
     h = aer.process_circuit(compiled_circ, n_shots=100)
     res = aer.get_result(h)
     res.get_counts()
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_ecr(ibm_brisbane_backend: IBMQBackend) -> None:
+    ghz5 = Circuit(5)
+    ghz5.H(0).CX(0, 1).CX(0, 2).CX(0, 3).CX(0, 4)
+    ghz5.measure_all()
+    ibm_ghz5 = ibm_brisbane_backend.get_compiled_circuit(ghz5)
+
+    compiled_ghz5 = ibm_brisbane_backend.get_compiled_circuit(ibm_ghz5)
+
+    ibm_brisbane_backend.valid_circuit(compiled_ghz5)
+
+    handle = ibm_brisbane_backend.process_circuit(compiled_ghz5, n_shots=1000)
+    ibm_brisbane_backend.cancel(handle)
 
 
 # helper function for testing

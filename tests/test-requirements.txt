@@ -1,4 +1,5 @@
 pytest
+pytest-timeout
 pytest-rerunfailures
 hypothesis
 requests_mock

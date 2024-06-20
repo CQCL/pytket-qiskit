@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,5 @@
 """Backends for connecting to IBM devices and simulators directly from pytket"""
 
 from .ibm import IBMQBackend, NoIBMQCredentialsError
-from .aer import AerBackend, AerStateBackend, AerUnitaryBackend
+from .aer import AerBackend, AerStateBackend, AerUnitaryBackend, qiskit_aer_backend
 from .ibmq_emulator import IBMQEmulatorBackend

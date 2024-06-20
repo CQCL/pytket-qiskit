@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ from qiskit.transpiler.passes import BasisTranslator  # type: ignore
 from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupe  # type: ignore
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
+from qiskit.circuit.library import TwoLocal
+from qiskit import transpile
 
 from pytket.circuit import (
     Circuit,
@@ -50,6 +52,7 @@ from pytket.circuit import (
     StatePreparationBox,
 )
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
+from pytket.extensions.qiskit.backends import qiskit_aer_backend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
@@ -235,7 +238,7 @@ def test_symbolic() -> None:
 
 def test_measures() -> None:
     qc = get_test_circuit(True)
-    backend = Aer.get_backend("aer_simulator")
+    backend = qiskit_aer_backend("aer_simulator")
     qc = transpile(qc, backend)
     job = backend.run([qc], seed_simulator=7)
     counts0 = job.result().get_counts(qc)
@@ -371,7 +374,7 @@ def test_tketpass() -> None:
 def test_tketautopass(brisbane_backend: IBMQBackend) -> None:
     backends = [
         Aer.get_backend("aer_simulator_statevector"),
-        Aer.get_backend("aer_simulator"),
+        qiskit_aer_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
     backends.append(brisbane_backend._backend)
@@ -556,7 +559,7 @@ def test_convert_result() -> None:
     qc.measure(qr1[0], cr[0])
     qc.measure(qr2[1], cr2[0])
 
-    simulator = Aer.get_backend("aer_simulator")
+    simulator = qiskit_aer_backend("aer_simulator")
     qisk_result = simulator.run(qc, shots=10).result()
 
     tk_res = next(qiskit_result_to_backendresult(qisk_result))
@@ -799,7 +802,6 @@ def test_rebased_conversion() -> None:
     assert compare_unitaries(u1, u2)
 
 
-# https://github.com/CQCL/pytket-qiskit/issues/24
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")
 def test_parametrized_evolution() -> None:
     operator = SparsePauliOp(["XXZ", "YXY"], coeffs=[1.0, 0.5]) * Parameter("x")
@@ -1091,3 +1093,32 @@ def test_RealAmplitudes_numeric_params() -> None:
     unitary2 = tkc2.get_unitary()
     assert compare_unitaries(qiskit_unitary, unitary1)
     assert compare_unitaries(unitary1, unitary2)
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/256
+def test_symbolic_param_conv() -> None:
+    qc = TwoLocal(1, "ry", "cz", reps=1, entanglement="linear")
+    qc_transpiled = transpile(
+        qc, basis_gates=["sx", "rz", "cx", "x"], optimization_level=3
+    )
+
+    tket_qc = qiskit_to_tk(qc_transpiled)
+    CliffordSimp().apply(tket_qc)
+    transformed_qc = tk_to_qiskit(tket_qc)
+
+    qc_transpiled_again = transpile(transformed_qc, basis_gates=["sx", "rz", "cx", "x"])
+
+    qc_transpiled_again = qc_transpiled_again.assign_parameters(
+        {
+            qc_transpiled_again.parameters[i]: 0
+            for i in range(len(qc_transpiled_again.parameters))
+        }
+    )
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/337
+def test_nonregister_bits() -> None:
+    c = Circuit(1).X(0).measure_all()
+    c.rename_units({Bit(0): Bit(1)})
+    with pytest.raises(NotImplementedError):
+        tk_to_qiskit(c)

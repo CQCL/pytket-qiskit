@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Cambridge Quantum Computing
+# Copyright 2020-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 from typing import Optional, List, Union, Any
 from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
-from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
+from qiskit.providers.backend import BackendV1  # type: ignore
 from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
 from qiskit.providers import Options  # type: ignore
 from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
@@ -41,7 +41,7 @@ def _extract_basis_gates(backend: Backend) -> List[str]:
     return []
 
 
-class TketBackend(QiskitBackend):
+class TketBackend(BackendV1):
     """Wraps a :py:class:`Backend` as a :py:class:`qiskit.providers.BaseBackend` for use
     within the Qiskit software stack.
 

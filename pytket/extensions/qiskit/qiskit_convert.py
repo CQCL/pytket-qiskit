@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ from inspect import signature
 from uuid import UUID
 
 import numpy as np
+from symengine import sympify  # type: ignore
 
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
@@ -81,15 +82,13 @@ from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
-    from qiskit.providers.backend import BackendV1 as QiskitBackend  # type: ignore
-    from qiskit.providers.models.backendproperties import (  # type: ignore
-        BackendProperties,
-        Nduv,
-    )
+    from qiskit.providers.backend import BackendV1  # type: ignore
+    from qiskit.providers.models.backendproperties import Nduv  # type: ignore
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
 
@@ -208,9 +207,8 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(backend: "QiskitBackend") -> Set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> Set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
-    config = backend.configuration()
     if config.simulator:
         gate_set = {
             _gate_str_2_optype[gate_str]
@@ -580,7 +578,7 @@ def param_to_qiskit(
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
     else:
-        return ParameterExpression(symb_map, ppi)
+        return ParameterExpression(symb_map, sympify(ppi))
 
 
 def _get_params(
@@ -724,7 +722,7 @@ order or only one bit of one register"""
 
     if optype == OpType.TK1:
         params = _get_params(op, symb_map)
-        half = ParameterExpression(symb_map, sympy.pi / 2)
+        half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
         return qcirc.append(
             qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
@@ -749,7 +747,7 @@ order or only one bit of one register"""
     if type(phase) == float:
         qcirc.global_phase += phase * np.pi
     else:
-        qcirc.global_phase += phase * sympy.pi
+        qcirc.global_phase += sympify(phase * sympy.pi)
     return qcirc.append(g, qargs=qargs)
 
 
@@ -812,26 +810,20 @@ def tk_to_qiskit(
             raise NotImplementedError("Qiskit registers must use a single index")
         if (qb.reg_name not in qreg_sizes) or (qb.index[0] >= qreg_sizes[qb.reg_name]):
             qreg_sizes.update({qb.reg_name: qb.index[0] + 1})
-    creg_sizes: Dict[str, int] = {}
-    for b in tkc.bits:
-        if len(b.index) != 1:
-            raise NotImplementedError("Qiskit registers must use a single index")
-        # names with underscore not supported, and _TEMP_BIT_NAME should not be needed
-        # for qiskit compatible classical control circuits
-        if b.reg_name != _TEMP_BIT_NAME and (
-            (b.reg_name not in creg_sizes) or (b.index[0] >= creg_sizes[b.reg_name])
-        ):
-            creg_sizes.update({b.reg_name: b.index[0] + 1})
+    c_regs = tkcirc.c_registers
+    if set(bit for reg in c_regs for bit in reg) != set(tkcirc.bits):
+        raise NotImplementedError("Bit registers must be singly indexed from zero")
     qregmap = {}
     for reg_name, size in qreg_sizes.items():
         qis_reg = QuantumRegister(size, reg_name)
         qregmap.update({reg_name: qis_reg})
         qcirc.add_register(qis_reg)
     cregmap = {}
-    for reg_name, size in creg_sizes.items():
-        qis_reg = ClassicalRegister(size, reg_name)
-        cregmap.update({reg_name: qis_reg})
-        qcirc.add_register(qis_reg)
+    for c_reg in c_regs:
+        if c_reg.name != _TEMP_BIT_NAME:
+            qis_reg = ClassicalRegister(c_reg.size, c_reg.name)
+            cregmap.update({c_reg.name: qis_reg})
+            qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
     range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
 
@@ -862,19 +854,34 @@ def tk_to_qiskit(
     return qcirc
 
 
-def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
-    """Convert a :py:class:`qiskit.providers.backend.Backendv1` to a dictionary
+def process_characterisation(backend: "BackendV1") -> Dict[str, Any]:
+    """Convert a :py:class:`qiskit.providers.backend.BackendV1` to a dictionary
      containing device Characteristics
 
     :param backend: A backend to be converted
-    :type backend: Backendv1
+    :type backend: BackendV1
+    :return: A dictionary containing device characteristics
+    :rtype: dict
+    """
+    config = backend.configuration()
+    props = backend.properties()
+    return process_characterisation_from_config(config, props)
+
+
+def process_characterisation_from_config(
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
+) -> Dict[str, Any]:
+    """Obtain a dictionary containing device Characteristics given config and props.
+
+    :param config: A IBMQ configuration object
+    :type config: QasmBackendConfiguration
+    :param properties: An optional IBMQ properties object
+    :type properties: Optional[BackendProperties]
     :return: A dictionary containing device characteristics
     :rtype: dict
     """
 
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    properties = cast("BackendProperties", backend.properties())
-
     def return_value_if_found(iterator: Iterable["Nduv"], name: str) -> Optional[Any]:
         try:
             first_found = next(filter(lambda item: item.name == name, iterator))
@@ -884,7 +891,6 @@ def process_characterisation(backend: "QiskitBackend") -> Dict[str, Any]:
             return first_found.value
         return None
 
-    config = backend.configuration()
     coupling_map = config.coupling_map
     n_qubits = config.n_qubits
     if coupling_map is None:

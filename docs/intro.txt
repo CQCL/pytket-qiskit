@@ -94,7 +94,7 @@ to disk:
 
     QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token, instance=my_instance)
 
-To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend`. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM are accessible with your credentials.
+To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend`. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
 
 ::
 

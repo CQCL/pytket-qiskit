@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.54.0 (June 2024)
+------------------
 
 * User can pass a `SamplerOptions` instance (from `qiskit-ibm-runtime`)
   via a keyword argument to both an `IBMQBackend` constructor and 

@@ -100,7 +100,7 @@ To see which devices you can access you can use the ``available_devices`` method
 
     from pytket.extensions.qiskit import IBMQBackend
 
-    backend = IBMQBackend("ibmq_nairobi") # Initialise backend for an IBM device
+    backend = IBMQBackend("ibm_kyiv") # Initialise backend for an IBM device
 
     backendinfo_list = backend.available_devices(instance=my_instance) 
     print([backend.device_name for backend in backendinfo_list])

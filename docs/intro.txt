@@ -83,7 +83,7 @@ In this section we are assuming that you have set the following variables with t
     my_instance=f"{hub}/{group}/{project}"
 
 Method 1: Using :py:class:`QiskitRuntimeService`
----------------------------------------
+------------------------------------------------
 
 You can use the following qiskit commands to save your IBM credentials
 to disk:

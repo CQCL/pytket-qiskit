@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Relax version requirements on dependencies by removing upper bounds.
+
 0.54.0 (June 2024)
 ------------------
 

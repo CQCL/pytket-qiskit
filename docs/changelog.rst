@@ -1,10 +1,11 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.54.1 (June 2024)
+------------------
 
 * Relax version requirements on dependencies by removing upper bounds.
+* Fix status reporting when running on hardware.
 
 0.54.0 (June 2024)
 ------------------

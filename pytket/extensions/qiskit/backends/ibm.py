@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import itertools
-import logging
 from ast import literal_eval
 from collections import Counter
 import json
@@ -49,17 +48,13 @@ from qiskit_ibm_runtime import (  # type: ignore
     SamplerV2,
     RuntimeJob,
 )
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
 from pytket.circuit import Bit, Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from ..qiskit_convert import (
-    get_avg_characterisation,
-    process_characterisation_from_config,
-)
-from .._metadata import __extension_version__
 from pytket.passes import (
     BasePass,
     auto_rebase_pass,
@@ -84,9 +79,7 @@ from pytket.predicates import (
     Predicate,
     DirectednessPredicate,
 )
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
 
-from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
 from pytket.architecture import FullyConnected, Architecture
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
@@ -94,6 +87,13 @@ from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
 from .ibm_utils import _STATUS_MAP, _batch_circuits
 from .config import QiskitConfig
+from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
+from ..qiskit_convert import (
+    get_avg_characterisation,
+    process_characterisation_from_config,
+)
+
+from .._metadata import __extension_version__
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1  # type: ignore

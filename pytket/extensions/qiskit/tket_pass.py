@@ -17,7 +17,6 @@ from qiskit.dagcircuit import DAGCircuit  # type: ignore
 from qiskit.providers import BackendV1  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
-from qiskit_aer.aerprovider import AerProvider  # type: ignore
 from qiskit_aer.backends import AerSimulator  # type: ignore
 
 

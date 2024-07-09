@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import Optional, Any
+from typing import Any
 
 import numpy as np
 import pytest
@@ -23,7 +23,6 @@ from qiskit.primitives import BackendSampler  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_algorithms import Grover, AmplificationProblem, AlgorithmError  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session, SamplerV2  # type: ignore
 
 from pytket.extensions.qiskit import (
     AerBackend,

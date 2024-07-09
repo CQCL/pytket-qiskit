@@ -131,7 +131,8 @@ def qiskit_aer_backend(backend_name: str) -> "QiskitAerBackend":
         raise ValueError(f"No backend with name '{backend_name}' is available.")
     if n_candidates > 1:
         warnings.warn(
-            f"More than one backend with name '{backend_name}' is available. Picking one."
+            f"More than one backend with name '{backend_name}' \
+is available. Picking one."
         )
     return candidates[0]
 

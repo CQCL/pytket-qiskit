@@ -63,6 +63,8 @@ from qiskit.circuit.library import (
     UnitaryGate,
     Initialize,
 )
+from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+
 from pytket.circuit import (
     CircBox,
     Circuit,
@@ -82,8 +84,6 @@ from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
-
 from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:

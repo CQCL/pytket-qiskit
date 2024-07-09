@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-0.55.0
-------
+0.55.0 (unreleased)
+-------------------
 
 * Updated pytket version requirement to 1.30.0rc0.
 

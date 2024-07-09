@@ -44,7 +44,7 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket >= 1.29",
+        "pytket >= 1.30.0rc0",
         "qiskit >= 1.1",
         "qiskit-algorithms >= 0.3.0",
         "qiskit-ibm-runtime >= 0.24.1",

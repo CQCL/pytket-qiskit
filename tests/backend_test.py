@@ -15,7 +15,6 @@ import json
 import os
 from collections import Counter
 from typing import Dict, cast
-from warnings import warn
 import math
 import cmath
 from hypothesis import given, strategies
@@ -28,7 +27,7 @@ from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService, Session  # type: ignore
+from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 from qiskit_aer import Aer  # type: ignore
 

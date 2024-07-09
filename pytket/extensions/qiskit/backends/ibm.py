@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import itertools
-import logging
 from ast import literal_eval
 from collections import Counter
 import json

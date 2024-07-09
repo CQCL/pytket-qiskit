@@ -95,6 +95,7 @@ from ..qiskit_convert import (
 )
 
 from .._metadata import __extension_version__
+
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1  # type: ignore
 

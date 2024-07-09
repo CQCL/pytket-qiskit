@@ -564,11 +564,11 @@ def param_to_tk(p: Union[float, ParameterExpression]) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         symexpr = p._symbol_expr
         try:
-            return symexpr._sympy_() / sympy.pi
+            return symexpr._sympy_() / sympy.pi  # type: ignore
         except AttributeError:
-            return symexpr / sympy.pi
+            return symexpr / sympy.pi  # type: ignore
     else:
-        return p / sympy.pi
+        return p / sympy.pi  # type: ignore
 
 
 def param_to_qiskit(
@@ -584,7 +584,7 @@ def param_to_qiskit(
 def _get_params(
     op: Op, symb_map: Dict[Parameter, sympy.Symbol]
 ) -> List[Union[float, ParameterExpression]]:
-    return [param_to_qiskit(p, symb_map) for p in op.params]
+    return [param_to_qiskit(p, symb_map) for p in op.params]  # type: ignore
 
 
 def append_tk_command_to_qiskit(
@@ -706,7 +706,7 @@ order or only one bit of one register"""
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
-        alpha = param_to_qiskit(op.params[0], symb_map)
+        alpha = param_to_qiskit(op.params[0], symb_map)  # type: ignore
         assert len(qargs) >= 2
         if len(qargs) == 2:
             # presumably more efficient; single control only
@@ -834,7 +834,7 @@ def tk_to_qiskit(
         append_tk_command_to_qiskit(
             command.op, command.args, qcirc, qregmap, cregmap, symb_map, range_preds
         )
-    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)
+    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)  # type: ignore
 
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()

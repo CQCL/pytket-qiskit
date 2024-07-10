@@ -1,11 +1,17 @@
 # pytket-qiskit
 
+[![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://tketusers.slack.com/join/shared_invite/zt-18qmsamj9-UqQFVdkRzxnXCcKtcarLRA#)
+[![Stack Exchange](https://img.shields.io/badge/StackExchange-%23ffffff.svg?style=for-the-badge&logo=StackExchange)](https://quantumcomputing.stackexchange.com/tags/pytket)
+
 [Pytket](https://tket.quantinuum.com/api-docs/index.html) is a python module for interfacing
 with tket, a quantum computing toolkit and optimising compiler developed by Quantinuum.
 
 `pytket-qiskit` is an extension to `pytket` that allows `pytket` circuits to be
 run on IBM backends and simulators, as well as conversion to and from Qiskit
 representations.
+
+Some useful links:
+- [API Documentation](https://tket.quantinuum.com/extensions/pytket-qiskit/)
 
 ## Getting started
 

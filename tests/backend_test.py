@@ -1430,3 +1430,21 @@ def test_ibmq_local_emulator(
     counts = r.get_counts()
     # Most results should be (0,0) or (1,1):
     assert sum(c0 != c1 for c0, c1 in counts) < 25
+
+
+def text_mc_gate_on_aer() -> None:
+    """Test for cm gates support in aer simulators
+    https://github.com/CQCL/pytket-qiskit/issues/368"""
+    for b in [AerBackend(), AerStateBackend(), AerUnitaryBackend()]:
+        for i in range(3):
+            circ = Circuit(4)
+            circ.add_gate(OpType.CnX, range(4))
+            circ.add_gate(OpType.CnY, range(4))
+            circ.add_gate(OpType.CnZ, range(4))
+            circ.add_gate(OpType.CnRy, 0.5, range(4))
+            unitary_before = circ.get_unitary()
+            compilation_pass = b.default_compilation_pass(i)
+            compilation_pass.apply(circ)
+            unitary_after = circ.get_unitary()
+            assert compare_unitaries(unitary_before, unitary_after)
+            b.run_circuit(circ, n_shots=10)

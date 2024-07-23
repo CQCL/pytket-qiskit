@@ -700,13 +700,11 @@ order or only one bit of one register"""
     if optype == OpType.CnX:
         return qcirc.mcx(qargs[:-1], qargs[-1])
     if optype == OpType.CnY:
-        qcirc.s(qargs[-1])
-        qcirc.mcx(qargs[:-1], qargs[-1])
-        return qcirc.sdg(qargs[-1])
+        return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnZ:
-        qcirc.h(qargs[-1])
-        qcirc.mcx(qargs[:-1], qargs[-1])
-        return qcirc.h(qargs[-1])
+        new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
+        new_gate.name = "mcz"
+        return qcirc.append(new_gate, qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1

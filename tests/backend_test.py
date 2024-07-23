@@ -1432,7 +1432,7 @@ def test_ibmq_local_emulator(
     assert sum(c0 != c1 for c0, c1 in counts) < 25
 
 
-def text_mc_gate_on_aer() -> None:
+def test_mc_gate_on_aer() -> None:
     """Test for cm gates support in aer simulators
     https://github.com/CQCL/pytket-qiskit/issues/368"""
     for b in [AerBackend(), AerStateBackend(), AerUnitaryBackend()]:

@@ -472,9 +472,7 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
             elif type(instr) == UnitaryGate:
                 assert len(cargs) == 0
-                add_qiskit_unitary_to_tkc(
-                    self.tkc, instr, qubits, condition_kwargs
-                )
+                add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
             elif optype == OpType.CircBox:

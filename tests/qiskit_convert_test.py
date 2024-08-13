@@ -855,6 +855,17 @@ def test_qcontrolbox_conversion() -> None:
     assert tkc2.n_gates_of_type(OpType.QControlBox) == 3
 
 
+def test_controlled_unitary_conversion() -> None:
+    u = np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+    qc = QuantumCircuit(4)
+    cu_gate = UnitaryGate(u).control(num_ctrl_qubits=2, ctrl_state="01")
+    qc.append(cu_gate, [0, 1, 2, 3])
+    u_qc = permute_rows_cols_in_unitary(Operator(qc).data, (3, 2, 1, 0))
+    tkc = qiskit_to_tk(qc)
+    u_tkc = tkc.get_unitary()
+    assert np.allclose(u_qc, u_tkc)
+
+
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates
 def test_tk_to_qiskit_redundancies() -> None:
     h_circ = Circuit(1).H(0).H(0)

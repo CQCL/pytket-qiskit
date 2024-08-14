@@ -510,8 +510,11 @@ class CircuitBuilder:
 
 
 def add_qiskit_unitary_to_tkc(
-    tkc: Circuit, u_gate: UnitaryGate, qubits, condition_kwargs
-):
+    tkc: Circuit,
+    u_gate: UnitaryGate,
+    qubits: List[Qubit],
+    condition_kwargs: Dict[str, Any],
+) -> None:
     # Note reversal of qubits, to account for endianness (pytket unitaries
     # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
     params = u_gate.params

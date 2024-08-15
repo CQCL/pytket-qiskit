@@ -660,6 +660,34 @@ class AerUnitaryBackend(_AerBaseBackend):
         ]
 
 
+class AerDensityMatrixBackend(_AerBaseBackend):
+    _supports_density_matrix = True
+    _memory = False
+    _noise_model = None
+    _needs_transpile = True
+    _supports_expectation = True
+
+    _qiskit_backend_name = "aer_simulator_density_matrix"
+
+    def __init__(self, n_qubits: int = 40) -> None:
+        super().__init__()
+        self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
+        self._backend_info = BackendInfo(
+            name=type(self).__name__,
+            device_name=self._qiskit_backend_name,
+            version=__extension_version__,
+            architecture=FullyConnected(n_qubits),
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
+            supports_midcircuit_measurement=True,  # is this correct?
+            misc={"characterisation": None},
+        )
+        self._required_predicates = [
+            NoClassicalControlPredicate(),
+            NoFastFeedforwardPredicate(),
+            GateSetPredicate(self._backend_info.gate_set),
+        ]
+
+
 def _process_noise_model(
     noise_model: NoiseModel, gate_set: Set[OpType]
 ) -> NoiseModelCharacterisation:

@@ -32,6 +32,7 @@ Available IBM Backends
     AerBackend
     AerStateBackend
     AerUnitaryBackend
+    AerDensityMatrixBackend
 
 
 An example using the shots-based :py:class:`AerBackend` simulator is shown below. 

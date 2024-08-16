@@ -35,7 +35,7 @@ from uuid import UUID
 
 import numpy as np
 from symengine import sympify  # type: ignore
-from symengine.lib import symengine_wrapper
+from symengine.lib import symengine_wrapper  # type: ignore
 
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore

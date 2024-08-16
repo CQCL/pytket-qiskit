@@ -35,6 +35,7 @@ from uuid import UUID
 
 import numpy as np
 from symengine import sympify  # type: ignore
+from symengine.lib import symengine_wrapper  # type: ignore
 
 import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
@@ -846,7 +847,9 @@ def tk_to_qiskit(
             # See Parameter.__init__() in qiskit/circuit/parameter.py.
             new_p = Parameter(p_name)
             new_p._uuid = uuid
-            new_p._parameter_keys = frozenset(((p_name, uuid),))
+            new_p._parameter_keys = frozenset(
+                ((symengine_wrapper.Symbol(p_name), uuid),)
+            )
             new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)

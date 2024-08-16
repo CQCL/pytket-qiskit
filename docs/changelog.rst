@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Fix conversion of symbols into qiskit.
+* Require qiskit >= 1.2.0.
 
 0.55.0 (July 2024)
 ------------------

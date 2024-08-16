@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Fix conversion of symbols into qiskit.
+
 0.55.0 (July 2024)
 ------------------
 

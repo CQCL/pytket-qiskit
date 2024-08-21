@@ -33,7 +33,7 @@ from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
 from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
-from qiskit_ibm_runtime.fake_provider import FakeGuadalupe  # type: ignore
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.circuit.library import TwoLocal
 from qiskit import transpile
@@ -88,7 +88,7 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
 def test_parameterised_circuit_global_phase() -> None:
     pass_1 = BasisTranslator(
         StandardEquivalenceLibrary,
-        target_basis=FakeGuadalupe().configuration().basis_gates,
+        target_basis=FakeGuadalupeV2().configuration().basis_gates,
     )
     pass_2 = CliffordSimp()
 

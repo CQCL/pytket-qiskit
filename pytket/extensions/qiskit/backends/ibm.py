@@ -193,7 +193,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: "BackendV1" = self._service.get_backend(backend_name)
+        self._backend: "BackendV1" = self._service.backend(backend_name)
         config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 

@@ -57,7 +57,7 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.passes import (
     BasePass,
-    auto_rebase_pass,
+    AutoRebase,
     KAKDecomposition,
     RemoveRedundancies,
     SequencePass,
@@ -476,7 +476,7 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
-        return auto_rebase_pass(primitive_gates)
+        return AutoRebase(primitive_gates)
 
     def process_circuits(
         self,

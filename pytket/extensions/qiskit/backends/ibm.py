@@ -556,7 +556,7 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    sampler = SamplerV2(session=self._session, options=sampler_options)
+                    sampler = SamplerV2(mode=self._session, options=sampler_options)
                     job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):

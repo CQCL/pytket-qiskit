@@ -341,7 +341,8 @@ class CircuitBuilder:
         self, circuit: QuantumCircuit, data: Optional["QuantumCircuitData"] = None
     ) -> None:
         data = data or circuit.data
-        for instr, qargs, cargs in data:
+        for datum in data:
+            instr, qargs, cargs = datum.operation, datum.qubits, datum.clbits
             condition_kwargs = {}
             if instr.condition is not None:
                 if type(instr.condition[0]) == ClassicalRegister:

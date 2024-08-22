@@ -107,7 +107,7 @@ def qiskit_experimentresult_to_backendresult(
             for index in range(size):
                 q_bits.append(Qubit(name, index))
 
-    shots, counts, state, unitary = (None,) * 4
+    shots, counts, state, unitary, density_matrix = (None,) * 5
     datadict = result.data.to_dict()
     if _result_is_empty_shots(result):
         n_bits = len(c_bits) if c_bits else 0
@@ -133,6 +133,9 @@ def qiskit_experimentresult_to_backendresult(
         if "unitary" in datadict:
             unitary = datadict["unitary"].reverse_qargs().data
 
+        if "density_matrix" in datadict:
+            density_matrix = datadict["density_matrix"].reverse_qargs().data
+
     return BackendResult(
         c_bits=c_bits,
         q_bits=q_bits,
@@ -140,6 +143,7 @@ def qiskit_experimentresult_to_backendresult(
         counts=counts,
         state=state,
         unitary=unitary,
+        density_matrix=density_matrix,
         ppcirc=ppcirc,
     )
 

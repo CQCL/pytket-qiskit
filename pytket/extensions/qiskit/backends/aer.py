@@ -304,6 +304,8 @@ class _AerBaseBackend(Backend):
                     qc.save_state()
                 elif self.supports_unitary:
                     qc.save_unitary()
+                elif self.supports_density_matrix:
+                    qc.save_state()
                 qcs.append(qc)
                 tkc_qubits_count.append(c0.n_qubits)
                 ppcirc_strs.append(json.dumps(ppcirc_rep))
@@ -662,6 +664,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
 class AerDensityMatrixBackend(_AerBaseBackend):
     _supports_density_matrix = True
+    _supports_state = False
     _memory = False
     _noise_model = None
     _needs_transpile = True
@@ -669,21 +672,22 @@ class AerDensityMatrixBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_density_matrix"
 
-    def __init__(self, n_qubits: int = 40) -> None:
+    def __init__(
+        self, n_qubits: int = 40, noise_model: Optional[NoiseModel] = None
+    ) -> None:
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
+        self._noise_model = noise_model
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
             architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
-            supports_midcircuit_measurement=True,  # is this correct?
+            supports_midcircuit_measurement=True,
             misc={"characterisation": None},
         )
         self._required_predicates = [
-            NoClassicalControlPredicate(),
-            NoFastFeedforwardPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
         ]
 

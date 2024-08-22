@@ -51,7 +51,7 @@ from pytket.passes import (
     FullPeepholeOptimise,
     SequencePass,
     SynthesiseTket,
-    auto_rebase_pass,
+    AutoRebase,
     NaivePlacementPass,
 )
 from pytket.pauli import Pauli, QubitPauliString
@@ -161,7 +161,7 @@ class _AerBaseBackend(Backend):
         return self._backend_info
 
     def rebase_pass(self) -> BasePass:
-        return auto_rebase_pass(
+        return AutoRebase(
             self._backend_info.gate_set,
         )
 

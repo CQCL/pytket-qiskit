@@ -57,7 +57,7 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.passes import (
     BasePass,
-    auto_rebase_pass,
+    AutoRebase,
     KAKDecomposition,
     RemoveRedundancies,
     SequencePass,
@@ -193,7 +193,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: "BackendV1" = self._service.get_backend(backend_name)
+        self._backend: "BackendV1" = self._service.backend(backend_name)
         config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -204,7 +204,7 @@ class IBMQBackend(Backend):
         self._service = QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance=instance
         )
-        self._session = Session(service=self._service, backend=backend_name)
+        self._session = Session(backend=self._backend)
 
         self._primitive_gates = _get_primitive_gates(gate_set)
 
@@ -476,7 +476,7 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
-        return auto_rebase_pass(primitive_gates)
+        return AutoRebase(primitive_gates)
 
     def process_circuits(
         self,
@@ -556,7 +556,7 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
-                    sampler = SamplerV2(session=self._session, options=sampler_options)
+                    sampler = SamplerV2(mode=self._session, options=sampler_options)
                     job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):

@@ -1,6 +1,13 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Fix conversion of symbols into qiskit.
+* Require qiskit >= 1.2.0.
+* Add conversion of controlled unitary gates from qiskit to tket.
+
 0.55.0 (July 2024)
 ------------------
 

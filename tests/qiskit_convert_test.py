@@ -33,7 +33,7 @@ from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
 from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
-from qiskit_ibm_runtime.fake_provider import FakeGuadalupe  # type: ignore
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.circuit.library import TwoLocal
 from qiskit import transpile
@@ -88,7 +88,7 @@ def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
 def test_parameterised_circuit_global_phase() -> None:
     pass_1 = BasisTranslator(
         StandardEquivalenceLibrary,
-        target_basis=FakeGuadalupe().configuration().basis_gates,
+        target_basis=FakeGuadalupeV2().configuration().basis_gates,
     )
     pass_2 = CliffordSimp()
 
@@ -853,6 +853,17 @@ def test_qcontrolbox_conversion() -> None:
     tkc2 = qiskit_to_tk(qc2)
     assert tkc2.n_gates == 3
     assert tkc2.n_gates_of_type(OpType.QControlBox) == 3
+
+
+def test_controlled_unitary_conversion() -> None:
+    u = np.asarray([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+    qc = QuantumCircuit(4)
+    cu_gate = UnitaryGate(u).control(num_ctrl_qubits=2, ctrl_state="01")
+    qc.append(cu_gate, [0, 1, 2, 3])
+    u_qc = permute_rows_cols_in_unitary(Operator(qc).data, (3, 2, 1, 0))
+    tkc = qiskit_to_tk(qc)
+    u_tkc = tkc.get_unitary()
+    assert np.allclose(u_qc, u_tkc)
 
 
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates

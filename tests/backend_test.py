@@ -61,6 +61,7 @@ from pytket.extensions.qiskit import (
     AerStateBackend,
     AerUnitaryBackend,
     IBMQEmulatorBackend,
+    AerDensityMatrixBackend,
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
@@ -1430,3 +1431,35 @@ def test_ibmq_local_emulator(
     counts = r.get_counts()
     # Most results should be (0,0) or (1,1):
     assert sum(c0 != c1 for c0, c1 in counts) < 25
+
+
+def test_noiseless_density_matrix_simulation() -> None:
+    density_matrix_backend = AerDensityMatrixBackend()
+    assert density_matrix_backend.supports_density_matrix == True
+
+    circ1 = Circuit(3).X(0).X(1).CCX(0, 1, 2)
+
+    output_state = np.array([0] * 7 + [1])
+
+    result1 = density_matrix_backend.run_circuit(circ1)
+
+    assert result1.get_density_matrix().shape == (8, 8)
+    assert np.allclose(
+        result1.get_density_matrix(), np.outer(output_state, output_state.conj())
+    )
+    # Example with resets and conditional gates. Deterministic if input is a basis state
+    circ2 = Circuit(3, 1)
+    circ2.CCX(*range(3))
+    circ2.U1(1 / 4, 2)
+    circ2.H(2)
+    circ2.Measure(2, 0)
+    circ2.CZ(0, 1, condition_bits=[0], condition_value=1)
+    circ2.add_gate(OpType.Reset, [2])
+
+    result2 = density_matrix_backend.run_circuit(circ2)
+    assert result1.get_density_matrix().shape == (8, 8)
+    state_backend = AerStateBackend()
+    statevector = state_backend.run_circuit(circ2).get_state()
+    assert np.allclose(
+        result2.get_density_matrix(), np.outer(statevector, statevector.conj())
+    )

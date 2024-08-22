@@ -31,11 +31,6 @@ API documentation
     :inherited-members:
     :members:
 
-.. autoclass:: pytket.extensions.qiskit.AerDensityMatrixBackend
-    :special-members: __init__
-    :inherited-members:
-    :members:
-
 .. automodule:: pytket.extensions.qiskit
     :members: qiskit_to_tk, tk_to_qiskit, process_characterisation
 

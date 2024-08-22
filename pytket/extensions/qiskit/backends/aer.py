@@ -663,6 +663,13 @@ class AerUnitaryBackend(_AerBaseBackend):
 
 
 class AerDensityMatrixBackend(_AerBaseBackend):
+    """
+    Backend for running simulations on the Qiskit Aer density matrix simulator.
+
+    :param noise_model: Noise model to apply during simulation. Defaults to None.
+    :param n_qubits: The maximum number of qubits supported by the backend.
+    """
+
     _supports_density_matrix = True
     _supports_state = False
     _memory = False

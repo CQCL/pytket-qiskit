@@ -265,32 +265,33 @@ def _string_to_circuit(
 
     # We iterate through the string in reverse to add the
     # gates in the correct order (endian-ness).
-    for count, char in enumerate(reversed(circuit_string)):
-        if char == "0":
-            pass
-        elif char == "1":
-            circ.X(count)
-        elif char == "+":
-            circ.H(count)
-        elif char == "-":
-            circ.X(count)
-            circ.H(count)
-        elif char == "r":
-            circ.H(count)
-            circ.S(count)
-        elif char == "l":
-            circ.H(count)
-            circ.Sdg(count)
-        else:
-            raise ValueError(
-                f"Cannot parse string for character {char}. "
-                + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
-            )
+    for qubit_index, character in enumerate(reversed(circuit_string)):
+        match character:
+            case "0":
+                pass
+            case "1":
+                circ.X(qubit_index)
+            case "+":
+                circ.H(qubit_index)
+            case "-":
+                circ.X(qubit_index)
+                circ.H(qubit_index)
+            case "r":
+                circ.H(qubit_index)
+                circ.S(qubit_index)
+            case "l":
+                circ.H(qubit_index)
+                circ.Sdg(qubit_index)
+            case _:
+                raise ValueError(
+                    f"Cannot parse string for character {character}. "
+                    + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
+                )
 
     return circ
 
 
-def get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
+def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     if c_gate.base_class in _known_qiskit_gate:
         # First we check if the gate is in _known_qiskit_gate
         # this avoids CZ being converted to CnZ
@@ -443,7 +444,7 @@ class CircuitBuilder:
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if isinstance(instr, ControlledGate):
-                optype = get_controlled_tket_optype(instr)
+                optype = _get_controlled_tket_optype(instr)
             elif type(instr) in (PauliEvolutionGate, UnitaryGate):
                 pass  # Special handling below
             else:

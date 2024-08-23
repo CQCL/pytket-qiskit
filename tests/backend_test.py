@@ -1433,6 +1433,7 @@ def test_ibmq_local_emulator(
     assert sum(c0 != c1 for c0, c1 in counts) < 25
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/231
 def test_noiseless_density_matrix_simulation() -> None:
     density_matrix_backend = AerDensityMatrixBackend()
     assert density_matrix_backend.supports_density_matrix == True
@@ -1463,3 +1464,24 @@ def test_noiseless_density_matrix_simulation() -> None:
     assert np.allclose(
         result2.get_density_matrix(), np.outer(statevector, statevector.conj())
     )
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/231
+def test_noisy_density_matrix_simulation() -> None:
+
+    noise_model = NoiseModel()
+    noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [0, 1])
+    noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [1, 2])
+
+    noisy_density_sim = AerDensityMatrixBackend(noise_model)
+
+    circ = Circuit(3)
+    circ.X(0)
+    circ.X(1)
+    circ.SX(1)
+    circ.CZ(0, 1)
+    circ.CZ(1, 2)
+    assert noisy_density_sim.valid_circuit(circ)
+
+    result = noisy_density_sim.run_circuit(circ)
+    assert result.get_density_matrix().shape == (8, 8)

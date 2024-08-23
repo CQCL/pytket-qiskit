@@ -1476,7 +1476,6 @@ def test_noisy_density_matrix_simulation() -> None:
     noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [1, 2])
 
     noisy_density_sim = AerDensityMatrixBackend(noise_model)
-    print(noisy_density_sim.backend_info)
 
     circ = Circuit(3)
     circ.X(0)

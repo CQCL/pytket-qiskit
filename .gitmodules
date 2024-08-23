@@ -1,0 +1,4 @@
+[submodule "pytket-docs-theming"]
+	path = pytket-docs-theming
+	url = git@github.com:CalMacCQ/pytket-docs-theming.git
+	branch = main

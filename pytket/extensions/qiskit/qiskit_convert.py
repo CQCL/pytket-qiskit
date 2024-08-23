@@ -302,15 +302,15 @@ def _add_statepreparation_circuit(
         )
         tkc.add_circuit(circuit, qubits)
 
-    elif len(instr.params) != 1:
-        amplitude_list = instr.params
+    if len(instr.params) != 1:
+        amplitude_list: list[complex] = instr.params
         if isinstance(instr, Initialize):
             pytket_state_prep_box = StatePreparationBox(
-                amplitude_list, with_initial_reset=True  # type: ignore
+                amplitude_list, with_initial_reset=True
             )
         else:
             pytket_state_prep_box = StatePreparationBox(
-                amplitude_list, with_initial_reset=False  # type: ignore
+                amplitude_list, with_initial_reset=False
             )
         # Need to reverse qubits here (endian-ness)
         reversed_qubits = list(reversed(qubits))

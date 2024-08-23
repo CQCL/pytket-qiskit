@@ -290,6 +290,42 @@ def _string_to_circuit(
     return circ
 
 
+def _add_statepreparation_circuit(
+    tkc: Circuit, qubits: List[Qubit], instr: Instruction
+) -> None:
+    # Check how Initialize or StatePrep is constructed
+    if isinstance(instr.params[0], str):
+        # Parse string to get the right single qubit gates
+        circuit_string = "".join(instr.params)
+        circuit = _string_to_circuit(
+            circuit_string, instr.num_qubits, qiskit_instruction=instr
+        )
+        tkc.add_circuit(circuit, qubits)
+
+    elif len(instr.params) != 1:
+        amplitude_list = instr.params
+        if isinstance(instr, Initialize):
+            pytket_state_prep_box = StatePreparationBox(
+                amplitude_list, with_initial_reset=True  # type: ignore
+            )
+        else:
+            pytket_state_prep_box = StatePreparationBox(
+                amplitude_list, with_initial_reset=False  # type: ignore
+            )
+        # Need to reverse qubits here (endian-ness)
+        reversed_qubits = list(reversed(qubits))
+        tkc.add_gate(pytket_state_prep_box, reversed_qubits)
+
+    elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
+        # convert int to a binary string and apply X for |1>
+        integer_parameter = int(instr.params[0].real)
+        bit_string = bin(integer_parameter)[2:]
+        circuit = _string_to_circuit(
+            bit_string, instr.num_qubits, qiskit_instruction=instr
+        )
+        tkc.add_circuit(circuit, qubits)
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -399,7 +435,7 @@ class CircuitBuilder:
                             f"qiskit ControlledGate with base gate {instr.base_gate}"
                             + "not implemented."
                         )
-            elif type(instr) in [PauliEvolutionGate, UnitaryGate]:
+            elif type(instr) in (PauliEvolutionGate, UnitaryGate):
                 pass  # Special handling below
             else:
                 try:
@@ -420,7 +456,8 @@ class CircuitBuilder:
                 sub_circ = Circuit(n_base_qubits)
                 # use base gate name for the CircBox (shows in renderer)
                 sub_circ.name = instr.base_gate.name.capitalize()
-                if type(instr.base_gate) == UnitaryGate:
+
+                if type(instr.base_gate) is UnitaryGate:
                     assert len(cargs) == 0
                     add_qiskit_unitary_to_tkc(
                         sub_circ, instr.base_gate, sub_circ.qubits, condition_kwargs
@@ -433,46 +470,19 @@ class CircuitBuilder:
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
-                if isinstance(instr.params[0], str):
-                    # Parse string to get the right single qubit gates
-                    circuit_string = "".join(instr.params)
-                    circuit = _string_to_circuit(
-                        circuit_string, instr.num_qubits, qiskit_instruction=instr
-                    )
-                    self.tkc.add_circuit(circuit, qubits)
+                _add_statepreparation_circuit(self.tkc, qubits, instr)
 
-                elif isinstance(instr.params, list) and len(instr.params) != 1:
-                    amplitude_list = instr.params
-                    if isinstance(instr, Initialize):
-                        pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=True  # type: ignore
-                        )
-                    else:
-                        pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=False  # type: ignore
-                        )
-                    # Need to reverse qubits here (endian-ness)
-                    reversed_qubits = list(reversed(qubits))
-                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
-
-                elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
-                    # convert int to a binary string and apply X for |1>
-                    integer_parameter = int(instr.params[0].real)
-                    bit_string = bin(integer_parameter)[2:]
-                    circuit = _string_to_circuit(
-                        bit_string, instr.num_qubits, qiskit_instruction=instr
-                    )
-                    self.tkc.add_circuit(circuit, qubits)
-
-            elif type(instr) == PauliEvolutionGate:
+            elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
                 self.tkc.add_circbox(ccbox, qubits)
-            elif type(instr) == UnitaryGate:
+
+            elif type(instr) is UnitaryGate:
                 assert len(cargs) == 0
                 add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
             elif optype == OpType.Barrier:
@@ -494,7 +504,7 @@ class CircuitBuilder:
                 subc.name = instr.name
                 self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
 
-            elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
+            elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,

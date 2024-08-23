@@ -290,6 +290,31 @@ def _string_to_circuit(
     return circ
 
 
+def get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
+    if c_gate.base_class in _known_qiskit_gate:
+        # First we check if the gate is in _known_qiskit_gate
+        # this avoids CZ being converted to CnZ
+        known_optype = _known_qiskit_gate[c_gate.base_class]
+        return known_optype
+    elif c_gate.base_gate.base_class is qiskit_gates.RYGate:
+        return OpType.CnRy
+    elif c_gate.base_gate.base_class is qiskit_gates.YGate:
+        return OpType.CnY
+    elif c_gate.base_gate.base_class is qiskit_gates.ZGate:
+        return OpType.CnZ
+    else:
+        if (
+            c_gate.base_gate.base_class in _known_qiskit_gate
+            or c_gate.base_gate.base_class is UnitaryGate
+        ):
+            return OpType.QControlBox
+        else:
+            raise NotImplementedError(
+                f"Conversion of qiskit ControlledGate with base gate {c_gate.base_gate}"
+                + "not implemented."
+            )
+
+
 def _add_statepreparation_circuit(
     tkc: Circuit, qubits: List[Qubit], instr: Instruction
 ) -> None:
@@ -416,27 +441,7 @@ class CircuitBuilder:
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
             optype = None
             if isinstance(instr, ControlledGate):
-                if instr.base_class in _known_qiskit_gate:
-                    # First we check if the gate is in _known_qiskit_gate
-                    # this avoids CZ being converted to CnZ
-                    optype = _known_qiskit_gate[instr.base_class]
-                elif instr.base_gate.base_class is qiskit_gates.RYGate:
-                    optype = OpType.CnRy
-                elif instr.base_gate.base_class is qiskit_gates.YGate:
-                    optype = OpType.CnY
-                elif instr.base_gate.base_class is qiskit_gates.ZGate:
-                    optype = OpType.CnZ
-                else:
-                    if (
-                        instr.base_gate.base_class in _known_qiskit_gate
-                        or instr.base_gate.base_class == UnitaryGate
-                    ):
-                        optype = OpType.QControlBox  # QControlBox case handled below
-                    else:
-                        raise NotImplementedError(
-                            f"qiskit ControlledGate with base gate {instr.base_gate}"
-                            + "not implemented."
-                        )
+                optype = get_controlled_tket_optype(instr)
             elif type(instr) in (PauliEvolutionGate, UnitaryGate):
                 pass  # Special handling below
             else:

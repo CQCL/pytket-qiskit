@@ -680,6 +680,13 @@ class AerDensityMatrixBackend(_AerBaseBackend):
 
     _qiskit_backend_name = "aer_simulator_density_matrix"
 
+    _allowed_special_gates = {
+        OpType.Measure,
+        OpType.Barrier,
+        OpType.Reset,
+        OpType.RangePredicate,
+    }
+
     def __init__(
         self,
         noise_model: Optional[NoiseModel] = None,
@@ -688,6 +695,17 @@ class AerDensityMatrixBackend(_AerBaseBackend):
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
         self._noise_model = noise_model
+        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
+            self._allowed_special_gates
+        )
+        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+        characterisation = _get_characterisation_of_noise_model(
+            self._noise_model, gate_set
+        )
+        self._has_arch = bool(characterisation.architecture) and bool(
+            characterisation.architecture.nodes
+        )
+
         self._backend_info = BackendInfo(
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
@@ -695,7 +713,15 @@ class AerDensityMatrixBackend(_AerBaseBackend):
             architecture=FullyConnected(n_qubits),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,
-            misc={"characterisation": None},
+            supports_reset=True,
+            supports_fast_feedforward=True,
+            all_node_gate_errors=characterisation.node_errors,
+            all_edge_gate_errors=characterisation.edge_errors,
+            all_readout_errors=characterisation.readout_errors,
+            averaged_node_gate_errors=characterisation.averaged_node_errors,
+            averaged_edge_gate_errors=characterisation.averaged_edge_errors,
+            averaged_readout_errors=characterisation.averaged_readout_errors,
+            misc={"characterisation": characterisation.generic_q_errors},
         )
         self._required_predicates = [
             GateSetPredicate(self._backend_info.gate_set),

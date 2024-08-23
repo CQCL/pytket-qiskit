@@ -1448,7 +1448,8 @@ def test_noiseless_density_matrix_simulation() -> None:
     assert np.allclose(
         result1.get_density_matrix(), np.outer(output_state, output_state.conj())
     )
-    # Example with resets and conditional gates. Deterministic if input is a basis state
+    # Example with resets and conditional gates
+    # Deterministic if input is a computational basis state
     circ2 = Circuit(3, 1)
     circ2.CCX(*range(3))
     circ2.U1(1 / 4, 2)
@@ -1469,11 +1470,13 @@ def test_noiseless_density_matrix_simulation() -> None:
 # https://github.com/CQCL/pytket-qiskit/issues/231
 def test_noisy_density_matrix_simulation() -> None:
 
+    # Test that __init__ works with a very simple noise model
     noise_model = NoiseModel()
     noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [0, 1])
     noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [1, 2])
 
     noisy_density_sim = AerDensityMatrixBackend(noise_model)
+    print(noisy_density_sim.backend_info)
 
     circ = Circuit(3)
     circ.X(0)

@@ -411,13 +411,13 @@ class CircuitBuilder:
             instr, qargs, cargs = datum.operation, datum.qubits, datum.clbits
             condition_kwargs = {}
             if instr.condition is not None:
-                if type(instr.condition[0]) == ClassicalRegister:
+                if type(instr.condition[0]) is ClassicalRegister:
                     cond_reg = self.cregmap[instr.condition[0]]
                     condition_kwargs = {
                         "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
                         "condition_value": instr.condition[1],
                     }
-                elif type(instr.condition[0]) == Clbit:
+                elif type(instr.condition[0]) is Clbit:
                     # .find_bit() returns type:
                     #    tuple[index, list[tuple[ClassicalRegister, index]]]
                     # We assume each bit belongs to exactly one register.

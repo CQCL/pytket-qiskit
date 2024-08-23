@@ -300,6 +300,7 @@ class _AerBaseBackend(Backend):
                     c0, ppcirc_rep = tkc, None
 
                 qc = tk_to_qiskit(c0, replace_implicit_swaps)
+
                 if self.supports_state or self.supports_density_matrix:
                     qc.save_state()
 
@@ -680,7 +681,9 @@ class AerDensityMatrixBackend(_AerBaseBackend):
     _qiskit_backend_name = "aer_simulator_density_matrix"
 
     def __init__(
-        self, n_qubits: int = 40, noise_model: Optional[NoiseModel] = None
+        self,
+        noise_model: Optional[NoiseModel] = None,
+        n_qubits: int = 40,
     ) -> None:
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)

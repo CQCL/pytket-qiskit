@@ -261,7 +261,7 @@ def _string_to_circuit(
     # If Initialize, add resets
     if isinstance(qiskit_instruction, Initialize):
         for qubit in circ.qubits:
-            circ.add_gate(OpType.Reset, [qubit])
+            circ.Reset(qubit)
 
     # We iterate through the string in reverse to add the
     # gates in the correct order (endian-ness).

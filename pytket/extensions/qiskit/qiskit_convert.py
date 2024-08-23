@@ -294,36 +294,38 @@ def _add_statepreparation_circuit(
     tkc: Circuit, qubits: List[Qubit], instr: Instruction
 ) -> None:
     # Check how Initialize or StatePrep is constructed
-    if isinstance(instr.params[0], str):
-        # Parse string to get the right single qubit gates
-        circuit_string = "".join(instr.params)
-        circuit = _string_to_circuit(
-            circuit_string, instr.num_qubits, qiskit_instruction=instr
-        )
-        tkc.add_circuit(circuit, qubits)
 
     if len(instr.params) != 1:
-        amplitude_list: list[complex] = instr.params
-        if isinstance(instr, Initialize):
-            pytket_state_prep_box = StatePreparationBox(
-                amplitude_list, with_initial_reset=True
+        if isinstance(instr.params[0], str):
+            # Parse string to get the right single qubit gates
+            circuit_string = "".join(instr.params)
+            circuit = _string_to_circuit(
+                circuit_string, instr.num_qubits, qiskit_instruction=instr
             )
+            tkc.add_circuit(circuit, qubits)
         else:
-            pytket_state_prep_box = StatePreparationBox(
-                amplitude_list, with_initial_reset=False
+            amplitude_list = instr.params
+            if isinstance(instr, Initialize):
+                pytket_state_prep_box = StatePreparationBox(
+                    amplitude_list, with_initial_reset=True  # type: ignore
+                )
+            else:
+                pytket_state_prep_box = StatePreparationBox(
+                    amplitude_list, with_initial_reset=False  # type: ignore
+                )
+            # Need to reverse qubits here (endian-ness)
+            reversed_qubits = list(reversed(qubits))
+            tkc.add_gate(pytket_state_prep_box, reversed_qubits)
+    else:
+        if isinstance(instr.params[0], complex):
+            # convert int to a binary string and apply X for |1>
+            integer_parameter = int(instr.params[0].real)
+            bit_string = bin(integer_parameter)[2:]
+            circuit = _string_to_circuit(
+                bit_string, instr.num_qubits, qiskit_instruction=instr
             )
-        # Need to reverse qubits here (endian-ness)
-        reversed_qubits = list(reversed(qubits))
-        tkc.add_gate(pytket_state_prep_box, reversed_qubits)
-
-    elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
-        # convert int to a binary string and apply X for |1>
-        integer_parameter = int(instr.params[0].real)
-        bit_string = bin(integer_parameter)[2:]
-        circuit = _string_to_circuit(
-            bit_string, instr.num_qubits, qiskit_instruction=instr
-        )
-        tkc.add_circuit(circuit, qubits)
+            tkc.add_circuit(circuit, qubits)
+        # TODO raise error
 
 
 class CircuitBuilder:

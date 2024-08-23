@@ -694,7 +694,7 @@ class AerDensityMatrixBackend(_AerBaseBackend):
     ) -> None:
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
-        self._noise_model = noise_model
+
         gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
             self._allowed_special_gates
         )

@@ -296,23 +296,25 @@ def get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
         # this avoids CZ being converted to CnZ
         known_optype = _known_qiskit_gate[c_gate.base_class]
         return known_optype
-    elif c_gate.base_gate.base_class is qiskit_gates.RYGate:
-        return OpType.CnRy
-    elif c_gate.base_gate.base_class is qiskit_gates.YGate:
-        return OpType.CnY
-    elif c_gate.base_gate.base_class is qiskit_gates.ZGate:
-        return OpType.CnZ
-    else:
-        if (
-            c_gate.base_gate.base_class in _known_qiskit_gate
-            or c_gate.base_gate.base_class is UnitaryGate
-        ):
-            return OpType.QControlBox
-        else:
-            raise NotImplementedError(
-                f"Conversion of qiskit ControlledGate with base gate {c_gate.base_gate}"
-                + "not implemented."
-            )
+
+    match c_gate.base_gate.base_class:
+        case qiskit_gates.RYGate:
+            return OpType.CnRy
+        case qiskit_gates.YGate:
+            return OpType.CnY
+        case qiskit_gates.ZGate:
+            return OpType.CnZ
+        case _:
+            if (
+                c_gate.base_gate.base_class in _known_qiskit_gate
+                or c_gate.base_gate.base_class is UnitaryGate
+            ):
+                return OpType.QControlBox
+            else:
+                raise NotImplementedError(
+                    f"Conversion of qiskit ControlledGate with base gate {c_gate.base_gate}"
+                    + "not implemented."
+                )
 
 
 def _add_statepreparation_circuit(

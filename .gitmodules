@@ -2,3 +2,7 @@
 	path = pytket-docs-theming
 	url = git@github.com:CalMacCQ/pytket-docs-theming.git
 	branch = main
+[submodule "docs/pytket-docs-theming"]
+	path = docs/pytket-docs-theming
+	url = git@github.com:CalMacCQ/pytket-docs-theming.git
+	branch = main

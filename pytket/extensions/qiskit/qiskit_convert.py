@@ -294,26 +294,26 @@ def _add_statepreparation_circuit(
     tkc: Circuit, qubits: List[Qubit], instr: Instruction
 ) -> None:
     # Check how Initialize or StatePrep is constructed
-
     if len(instr.params) != 1:
         if isinstance(instr.params[0], str):
             # Parse string to get the right single qubit gates
-            circuit_string = "".join(instr.params)
+            circuit_string: str = "".join(instr.params)
             circuit = _string_to_circuit(
                 circuit_string, instr.num_qubits, qiskit_instruction=instr
             )
             tkc.add_circuit(circuit, qubits)
         else:
-            amplitude_list = instr.params
+            amplitude_array = np.array(instr.params)
             if isinstance(instr, Initialize):
                 pytket_state_prep_box = StatePreparationBox(
-                    amplitude_list, with_initial_reset=True  # type: ignore
+                    amplitude_array, with_initial_reset=True
                 )
             else:
                 pytket_state_prep_box = StatePreparationBox(
-                    amplitude_list, with_initial_reset=False  # type: ignore
+                    amplitude_array, with_initial_reset=False
                 )
             # Need to reverse qubits here (endian-ness)
+            # TODO pass same list of qubits to add_circuit
             reversed_qubits = list(reversed(qubits))
             tkc.add_gate(pytket_state_prep_box, reversed_qubits)
     else:

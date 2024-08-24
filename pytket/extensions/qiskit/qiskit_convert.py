@@ -30,6 +30,7 @@ from inspect import signature
 from uuid import UUID
 
 import numpy as np
+from numpy.typing import NDArray
 from symengine import sympify  # type: ignore
 from symengine.lib import symengine_wrapper  # type: ignore
 
@@ -334,6 +335,18 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
         )
 
 
+def _state_prep_box_from_amplitudes(
+    amplitudes: NDArray[np.complex128], prep: Initialize | StatePreparation
+) -> StatePreparationBox:
+    if isinstance(prep, Initialize):
+        pytket_state_prep_box = StatePreparationBox(amplitudes, with_initial_reset=True)
+    else:
+        pytket_state_prep_box = StatePreparationBox(
+            amplitudes, with_initial_reset=False
+        )
+    return pytket_state_prep_box
+
+
 def _add_state_preparation(
     tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
@@ -351,15 +364,10 @@ def _add_state_preparation(
             )
             tkc.add_circuit(circuit, qubits)
         else:
-            amplitude_array = np.array(prep.params)
-            if isinstance(prep, Initialize):
-                pytket_state_prep_box = StatePreparationBox(
-                    amplitude_array, with_initial_reset=True
-                )
-            else:
-                pytket_state_prep_box = StatePreparationBox(
-                    amplitude_array, with_initial_reset=False
-                )
+            amplitude_array: NDArray[np.complex128] = np.array(prep.params)
+            pytket_state_prep_box = _state_prep_box_from_amplitudes(
+                amplitude_array, prep
+            )
             # Need to reverse qubits here (endian-ness)
             # TODO pass same list of qubits to add_circuit
             reversed_qubits = list(reversed(qubits))

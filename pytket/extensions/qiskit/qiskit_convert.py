@@ -247,15 +247,17 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOpe
 
 
 def _string_to_circuit(
-    circuit_string: str, n_qubits: int, qiskit_instruction: Instruction
+    circuit_string: str,
+    n_qubits: int,
+    qiskit_prep: Initialize | StatePreparation,
 ) -> Circuit:
-    """Helper function to handle strings in QuantumCircuit.initialize
-    and QuantumCircuit.prepare_state"""
+    """Helper function to generate circuits for Initialize
+    and StatePreparation objects built with strings"""
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
     # If Initialize, add resets
-    if isinstance(qiskit_instruction, Initialize):
+    if isinstance(qiskit_prep, Initialize):
         for qubit in circ.qubits:
             circ.Reset(qubit)
 
@@ -288,6 +290,7 @@ def _string_to_circuit(
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
+    """Get a pytket contolled OpType from a qiskit ControlledGate."""
     if c_gate.base_class in _known_qiskit_gate:
         # First we check if the gate is in _known_qiskit_gate
         # this avoids CZ being converted to CnZ
@@ -316,6 +319,7 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
 
 
 def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
+    """Get a pytket OpType from a qiskit Instruction."""
     if isinstance(instruction, ControlledGate):
         return _get_controlled_tket_optype(instruction)
     try:
@@ -331,21 +335,24 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
 
 
 def _add_state_preparation(
-    tkc: Circuit, qubits: list[Qubit], instr: Instruction
+    tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
-    """ """
+    """Handles different cases of Initialize and StatePreparation
+    and appends the appropriate state preparation to a Circuit instance."""
+
     # Check how Initialize or StatePrep is constructed
-    if len(instr.params) != 1:
-        if isinstance(instr.params[0], str):
+    # With a string, an int or an array of amplitudes
+    if len(prep.params) != 1:
+        if isinstance(prep.params[0], str):
             # Parse string to get the right single qubit gates
-            circuit_string: str = "".join(instr.params)
+            circuit_string: str = "".join(prep.params)
             circuit = _string_to_circuit(
-                circuit_string, instr.num_qubits, qiskit_instruction=instr
+                circuit_string, prep.num_qubits, qiskit_prep=prep
             )
             tkc.add_circuit(circuit, qubits)
         else:
-            amplitude_array = np.array(instr.params)
-            if isinstance(instr, Initialize):
+            amplitude_array = np.array(prep.params)
+            if isinstance(prep, Initialize):
                 pytket_state_prep_box = StatePreparationBox(
                     amplitude_array, with_initial_reset=True
                 )
@@ -358,13 +365,11 @@ def _add_state_preparation(
             reversed_qubits = list(reversed(qubits))
             tkc.add_gate(pytket_state_prep_box, reversed_qubits)
     else:
-        if isinstance(instr.params[0], complex):
+        if isinstance(prep.params[0], complex):
             # convert int to a binary string and apply X for |1>
-            integer_parameter = int(instr.params[0].real)
+            integer_parameter = int(prep.params[0].real)
             bit_string = bin(integer_parameter)[2:]
-            circuit = _string_to_circuit(
-                bit_string, instr.num_qubits, qiskit_instruction=instr
-            )
+            circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
             tkc.add_circuit(circuit, qubits)
         # TODO raise error
 
@@ -486,7 +491,7 @@ class CircuitBuilder:
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, (Initialize, StatePreparation)):
-                # Check how Initialize or StatePrep is constructed
+                # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 
             elif type(instr) is PauliEvolutionGate:

@@ -313,7 +313,8 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
                 return OpType.QControlBox
             else:
                 raise NotImplementedError(
-                    f"Conversion of qiskit ControlledGate with base gate {c_gate.base_gate}"
+                    "Conversion of qiskit ControlledGate with base gate "
+                    + f"base gate {c_gate.base_gate}"
                     + "not implemented."
                 )
 

@@ -318,9 +318,25 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
                 )
 
 
-def _add_statepreparation_circuit(
+def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
+    if isinstance(instruction, ControlledGate):
+        return _get_controlled_tket_optype(instruction)
+    try:
+        optype = _known_qiskit_gate[instruction.base_class]
+        return optype
+    except KeyError:
+        raise NotImplementedError(
+            f"Conversion of qiskit's {instruction.name} instruction is "
+            + "currently unsupported by qiskit_to_tk. Consider "
+            + "using QuantumCircuit.decompose() before attempting "
+            + "conversion."
+        )
+
+
+def _add_state_preparation_box(
     tkc: Circuit, qubits: List[Qubit], instr: Instruction
 ) -> None:
+    """ """
     # Check how Initialize or StatePrep is constructed
     if len(instr.params) != 1:
         if isinstance(instr.params[0], str):
@@ -442,21 +458,12 @@ class CircuitBuilder:
             except AttributeError:
                 pass
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
+
             optype = None
-            if isinstance(instr, ControlledGate):
-                optype = _get_controlled_tket_optype(instr)
-            elif type(instr) in (PauliEvolutionGate, UnitaryGate):
-                pass  # Special handling below
-            else:
-                try:
-                    optype = _known_qiskit_gate[instr.base_class]
-                except KeyError:
-                    raise NotImplementedError(
-                        f"Conversion of qiskit's {instr.name} instruction is "
-                        + "currently unsupported by qiskit_to_tk. Consider "
-                        + "using QuantumCircuit.decompose() before attempting "
-                        + "conversion."
-                    )
+            if type(instr) not in (PauliEvolutionGate, UnitaryGate):
+                # Handling of PauliEvolutionGate and UnitaryGate below
+                optype = _optype_from_qiskit_instruction(instruction=instr)
+
             qubits = [self.qbmap[qbit] for qbit in qargs]
             bits = [self.cbmap[bit] for bit in cargs]
 
@@ -483,7 +490,7 @@ class CircuitBuilder:
 
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
-                _add_statepreparation_circuit(self.tkc, qubits, instr)
+                _add_state_preparation_box(self.tkc, qubits, instr)
 
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

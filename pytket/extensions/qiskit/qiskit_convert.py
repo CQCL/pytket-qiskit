@@ -334,7 +334,7 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
         )
 
 
-def _add_state_preparation_box(
+def _add_state_preparation(
     tkc: Circuit, qubits: List[Qubit], instr: Instruction
 ) -> None:
     """ """
@@ -491,7 +491,7 @@ class CircuitBuilder:
 
             elif isinstance(instr, (Initialize, StatePreparation)):
                 # Check how Initialize or StatePrep is constructed
-                _add_state_preparation_box(self.tkc, qubits, instr)
+                _add_state_preparation(self.tkc, qubits, instr)
 
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)
@@ -819,7 +819,7 @@ Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
 # Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
 def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:
     tk1_circ = Circuit(1)
-    tk1_circ.add_gate(OpType.U3, [b, a - 1 / 2, c + 1 / 2], [0]).add_phase(-(a + c) / 2)
+    tk1_circ.U3(b, a - 1 / 2, c + 1 / 2, 0).add_phase(-(a + c) / 2)
     return tk1_circ
 
 

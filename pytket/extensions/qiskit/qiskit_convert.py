@@ -463,8 +463,8 @@ class CircuitBuilder:
                 # Handling of PauliEvolutionGate and UnitaryGate below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
-            qubits = [self.qbmap[qbit] for qbit in qargs]
-            bits = [self.cbmap[bit] for bit in cargs]
+            qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
+            bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             if optype == OpType.QControlBox:
                 params = [param_to_tk(p) for p in instr.base_gate.params]
@@ -479,7 +479,9 @@ class CircuitBuilder:
                         sub_circ, instr.base_gate, sub_circ.qubits, condition_kwargs
                     )
                 else:
-                    base_tket_gate = _known_qiskit_gate[instr.base_gate.base_class]
+                    base_tket_gate: OpType = _known_qiskit_gate[
+                        instr.base_gate.base_class
+                    ]
                     sub_circ.add_gate(
                         base_tket_gate, params, list(range(n_base_qubits))
                     )
@@ -784,7 +786,7 @@ order or only one bit of one register"""
         ) from error
     params = _get_params(op, symb_map)
     g = gatetype(*params)
-    if type(phase) == float:
+    if type(phase) is float:
         qcirc.global_phase += phase * np.pi
     else:
         qcirc.global_phase += sympify(phase * sympy.pi)

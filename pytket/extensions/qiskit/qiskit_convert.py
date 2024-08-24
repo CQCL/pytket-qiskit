@@ -18,15 +18,11 @@
 from collections import defaultdict
 from typing import (
     Callable,
-    Dict,
-    List,
-    Optional,
     Union,
+    Optional,
     Any,
     Iterable,
     cast,
-    Set,
-    Tuple,
     TypeVar,
     TYPE_CHECKING,
 )
@@ -184,7 +180,7 @@ _known_gate_rev_phase[OpType.V] = (qiskit_gates.SXGate, -0.25)
 _known_gate_rev_phase[OpType.Vdg] = (qiskit_gates.SXdgGate, 0.25)
 
 # use minor signature hacks to figure out the string names of qiskit Gate objects
-_gate_str_2_optype: Dict[str, OpType] = dict()
+_gate_str_2_optype: dict[str, OpType] = dict()
 for gate, optype in _known_qiskit_gate.items():
     if gate in (
         UnitaryGate,
@@ -208,7 +204,7 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(config: QasmBackendConfiguration) -> Set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     if config.simulator:
         gate_set = {
@@ -226,7 +222,7 @@ def _tk_gate_set(config: QasmBackendConfiguration) -> Set[OpType]:
         }
 
 
-def _qpo_from_peg(peg: PauliEvolutionGate, qubits: List[Qubit]) -> QubitPauliOperator:
+def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOperator:
     op = peg.operator
     t = peg.params[0]
     qpodict = {}
@@ -335,7 +331,7 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
 
 
 def _add_state_preparation(
-    tkc: Circuit, qubits: List[Qubit], instr: Instruction
+    tkc: Circuit, qubits: list[Qubit], instr: Instruction
 ) -> None:
     """ """
     # Check how Initialize or StatePrep is constructed
@@ -376,8 +372,8 @@ def _add_state_preparation(
 class CircuitBuilder:
     def __init__(
         self,
-        qregs: List[QuantumRegister],
-        cregs: Optional[List[ClassicalRegister]] = None,
+        qregs: list[QuantumRegister],
+        cregs: Optional[list[ClassicalRegister]] = None,
         name: Optional[str] = None,
         phase: Optional[sympy.Expr] = None,
     ):
@@ -408,8 +404,8 @@ class CircuitBuilder:
     def add_xs(
         self,
         num_ctrl_qubits: Optional[int],
-        ctrl_state: Optional[Union[str, int]],
-        qargs: List["Qubit"],
+        ctrl_state: Optional[str | int],
+        qargs: list["Qubit"],
     ) -> None:
         if ctrl_state is not None:
             assert isinstance(num_ctrl_qubits, int)
@@ -542,8 +538,8 @@ class CircuitBuilder:
 def add_qiskit_unitary_to_tkc(
     tkc: Circuit,
     u_gate: UnitaryGate,
-    qubits: List[Qubit],
-    condition_kwargs: Dict[str, Any],
+    qubits: list[Qubit],
+    condition_kwargs: dict[str, Any],
 ) -> None:
     # Note reversal of qubits, to account for endianness (pytket unitaries
     # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
@@ -605,7 +601,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     return builder.circuit()
 
 
-def param_to_tk(p: Union[float, ParameterExpression]) -> sympy.Expr:
+def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         symexpr = p._symbol_expr
         try:
@@ -617,8 +613,8 @@ def param_to_tk(p: Union[float, ParameterExpression]) -> sympy.Expr:
 
 
 def param_to_qiskit(
-    p: sympy.Expr, symb_map: Dict[Parameter, sympy.Symbol]
-) -> Union[float, ParameterExpression]:
+    p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
+) -> float | ParameterExpression:
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
@@ -627,19 +623,19 @@ def param_to_qiskit(
 
 
 def _get_params(
-    op: Op, symb_map: Dict[Parameter, sympy.Symbol]
-) -> List[Union[float, ParameterExpression]]:
+    op: Op, symb_map: dict[Parameter, sympy.Symbol]
+) -> list[float | ParameterExpression]:
     return [param_to_qiskit(p, symb_map) for p in op.params]
 
 
 def append_tk_command_to_qiskit(
     op: "Op",
-    args: List["UnitID"],
+    args: list["UnitID"],
     qcirc: QuantumCircuit,
-    qregmap: Dict[str, QuantumRegister],
-    cregmap: Dict[str, ClassicalRegister],
-    symb_map: Dict[Parameter, sympy.Symbol],
-    range_preds: Dict[Bit, Tuple[List["UnitID"], int]],
+    qregmap: dict[str, QuantumRegister],
+    cregmap: dict[str, ClassicalRegister],
+    symb_map: dict[Parameter, sympy.Symbol],
+    range_preds: dict[Bit, tuple[list["UnitID"], int]],
 ) -> InstructionSet:
     optype = op.type
     if optype == OpType.Measure:
@@ -849,7 +845,7 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
     qcirc = QuantumCircuit(name=tkc.name)
-    qreg_sizes: Dict[str, int] = {}
+    qreg_sizes: dict[str, int] = {}
     for qb in tkc.qubits:
         if len(qb.index) != 1:
             raise NotImplementedError("Qiskit registers must use a single index")
@@ -870,7 +866,7 @@ def tk_to_qiskit(
             cregmap.update({c_reg.name: qis_reg})
             qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
-    range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
+    range_preds: dict[Bit, tuple[list["UnitID"], int]] = dict()
 
     # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
@@ -901,7 +897,7 @@ def tk_to_qiskit(
     return qcirc
 
 
-def process_characterisation(backend: "BackendV1") -> Dict[str, Any]:
+def process_characterisation(backend: "BackendV1") -> dict[str, Any]:
     """Convert a :py:class:`qiskit.providers.backend.BackendV1` to a dictionary
      containing device Characteristics
 
@@ -917,7 +913,7 @@ def process_characterisation(backend: "BackendV1") -> Dict[str, Any]:
 
 def process_characterisation_from_config(
     config: QasmBackendConfiguration, properties: Optional[BackendProperties]
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 
     :param config: A IBMQ configuration object
@@ -942,7 +938,7 @@ def process_characterisation_from_config(
     n_qubits = config.n_qubits
     if coupling_map is None:
         # Assume full connectivity
-        arc: Union[FullyConnected, Architecture] = FullyConnected(n_qubits)
+        arc: FullyConnected | Architecture = FullyConnected(n_qubits)
     else:
         arc = Architecture(coupling_map)
 
@@ -992,14 +988,14 @@ def process_characterisation_from_config(
     K1 = TypeVar("K1")
     K2 = TypeVar("K2")
     V = TypeVar("V")
-    convert_keys_t = Callable[[Callable[[K1], K2], Dict[K1, V]], Dict[K2, V]]
+    convert_keys_t = Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
     # convert qubits to architecture Nodes
     convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
     node_errors = convert_keys(lambda q: Node(q), node_errors)
     link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
     readout_errors = convert_keys(lambda q: Node(q), readout_errors)
 
-    characterisation: Dict[str, Any] = dict()
+    characterisation: dict[str, Any] = dict()
     characterisation["NodeErrors"] = node_errors
     characterisation["EdgeErrors"] = link_errors
     characterisation["ReadoutErrors"] = readout_errors
@@ -1013,8 +1009,8 @@ def process_characterisation_from_config(
 
 
 def get_avg_characterisation(
-    characterisation: Dict[str, Any]
-) -> Dict[str, Dict[Node, float]]:
+    characterisation: dict[str, Any]
+) -> dict[str, dict[Node, float]]:
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors
 
@@ -1025,19 +1021,19 @@ def get_avg_characterisation(
     K = TypeVar("K")
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
-    map_values_t = Callable[[Callable[[V1], V2], Dict[K, V1]], Dict[K, V2]]
+    map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
     map_values: map_values_t = lambda f, d: {k: f(v) for k, v in d.items()}
 
-    node_errors = cast(Dict[Node, Dict[OpType, float]], characterisation["NodeErrors"])
+    node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
     link_errors = cast(
-        Dict[Tuple[Node, Node], Dict[OpType, float]], characterisation["EdgeErrors"]
+        dict[tuple[Node, Node], dict[OpType, float]], characterisation["EdgeErrors"]
     )
     readout_errors = cast(
-        Dict[Node, List[List[float]]], characterisation["ReadoutErrors"]
+        dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
     )
 
-    avg: Callable[[Dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
-    avg_mat: Callable[[List[List[float]]], float] = (
+    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
+    avg_mat: Callable[[list[list[float]]], float] = (
         lambda xs: (xs[0][1] + xs[1][0]) / 2.0
     )
     avg_readout_errors = map_values(avg_mat, readout_errors)

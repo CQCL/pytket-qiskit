@@ -297,7 +297,6 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
         # this avoids CZ being converted to CnZ
         known_optype = _known_qiskit_gate[c_gate.base_class]
         return known_optype
-
     match c_gate.base_gate.base_class:
         case qiskit_gates.RYGate:
             return OpType.CnRy
@@ -371,6 +370,34 @@ def _add_state_preparation(
         # TODO raise error
 
 
+def _get_pytket_condition_kwargs(
+    instruction: Instruction,
+    cregmap: dict[str, ClassicalRegister],
+    circuit: QuantumCircuit,
+) -> dict[str, Any]:
+    if type(instruction.condition[0]) is ClassicalRegister:
+        cond_reg = cregmap[instruction.condition[0]]
+        condition_kwargs = {
+            "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
+            "condition_value": instruction.condition[1],
+        }
+        return condition_kwargs
+    elif type(instruction.condition[0]) is Clbit:
+        # .find_bit() returns type:
+        #    tuple[index, list[tuple[ClassicalRegister, index]]]
+        # We assume each bit belongs to exactly one register.
+        index = circuit.find_bit(instruction.condition[0])[0]
+        register = circuit.find_bit(instruction.condition[0])[1][0][0]
+        cond_reg = cregmap[register]
+        condition_kwargs = {
+            "condition_bits": [cond_reg[index]],
+            "condition_value": instruction.condition[1],
+        }
+        return condition_kwargs
+    else:
+        raise NotImplementedError("condition must contain classical bit or register")
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -424,29 +451,17 @@ class CircuitBuilder:
         data = data or circuit.data
         for datum in data:
             instr, qargs, cargs = datum.operation, datum.qubits, datum.clbits
+
+            qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
+            bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
+
             condition_kwargs = {}
             if instr.condition is not None:
-                if type(instr.condition[0]) is ClassicalRegister:
-                    cond_reg = self.cregmap[instr.condition[0]]
-                    condition_kwargs = {
-                        "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
-                        "condition_value": instr.condition[1],
-                    }
-                elif type(instr.condition[0]) is Clbit:
-                    # .find_bit() returns type:
-                    #    tuple[index, list[tuple[ClassicalRegister, index]]]
-                    # We assume each bit belongs to exactly one register.
-                    index = circuit.find_bit(instr.condition[0])[0]
-                    register = circuit.find_bit(instr.condition[0])[1][0][0]
-                    cond_reg = self.cregmap[register]
-                    condition_kwargs = {
-                        "condition_bits": [cond_reg[index]],
-                        "condition_value": instr.condition[1],
-                    }
-                else:
-                    raise NotImplementedError(
-                        "condition must contain classical bit or register"
-                    )
+                condition_kwargs = _get_pytket_condition_kwargs(
+                    instruction=instr,
+                    cregmap=self.cregmap,
+                    circuit=circuit,
+                )
 
             # Controlled operations may be controlled on values other than all-1. Handle
             # this by prepending and appending X gates on the control qubits.
@@ -462,9 +477,6 @@ class CircuitBuilder:
             if type(instr) not in (PauliEvolutionGate, UnitaryGate):
                 # Handling of PauliEvolutionGate and UnitaryGate below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
-
-            qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
-            bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             if optype == OpType.QControlBox:
                 params = [param_to_tk(p) for p in instr.base_gate.params]

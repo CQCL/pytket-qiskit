@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, Optional, Any, TYPE_CHECKING, Union, cast
+from typing import Optional, Any, TYPE_CHECKING, Union, cast
 from qiskit.providers import JobStatus, JobV1  # type: ignore
 from qiskit.result import Result  # type: ignore
 from pytket.backends import ResultHandle, StatusEnum

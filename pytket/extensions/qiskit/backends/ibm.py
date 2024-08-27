@@ -19,7 +19,6 @@ import json
 from time import sleep
 from typing import (
     cast,
-    List,
     Optional,
     Dict,
     Sequence,

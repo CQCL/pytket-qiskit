@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import List, Union, Optional
+from typing import Union, Optional
 from dataclasses import dataclass
 
 from qiskit_aer.noise import NoiseModel  # type: ignore

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from collections import Counter
-from typing import List, Union
+from typing import Union
 from math import pi
 import pytest
 from sympy import Symbol

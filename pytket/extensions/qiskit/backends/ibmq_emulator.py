@@ -16,7 +16,6 @@ from collections import Counter
 from typing import (
     Dict,
     Optional,
-    List,
     Sequence,
     Union,
 )

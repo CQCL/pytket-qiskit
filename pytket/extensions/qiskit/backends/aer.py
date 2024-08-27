@@ -19,7 +19,6 @@ import json
 from logging import warning
 from typing import (
     Dict,
-    List,
     Optional,
     Sequence,
     Union,

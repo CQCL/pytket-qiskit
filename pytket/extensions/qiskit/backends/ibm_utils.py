@@ -16,7 +16,7 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, List, TYPE_CHECKING
+from typing import Collection, Optional, Sequence, TYPE_CHECKING
 
 import numpy as np
 
@@ -48,7 +48,7 @@ _STATUS_MAP = {
 def _batch_circuits(
     circuits: Sequence["Circuit"],
     n_shots: Sequence[Optional[int]],
-) -> tuple[List[tuple[Optional[int], List["Circuit"]]], List[List[int]]]:
+) -> tuple[list[tuple[Optional[int], list["Circuit"]]], list[list[int]]]:
     """
     Groups circuits into sets of circuits with the same number of shots.
 
@@ -63,11 +63,11 @@ def _batch_circuits(
     n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
 
     order: Collection[int] = np.argsort(n_shots_int)
-    batches: List[tuple[Optional[int], List["Circuit"]]] = [
+    batches: list[tuple[Optional[int], list["Circuit"]]] = [
         (n, [circuits[i] for i in indices])
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]
-    batch_order: List[List[int]] = [
+    batch_order: list[list[int]] = [
         list(indices)
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]

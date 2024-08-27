@@ -212,7 +212,7 @@ class IBMQBackend(Backend):
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()
 
         if sampler_options is None:
             sampler_options = SamplerOptions()
@@ -309,7 +309,7 @@ class IBMQBackend(Backend):
         return backend_info
 
     @classmethod
-    def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
+    def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         service: Optional[QiskitRuntimeService] = kwargs.get("service")
         if service is None:
             instance = kwargs.get("instance")
@@ -327,7 +327,7 @@ class IBMQBackend(Backend):
         return backend_info_list
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         predicates = [
             NoSymbolsPredicate(),
             MaxNQubitsPredicate(self._backend_info.n_nodes),
@@ -483,7 +483,7 @@ class IBMQBackend(Backend):
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
 
@@ -509,7 +509,7 @@ class IBMQBackend(Backend):
             optional=False,
         )
 
-        handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
+        handle_list: list[Optional[ResultHandle]] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         postprocess = kwargs.get("postprocess", False)
@@ -566,7 +566,7 @@ class IBMQBackend(Backend):
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
-        return cast(List[ResultHandle], handle_list)
+        return cast(list[ResultHandle], handle_list)
 
     def _retrieve_job(self, jobid: str) -> RuntimeJob:
         return self._service.job(jobid)

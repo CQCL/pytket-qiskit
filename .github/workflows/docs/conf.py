@@ -48,7 +48,7 @@ autodoc_member_order = "groupwise"
 # The following code is for resolving broken hyperlinks in the doc.
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from urllib.parse import urljoin
 
 from docutils import nodes

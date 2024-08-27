@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Optional, Union, List, Sequence, Set, cast
+from typing import Optional, Union, Sequence, Set, cast
 import json
 
 from pytket.circuit import Circuit, OpType
@@ -49,7 +49,7 @@ class MockShotBackend(Backend):
             self._gate_set = {OpType.CX, OpType.U3}
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         """Returns a GateSetPredicate constructed with the given gateset."""
         return [GateSetPredicate(self._gate_set)]
 
@@ -82,7 +82,7 @@ class MockShotBackend(Backend):
         n_shots: Optional[Union[int, Sequence[int]]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """Mock processing the circuits."""
         handles = []
         for c in circuits:

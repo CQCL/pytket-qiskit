@@ -974,7 +974,7 @@ def test_compile_x(brisbane_backend: IBMQBackend) -> None:
         assert c1.n_gates == 1
 
 
-def lift_perm(p: Dict[int, int]) -> np.ndarray:
+def lift_perm(p: dict[int, int]) -> np.ndarray:
     """
     Given a permutation of {0,1,...,n-1} return the 2^n by 2^n permuation matrix
     representing the permutation of qubits (big-endian convention).

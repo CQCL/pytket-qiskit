@@ -76,14 +76,14 @@ class IBMQEmulatorBackend(Backend):
         self._aer = AerBackend(noise_model=self._noise_model)
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()
 
     @property
     def backend_info(self) -> BackendInfo:
         return self._ibmq._backend_info
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         return self._ibmq.required_predicates
 
     def default_compilation_pass(
@@ -109,7 +109,7 @@ class IBMQEmulatorBackend(Backend):
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.

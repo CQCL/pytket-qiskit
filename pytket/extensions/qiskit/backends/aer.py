@@ -142,13 +142,13 @@ class _AerBaseBackend(Backend):
     _qiskit_backend: "QiskitAerBackend"
     _backend_info: BackendInfo
     _memory: bool
-    _required_predicates: List[Predicate]
+    _required_predicates: list[Predicate]
     _noise_model: Optional[NoiseModel] = None
     _has_arch: bool = False
     _needs_transpile: bool = False
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         return self._required_predicates
 
     @property
@@ -258,7 +258,7 @@ class _AerBaseBackend(Backend):
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.
@@ -283,7 +283,7 @@ class _AerBaseBackend(Backend):
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits
 
-        handle_list: List[Optional[ResultHandle]] = [None] * len(circuits)
+        handle_list: list[Optional[ResultHandle]] = [None] * len(circuits)
         seed = kwargs.get("seed")
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
@@ -324,7 +324,7 @@ class _AerBaseBackend(Backend):
                 handle = ResultHandle(jobid, i, tkc_qubits_count[i], ppcirc_strs[i])
                 handle_list[ind] = handle
                 self._cache[handle] = {"job": job}
-        return cast(List[ResultHandle], handle_list)
+        return cast(list[ResultHandle], handle_list)
 
     def cancel(self, handle: ResultHandle) -> None:
         job: "AerJob" = self._cache[handle]["job"]
@@ -458,9 +458,9 @@ class NoiseModelCharacterisation:
     node_errors: Optional[Dict] = None
     edge_errors: Optional[Dict] = None
     readout_errors: Optional[Dict] = None
-    averaged_node_errors: Optional[Dict[Node, float]] = None
-    averaged_edge_errors: Optional[Dict[tuple[Node, Node], float]] = None
-    averaged_readout_errors: Optional[Dict[Node, float]] = None
+    averaged_node_errors: Optional[dict[Node, float]] = None
+    averaged_edge_errors: Optional[dict[tuple[Node, Node], float]] = None
+    averaged_readout_errors: Optional[dict[Node, float]] = None
     generic_q_errors: Optional[Dict] = None
 
 
@@ -711,7 +711,7 @@ def _process_noise_model(
                 )
             elif error["type"] == "roerror":
                 readout_errors[Node(q)] = cast(
-                    List[List[float]], error["probabilities"]
+                    list[list[float]], error["probabilities"]
                 )
             else:
                 raise RuntimeWarning("Error type not 'qerror' or 'roerror'.")

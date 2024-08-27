@@ -24,7 +24,6 @@ from typing import (
     Dict,
     Sequence,
     TYPE_CHECKING,
-    Tuple,
     Union,
     Set,
     Any,
@@ -213,7 +212,7 @@ class IBMQBackend(Backend):
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: Dict[tuple[str, int], Counter] = dict()
 
         if sampler_options is None:
             sampler_options = SamplerOptions()

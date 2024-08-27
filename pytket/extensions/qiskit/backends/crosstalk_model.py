@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import List, Tuple, Union, Dict, Optional
+from typing import List, Union, Dict, Optional
 from dataclasses import dataclass
 
 from qiskit_aer.noise import NoiseModel  # type: ignore
@@ -93,13 +93,13 @@ class CrosstalkParams:
         on each qubit
     """
 
-    zz_crosstalks: Dict[Tuple[Qubit, Qubit], float]
+    zz_crosstalks: Dict[tuple[Qubit, Qubit], float]
     single_q_phase_errors: Dict[Qubit, float]
-    two_q_induced_phase_errors: Dict[Tuple[Qubit, Qubit], Tuple[Qubit, float]]
-    non_markovian_noise: List[Tuple[Qubit, float, float]]
+    two_q_induced_phase_errors: Dict[tuple[Qubit, Qubit], tuple[Qubit, float]]
+    non_markovian_noise: List[tuple[Qubit, float, float]]
     virtual_z: bool
     N: float
-    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float]
+    gate_times: Dict[tuple[OpType, tuple[Qubit, ...]], float]
     phase_damping_error: Dict[Qubit, float]
     amplitude_damping_error: Dict[Qubit, float]
 
@@ -373,7 +373,7 @@ class NoisyCircuitBuilder:
 
 def get_gate_times_from_backendinfo(
     backend_info: BackendInfo,
-) -> Dict[Tuple[OpType, Tuple[Qubit, ...]], float]:
+) -> Dict[tuple[OpType, tuple[Qubit, ...]], float]:
     """Convert the gate time information stored in a `BackendInfo`
     into the format required by `NoisyCircuitBuilder`"""
     if (
@@ -381,7 +381,7 @@ def get_gate_times_from_backendinfo(
         or "GateTimes" not in backend_info.misc["characterisation"]
     ):
         raise ValueError("'GateTimes' is not present in the provided 'BackendInfo'")
-    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float] = {}
+    gate_times: Dict[tuple[OpType, tuple[Qubit, ...]], float] = {}
     for gt in backend_info.misc["characterisation"]["GateTimes"]:
         # GateTimes are nanoseconds
         gate_times[_gate_str_2_optype[gt[0]], tuple([Node(q) for q in gt[1]])] = (

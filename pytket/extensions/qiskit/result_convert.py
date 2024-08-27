@@ -18,7 +18,6 @@ from typing import (
     Iterator,
     Sequence,
     Set,
-    Tuple,
     Optional,
     Dict,
     Any,
@@ -43,10 +42,10 @@ def _get_registers_from_uids(uids: List[UnitID]) -> Dict[str, Set[UnitID]]:
     return registers
 
 
-LabelsType = List[Tuple[str, int]]
+LabelsType = List[tuple[str, int]]
 
 
-def _get_header_info(uids: List[UnitID]) -> Tuple[LabelsType, LabelsType]:
+def _get_header_info(uids: List[UnitID]) -> tuple[LabelsType, LabelsType]:
     registers = _get_registers_from_uids(uids)
     reg_sizes = [(name, max(uids).index[0] + 1) for name, uids in registers.items()]
     reg_labels = [

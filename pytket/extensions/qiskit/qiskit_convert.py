@@ -26,7 +26,6 @@ from typing import (
     Iterable,
     cast,
     Set,
-    Tuple,
     TypeVar,
     TYPE_CHECKING,
 )
@@ -611,7 +610,7 @@ def append_tk_command_to_qiskit(
     qregmap: Dict[str, QuantumRegister],
     cregmap: Dict[str, ClassicalRegister],
     symb_map: Dict[Parameter, sympy.Symbol],
-    range_preds: Dict[Bit, Tuple[List["UnitID"], int]],
+    range_preds: Dict[Bit, tuple[List["UnitID"], int]],
 ) -> InstructionSet:
     optype = op.type
     if optype == OpType.Measure:
@@ -842,7 +841,7 @@ def tk_to_qiskit(
             cregmap.update({c_reg.name: qis_reg})
             qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
-    range_preds: Dict[Bit, Tuple[List["UnitID"], int]] = dict()
+    range_preds: Dict[Bit, tuple[List["UnitID"], int]] = dict()
 
     # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
@@ -1002,7 +1001,7 @@ def get_avg_characterisation(
 
     node_errors = cast(Dict[Node, Dict[OpType, float]], characterisation["NodeErrors"])
     link_errors = cast(
-        Dict[Tuple[Node, Node], Dict[OpType, float]], characterisation["EdgeErrors"]
+        Dict[tuple[Node, Node], Dict[OpType, float]], characterisation["EdgeErrors"]
     )
     readout_errors = cast(
         Dict[Node, List[List[float]]], characterisation["ReadoutErrors"]

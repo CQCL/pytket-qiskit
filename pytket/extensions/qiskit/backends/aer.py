@@ -22,7 +22,6 @@ from typing import (
     List,
     Optional,
     Sequence,
-    Tuple,
     Union,
     cast,
     TYPE_CHECKING,
@@ -460,7 +459,7 @@ class NoiseModelCharacterisation:
     edge_errors: Optional[Dict] = None
     readout_errors: Optional[Dict] = None
     averaged_node_errors: Optional[Dict[Node, float]] = None
-    averaged_edge_errors: Optional[Dict[Tuple[Node, Node], float]] = None
+    averaged_edge_errors: Optional[Dict[tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[Dict[Node, float]] = None
     generic_q_errors: Optional[Dict] = None
 
@@ -674,7 +673,7 @@ def _process_noise_model(
     ]
 
     node_errors: dict[Node, dict[OpType, float]] = defaultdict(dict)
-    link_errors: dict[Tuple[Node, Node], dict[OpType, float]] = defaultdict(dict)
+    link_errors: dict[tuple[Node, Node], dict[OpType, float]] = defaultdict(dict)
     readout_errors: dict[Node, list[list[float]]] = {}
 
     generic_single_qerrors_dict: dict = defaultdict(list)
@@ -774,7 +773,7 @@ def _process_noise_model(
 
 def _sparse_to_zx_tup(
     pauli: QubitPauliString, n_qubits: int
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     x = np.zeros(n_qubits, dtype=np.bool_)
     z = np.zeros(n_qubits, dtype=np.bool_)
     for q, p in pauli.map.items():

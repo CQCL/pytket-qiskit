@@ -18,7 +18,6 @@ from typing import (
     Optional,
     List,
     Sequence,
-    Tuple,
     Union,
 )
 
@@ -77,7 +76,7 @@ class IBMQEmulatorBackend(Backend):
         self._aer = AerBackend(noise_model=self._noise_model)
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: Dict[tuple[str, int], Counter] = dict()
 
     @property
     def backend_info(self) -> BackendInfo:

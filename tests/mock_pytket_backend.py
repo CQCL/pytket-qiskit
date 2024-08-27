@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Optional, Union, Sequence, Set, cast
+from typing import Optional, Union, Sequence, cast
 import json
 
 from pytket.circuit import Circuit, OpType
@@ -32,14 +32,14 @@ class MockShotBackend(Backend):
     def __init__(
         self,
         arch: Optional[Union[Architecture, FullyConnected]] = None,
-        gate_set: Optional[Set[OpType]] = None,
+        gate_set: Optional[set[OpType]] = None,
     ):
         """Mock shot backend for testing qiskit embedding. This should only be used
         in conjunction with the TketBackend. The readout bitstring will always be 1s.
         :param arch: The backend architecture
         :type arch: Optional[Union[Architecture, FullyConnected]]
         :param gate_set: The supported gateset, default to {OpType.CX, OpType.U3}
-        :type gate_set: Optional[Set[OpType]]
+        :type gate_set: Optional[set[OpType]]
         """
         self._id = 0
         self._arch = arch

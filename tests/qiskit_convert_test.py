@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from collections import Counter
-from typing import List, Set, Union
+from typing import List, Union
 from math import pi
 import pytest
 from sympy import Symbol
@@ -640,7 +640,7 @@ def assert_equivalence(
     tk_circuits = []
 
     # We want unique circuit names, otherwise it confuses the Qiskit backend.
-    names: Set[str] = set()
+    names: set[str] = set()
     for nn in range(len(circuits)):
         if isinstance(circuits[nn], Circuit):
             if require_tk_equality:

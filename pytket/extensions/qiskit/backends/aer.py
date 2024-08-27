@@ -94,7 +94,7 @@ def _default_q_index(q: Qubit) -> int:
 
 def _tket_gate_set_from_qiskit_backend(
     qiskit_aer_backend: "QiskitAerBackend",
-) -> Set[OpType]:
+) -> set[OpType]:
     config = qiskit_aer_backend.configuration()
     gate_set = {
         _gate_str_2_optype[gate_str]
@@ -473,7 +473,7 @@ def _map_trivial_noise_model_to_none(
 
 
 def _get_characterisation_of_noise_model(
-    noise_model: Optional[NoiseModel], gate_set: Set[OpType]
+    noise_model: Optional[NoiseModel], gate_set: set[OpType]
 ) -> NoiseModelCharacterisation:
     if noise_model is None:
         return NoiseModelCharacterisation(architecture=Architecture([]))
@@ -660,7 +660,7 @@ class AerUnitaryBackend(_AerBaseBackend):
 
 
 def _process_noise_model(
-    noise_model: NoiseModel, gate_set: Set[OpType]
+    noise_model: NoiseModel, gate_set: set[OpType]
 ) -> NoiseModelCharacterisation:
     # obtain approximations for gate errors from noise model by using probability of
     #  "identity" error

@@ -130,7 +130,7 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
         )
 
 
-def _get_primitive_gates(gateset: Set[OpType]) -> Set[OpType]:
+def _get_primitive_gates(gateset: set[OpType]) -> set[OpType]:
     if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
         return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
     elif gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:

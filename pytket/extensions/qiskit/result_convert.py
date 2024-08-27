@@ -35,8 +35,8 @@ from pytket.backends.backendresult import BackendResult
 from pytket.utils.outcomearray import OutcomeArray
 
 
-def _get_registers_from_uids(uids: list[UnitID]) -> dict[str, Set[UnitID]]:
-    registers: dict[str, Set[UnitID]] = defaultdict(set)
+def _get_registers_from_uids(uids: list[UnitID]) -> dict[str, set[UnitID]]:
+    registers: dict[str, set[UnitID]] = defaultdict(set)
     for uid in uids:
         registers[uid.reg_name].add(uid)
     return registers

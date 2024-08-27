@@ -549,15 +549,12 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
     :param qcirc: A circuit to be converted
-    :type qcirc: QuantumCircuit
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
         by appending them to the tket Circuit symbol names as "_UUID:<uuid>".
         This can be useful if you want to reassign Parameters after conversion
         to tket and back, as it is necessary for Parameter object equality
         to be preserved.
-    :type preserve_param_uuid: bool
     :return: The converted circuit
-    :rtype: Circuit
     """
     circ_name = qcirc.name
     # Parameter uses a hidden _uuid for equality check
@@ -809,12 +806,9 @@ def tk_to_qiskit(
     circuit will be returned using the tket gates which are supported in qiskit.
 
     :param tkcirc: A :py:class:`Circuit` to be converted
-    :type tkcirc: Circuit
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
-    :type replace_implicit_swaps: bool
     :return: The converted circuit
-    :rtype: QuantumCircuit
     """
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
     if replace_implicit_swaps:
@@ -877,9 +871,7 @@ def process_characterisation(backend: "BackendV1") -> dict[str, Any]:
      containing device Characteristics
 
     :param backend: A backend to be converted
-    :type backend: BackendV1
     :return: A dictionary containing device characteristics
-    :rtype: dict
     """
     config = backend.configuration()
     props = backend.properties()
@@ -892,11 +884,8 @@ def process_characterisation_from_config(
     """Obtain a dictionary containing device Characteristics given config and props.
 
     :param config: A IBMQ configuration object
-    :type config: QasmBackendConfiguration
     :param properties: An optional IBMQ properties object
-    :type properties: Optional[BackendProperties]
     :return: A dictionary containing device characteristics
-    :rtype: dict
     """
 
     # TODO explicitly check for and separate 1 and 2 qubit gates

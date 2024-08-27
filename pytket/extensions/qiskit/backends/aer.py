@@ -393,14 +393,10 @@ class _AerBaseBackend(Backend):
 
         :param state_circuit: Circuit that generates the desired state
             :math:`\\left|\\psi\\right>`.
-        :type state_circuit: Circuit
         :param pauli: Pauli operator
-        :type pauli: QubitPauliString
         :param valid_check: Explicitly check that the circuit satisfies all required
             predicates to run on the backend. Defaults to True
-        :type valid_check: bool, optional
         :return: :math:`\\left<\\psi | P | \\psi \\right>`
-        :rtype: complex
         """
         if self._noise_model:
             raise RuntimeError(
@@ -427,14 +423,10 @@ class _AerBaseBackend(Backend):
 
         :param state_circuit: Circuit that generates the desired state
             :math:`\\left|\\psi\\right>`.
-        :type state_circuit: Circuit
         :param operator: Operator :math:`H`.
-        :type operator: QubitPauliOperator
         :param valid_check: Explicitly check that the circuit satisfies all required
             predicates to run on the backend. Defaults to True
-        :type valid_check: bool, optional
         :return: :math:`\\left<\\psi | H | \\psi \\right>`
-        :rtype: complex
         """
         if self._noise_model:
             raise RuntimeError(
@@ -485,14 +477,11 @@ class AerBackend(_AerBaseBackend):
     Backend for running simulations on the Qiskit Aer QASM simulator.
 
     :param noise_model: Noise model to apply during simulation. Defaults to None.
-    :type noise_model: Optional[NoiseModel], optional
     :param simulation_method: Simulation method, see
         https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
         for available values. Defaults to "automatic".
-    :type simulation_method: str
     :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
         execution. `noise_model` will be overwritten if this is given. Default to None.
-    :type: Optional[`CrosstalkParams`]
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 

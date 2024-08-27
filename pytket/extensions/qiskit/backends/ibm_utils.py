@@ -55,9 +55,7 @@ def _batch_circuits(
     Returns a tuple of circuit batches and their ordering.
 
     :param circuits: Circuits to be grouped.
-    :type circuits: Sequence[Circuit]
     :param n_shots: Number of shots for each circuit.
-    :type n_shots: Sequence[int]
     """
     # take care of None entries
     n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))

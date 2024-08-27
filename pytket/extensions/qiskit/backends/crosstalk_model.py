@@ -140,11 +140,8 @@ class NoisyCircuitBuilder:
     ) -> None:
         """Construct a builder to generate noisy circuit
         :param circ: the original circuit.
-        :type circ: `Circuit`
         :param N: hyperparameter N
-        :type N: float
         :param ct_params: crosstalk parameters.
-        :type ct_params: `CrosstalkParams`
         """
         self.circ = circ
         self.all_qubits = set(circ.qubits)

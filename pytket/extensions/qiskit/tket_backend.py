@@ -70,10 +70,8 @@ class TketBackend(BackendV1):
         """Create a new :py:class:`TketBackend` from a :py:class:`Backend`.
 
         :param backend: The device or simulator to wrap up
-        :type backend: Backend
         :param comp_pass: The (optional) tket compilation pass to apply to each circuit
          before submitting to the :py:class:`Backend`, defaults to None
-        :type comp_pass: Optional[BasePass], optional
         """
         arch = backend.backend_info.architecture if backend.backend_info else None
         coupling: Optional[list[list[Any]]]

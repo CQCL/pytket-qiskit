@@ -154,21 +154,15 @@ class IBMQBackend(Backend):
     This function can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
-    :type backend_name: str
     :param instance: String containing information about the hub/group/project.
-    :type instance: str, optional
     :param monitor: Use the IBM job monitor. Defaults to True.
-    :type monitor: bool, optional
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
     :param service: A QiskitRuntimeService
-    :type service: Optional[QiskitRuntimeService]
     :param token: Authentication token to use the `QiskitRuntimeService`.
-    :type token: Optional[str]
     :param sampler_options: A customised `qiskit_ibm_runtime` `SamplerOptions` instance.
         See the Qiskit documentation at
         https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
         for details and default values.
-    :type sampler_options: Optional[SamplerOptions]
     """
 
     _supports_shots = False
@@ -244,11 +238,8 @@ class IBMQBackend(Backend):
         """Construct a BackendInfo from data returned by the IBMQ API.
 
         :param config: The configuration of this backend.
-        :type config: QasmBackendConfiguration
         :param props: The measured properties of this backend (not required).
-        :type props: Optional[BackendProperties]
         :return: Information about the backend.
-        :rtype: BackendInfo
         """
         characterisation = process_characterisation_from_config(config, props)
         averaged_errors = get_avg_characterisation(characterisation)
@@ -378,13 +369,10 @@ class IBMQBackend(Backend):
             - Level 2 (the default) adds more computationally intensive optimisations
               that should give the best results from execution.
 
-        :type optimisation_level: int, optional
 
         :param placement_options: Optional argument allowing the user to override
           the default settings in :py:class:`NoiseAwarePlacement`.
-        :type placement_options: Dict, optional
         :return: Compilation pass guaranteeing required predicates.
-        :rtype: BasePass
         """
         config: QasmBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()

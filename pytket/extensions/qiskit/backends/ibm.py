@@ -22,7 +22,6 @@ from typing import (
     Optional,
     Sequence,
     TYPE_CHECKING,
-    Union,
     Any,
 )
 from warnings import warn
@@ -465,7 +464,7 @@ class IBMQBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[Optional[int]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:

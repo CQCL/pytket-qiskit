@@ -16,7 +16,6 @@ from collections import Counter
 from typing import (
     Optional,
     Sequence,
-    Union,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
@@ -104,7 +103,7 @@ class IBMQEmulatorBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[Optional[int]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:

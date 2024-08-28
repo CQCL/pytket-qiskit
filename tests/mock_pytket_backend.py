@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Optional, Union, Sequence, cast
+from typing import Optional, Sequence, cast
 import json
 
 from pytket.circuit import Circuit, OpType
@@ -31,7 +31,7 @@ from pytket.utils.outcomearray import OutcomeArray
 class MockShotBackend(Backend):
     def __init__(
         self,
-        arch: Optional[Union[Architecture, FullyConnected]] = None,
+        arch: Optional[Architecture | FullyConnected] = None,
         gate_set: Optional[set[OpType]] = None,
     ):
         """Mock shot backend for testing qiskit embedding. This should only be used
@@ -77,7 +77,7 @@ class MockShotBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Optional[Union[int, Sequence[int]]] = None,
+        n_shots: Optional[int | Sequence[int]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:

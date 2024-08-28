@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 from collections import Counter
-from typing import Union
 from math import pi
 import pytest
 from sympy import Symbol
@@ -571,7 +570,7 @@ def test_convert_result() -> None:
 
 
 def add_x(
-    qbit: int, qr: QuantumRegister, circuits: list[Union[Circuit, QuantumCircuit]]
+    qbit: int, qr: QuantumRegister, circuits: list[Circuit | QuantumCircuit]
 ) -> None:
     """Add an x gate to each circuit in a list,
     each one being either a tket or qiskit circuit."""
@@ -586,7 +585,7 @@ def add_cnry(
     param: float,
     qbits: list[int],
     qr: QuantumRegister,
-    circuits: list[Union[Circuit, QuantumCircuit]],
+    circuits: list[Circuit | QuantumCircuit],
 ) -> None:
     """Add a CnRy gate to each circuit in a list,
     each one being either a tket or qiskit circuit."""
@@ -624,7 +623,7 @@ def assert_tket_circuits_identical(circuits: list[Circuit]) -> None:
 
 
 def assert_equivalence(
-    circuits: list[Union[Circuit, QuantumCircuit]],
+    circuits: list[Circuit | QuantumCircuit],
     require_qk_conversions_equality: bool = True,
     require_tk_equality: bool = True,
 ) -> None:

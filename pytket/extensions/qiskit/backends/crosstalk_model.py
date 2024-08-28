@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Union, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 from qiskit_aer.noise import NoiseModel  # type: ignore
@@ -64,7 +64,7 @@ class NoiseGate:
     type: str
 
 
-Instruction = Union[FractionalUnitary, Command, NoiseGate]
+Instruction = FractionalUnitary | Command | NoiseGate
 Slice = list[Instruction]
 EPS = 1e-9
 
@@ -205,7 +205,7 @@ class NoisyCircuitBuilder:
         self._fill_gaps(frontier)
 
     @staticmethod
-    def _get_ubox(u: np.ndarray) -> Union[Unitary1qBox, Unitary2qBox, Unitary3qBox]:
+    def _get_ubox(u: np.ndarray) -> Unitary1qBox | Unitary2qBox | Unitary3qBox:
         """Return a UnitaryxqBox for a given unitary"""
         if u.shape[0] == 2:
             return Unitary1qBox(u)

@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 import json
 from logging import warning
-from typing import Optional, Sequence, Union, cast, TYPE_CHECKING
+from typing import Optional, Sequence, cast, TYPE_CHECKING
 import warnings
 
 import numpy as np
@@ -246,7 +246,7 @@ class _AerBaseBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[Optional[int]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -351,7 +351,7 @@ class _AerBaseBackend(Backend):
     def _snapshot_expectation_value(
         self,
         circuit: Circuit,
-        hamiltonian: Union[SparsePauliOp, qk_Pauli],
+        hamiltonian: SparsePauliOp | qk_Pauli,
         valid_check: bool = True,
     ) -> complex:
         if valid_check:

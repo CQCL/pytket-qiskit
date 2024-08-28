@@ -321,7 +321,7 @@ class CircuitBuilder:
     def add_xs(
         self,
         num_ctrl_qubits: Optional[int],
-        ctrl_state: Optional[Union[str, int]],
+        ctrl_state: Optional[str | int],
         qargs: list["Qubit"],
     ) -> None:
         if ctrl_state is not None:
@@ -570,7 +570,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     return builder.circuit()
 
 
-def param_to_tk(p: Union[float, ParameterExpression]) -> sympy.Expr:
+def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         symexpr = p._symbol_expr
         try:
@@ -583,7 +583,7 @@ def param_to_tk(p: Union[float, ParameterExpression]) -> sympy.Expr:
 
 def param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
-) -> Union[float, ParameterExpression]:
+) -> float | ParameterExpression:
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
@@ -593,7 +593,7 @@ def param_to_qiskit(
 
 def _get_params(
     op: Op, symb_map: dict[Parameter, sympy.Symbol]
-) -> list[Union[float, ParameterExpression]]:
+) -> list[float | ParameterExpression]:
     return [param_to_qiskit(p, symb_map) for p in op.params]
 
 
@@ -899,7 +899,7 @@ def process_characterisation_from_config(
     n_qubits = config.n_qubits
     if coupling_map is None:
         # Assume full connectivity
-        arc: Union[FullyConnected, Architecture] = FullyConnected(n_qubits)
+        arc: FullyConnected | Architecture = FullyConnected(n_qubits)
     else:
         arc = Architecture(coupling_map)
 

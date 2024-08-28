@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Optional, Any, TYPE_CHECKING, Union, cast
+from typing import Optional, Any, TYPE_CHECKING, cast
 from qiskit.providers import JobStatus, JobV1  # type: ignore
 from qiskit.result import Result  # type: ignore
 from pytket.backends import ResultHandle, StatusEnum
@@ -45,7 +45,7 @@ class TketJob(JobV1):
         backend: "TketBackend",
         handles: list[ResultHandle],
         jobinfos: list[JobInfo],
-        final_maps: Union[list[None], list[dict[UnitID, UnitID]]],
+        final_maps: list[None] | list[dict[UnitID, UnitID]],
     ):
         """Initializes the asynchronous job."""
 

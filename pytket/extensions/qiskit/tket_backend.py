@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Union, Any
+from typing import Optional, Any
 from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
 from qiskit.providers.backend import BackendV1  # type: ignore
 from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
@@ -118,7 +118,7 @@ class TketBackend(BackendV1):
         return Options(shots=None, memory=False)
 
     def run(
-        self, run_input: Union[QuantumCircuit, list[QuantumCircuit]], **options: Any
+        self, run_input: QuantumCircuit | list[QuantumCircuit], **options: Any
     ) -> TketJob:
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]

@@ -113,7 +113,7 @@ def correct_signature(
     what: str,
     name: str,
     obj: Any,
-    options: Dict,
+    options: 
     signature: str,
     return_annotation: str,
 ) -> (str, str):

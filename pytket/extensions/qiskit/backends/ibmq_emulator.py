@@ -14,7 +14,6 @@
 
 from collections import Counter
 from typing import (
-    Dict,
     Optional,
     Sequence,
     Union,
@@ -86,7 +85,7 @@ class IBMQEmulatorBackend(Backend):
         return self._ibmq.required_predicates
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
+        self, optimisation_level: int = 2, placement_options: Optional[dict] = None
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.

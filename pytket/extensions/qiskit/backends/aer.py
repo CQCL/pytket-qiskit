@@ -17,15 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 import json
 from logging import warning
-from typing import (
-    Dict,
-    Optional,
-    Sequence,
-    Union,
-    cast,
-    TYPE_CHECKING,
-    Set,
-)
+from typing import Optional, Sequence, Union, cast, TYPE_CHECKING
 import warnings
 
 import numpy as np
@@ -167,7 +159,7 @@ class _AerBaseBackend(Backend):
         self,
         arch: Architecture,
         optimisation_level: int = 2,
-        placement_options: Optional[Dict] = None,
+        placement_options: Optional[dict] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
         if placement_options is not None:
@@ -234,7 +226,7 @@ class _AerBaseBackend(Backend):
         return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
+        self, optimisation_level: int = 2, placement_options: Optional[dict] = None
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
@@ -446,13 +438,13 @@ class NoiseModelCharacterisation:
     """Class to hold information from the processing of the noise model"""
 
     architecture: Architecture
-    node_errors: Optional[Dict] = None
-    edge_errors: Optional[Dict] = None
-    readout_errors: Optional[Dict] = None
+    node_errors: Optional[dict] = None
+    edge_errors: Optional[dict] = None
+    readout_errors: Optional[dict] = None
     averaged_node_errors: Optional[dict[Node, float]] = None
     averaged_edge_errors: Optional[dict[tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[dict[Node, float]] = None
-    generic_q_errors: Optional[Dict] = None
+    generic_q_errors: Optional[dict] = None
 
 
 def _map_trivial_noise_model_to_none(

@@ -23,7 +23,6 @@ from typing import (
     Any,
     Iterable,
     cast,
-    Set,
     TypeVar,
     TYPE_CHECKING,
 )

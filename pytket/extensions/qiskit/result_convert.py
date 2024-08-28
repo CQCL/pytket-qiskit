@@ -16,7 +16,6 @@
 from typing import (
     Iterator,
     Sequence,
-    Set,
     Optional,
     Any,
 )

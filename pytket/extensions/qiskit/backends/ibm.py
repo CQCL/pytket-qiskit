@@ -23,7 +23,6 @@ from typing import (
     Sequence,
     TYPE_CHECKING,
     Union,
-    Set,
     Any,
 )
 from warnings import warn

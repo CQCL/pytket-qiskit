@@ -22,15 +22,13 @@ from typing import (
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
-from pytket.backends import (
-    Backend,
-    ResultHandle,
-    CircuitStatus,
-)
+from pytket.backends.backend import Backend
+from pytket.backends.status import CircuitStatus
+
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
-from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.circuit import Circuit
+from pytket.backends.resulthandle import _ResultIdTuple, ResultHandle
+from pytket._tket.circuit import Circuit
 from pytket.passes import BasePass
 from pytket.predicates import Predicate
 from pytket.utils.results import KwargTypes

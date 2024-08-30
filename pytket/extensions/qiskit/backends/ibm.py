@@ -339,7 +339,9 @@ class IBMQBackend(Backend):
         return predicates
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, placement_options: Optional[dict] = None
+        self,
+        optimisation_level: int = 2,
+        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         A suggested compilation pass that will will, if possible, produce an equivalent
@@ -381,7 +383,7 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
-        placement_options: Optional[dict] = None,
+        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
         primitive_gates = _get_primitive_gates(_tk_gate_set(config))

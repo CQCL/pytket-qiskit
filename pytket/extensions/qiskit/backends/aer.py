@@ -159,7 +159,7 @@ class _AerBaseBackend(Backend):
         self,
         arch: Architecture,
         optimisation_level: int = 2,
-        placement_options: Optional[dict] = None,
+        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
         if placement_options is not None:
@@ -226,7 +226,9 @@ class _AerBaseBackend(Backend):
         return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, placement_options: Optional[dict] = None
+        self,
+        optimisation_level: int = 2,
+        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.

@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 import json
 from logging import warning
-from typing import Optional, Sequence, cast, TYPE_CHECKING
+from typing import Optional, Sequence, Any, cast, TYPE_CHECKING
 import warnings
 
 import numpy as np
@@ -438,13 +438,13 @@ class NoiseModelCharacterisation:
     """Class to hold information from the processing of the noise model"""
 
     architecture: Architecture
-    node_errors: Optional[dict] = None
-    edge_errors: Optional[dict] = None
-    readout_errors: Optional[dict] = None
+    node_errors: Optional[dict[Node, dict[OpType, float]]] = None
+    edge_errors: Optional[dict[tuple[Node, Node], dict[OpType, float]]] = None
+    readout_errors: Optional[dict[Node, float]] = None
     averaged_node_errors: Optional[dict[Node, float]] = None
     averaged_edge_errors: Optional[dict[tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[dict[Node, float]] = None
-    generic_q_errors: Optional[dict] = None
+    generic_q_errors: Optional[dict[str, Any]] = None
 
 
 def _map_trivial_noise_model_to_none(

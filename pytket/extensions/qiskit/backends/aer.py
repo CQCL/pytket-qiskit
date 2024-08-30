@@ -695,14 +695,14 @@ class AerDensityMatrixBackend(_AerBaseBackend):
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
 
-        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
-            self._allowed_special_gates
-        )
+        gate_set: set[OpType] = _tket_gate_set_from_qiskit_backend(
+            self._qiskit_backend
+        ).union(self._allowed_special_gates)
         self._noise_model = _map_trivial_noise_model_to_none(noise_model)
-        characterisation = _get_characterisation_of_noise_model(
-            self._noise_model, gate_set
+        characterisation: NoiseModelCharacterisation = (
+            _get_characterisation_of_noise_model(self._noise_model, gate_set)
         )
-        self._has_arch = bool(characterisation.architecture) and bool(
+        self._has_arch: bool = bool(characterisation.architecture) and bool(
             characterisation.architecture.nodes
         )
 
@@ -710,7 +710,11 @@ class AerDensityMatrixBackend(_AerBaseBackend):
             name=type(self).__name__,
             device_name=self._qiskit_backend_name,
             version=__extension_version__,
-            architecture=FullyConnected(n_qubits),
+            architecture=(
+                FullyConnected(n_qubits)
+                if not self._has_arch
+                else characterisation.architecture
+            ),
             gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
             supports_midcircuit_measurement=True,
             supports_reset=True,

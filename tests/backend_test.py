@@ -77,6 +77,7 @@ from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
 )
+from pytket.architecture import FullyConnected
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 
@@ -1436,7 +1437,9 @@ def test_ibmq_local_emulator(
 # https://github.com/CQCL/pytket-qiskit/issues/231
 def test_noiseless_density_matrix_simulation() -> None:
     density_matrix_backend = AerDensityMatrixBackend()
-    assert density_matrix_backend.supports_density_matrix == True
+    assert density_matrix_backend.supports_density_matrix is True
+
+    assert isinstance(density_matrix_backend.backend_info.architecture, FullyConnected)
 
     circ1 = Circuit(3).X(0).X(1).CCX(0, 1, 2)
 
@@ -1476,6 +1479,8 @@ def test_noisy_density_matrix_simulation() -> None:
     noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [1, 2])
 
     noisy_density_sim = AerDensityMatrixBackend(noise_model)
+    assert isinstance(noisy_density_sim.backend_info.architecture, Architecture)
+    assert len(noisy_density_sim.backend_info.architecture.nodes) == 3
 
     circ = Circuit(3)
     circ.X(0)
@@ -1487,3 +1492,6 @@ def test_noisy_density_matrix_simulation() -> None:
 
     result = noisy_density_sim.run_circuit(circ)
     assert result.get_density_matrix().shape == (8, 8)
+
+
+test_noisy_density_matrix_simulation()

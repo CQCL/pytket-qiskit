@@ -442,7 +442,7 @@ class NoiseModelCharacterisation:
     architecture: Architecture
     node_errors: Optional[dict[Node, dict[OpType, float]]] = None
     edge_errors: Optional[dict[tuple[Node, Node], dict[OpType, float]]] = None
-    readout_errors: Optional[dict[Node, float]] = None
+    readout_errors: Optional[dict[Node, list[list[float]]]] = None
     averaged_node_errors: Optional[dict[Node, float]] = None
     averaged_edge_errors: Optional[dict[tuple[Node, Node], float]] = None
     averaged_readout_errors: Optional[dict[Node, float]] = None

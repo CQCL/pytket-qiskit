@@ -1348,7 +1348,7 @@ def test_statevector_simulator_gateset_deterministic() -> None:
     circ.H(2)
     circ.Measure(2, 0)
     circ.CZ(0, 1, condition_bits=[0], condition_value=1)
-    circ.add_gate(OpType.Reset, [2])
+    circ.Reset(2)
     compiled_circ = sv_backend.get_compiled_circuit(circ)
     assert sv_backend.valid_circuit(compiled_circ)
     tket_statevector = sv_backend.run_circuit(compiled_circ).get_state()
@@ -1459,7 +1459,7 @@ def test_noiseless_density_matrix_simulation() -> None:
     circ2.H(2)
     circ2.Measure(2, 0)
     circ2.CZ(0, 1, condition_bits=[0], condition_value=1)
-    circ2.add_gate(OpType.Reset, [2])
+    circ2.Reset(2)
 
     result2 = density_matrix_backend.run_circuit(circ2)
     assert result1.get_density_matrix().shape == (8, 8)
@@ -1492,6 +1492,3 @@ def test_noisy_density_matrix_simulation() -> None:
 
     result = noisy_density_sim.run_circuit(circ)
     assert result.get_density_matrix().shape == (8, 8)
-
-
-test_noisy_density_matrix_simulation()

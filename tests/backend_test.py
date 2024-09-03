@@ -1452,7 +1452,7 @@ def test_noiseless_density_matrix_simulation() -> None:
         result1.get_density_matrix(), np.outer(output_state, output_state.conj())
     )
     # Example with resets and conditional gates
-    # Deterministic if input is a computational basis state
+    # Prepares a state deterministically if input is a computational basis state
     circ2 = Circuit(3, 1)
     circ2.CCX(*range(3))
     circ2.U1(1 / 4, 2)

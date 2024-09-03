@@ -1465,9 +1465,10 @@ def test_noiseless_density_matrix_simulation() -> None:
     assert result1.get_density_matrix().shape == (8, 8)
     state_backend = AerStateBackend()
     statevector = state_backend.run_circuit(circ2).get_state()
-    assert np.allclose(
-        result2.get_density_matrix(), np.outer(statevector, statevector.conj())
-    )
+    noiseless_dm = result2.get_density_matrix()
+    assert np.allclose(noiseless_dm, np.outer(statevector, statevector.conj()))
+    # Check purity to verify that we have a pure state
+    assert np.trace(noiseless_dm**2).real == 1
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/231
@@ -1491,4 +1492,11 @@ def test_noisy_density_matrix_simulation() -> None:
     assert noisy_density_sim.valid_circuit(circ)
 
     result = noisy_density_sim.run_circuit(circ)
-    assert result.get_density_matrix().shape == (8, 8)
+    noisy_dm = result.get_density_matrix()
+    assert noisy_dm.shape == (8, 8)
+    # Check purity to verify mixed state
+    assert np.trace(noisy_dm**2).real < 1
+
+
+test_noiseless_density_matrix_simulation()
+test_noisy_density_matrix_simulation()

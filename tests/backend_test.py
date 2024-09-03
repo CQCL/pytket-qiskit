@@ -1496,7 +1496,3 @@ def test_noisy_density_matrix_simulation() -> None:
     assert noisy_dm.shape == (8, 8)
     # Check purity to verify mixed state
     assert np.trace(noisy_dm**2).real < 1
-
-
-test_noiseless_density_matrix_simulation()
-test_noisy_density_matrix_simulation()

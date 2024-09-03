@@ -301,8 +301,11 @@ class _AerBaseBackend(Backend):
 
                 qc = tk_to_qiskit(c0, replace_implicit_swaps)
 
-                if self.supports_state or self.supports_density_matrix:
+                if self.supports_state:
                     qc.save_state()
+
+                elif self.supports_density_matrix:
+                    qc.save_density_matrix()
 
                 elif self.supports_unitary:
                     qc.save_unitary()

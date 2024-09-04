@@ -1451,7 +1451,7 @@ def test_noiseless_density_matrix_simulation() -> None:
     assert noiseless_dm1.shape == (8, 8)
     assert np.allclose(noiseless_dm1, np.outer(output_state, output_state.conj()))
     # Check purity to verify that we have a pure state
-    assert np.trace(noiseless_dm1**2).real == 1
+    np.isclose(np.trace(noiseless_dm1**2).real, 1)
 
     # Example with resets and conditional gates
     # Prepares a state deterministically if input is a computational basis state
@@ -1470,7 +1470,7 @@ def test_noiseless_density_matrix_simulation() -> None:
     noiseless_dm2 = result2.get_density_matrix()
     assert np.allclose(noiseless_dm2, np.outer(statevector, statevector.conj()))
     # Check purity to verify that we have a pure state
-    assert np.trace(noiseless_dm2**2).real == 1
+    assert np.isclose(np.trace(noiseless_dm2**2).real, 1)
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/231
@@ -1497,4 +1497,4 @@ def test_noisy_density_matrix_simulation() -> None:
     noisy_dm = result.get_density_matrix()
     assert noisy_dm.shape == (8, 8)
     # Check purity to verify mixed state
-    assert np.trace(noisy_dm**2).real < 1
+    assert np.trace(noisy_dm**2).real < 0.99

@@ -165,7 +165,7 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - optimisation_level = 0
      - optimisation_level = 1
      - optimisation_level = 2 [1]
-   * - :py:class:`DecomposeBoxes`
+   * - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
    * - self.rebase_pass [2]

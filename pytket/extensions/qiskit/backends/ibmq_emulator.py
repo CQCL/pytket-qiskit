@@ -28,7 +28,7 @@ from pytket.backends.status import CircuitStatus
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple, ResultHandle
-from pytket._tket.circuit import Circuit
+from pytket.circuit import Circuit
 from pytket.passes import BasePass
 from pytket.predicates import Predicate
 from pytket.utils.results import KwargTypes

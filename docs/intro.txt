@@ -95,7 +95,7 @@ to disk:
 
     QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token, instance=inst)
 
-To see which devices you can access you can use the :py:meth:`~pytket.extensions.qiskit.IBMQBackend.available_devices` method on the :py:class:`IBMQBackend`. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
+To see which devices you can access, use the :py:meth:`IBMQBackend.available_devices` method. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
 
 ::
 
@@ -106,7 +106,7 @@ To see which devices you can access you can use the :py:meth:`~pytket.extensions
     backendinfo_list = backend.available_devices(instance=my_instance) 
     print([backend.device_name for backend in backendinfo_list])
 
-For more information see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`_.
+For more information, see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`_.
 
 
 Method 2: Saving credentials in a local pytket config file

@@ -2,5 +2,4 @@ pytest
 pytest-timeout
 pytest-rerunfailures
 hypothesis
-qiskit-algorithms
 requests_mock

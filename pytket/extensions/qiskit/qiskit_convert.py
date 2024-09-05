@@ -20,7 +20,6 @@ from typing import (
     Callable,
     Optional,
     Union,
-    Optional,
     Any,
     Iterable,
     cast,

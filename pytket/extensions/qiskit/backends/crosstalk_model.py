@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import List, Tuple, Union, Dict, Optional
+from typing import Optional
 from dataclasses import dataclass
 
 from qiskit_aer.noise import NoiseModel  # type: ignore
@@ -64,8 +64,8 @@ class NoiseGate:
     type: str
 
 
-Instruction = Union[FractionalUnitary, Command, NoiseGate]
-Slice = List[Instruction]
+Instruction = FractionalUnitary | Command | NoiseGate
+Slice = list[Instruction]
 EPS = 1e-9
 
 
@@ -93,15 +93,15 @@ class CrosstalkParams:
         on each qubit
     """
 
-    zz_crosstalks: Dict[Tuple[Qubit, Qubit], float]
-    single_q_phase_errors: Dict[Qubit, float]
-    two_q_induced_phase_errors: Dict[Tuple[Qubit, Qubit], Tuple[Qubit, float]]
-    non_markovian_noise: List[Tuple[Qubit, float, float]]
+    zz_crosstalks: dict[tuple[Qubit, Qubit], float]
+    single_q_phase_errors: dict[Qubit, float]
+    two_q_induced_phase_errors: dict[tuple[Qubit, Qubit], tuple[Qubit, float]]
+    non_markovian_noise: list[tuple[Qubit, float, float]]
     virtual_z: bool
     N: float
-    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float]
-    phase_damping_error: Dict[Qubit, float]
-    amplitude_damping_error: Dict[Qubit, float]
+    gate_times: dict[tuple[OpType, tuple[Qubit, ...]], float]
+    phase_damping_error: dict[Qubit, float]
+    amplitude_damping_error: dict[Qubit, float]
 
     def get_noise_model(self) -> NoiseModel:
         """Construct a NoiseModel from phase_damping_error
@@ -140,11 +140,8 @@ class NoisyCircuitBuilder:
     ) -> None:
         """Construct a builder to generate noisy circuit
         :param circ: the original circuit.
-        :type circ: `Circuit`
         :param N: hyperparameter N
-        :type N: float
         :param ct_params: crosstalk parameters.
-        :type ct_params: `CrosstalkParams`
         """
         self.circ = circ
         self.all_qubits = set(circ.qubits)
@@ -158,10 +155,10 @@ class NoisyCircuitBuilder:
 
     def reset(self) -> None:
         """Clear the build cache"""
-        self._slices: List[Slice] = []
+        self._slices: list[Slice] = []
 
     @staticmethod
-    def _get_qubits(inst: Instruction) -> List[Qubit]:
+    def _get_qubits(inst: Instruction) -> list[Qubit]:
         if isinstance(inst, Command):
             return inst.qubits
         else:
@@ -170,7 +167,7 @@ class NoisyCircuitBuilder:
     def _append(
         self,
         inst: Instruction,
-        frontier: Dict[Qubit, int],
+        frontier: dict[Qubit, int],
     ) -> None:
         """Append a command to the splices in Tetris style"""
         args = self._get_qubits(inst)
@@ -187,7 +184,7 @@ class NoisyCircuitBuilder:
         for q in args:
             frontier[q] = slice_idx + 1
 
-    def _fill_gaps(self, frontier: Dict[Qubit, int]) -> None:
+    def _fill_gaps(self, frontier: dict[Qubit, int]) -> None:
         """Fill the gaps in the slices with identity `Unitary1qBox`es"""
         for idx, s in enumerate(self._slices):
             slice_qubits = set().union(*[self._get_qubits(inst) for inst in s])
@@ -208,7 +205,7 @@ class NoisyCircuitBuilder:
         self._fill_gaps(frontier)
 
     @staticmethod
-    def _get_ubox(u: np.ndarray) -> Union[Unitary1qBox, Unitary2qBox, Unitary3qBox]:
+    def _get_ubox(u: np.ndarray) -> Unitary1qBox | Unitary2qBox | Unitary3qBox:
         """Return a UnitaryxqBox for a given unitary"""
         if u.shape[0] == 2:
             return Unitary1qBox(u)
@@ -366,14 +363,14 @@ class NoisyCircuitBuilder:
                     d.add_gate(inst.cmd.op, inst.cmd.args)
         return d
 
-    def get_slices(self) -> List[Slice]:
+    def get_slices(self) -> list[Slice]:
         """Return the internally stored slices"""
         return self._slices
 
 
 def get_gate_times_from_backendinfo(
     backend_info: BackendInfo,
-) -> Dict[Tuple[OpType, Tuple[Qubit, ...]], float]:
+) -> dict[tuple[OpType, tuple[Qubit, ...]], float]:
     """Convert the gate time information stored in a `BackendInfo`
     into the format required by `NoisyCircuitBuilder`"""
     if (
@@ -381,7 +378,7 @@ def get_gate_times_from_backendinfo(
         or "GateTimes" not in backend_info.misc["characterisation"]
     ):
         raise ValueError("'GateTimes' is not present in the provided 'BackendInfo'")
-    gate_times: Dict[Tuple[OpType, Tuple[Qubit, ...]], float] = {}
+    gate_times: dict[tuple[OpType, tuple[Qubit, ...]], float] = {}
     for gt in backend_info.misc["characterisation"]["GateTimes"]:
         # GateTimes are nanoseconds
         gate_times[_gate_str_2_optype[gt[0]], tuple([Node(q) for q in gt[1]])] = (

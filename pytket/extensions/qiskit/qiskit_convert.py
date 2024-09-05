@@ -18,6 +18,7 @@
 from collections import defaultdict
 from typing import (
     Callable,
+    Optional,
     Union,
     Optional,
     Any,

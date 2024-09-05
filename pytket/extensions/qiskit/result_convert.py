@@ -14,13 +14,9 @@
 
 
 from typing import (
-    List,
     Iterator,
     Sequence,
-    Set,
-    Tuple,
     Optional,
-    Dict,
     Any,
 )
 from collections import Counter, defaultdict
@@ -36,17 +32,17 @@ from pytket.backends.backendresult import BackendResult
 from pytket.utils.outcomearray import OutcomeArray
 
 
-def _get_registers_from_uids(uids: List[UnitID]) -> Dict[str, Set[UnitID]]:
-    registers: Dict[str, Set[UnitID]] = defaultdict(set)
+def _get_registers_from_uids(uids: list[UnitID]) -> dict[str, set[UnitID]]:
+    registers: dict[str, set[UnitID]] = defaultdict(set)
     for uid in uids:
         registers[uid.reg_name].add(uid)
     return registers
 
 
-LabelsType = List[Tuple[str, int]]
+LabelsType = list[tuple[str, int]]
 
 
-def _get_header_info(uids: List[UnitID]) -> Tuple[LabelsType, LabelsType]:
+def _get_header_info(uids: list[UnitID]) -> tuple[LabelsType, LabelsType]:
     registers = _get_registers_from_uids(uids)
     reg_sizes = [(name, max(uids).index[0] + 1) for name, uids in registers.items()]
     reg_labels = [
@@ -56,7 +52,7 @@ def _get_header_info(uids: List[UnitID]) -> Tuple[LabelsType, LabelsType]:
     return reg_sizes, reg_labels
 
 
-def _qiskit_ordered_uids(uids: List[UnitID]) -> List[UnitID]:
+def _qiskit_ordered_uids(uids: list[UnitID]) -> list[UnitID]:
     registers = _get_registers_from_uids(uids)
     names = sorted(registers.keys())
     return [uid for name in names for uid in sorted(registers[name], reverse=True)]
@@ -151,11 +147,11 @@ def qiskit_result_to_backendresult(res: Result) -> Iterator[BackendResult]:
 
 def backendresult_to_qiskit_resultdata(
     res: BackendResult,
-    cbits: List[UnitID],
-    qbits: List[UnitID],
-    final_map: Optional[Dict[UnitID, UnitID]],
-) -> Dict[str, Any]:
-    data: Dict[str, Any] = dict()
+    cbits: list[UnitID],
+    qbits: list[UnitID],
+    final_map: Optional[dict[UnitID, UnitID]],
+) -> dict[str, Any]:
+    data: dict[str, Any] = dict()
     if res.contains_state_results:
         qbits = _qiskit_ordered_uids(qbits)
         qbits.sort(reverse=True)

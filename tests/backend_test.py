@@ -14,7 +14,7 @@
 import json
 import os
 from collections import Counter
-from typing import Dict, cast
+from typing import cast
 import math
 import cmath
 from hypothesis import given, strategies
@@ -323,8 +323,8 @@ def test_process_characterisation_complete_noise_model() -> None:
     back = AerBackend(my_noise_model)
     char = back.backend_info.get_misc("characterisation")
 
-    node_errors = cast(Dict, back.backend_info.all_node_gate_errors)
-    link_errors = cast(Dict, back.backend_info.all_edge_gate_errors)
+    node_errors = cast(dict, back.backend_info.all_node_gate_errors)
+    link_errors = cast(dict, back.backend_info.all_edge_gate_errors)
     arch = back.backend_info.architecture
     assert node_errors is not None
     assert link_errors is not None
@@ -346,7 +346,7 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert (
         round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375
     )
-    readout_errors = cast(Dict, back.backend_info.all_readout_errors)
+    readout_errors = cast(dict, back.backend_info.all_readout_errors)
     assert readout_errors[arch.nodes[0]] == [
         [0.8, 0.2],
         [0.2, 0.8],
@@ -381,9 +381,9 @@ def test_process_model() -> None:
     assert "characterisation" in b.backend_info.misc
     assert "GenericOneQubitQErrors" in b.backend_info.misc["characterisation"]
     assert "GenericTwoQubitQErrors" in b.backend_info.misc["characterisation"]
-    node_gate_errors = cast(Dict, b.backend_info.all_node_gate_errors)
+    node_gate_errors = cast(dict, b.backend_info.all_node_gate_errors)
     assert nodes[3] in node_gate_errors
-    edge_gate_errors = cast(Dict, b.backend_info.all_edge_gate_errors)
+    edge_gate_errors = cast(dict, b.backend_info.all_edge_gate_errors)
     assert (nodes[7], nodes[8]) in edge_gate_errors
 
 
@@ -974,7 +974,7 @@ def test_compile_x(brisbane_backend: IBMQBackend) -> None:
         assert c1.n_gates == 1
 
 
-def lift_perm(p: Dict[int, int]) -> np.ndarray:
+def lift_perm(p: dict[int, int]) -> np.ndarray:
     """
     Given a permutation of {0,1,...,n-1} return the 2^n by 2^n permuation matrix
     representing the permutation of qubits (big-endian convention).

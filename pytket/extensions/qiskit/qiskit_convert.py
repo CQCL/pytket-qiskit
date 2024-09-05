@@ -60,7 +60,8 @@ from qiskit.circuit.library import (
     UnitaryGate,
     Initialize,
 )
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
+from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
 
 from pytket.circuit import (
     CircBox,
@@ -84,8 +85,8 @@ from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
 from pytket.passes import RebaseCustom
 
 if TYPE_CHECKING:
-    from qiskit.providers.backend import BackendV1  # type: ignore
-    from qiskit.providers.models.backendproperties import Nduv  # type: ignore
+    from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
+    from qiskit_ibm_runtime.models.backend_properties import Nduv
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
     from pytket.circuit import Op, UnitID
 
@@ -204,7 +205,7 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
+def _tk_gate_set(config: PulseBackendConfiguration) -> set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     if config.simulator:
         gate_set = {
@@ -863,9 +864,9 @@ def tk_to_qiskit(
     return qcirc
 
 
-def process_characterisation(backend: "BackendV1") -> dict[str, Any]:
-    """Convert a :py:class:`qiskit.providers.backend.BackendV1` to a dictionary
-     containing device Characteristics
+def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
+    """Convert a :py:class:`qiskit_ibm_runtime.ibm_backend.IBMBackend` to a
+    dictionary containing device Characteristics
 
     :param backend: A backend to be converted
     :return: A dictionary containing device characteristics
@@ -876,7 +877,7 @@ def process_characterisation(backend: "BackendV1") -> dict[str, Any]:
 
 
 def process_characterisation_from_config(
-    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
+    config: PulseBackendConfiguration, properties: Optional[BackendProperties]
 ) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 

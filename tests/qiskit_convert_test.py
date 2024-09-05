@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 from collections import Counter
-from typing import List, Set, Union
 from math import pi
 import pytest
 from sympy import Symbol
@@ -571,7 +570,7 @@ def test_convert_result() -> None:
 
 
 def add_x(
-    qbit: int, qr: QuantumRegister, circuits: List[Union[Circuit, QuantumCircuit]]
+    qbit: int, qr: QuantumRegister, circuits: list[Circuit | QuantumCircuit]
 ) -> None:
     """Add an x gate to each circuit in a list,
     each one being either a tket or qiskit circuit."""
@@ -584,9 +583,9 @@ def add_x(
 
 def add_cnry(
     param: float,
-    qbits: List[int],
+    qbits: list[int],
     qr: QuantumRegister,
-    circuits: List[Union[Circuit, QuantumCircuit]],
+    circuits: list[Circuit | QuantumCircuit],
 ) -> None:
     """Add a CnRy gate to each circuit in a list,
     each one being either a tket or qiskit circuit."""
@@ -603,7 +602,7 @@ def add_cnry(
             circ.append(new_gate, [qr[nn] for nn in qbits])
 
 
-def assert_tket_circuits_identical(circuits: List[Circuit]) -> None:
+def assert_tket_circuits_identical(circuits: list[Circuit]) -> None:
     """Apart from the circuit names and qubit labels, assert that
     all circuits in the list are identical (i.e., identical gates), not just equivalent
     (having the same unitary matrix)."""
@@ -624,7 +623,7 @@ def assert_tket_circuits_identical(circuits: List[Circuit]) -> None:
 
 
 def assert_equivalence(
-    circuits: List[Union[Circuit, QuantumCircuit]],
+    circuits: list[Circuit | QuantumCircuit],
     require_qk_conversions_equality: bool = True,
     require_tk_equality: bool = True,
 ) -> None:
@@ -640,7 +639,7 @@ def assert_equivalence(
     tk_circuits = []
 
     # We want unique circuit names, otherwise it confuses the Qiskit backend.
-    names: Set[str] = set()
+    names: set[str] = set()
     for nn in range(len(circuits)):
         if isinstance(circuits[nn], Circuit):
             if require_tk_equality:

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, List, Union, Any
+from typing import Optional, Any
 from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
 from qiskit.providers.backend import BackendV1  # type: ignore
 from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
@@ -30,7 +30,7 @@ from pytket.predicates import (
 from pytket.architecture import FullyConnected
 
 
-def _extract_basis_gates(backend: Backend) -> List[str]:
+def _extract_basis_gates(backend: Backend) -> list[str]:
     for pred in backend.required_predicates:
         if type(pred) == GateSetPredicate:
             return [
@@ -70,13 +70,11 @@ class TketBackend(BackendV1):
         """Create a new :py:class:`TketBackend` from a :py:class:`Backend`.
 
         :param backend: The device or simulator to wrap up
-        :type backend: Backend
         :param comp_pass: The (optional) tket compilation pass to apply to each circuit
          before submitting to the :py:class:`Backend`, defaults to None
-        :type comp_pass: Optional[BasePass], optional
         """
         arch = backend.backend_info.architecture if backend.backend_info else None
-        coupling: Optional[List[List[Any]]]
+        coupling: Optional[list[list[Any]]]
         if isinstance(arch, FullyConnected):
             coupling = [
                 [n1.index[0], n2.index[0]]
@@ -120,7 +118,7 @@ class TketBackend(BackendV1):
         return Options(shots=None, memory=False)
 
     def run(
-        self, run_input: Union[QuantumCircuit, List[QuantumCircuit]], **options: Any
+        self, run_input: QuantumCircuit | list[QuantumCircuit], **options: Any
     ) -> TketJob:
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]

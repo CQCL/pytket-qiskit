@@ -43,7 +43,8 @@ from qiskit_ibm_runtime import (  # type: ignore
     SamplerV2,
     RuntimeJob,
 )
-from qiskit.providers.models import BackendProperties, QasmBackendConfiguration  # type: ignore
+from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
+from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
 
 from pytket.circuit import Bit, Circuit, OpType
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
@@ -91,7 +92,7 @@ from ..qiskit_convert import (
 from .._metadata import __extension_version__
 
 if TYPE_CHECKING:
-    from qiskit.providers.backend import BackendV1  # type: ignore
+    from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
@@ -182,8 +183,8 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: "BackendV1" = self._service.backend(backend_name)
-        config: QasmBackendConfiguration = self._backend.configuration()
+        self._backend: "IBMBackend" = self._service.backend(backend_name)
+        config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
@@ -228,7 +229,7 @@ class IBMQBackend(Backend):
     @classmethod
     def _get_backend_info(
         cls,
-        config: QasmBackendConfiguration,
+        config: PulseBackendConfiguration,
         props: Optional[BackendProperties],
     ) -> BackendInfo:
         """Construct a BackendInfo from data returned by the IBMQ API.
@@ -372,7 +373,7 @@ class IBMQBackend(Backend):
           the default settings in :py:class:`NoiseAwarePlacement`.
         :return: Compilation pass guaranteeing required predicates.
         """
-        config: QasmBackendConfiguration = self._backend.configuration()
+        config: PulseBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
             config, props, optimisation_level, placement_options
@@ -380,7 +381,7 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def default_compilation_pass_offline(
-        config: QasmBackendConfiguration,
+        config: PulseBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
         placement_options: Optional[dict[str, Any]] = None,

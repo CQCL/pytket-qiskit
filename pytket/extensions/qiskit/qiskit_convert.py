@@ -19,7 +19,6 @@ from collections import defaultdict
 from typing import (
     Callable,
     Optional,
-    Union,
     Any,
     Iterable,
     cast,
@@ -82,7 +81,7 @@ from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
 from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
-from pytket.passes import RebaseCustom
+from pytket.passes import AutoRebase
 
 if TYPE_CHECKING:
     from qiskit.providers.backend import BackendV1  # type: ignore
@@ -805,9 +804,6 @@ order or only one bit of one register"""
     return qcirc.append(g, qargs=qargs)
 
 
-# Define varibles for RebaseCustom
-_cx_replacement = Circuit(2).CX(0, 1)
-
 # The set of tket gates that can be converted directly to qiskit gates
 _supported_tket_gates = set(_known_gate_rev_phase.keys())
 
@@ -820,20 +816,8 @@ _protected_tket_gates = (
     | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
     | {OpType.CustomGate}
 )
-
-
-Param = Union[float, "sympy.Expr"]  # Type for TK1 and U3 parameters
-
-
-# Use the U3 gate for tk1_replacement as this is a member of _supported_tket_gates
-def _tk1_to_u3(a: Param, b: Param, c: Param) -> Circuit:
-    tk1_circ = Circuit(1)
-    tk1_circ.U3(b, a - 1 / 2, c + 1 / 2, 0).add_phase(-(a + c) / 2)
-    return tk1_circ
-
-
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
-supported_gate_rebase = RebaseCustom(_protected_tket_gates, _cx_replacement, _tk1_to_u3)
+supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
 def tk_to_qiskit(

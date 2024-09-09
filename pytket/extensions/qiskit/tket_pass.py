@@ -14,7 +14,7 @@
 
 from typing import Optional
 from qiskit.dagcircuit import DAGCircuit  # type: ignore
-from qiskit.providers import BackendV1  # type: ignore
+from qiskit.providers import BackendV2  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit_aer.backends import AerSimulator  # type: ignore
@@ -76,7 +76,7 @@ class TketAutoPass(TketPass):
 
     def __init__(
         self,
-        backend: BackendV1,
+        backend: BackendV2,
         optimisation_level: int = 2,
         token: Optional[str] = None,
     ):

@@ -368,7 +368,8 @@ def _add_state_preparation(
             tkc.add_circuit(circuit, qubits)
         else:
             raise TypeError(
-                "Unrecognised type of Instruction.params when trying to convert Initialize or StatePreparation instruction."
+                "Unrecognised type of Instruction.params "
+                + "when trying to convert Initialize or StatePreparation instruction."
             )
 
 

@@ -12,36 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import inspect
 from typing import Optional, Any
+from qiskit.circuit.library.standard_gates import get_standard_gate_name_mapping  # type: ignore
 from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
-from qiskit.providers.backend import BackendV1  # type: ignore
-from qiskit.providers.models import QasmBackendConfiguration  # type: ignore
+from qiskit.providers.backend import BackendV2  # type: ignore
 from qiskit.providers import Options  # type: ignore
+from qiskit.transpiler import CouplingMap, Target  # type: ignore
 from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
 from pytket.extensions.qiskit.qiskit_convert import qiskit_to_tk, _gate_str_2_optype_rev
 from pytket.extensions.qiskit.tket_job import TketJob, JobInfo
 from pytket.backends import Backend
 from pytket.passes import BasePass
-from pytket.predicates import (
-    NoClassicalControlPredicate,
-    GateSetPredicate,
-    CompilationUnit,
-)
+from pytket.predicates import GateSetPredicate, CompilationUnit
 from pytket.architecture import FullyConnected
 
 
 def _extract_basis_gates(backend: Backend) -> list[str]:
+    standard_gate_mapping = get_standard_gate_name_mapping()
     for pred in backend.required_predicates:
         if type(pred) == GateSetPredicate:
-            return [
-                _gate_str_2_optype_rev[optype]
-                for optype in pred.gate_set
-                if optype in _gate_str_2_optype_rev.keys()
-            ]
+            basis_gates = []
+            for optype in pred.gate_set:
+                if optype in _gate_str_2_optype_rev.keys():
+                    gate_name = _gate_str_2_optype_rev[optype]
+                    if gate_name in standard_gate_mapping:
+                        gate_obj = standard_gate_mapping[gate_name]
+                        if gate_obj.num_qubits in [1, 2] or inspect.isclass(gate_obj):
+                            basis_gates.append(gate_name)
+            return basis_gates
     return []
 
 
-class TketBackend(BackendV1):
+class TketBackend(BackendV2):
     """Wraps a :py:class:`Backend` as a :py:class:`qiskit.providers.BaseBackend` for use
     within the Qiskit software stack.
 
@@ -87,31 +90,27 @@ class TketBackend(BackendV1):
                 [[n.index[0], m.index[0]] for n, m in arch.coupling] if arch else None
             )
 
-        config = QasmBackendConfiguration(
-            backend_name=("statevector_" if backend.supports_state else "")
+        super().__init__(
+            name=("statevector_" if backend.supports_state else "")
             + "pytket/"
             + str(type(backend)),
             backend_version="0.0.1",
-            n_qubits=len(arch.nodes) if arch and arch.nodes else 40,
-            basis_gates=_extract_basis_gates(backend),
-            gates=[],
-            local=False,
-            simulator=False,
-            conditional=not any(
-                (
-                    type(pred) == NoClassicalControlPredicate
-                    for pred in backend.required_predicates
-                )
-            ),
-            open_pulse=False,
-            memory=backend.supports_shots,
-            max_shots=10000,
-            coupling_map=coupling,
-            max_experiments=10000,
         )
-        super().__init__(configuration=config, provider=None)
         self._backend = backend
         self._comp_pass = comp_pass
+        self._target = Target.from_configuration(
+            basis_gates=_extract_basis_gates(backend),
+            num_qubits=len(arch.nodes) if arch and arch.nodes else 40,
+            coupling_map=CouplingMap(coupling),
+        )
+
+    @property
+    def target(self) -> Target:
+        return self._target
+
+    @property
+    def max_circuits(self) -> int:
+        return 10000
 
     @classmethod
     def _default_options(cls) -> Options:

@@ -357,7 +357,6 @@ def _add_state_preparation(
             )
 
             # Need to reverse qubits here (endian-ness)
-            # TODO pass same list of qubits to add_circuit
             reversed_qubits = list(reversed(qubits))
             tkc.add_gate(pytket_state_prep_box, reversed_qubits)
     else:
@@ -367,7 +366,10 @@ def _add_state_preparation(
             bit_string = bin(integer_parameter)[2:]
             circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
             tkc.add_circuit(circuit, qubits)
-        # TODO raise error
+        else:
+            raise TypeError(
+                "Unrecognised type of Instruction.params when trying to convert Initialize or StatePreparation instruction."
+            )
 
 
 def _get_pytket_condition_kwargs(

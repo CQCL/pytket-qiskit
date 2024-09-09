@@ -292,10 +292,16 @@ class _AerBaseBackend(Backend):
                     c0, ppcirc_rep = tkc, None
 
                 qc = tk_to_qiskit(c0, replace_implicit_swaps)
+
                 if self.supports_state:
                     qc.save_state()
+
+                elif self.supports_density_matrix:
+                    qc.save_density_matrix()
+
                 elif self.supports_unitary:
                     qc.save_unitary()
+
                 qcs.append(qc)
                 tkc_qubits_count.append(c0.n_qubits)
                 ppcirc_strs.append(json.dumps(ppcirc_rep))
@@ -478,16 +484,16 @@ class AerBackend(_AerBaseBackend):
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 
-    _persistent_handles = False
-    _supports_shots = True
-    _supports_counts = True
-    _supports_expectation = True
-    _expectation_allows_nonhermitian = False
+    _persistent_handles: bool = False
+    _supports_shots: bool = True
+    _supports_counts: bool = True
+    _supports_expectation: bool = True
+    _expectation_allows_nonhermitian: bool = False
 
-    _memory = True
+    _memory: bool = True
 
-    _qiskit_backend_name = "aer_simulator"
-    _allowed_special_gates = {
+    _qiskit_backend_name: str = "aer_simulator"
+    _allowed_special_gates: set[OpType] = {
         OpType.Measure,
         OpType.Barrier,
         OpType.Reset,
@@ -504,9 +510,9 @@ class AerBackend(_AerBaseBackend):
         super().__init__()
         self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
         self._qiskit_backend.set_options(method=simulation_method)
-        gate_set = _tket_gate_set_from_qiskit_backend(self._qiskit_backend).union(
-            self._allowed_special_gates
-        )
+        gate_set: set[OpType] = _tket_gate_set_from_qiskit_backend(
+            self._qiskit_backend
+        ).union(self._allowed_special_gates)
 
         self._crosstalk_params = crosstalk_params
         if self._crosstalk_params is not None:
@@ -575,15 +581,15 @@ class AerStateBackend(_AerBaseBackend):
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 
-    _persistent_handles = False
-    _supports_state = True
-    _supports_expectation = True
-    _expectation_allows_nonhermitian = False
+    _persistent_handles: bool = False
+    _supports_state: bool = True
+    _supports_expectation: bool = True
+    _expectation_allows_nonhermitian: bool = False
 
-    _noise_model = None
-    _memory = False
+    _noise_model: Optional[NoiseModel] = None
+    _memory: bool = False
 
-    _qiskit_backend_name = "aer_simulator_statevector"
+    _qiskit_backend_name: str = "aer_simulator_statevector"
 
     def __init__(
         self,
@@ -613,14 +619,14 @@ class AerUnitaryBackend(_AerBaseBackend):
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 
-    _persistent_handles = False
-    _supports_unitary = True
+    _persistent_handles: bool = False
+    _supports_unitary: bool = True
 
-    _memory = False
-    _noise_model = None
-    _needs_transpile = True
+    _memory: bool = False
+    _noise_model: Optional[NoiseModel] = None
+    _needs_transpile: bool = True
 
-    _qiskit_backend_name = "aer_simulator_unitary"
+    _qiskit_backend_name: str = "aer_simulator_unitary"
 
     def __init__(self, n_qubits: int = 40) -> None:
         super().__init__()
@@ -637,6 +643,75 @@ class AerUnitaryBackend(_AerBaseBackend):
         self._required_predicates = [
             NoClassicalControlPredicate(),
             NoFastFeedforwardPredicate(),
+            GateSetPredicate(self._backend_info.gate_set),
+        ]
+
+
+class AerDensityMatrixBackend(_AerBaseBackend):
+    """
+    Backend for running simulations on the Qiskit Aer density matrix simulator.
+
+    :param noise_model: Noise model to apply during simulation. Defaults to None.
+    :param n_qubits: The maximum number of qubits supported by the backend.
+    """
+
+    _supports_density_matrix: bool = True
+    _supports_state: bool = False
+    _memory: bool = False
+    _noise_model: Optional[NoiseModel] = None
+    _needs_transpile: bool = True
+    _supports_expectation: bool = True
+
+    _qiskit_backend_name: str = "aer_simulator_density_matrix"
+
+    _allowed_special_gates: set[OpType] = {
+        OpType.Measure,
+        OpType.Barrier,
+        OpType.Reset,
+        OpType.RangePredicate,
+    }
+
+    def __init__(
+        self,
+        noise_model: Optional[NoiseModel] = None,
+        n_qubits: int = 40,
+    ) -> None:
+        super().__init__()
+        self._qiskit_backend = qiskit_aer_backend(self._qiskit_backend_name)
+
+        gate_set: set[OpType] = _tket_gate_set_from_qiskit_backend(
+            self._qiskit_backend
+        ).union(self._allowed_special_gates)
+        self._noise_model = _map_trivial_noise_model_to_none(noise_model)
+        characterisation: NoiseModelCharacterisation = (
+            _get_characterisation_of_noise_model(self._noise_model, gate_set)
+        )
+        self._has_arch: bool = bool(characterisation.architecture) and bool(
+            characterisation.architecture.nodes
+        )
+
+        self._backend_info = BackendInfo(
+            name=type(self).__name__,
+            device_name=self._qiskit_backend_name,
+            version=__extension_version__,
+            architecture=(
+                FullyConnected(n_qubits)
+                if not self._has_arch
+                else characterisation.architecture
+            ),
+            gate_set=_tket_gate_set_from_qiskit_backend(self._qiskit_backend),
+            supports_midcircuit_measurement=True,
+            supports_reset=True,
+            supports_fast_feedforward=True,
+            all_node_gate_errors=characterisation.node_errors,
+            all_edge_gate_errors=characterisation.edge_errors,
+            all_readout_errors=characterisation.readout_errors,
+            averaged_node_gate_errors=characterisation.averaged_node_errors,
+            averaged_edge_gate_errors=characterisation.averaged_edge_errors,
+            averaged_readout_errors=characterisation.averaged_readout_errors,
+            misc={"characterisation": characterisation.generic_q_errors},
+        )
+        self._required_predicates = [
             GateSetPredicate(self._backend_info.gate_set),
         ]
 

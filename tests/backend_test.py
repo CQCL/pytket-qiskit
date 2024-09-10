@@ -1498,3 +1498,17 @@ def test_noisy_density_matrix_simulation() -> None:
     assert noisy_dm.shape == (8, 8)
     # Check purity to verify mixed state
     assert np.trace(noisy_dm**2).real < 0.99
+
+
+def test_mc_gate_on_aer() -> None:
+    """Test for cm gates support in aer simulators
+    https://github.com/CQCL/pytket-qiskit/issues/368"""
+    b = AerBackend()
+    c = Circuit(3, 3)
+    c.X(0).X(1)
+    c.H(2)
+    c.add_gate(OpType.CnZ, [0, 1, 2])
+    c.H(2)
+    c.measure_all()
+    r = b.run_circuit(c, n_shots=10)
+    assert r.get_counts() == Counter({(1, 1, 1): 10})

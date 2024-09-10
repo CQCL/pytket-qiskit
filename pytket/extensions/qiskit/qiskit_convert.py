@@ -758,7 +758,9 @@ order or only one bit of one register"""
     if optype == OpType.CnY:
         return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnZ:
-        return qcirc.append(qiskit_gates.ZGate().control(len(qargs) - 1), qargs)
+        new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
+        new_gate.name = "mcz"
+        return qcirc.append(new_gate, qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1

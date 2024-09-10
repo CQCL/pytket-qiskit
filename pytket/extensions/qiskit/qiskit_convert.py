@@ -29,6 +29,7 @@ from inspect import signature
 from uuid import UUID
 
 import numpy as np
+from numpy.typing import NDArray
 from symengine import sympify  # type: ignore
 from symengine.lib import symengine_wrapper  # type: ignore
 
@@ -247,43 +248,156 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOpe
 
 
 def _string_to_circuit(
-    circuit_string: str, n_qubits: int, qiskit_instruction: Instruction
+    circuit_string: str,
+    n_qubits: int,
+    qiskit_prep: Initialize | StatePreparation,
 ) -> Circuit:
-    """Helper function to handle strings in QuantumCircuit.initialize
-    and QuantumCircuit.prepare_state"""
+    """Helper function to generate circuits for Initialize
+    and StatePreparation objects built with strings"""
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
     # If Initialize, add resets
-    if isinstance(qiskit_instruction, Initialize):
+    if isinstance(qiskit_prep, Initialize):
         for qubit in circ.qubits:
-            circ.add_gate(OpType.Reset, [qubit])
+            circ.Reset(qubit)
 
     # We iterate through the string in reverse to add the
     # gates in the correct order (endian-ness).
-    for count, char in enumerate(reversed(circuit_string)):
-        if char == "0":
-            pass
-        elif char == "1":
-            circ.X(count)
-        elif char == "+":
-            circ.H(count)
-        elif char == "-":
-            circ.X(count)
-            circ.H(count)
-        elif char == "r":
-            circ.H(count)
-            circ.S(count)
-        elif char == "l":
-            circ.H(count)
-            circ.Sdg(count)
-        else:
-            raise ValueError(
-                f"Cannot parse string for character {char}. "
-                + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
-            )
+    for qubit_index, character in enumerate(reversed(circuit_string)):
+        match character:
+            case "0":
+                pass
+            case "1":
+                circ.X(qubit_index)
+            case "+":
+                circ.H(qubit_index)
+            case "-":
+                circ.X(qubit_index)
+                circ.H(qubit_index)
+            case "r":
+                circ.H(qubit_index)
+                circ.S(qubit_index)
+            case "l":
+                circ.H(qubit_index)
+                circ.Sdg(qubit_index)
+            case _:
+                raise ValueError(
+                    f"Cannot parse string for character {character}. "
+                    + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
+                )
 
     return circ
+
+
+def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
+    """Get a pytket contolled OpType from a qiskit ControlledGate."""
+    if c_gate.base_class in _known_qiskit_gate:
+        # First we check if the gate is in _known_qiskit_gate
+        # this avoids CZ being converted to CnZ
+        return _known_qiskit_gate[c_gate.base_class]
+
+    match c_gate.base_gate.base_class:
+        case qiskit_gates.RYGate:
+            return OpType.CnRy
+        case qiskit_gates.YGate:
+            return OpType.CnY
+        case qiskit_gates.ZGate:
+            return OpType.CnZ
+        case _:
+            if (
+                c_gate.base_gate.base_class in _known_qiskit_gate
+                or c_gate.base_gate.base_class is UnitaryGate
+            ):
+                return OpType.QControlBox
+            else:
+                raise NotImplementedError(
+                    "Conversion of qiskit ControlledGate with base gate "
+                    + f"base gate {c_gate.base_gate}"
+                    + "not implemented."
+                )
+
+
+def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
+    """Get a pytket OpType from a qiskit Instruction."""
+    if isinstance(instruction, ControlledGate):
+        return _get_controlled_tket_optype(instruction)
+    try:
+        optype = _known_qiskit_gate[instruction.base_class]
+        return optype
+    except KeyError:
+        raise NotImplementedError(
+            f"Conversion of qiskit's {instruction.name} instruction is "
+            + "currently unsupported by qiskit_to_tk. Consider "
+            + "using QuantumCircuit.decompose() before attempting "
+            + "conversion."
+        )
+
+
+def _add_state_preparation(
+    tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
+) -> None:
+    """Handles different cases of Initialize and StatePreparation
+    and appends the appropriate state preparation to a Circuit instance."""
+
+    # Check how Initialize or StatePrep is constructed
+    # With a string, an int or an array of amplitudes
+    if len(prep.params) != 1:
+        if isinstance(prep.params[0], str):
+            # Parse string to get the right single qubit gates
+            circuit_string: str = "".join(prep.params)
+            circuit = _string_to_circuit(
+                circuit_string, prep.num_qubits, qiskit_prep=prep
+            )
+            tkc.add_circuit(circuit, qubits)
+        else:
+            amplitude_array: NDArray[np.complex128] = np.array(prep.params)
+            pytket_state_prep_box = StatePreparationBox(
+                amplitude_array, with_initial_reset=(type(prep) is Initialize)
+            )
+
+            # Need to reverse qubits here (endian-ness)
+            reversed_qubits = list(reversed(qubits))
+            tkc.add_gate(pytket_state_prep_box, reversed_qubits)
+    elif isinstance(prep.params[0], complex):
+        # convert int to a binary string and apply X for |1>
+        integer_parameter = int(prep.params[0].real)
+        bit_string = bin(integer_parameter)[2:]
+        circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
+        tkc.add_circuit(circuit, qubits)
+    else:
+        raise TypeError(
+            "Unrecognised type of Instruction.params "
+            + "when trying to convert Initialize or StatePreparation instruction."
+        )
+
+
+def _get_pytket_condition_kwargs(
+    instruction: Instruction,
+    cregmap: dict[str, ClassicalRegister],
+    circuit: QuantumCircuit,
+) -> dict[str, Any]:
+    if type(instruction.condition[0]) is ClassicalRegister:
+        cond_reg = cregmap[instruction.condition[0]]
+        condition_kwargs = {
+            "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
+            "condition_value": instruction.condition[1],
+        }
+        return condition_kwargs
+    elif type(instruction.condition[0]) is Clbit:
+        # .find_bit() returns type:
+        #    tuple[index, list[tuple[ClassicalRegister, index]]]
+        # We assume each bit belongs to exactly one register.
+        index = circuit.find_bit(instruction.condition[0])[0]
+        register = circuit.find_bit(instruction.condition[0])[1][0][0]
+        cond_reg = cregmap[register]
+        condition_kwargs = {
+            "condition_bits": [cond_reg[index]],
+            "condition_value": instruction.condition[1],
+        }
+        return condition_kwargs
+    else:
+        raise NotImplementedError("condition must contain classical bit or register")
 
 
 class CircuitBuilder:
@@ -339,29 +453,17 @@ class CircuitBuilder:
         data = data or circuit.data
         for datum in data:
             instr, qargs, cargs = datum.operation, datum.qubits, datum.clbits
+
+            qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
+            bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
+
             condition_kwargs = {}
             if instr.condition is not None:
-                if type(instr.condition[0]) == ClassicalRegister:
-                    cond_reg = self.cregmap[instr.condition[0]]
-                    condition_kwargs = {
-                        "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
-                        "condition_value": instr.condition[1],
-                    }
-                elif type(instr.condition[0]) == Clbit:
-                    # .find_bit() returns type:
-                    #    tuple[index, list[tuple[ClassicalRegister, index]]]
-                    # We assume each bit belongs to exactly one register.
-                    index = circuit.find_bit(instr.condition[0])[0]
-                    register = circuit.find_bit(instr.condition[0])[1][0][0]
-                    cond_reg = self.cregmap[register]
-                    condition_kwargs = {
-                        "condition_bits": [cond_reg[index]],
-                        "condition_value": instr.condition[1],
-                    }
-                else:
-                    raise NotImplementedError(
-                        "condition must contain classical bit or register"
-                    )
+                condition_kwargs = _get_pytket_condition_kwargs(
+                    instruction=instr,
+                    cregmap=self.cregmap,
+                    circuit=circuit,
+                )
 
             # Controlled operations may be controlled on values other than all-1. Handle
             # this by prepending and appending X gates on the control qubits.
@@ -372,43 +474,11 @@ class CircuitBuilder:
             except AttributeError:
                 pass
             self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
+
             optype = None
-            if isinstance(instr, ControlledGate):
-                if instr.base_class in _known_qiskit_gate:
-                    # First we check if the gate is in _known_qiskit_gate
-                    # this avoids CZ being converted to CnZ
-                    optype = _known_qiskit_gate[instr.base_class]
-                elif instr.base_gate.base_class is qiskit_gates.RYGate:
-                    optype = OpType.CnRy
-                elif instr.base_gate.base_class is qiskit_gates.YGate:
-                    optype = OpType.CnY
-                elif instr.base_gate.base_class is qiskit_gates.ZGate:
-                    optype = OpType.CnZ
-                else:
-                    if (
-                        instr.base_gate.base_class in _known_qiskit_gate
-                        or instr.base_gate.base_class == UnitaryGate
-                    ):
-                        optype = OpType.QControlBox  # QControlBox case handled below
-                    else:
-                        raise NotImplementedError(
-                            f"qiskit ControlledGate with base gate {instr.base_gate}"
-                            + "not implemented."
-                        )
-            elif type(instr) in [PauliEvolutionGate, UnitaryGate]:
-                pass  # Special handling below
-            else:
-                try:
-                    optype = _known_qiskit_gate[instr.base_class]
-                except KeyError:
-                    raise NotImplementedError(
-                        f"Conversion of qiskit's {instr.name} instruction is "
-                        + "currently unsupported by qiskit_to_tk. Consider "
-                        + "using QuantumCircuit.decompose() before attempting "
-                        + "conversion."
-                    )
-            qubits = [self.qbmap[qbit] for qbit in qargs]
-            bits = [self.cbmap[bit] for bit in cargs]
+            if type(instr) not in (PauliEvolutionGate, UnitaryGate):
+                # Handling of PauliEvolutionGate and UnitaryGate below
+                optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
                 params = [param_to_tk(p) for p in instr.base_gate.params]
@@ -416,59 +486,35 @@ class CircuitBuilder:
                 sub_circ = Circuit(n_base_qubits)
                 # use base gate name for the CircBox (shows in renderer)
                 sub_circ.name = instr.base_gate.name.capitalize()
-                if type(instr.base_gate) == UnitaryGate:
+
+                if type(instr.base_gate) is UnitaryGate:
                     assert len(cargs) == 0
                     add_qiskit_unitary_to_tkc(
                         sub_circ, instr.base_gate, sub_circ.qubits, condition_kwargs
                     )
                 else:
-                    base_tket_gate = _known_qiskit_gate[instr.base_gate.base_class]
+                    base_tket_gate: OpType = _known_qiskit_gate[
+                        instr.base_gate.base_class
+                    ]
                     sub_circ.add_gate(
                         base_tket_gate, params, list(range(n_base_qubits))
                     )
                 c_box = CircBox(sub_circ)
                 q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
+
             elif isinstance(instr, (Initialize, StatePreparation)):
-                # Check how Initialize or StatePrep is constructed
-                if isinstance(instr.params[0], str):
-                    # Parse string to get the right single qubit gates
-                    circuit_string = "".join(instr.params)
-                    circuit = _string_to_circuit(
-                        circuit_string, instr.num_qubits, qiskit_instruction=instr
-                    )
-                    self.tkc.add_circuit(circuit, qubits)
+                # Append OpType found by stateprep helpers
+                _add_state_preparation(self.tkc, qubits, instr)
 
-                elif isinstance(instr.params, list) and len(instr.params) != 1:
-                    amplitude_list = instr.params
-                    if isinstance(instr, Initialize):
-                        pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=True  # type: ignore
-                        )
-                    else:
-                        pytket_state_prep_box = StatePreparationBox(
-                            amplitude_list, with_initial_reset=False  # type: ignore
-                        )
-                    # Need to reverse qubits here (endian-ness)
-                    reversed_qubits = list(reversed(qubits))
-                    self.tkc.add_gate(pytket_state_prep_box, reversed_qubits)
-
-                elif isinstance(instr.params[0], complex) and len(instr.params) == 1:
-                    # convert int to a binary string and apply X for |1>
-                    integer_parameter = int(instr.params[0].real)
-                    bit_string = bin(integer_parameter)[2:]
-                    circuit = _string_to_circuit(
-                        bit_string, instr.num_qubits, qiskit_instruction=instr
-                    )
-                    self.tkc.add_circuit(circuit, qubits)
-
-            elif type(instr) == PauliEvolutionGate:
+            elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)
                 empty_circ = Circuit(len(qargs))
                 circ = gen_term_sequence_circuit(qpo, empty_circ)
                 ccbox = CircBox(circ)
                 self.tkc.add_circbox(ccbox, qubits)
-            elif type(instr) == UnitaryGate:
+
+            elif type(instr) is UnitaryGate:
                 assert len(cargs) == 0
                 add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
             elif optype == OpType.Barrier:
@@ -490,7 +536,7 @@ class CircuitBuilder:
                 subc.name = instr.name
                 self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
 
-            elif optype == OpType.CU3 and type(instr) == qiskit_gates.CUGate:
+            elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,
@@ -754,7 +800,7 @@ order or only one bit of one register"""
         ) from error
     params = _get_params(op, symb_map)
     g = gatetype(*params)
-    if type(phase) == float:
+    if type(phase) is float:
         qcirc.global_phase += phase * np.pi
     else:
         qcirc.global_phase += sympify(phase * sympy.pi)
@@ -773,7 +819,6 @@ _protected_tket_gates = (
     | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
     | {OpType.CustomGate}
 )
-
 
 # This is a rebase to the set of tket gates which have an exact substitution in qiskit
 supported_gate_rebase = AutoRebase(_protected_tket_gates)

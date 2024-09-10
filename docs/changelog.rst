@@ -4,8 +4,8 @@ Changelog
 .. currentmodule:: pytket.extensions.qiskit
 
 
-Unreleased
-----------
+0.56.0 (September 2024)
+-----------------------
 
 * Added :py:class:`AerDensityMatrixBackend` simulator. This simulator has the option to support a :py:class:`NoiseModel`.
 * Fix conversion of symbols into qiskit.

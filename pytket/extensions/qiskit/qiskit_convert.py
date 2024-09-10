@@ -295,8 +295,8 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     if c_gate.base_class in _known_qiskit_gate:
         # First we check if the gate is in _known_qiskit_gate
         # this avoids CZ being converted to CnZ
-        known_optype = _known_qiskit_gate[c_gate.base_class]
-        return known_optype
+        return _known_qiskit_gate[c_gate.base_class]
+
     match c_gate.base_gate.base_class:
         case qiskit_gates.RYGate:
             return OpType.CnRy
@@ -359,18 +359,17 @@ def _add_state_preparation(
             # Need to reverse qubits here (endian-ness)
             reversed_qubits = list(reversed(qubits))
             tkc.add_gate(pytket_state_prep_box, reversed_qubits)
+    elif isinstance(prep.params[0], complex):
+        # convert int to a binary string and apply X for |1>
+        integer_parameter = int(prep.params[0].real)
+        bit_string = bin(integer_parameter)[2:]
+        circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
+        tkc.add_circuit(circuit, qubits)
     else:
-        if isinstance(prep.params[0], complex):
-            # convert int to a binary string and apply X for |1>
-            integer_parameter = int(prep.params[0].real)
-            bit_string = bin(integer_parameter)[2:]
-            circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
-            tkc.add_circuit(circuit, qubits)
-        else:
-            raise TypeError(
-                "Unrecognised type of Instruction.params "
-                + "when trying to convert Initialize or StatePreparation instruction."
-            )
+        raise TypeError(
+            "Unrecognised type of Instruction.params "
+            + "when trying to convert Initialize or StatePreparation instruction."
+        )
 
 
 def _get_pytket_condition_kwargs(

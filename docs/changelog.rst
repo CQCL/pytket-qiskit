@@ -12,6 +12,7 @@ Unreleased
 * Require qiskit >= 1.2.0.
 * Add conversion of controlled unitary gates from qiskit to tket.
 * Initialize `TketAutoPass` with a `BackendV2`.
+* Update `TketBackend` to derive from `BackendV2`.
 
 0.55.0 (July 2024)
 ------------------

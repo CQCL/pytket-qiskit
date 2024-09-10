@@ -93,8 +93,8 @@ class TketJob(JobV1):
         self._result = Result.from_dict(
             {
                 "results": result_list,
-                "backend_name": self._backend.configuration().backend_name,
-                "backend_version": self._backend.configuration().backend_version,
+                "backend_name": self._backend.name,
+                "backend_version": self._backend.backend_version,
                 "job_id": self._job_id,
                 "qobj_id": ", ".join(str(hand) for hand in self._handles),
                 "success": True,

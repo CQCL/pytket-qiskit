@@ -31,8 +31,10 @@ from pytket.architecture import FullyConnected
 def _extract_basis_gates(backend: Backend) -> list[str]:
     standard_gate_mapping = get_standard_gate_name_mapping()
     for pred in backend.required_predicates:
-        if type(pred) == GateSetPredicate:
+        if type(pred) is GateSetPredicate:
             basis_gates = []
+            # Restrict to the gate set accepted by the backend, the converters,
+            # and the Target.from_configuration() method.
             for optype in pred.gate_set:
                 if optype in _gate_str_2_optype_rev.keys():
                     gate_name = _gate_str_2_optype_rev[optype]

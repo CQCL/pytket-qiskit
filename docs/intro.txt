@@ -32,6 +32,7 @@ Available IBM Backends
     AerBackend
     AerStateBackend
     AerUnitaryBackend
+    AerDensityMatrixBackend
 
 
 An example using the shots-based :py:class:`AerBackend` simulator is shown below. 
@@ -75,12 +76,13 @@ In this section we are assuming that you have set the following variables with t
 ::
 
     # Replace the placeholders with your actual values
+
     ibm_token = '<your_ibm_token_here>'    
     hub = '<your_hub_here>'
     group = '<your_group_here>'
     project = '<your_project_here>'
 
-    my_instance=f"{hub}/{group}/{project}"
+    inst = f"{hub}/{group}/{project}"
 
 Method 1: Using :py:class:`QiskitRuntimeService`
 ------------------------------------------------
@@ -92,9 +94,9 @@ to disk:
 
     from qiskit_ibm_runtime import QiskitRuntimeService
 
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token, instance=my_instance)
+    QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token, instance=inst)
 
-To see which devices you can access you can use the ``available_devices`` method on the :py:class:`IBMQBackend`. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
+To see which devices you can access, use the :py:meth:`IBMQBackend.available_devices` method. Note that it is possible to pass an optional ``instance`` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
 
 ::
 
@@ -105,12 +107,12 @@ To see which devices you can access you can use the ``available_devices`` method
     backendinfo_list = backend.available_devices(instance=my_instance) 
     print([backend.device_name for backend in backendinfo_list])
 
-For more information see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`.
+For more information, see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`_.
 
 
 Method 2: Saving credentials in a local pytket config file
 ----------------------------------------------------------
-Alternatively, you can store your credentials in local pytket config using the :py:meth:`set_ibmq_config` method.
+Alternatively, you can store your credentials in local pytket config using the :py:meth:`~pytket.extensions.qiskit.backends.config.set_ibmq_config` method.
 
 ::
 
@@ -120,7 +122,7 @@ Alternatively, you can store your credentials in local pytket config using the :
 
 After saving your credentials you can access ``pytket-qiskit`` backend repeatedly without having to re-initialise your credentials.
 
-If you are a member of an IBM hub then you can add this information to ``set_ibmq_config`` as well.
+If you are a member of an IBM hub then you can add this information to :py:meth:`~pytket.extensions.qiskit.backends.config.set_ibmq_config` as well.
 
 ::
 
@@ -155,7 +157,7 @@ For instance those familiar with qiskit may wish to convert their circuits to py
 Default Compilation
 ===================
 
-Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the :py:class:`Backend`. The passes applied by different levels of optimisation are specified in the table below.
+Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:meth:`~pytket.backends.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an ``optimisation_level`` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the :py:class:`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below.
 
 .. list-table:: **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
    :widths: 25 25 25
@@ -194,10 +196,10 @@ Every :py:class:`Backend` in pytket has its own ``default_compilation_pass`` met
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
 * [2] self.rebase_pass is a rebase to the gateset supported by the backend. For IBM quantum devices and emulators that is either {X, SX, Rz, CX} or {X, SX, Rz, ECR}. The more idealised Aer simulators have a much broader range of supported gates.
-* [3] Here :py:class:`CXMappingPass` maps program qubits to the architecture using a `NoiseAwarePlacement <https://tket.quantinuum.com/api-docs/placement.html#pytket.placement.NoiseAwarePlacement>`_
+* [3] Here :py:class:`~pytket._tket.passes.CXMappingPass` maps program qubits to the architecture using a :py:class:`~pytket._tket.placement.NoiseAwarePlacement`
 
 
-**Note:** The ``default_compilation_pass`` for :py:class:`AerBackend` is the same as above.
+**Note:** The :py:meth:`~AerBackend.default_compilation_pass` for :py:class:`AerBackend` is the same as above.
 
 
 Noise Modelling
@@ -214,7 +216,7 @@ Noise Modelling
 Using TKET directly on qiskit circuits
 ======================================
 
-For usage of :py:class:`TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+For usage of :py:class:`~pytket.extensions.qiskit.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
 
 .. currentmodule:: pytket.extensions.qiskit.tket_backend
 

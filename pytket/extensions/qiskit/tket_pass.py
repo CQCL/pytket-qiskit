@@ -14,7 +14,7 @@
 
 from typing import Optional
 from qiskit.dagcircuit import DAGCircuit  # type: ignore
-from qiskit.providers import BackendV1  # type: ignore
+from qiskit.providers import BackendV2  # type: ignore
 from qiskit.transpiler.basepasses import TransformationPass, BasePass as qBasePass  # type: ignore
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit_aer.backends import AerSimulator  # type: ignore
@@ -40,7 +40,6 @@ class TketPass(TransformationPass):
         :py:class:`Circuit`. `tket_pass` will be run and the result is converted back.
 
         :param tket_pass: The pytket compiler pass to run
-        :type tket_pass: BasePass
         """
         qBasePass.__init__(self)
         self._pass = tket_pass
@@ -77,7 +76,7 @@ class TketAutoPass(TketPass):
 
     def __init__(
         self,
-        backend: BackendV1,
+        backend: BackendV2,
         optimisation_level: int = 2,
         token: Optional[str] = None,
     ):
@@ -90,9 +89,7 @@ class TketAutoPass(TketPass):
             compilation. Level 0 just solves the device constraints without
             optimising. Level 1 additionally performs some light optimisations.
             Level 2 adds more computationally intensive optimisations. Defaults to 2.
-        :type optimisation_level: int, optional
         :param token: Authentication token to use the `QiskitRuntimeService`.
-        :type token: Optional[str]
         """
         if isinstance(backend, AerSimulator):
             tk_backend = self._aer_backend_map[backend.name]()

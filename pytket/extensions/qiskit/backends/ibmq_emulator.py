@@ -14,25 +14,20 @@
 
 from collections import Counter
 from typing import (
-    Dict,
     Optional,
-    List,
     Sequence,
-    Tuple,
-    Union,
+    Any,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
-from pytket.backends import (
-    Backend,
-    ResultHandle,
-    CircuitStatus,
-)
+from pytket.backends.backend import Backend
+from pytket.backends.status import CircuitStatus
+
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
-from pytket.backends.resulthandle import _ResultIdTuple
+from pytket.backends.resulthandle import _ResultIdTuple, ResultHandle
 from pytket.circuit import Circuit
 from pytket.passes import BasePass
 from pytket.predicates import Predicate
@@ -77,18 +72,20 @@ class IBMQEmulatorBackend(Backend):
         self._aer = AerBackend(noise_model=self._noise_model)
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: Dict[Tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()
 
     @property
     def backend_info(self) -> BackendInfo:
         return self._ibmq._backend_info
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         return self._ibmq.required_predicates
 
     def default_compilation_pass(
-        self, optimisation_level: int = 2, placement_options: Optional[Dict] = None
+        self,
+        optimisation_level: int = 2,
+        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
@@ -107,10 +104,10 @@ class IBMQEmulatorBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[Optional[int]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.

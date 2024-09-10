@@ -14,7 +14,7 @@
 import json
 import os
 from collections import Counter
-from typing import Dict, cast
+from typing import cast
 import math
 import cmath
 from hypothesis import given, strategies
@@ -61,6 +61,7 @@ from pytket.extensions.qiskit import (
     AerStateBackend,
     AerUnitaryBackend,
     IBMQEmulatorBackend,
+    AerDensityMatrixBackend,
 )
 from pytket.extensions.qiskit import (
     qiskit_to_tk,
@@ -76,6 +77,7 @@ from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
 )
+from pytket.architecture import FullyConnected
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 
@@ -323,8 +325,8 @@ def test_process_characterisation_complete_noise_model() -> None:
     back = AerBackend(my_noise_model)
     char = back.backend_info.get_misc("characterisation")
 
-    node_errors = cast(Dict, back.backend_info.all_node_gate_errors)
-    link_errors = cast(Dict, back.backend_info.all_edge_gate_errors)
+    node_errors = cast(dict, back.backend_info.all_node_gate_errors)
+    link_errors = cast(dict, back.backend_info.all_edge_gate_errors)
     arch = back.backend_info.architecture
     assert node_errors is not None
     assert link_errors is not None
@@ -346,7 +348,7 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert (
         round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375
     )
-    readout_errors = cast(Dict, back.backend_info.all_readout_errors)
+    readout_errors = cast(dict, back.backend_info.all_readout_errors)
     assert readout_errors[arch.nodes[0]] == [
         [0.8, 0.2],
         [0.2, 0.8],
@@ -381,9 +383,9 @@ def test_process_model() -> None:
     assert "characterisation" in b.backend_info.misc
     assert "GenericOneQubitQErrors" in b.backend_info.misc["characterisation"]
     assert "GenericTwoQubitQErrors" in b.backend_info.misc["characterisation"]
-    node_gate_errors = cast(Dict, b.backend_info.all_node_gate_errors)
+    node_gate_errors = cast(dict, b.backend_info.all_node_gate_errors)
     assert nodes[3] in node_gate_errors
-    edge_gate_errors = cast(Dict, b.backend_info.all_edge_gate_errors)
+    edge_gate_errors = cast(dict, b.backend_info.all_edge_gate_errors)
     assert (nodes[7], nodes[8]) in edge_gate_errors
 
 
@@ -974,7 +976,7 @@ def test_compile_x(brisbane_backend: IBMQBackend) -> None:
         assert c1.n_gates == 1
 
 
-def lift_perm(p: Dict[int, int]) -> np.ndarray:
+def lift_perm(p: dict[int, int]) -> np.ndarray:
     """
     Given a permutation of {0,1,...,n-1} return the 2^n by 2^n permuation matrix
     representing the permutation of qubits (big-endian convention).
@@ -1346,7 +1348,7 @@ def test_statevector_simulator_gateset_deterministic() -> None:
     circ.H(2)
     circ.Measure(2, 0)
     circ.CZ(0, 1, condition_bits=[0], condition_value=1)
-    circ.add_gate(OpType.Reset, [2])
+    circ.Reset(2)
     compiled_circ = sv_backend.get_compiled_circuit(circ)
     assert sv_backend.valid_circuit(compiled_circ)
     tket_statevector = sv_backend.run_circuit(compiled_circ).get_state()
@@ -1430,6 +1432,72 @@ def test_ibmq_local_emulator(
     counts = r.get_counts()
     # Most results should be (0,0) or (1,1):
     assert sum(c0 != c1 for c0, c1 in counts) < 25
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/231
+def test_noiseless_density_matrix_simulation() -> None:
+    density_matrix_backend = AerDensityMatrixBackend()
+    assert density_matrix_backend.supports_density_matrix is True
+
+    assert isinstance(density_matrix_backend.backend_info.architecture, FullyConnected)
+
+    circ1 = Circuit(3).X(0).X(1).CCX(0, 1, 2)
+
+    output_state = np.array([0] * 7 + [1])
+
+    result1 = density_matrix_backend.run_circuit(circ1)
+    noiseless_dm1 = result1.get_density_matrix()
+
+    assert noiseless_dm1.shape == (8, 8)
+    assert np.allclose(noiseless_dm1, np.outer(output_state, output_state.conj()))
+    # Check purity to verify that we have a pure state
+    np.isclose(np.trace(noiseless_dm1**2).real, 1)
+
+    # Example with resets and conditional gates
+    # Prepares a state deterministically if input is a computational basis state
+    circ2 = Circuit(3, 1)
+    circ2.CCX(*range(3))
+    circ2.U1(1 / 4, 2)
+    circ2.H(2)
+    circ2.Measure(2, 0)
+    circ2.CZ(0, 1, condition_bits=[0], condition_value=1)
+    circ2.Reset(2)
+
+    result2 = density_matrix_backend.run_circuit(circ2)
+    assert result1.get_density_matrix().shape == (8, 8)
+    state_backend = AerStateBackend()
+    statevector = state_backend.run_circuit(circ2).get_state()
+    noiseless_dm2 = result2.get_density_matrix()
+    assert np.allclose(noiseless_dm2, np.outer(statevector, statevector.conj()))
+    # Check purity to verify that we have a pure state
+    assert np.isclose(np.trace(noiseless_dm2**2).real, 1)
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/231
+def test_noisy_density_matrix_simulation() -> None:
+
+    # Test that __init__ works with a very simple noise model
+    noise_model = NoiseModel()
+    noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [0, 1])
+    noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [1, 2])
+
+    noisy_density_sim = AerDensityMatrixBackend(noise_model)
+    assert isinstance(noisy_density_sim.backend_info.architecture, Architecture)
+    assert len(noisy_density_sim.backend_info.architecture.nodes) == 3
+
+    circ = Circuit(3)
+    circ.X(0)
+    circ.X(1)
+    circ.SX(1)
+    circ.CZ(0, 1)
+    circ.CZ(1, 2)
+    assert noisy_density_sim.valid_circuit(circ)
+
+    result = noisy_density_sim.run_circuit(circ)
+    noisy_dm = result.get_density_matrix()
+    assert noisy_dm.shape == (8, 8)
+    # Check purity to verify mixed state
+    assert np.trace(noisy_dm**2).real < 0.99
 
 
 def test_mc_gate_on_aer() -> None:

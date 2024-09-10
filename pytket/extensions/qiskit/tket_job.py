@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Any, TYPE_CHECKING, Union, cast
+from typing import Optional, Any, TYPE_CHECKING, cast
 from qiskit.providers import JobStatus, JobV1  # type: ignore
 from qiskit.result import Result  # type: ignore
 from pytket.backends import ResultHandle, StatusEnum
@@ -31,8 +31,8 @@ if TYPE_CHECKING:
 @dataclass
 class JobInfo:
     circuit_name: str
-    qbits: List[Qubit]
-    cbits: List[Bit]
+    qbits: list[Qubit]
+    cbits: list[Bit]
     n_shots: Optional[int]
 
 
@@ -43,9 +43,9 @@ class TketJob(JobV1):
     def __init__(
         self,
         backend: "TketBackend",
-        handles: List[ResultHandle],
-        jobinfos: List[JobInfo],
-        final_maps: Union[List[None], List[Dict[UnitID, UnitID]]],
+        handles: list[ResultHandle],
+        jobinfos: list[JobInfo],
+        final_maps: list[None] | list[dict[UnitID, UnitID]],
     ):
         """Initializes the asynchronous job."""
 
@@ -93,8 +93,8 @@ class TketJob(JobV1):
         self._result = Result.from_dict(
             {
                 "results": result_list,
-                "backend_name": self._backend.configuration().backend_name,
-                "backend_version": self._backend.configuration().backend_version,
+                "backend_name": self._backend.name,
+                "backend_version": self._backend.backend_version,
                 "job_id": self._job_id,
                 "qobj_id": ", ".join(str(hand) for hand in self._handles),
                 "success": True,

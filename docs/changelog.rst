@@ -1,12 +1,18 @@
 Changelog
 ~~~~~~~~~
 
+.. currentmodule:: pytket.extensions.qiskit
+
+
 Unreleased
 ----------
 
+* Added :py:class:`AerDensityMatrixBackend` simulator. This simulator has the option to support a :py:class:`NoiseModel`.
 * Fix conversion of symbols into qiskit.
 * Require qiskit >= 1.2.0.
 * Add conversion of controlled unitary gates from qiskit to tket.
+* Initialize `TketAutoPass` with a `BackendV2`.
+* Update `TketBackend` to derive from `BackendV2`.
 
 0.55.0 (July 2024)
 ------------------

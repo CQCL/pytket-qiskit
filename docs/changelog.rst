@@ -13,7 +13,7 @@ Unreleased
 * Add conversion of controlled unitary gates from qiskit to tket.
 * Initialize `TketAutoPass` with a `BackendV2`.
 * Update `TketBackend` to derive from `BackendV2`.
-* Fix to allow `AerBackend` to work with multi-controlled Y and Z gates.
+* Fix to allow `AerBackend` to work with multi-controlled Z gates.
 
 0.55.0 (July 2024)
 ------------------

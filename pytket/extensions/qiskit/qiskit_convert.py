@@ -290,15 +290,27 @@ def _string_to_circuit(
     return circ
 
 
-def _to_big_endian(string: str) -> tuple[bool, ...]:
+def _get_pytket_ctrl_state(bitstring: str, n_bits: int) -> tuple[bool, ...]:
     "Converts a little endian string '001'=1 (LE) to (1, 0, 0)."
-    assert set(string) == {"0", "1"}
-    return tuple(bool(int(b)) for b in string[::-1])
+    assert set(bitstring).issubset({"0", "1"})
+    pytket_ctrl_state = list(bool(int(b)) for b in bitstring[::-1])
+    padding_zeros = [0] * (n_bits - len(bitstring))
+    pytket_ctrl_state_padded = tuple(pytket_ctrl_state.extend(padding_zeros))
+    return pytket_ctrl_state_padded
+
+
+def _all_bits_set(integer: int) -> bool:
+    return integer.bit_count() == len(bin(integer)[2:])
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     """Get a pytket contolled OpType from a qiskit ControlledGate."""
-    if c_gate.base_class in _known_qiskit_gate:
+
+    # If the control state is not "all |1>", use QControlBox
+    if not _all_bits_set(c_gate.ctrl_state):
+        return OpType.QControlBox
+
+    elif c_gate.base_class in _known_qiskit_gate:
         # First we check if the gate is in _known_qiskit_gate
         # this avoids CZ being converted to CnZ
         return _known_qiskit_gate[c_gate.base_class]
@@ -438,21 +450,6 @@ class CircuitBuilder:
     def circuit(self) -> Circuit:
         return self.tkc
 
-    def add_xs(
-        self,
-        num_ctrl_qubits: Optional[int],
-        ctrl_state: Optional[str | int],
-        qargs: list["Qubit"],
-    ) -> None:
-        if ctrl_state is not None:
-            assert isinstance(num_ctrl_qubits, int)
-            assert num_ctrl_qubits >= 0
-            c = int(ctrl_state, 2) if isinstance(ctrl_state, str) else int(ctrl_state)
-            assert c >= 0 and (c >> num_ctrl_qubits) == 0
-            for i in range(num_ctrl_qubits):
-                if ((c >> i) & 1) == 0:
-                    self.tkc.X(self.qbmap[qargs[i]])
-
     def add_qiskit_data(
         self, circuit: QuantumCircuit, data: Optional["QuantumCircuitData"] = None
     ) -> None:
@@ -470,16 +467,6 @@ class CircuitBuilder:
                     cregmap=self.cregmap,
                     circuit=circuit,
                 )
-
-            # Controlled operations may be controlled on values other than all-1. Handle
-            # this by prepending and appending X gates on the control qubits.
-            ctrl_state, num_ctrl_qubits = None, None
-            try:
-                ctrl_state = instr.ctrl_state
-                num_ctrl_qubits = instr.num_ctrl_qubits
-            except AttributeError:
-                pass
-            self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
 
             optype = None
             if type(instr) not in (PauliEvolutionGate, UnitaryGate):
@@ -502,11 +489,27 @@ class CircuitBuilder:
                     base_tket_gate: OpType = _known_qiskit_gate[
                         instr.base_gate.base_class
                     ]
+
                     sub_circ.add_gate(
                         base_tket_gate, params, list(range(n_base_qubits))
                     )
                 c_box = CircBox(sub_circ)
-                q_ctrl_box = QControlBox(c_box, instr.num_ctrl_qubits)
+
+                if instr.ctrl_state is not None:
+                    qiskit_ctrl_state: str = bin(instr.ctrl_state)[2:]
+                else:
+                    qiskit_ctrl_state = "1" * instr.num_ctrl_qubits
+
+                pytket_ctrl_state = _get_pytket_ctrl_state(
+                    qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
+                )
+                print(pytket_ctrl_state)
+                print(instr.num_ctrl_qubits)
+                q_ctrl_box = QControlBox(
+                    c_box,
+                    n_controls=instr.num_ctrl_qubits,
+                    control_state=pytket_ctrl_state,
+                )
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, (Initialize, StatePreparation)):
@@ -555,8 +558,6 @@ class CircuitBuilder:
             else:
                 params = [param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)  # type: ignore
-
-            self.add_xs(num_ctrl_qubits, ctrl_state, qargs)
 
 
 def add_qiskit_unitary_to_tkc(

@@ -496,8 +496,8 @@ class CircuitBuilder:
                 c_box = CircBox(sub_circ)
 
                 qiskit_ctrl_state: str = bin(instr.ctrl_state)[2:]
-                pytket_ctrl_state = _get_pytket_ctrl_state(
-                    qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
+                pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
+                    bitstring=qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
                 )
                 q_ctrl_box = QControlBox(
                     c_box,
@@ -664,6 +664,9 @@ def append_tk_command_to_qiskit(
     if optype == OpType.Reset:
         qb = qregmap[args[0].reg_name][args[0].index[0]]
         return qcirc.reset(qb)
+    
+    if optype == OpType.QControlBox:
+
 
     if optype in [OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate]:
         subcircuit = op.get_circuit()  # type: ignore

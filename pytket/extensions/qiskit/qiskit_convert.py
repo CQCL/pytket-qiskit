@@ -293,7 +293,7 @@ def _string_to_circuit(
 def _get_pytket_ctrl_state(bitstring: str, n_bits: int) -> tuple[bool, ...]:
     "Converts a little endian string '001'=1 (LE) to (1, 0, 0)."
     assert set(bitstring).issubset({"0", "1"})
-    pytket_ctrl_state = list(bool(int(b)) for b in bitstring[::-1])
+    pytket_ctrl_state = [bool(int(b)) for b in bitstring[::-1]]
     padding_zeros: list[bool] = [False] * (n_bits - len(bitstring))
     pytket_ctrl_state.extend(padding_zeros)
     return tuple(pytket_ctrl_state)

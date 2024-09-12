@@ -294,20 +294,20 @@ def _get_pytket_ctrl_state(bitstring: str, n_bits: int) -> tuple[bool, ...]:
     "Converts a little endian string '001'=1 (LE) to (1, 0, 0)."
     assert set(bitstring).issubset({"0", "1"})
     pytket_ctrl_state = list(bool(int(b)) for b in bitstring[::-1])
-    padding_zeros = [0] * (n_bits - len(bitstring))
-    pytket_ctrl_state_padded = tuple(pytket_ctrl_state.extend(padding_zeros))
-    return pytket_ctrl_state_padded
+    padding_zeros: list[bool] = [False] * (n_bits - len(bitstring))
+    pytket_ctrl_state.extend(padding_zeros)
+    return tuple(pytket_ctrl_state)
 
 
-def _all_bits_set(integer: int) -> bool:
-    return integer.bit_count() == len(bin(integer)[2:])
+def _all_bits_set(integer: int, n_bits: int) -> bool:
+    return integer.bit_count() == n_bits
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     """Get a pytket contolled OpType from a qiskit ControlledGate."""
 
     # If the control state is not "all |1>", use QControlBox
-    if not _all_bits_set(c_gate.ctrl_state):
+    if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
         return OpType.QControlBox
 
     elif c_gate.base_class in _known_qiskit_gate:
@@ -503,8 +503,6 @@ class CircuitBuilder:
                 pytket_ctrl_state = _get_pytket_ctrl_state(
                     qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
                 )
-                print(pytket_ctrl_state)
-                print(instr.num_ctrl_qubits)
                 q_ctrl_box = QControlBox(
                     c_box,
                     n_controls=instr.num_ctrl_qubits,

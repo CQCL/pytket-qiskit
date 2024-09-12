@@ -290,6 +290,12 @@ def _string_to_circuit(
     return circ
 
 
+def _to_big_endian(string: str) -> tuple[bool, ...]:
+    "Converts a little endian string '001'=1 (LE) to (1, 0, 0)."
+    assert set(string) == {"0", "1"}
+    return tuple(bool(int(b)) for b in string[::-1])
+
+
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     """Get a pytket contolled OpType from a qiskit ControlledGate."""
     if c_gate.base_class in _known_qiskit_gate:

@@ -495,11 +495,7 @@ class CircuitBuilder:
                     )
                 c_box = CircBox(sub_circ)
 
-                if instr.ctrl_state is not None:
-                    qiskit_ctrl_state: str = bin(instr.ctrl_state)[2:]
-                else:
-                    qiskit_ctrl_state = "1" * instr.num_ctrl_qubits
-
+                qiskit_ctrl_state: str = bin(instr.ctrl_state)[2:]
                 pytket_ctrl_state = _get_pytket_ctrl_state(
                     qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
                 )

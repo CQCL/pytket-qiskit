@@ -24,6 +24,7 @@ from typing import (
     cast,
     TypeVar,
     TYPE_CHECKING,
+    Union,
 )
 from inspect import signature
 from uuid import UUID
@@ -352,6 +353,47 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
         )
 
 
+UnitaryBox = Union[Unitary1qBox, Unitary2qBox, Unitary3qBox]
+
+
+def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
+    params = u_gate.params
+    assert len(params) == 1
+    unitary = cast(NDArray[np.complex128], params[0])
+    assert isinstance(u_gate.num_qubits, int)
+    match u_gate.num_qubits:
+        case 1:
+            assert unitary.shape == (2, 2)
+            return Unitary1qBox(unitary)
+        case 2:
+            assert unitary.shape == (4, 4)
+            return Unitary2qBox(unitary)
+        case 3:
+            assert unitary.shape == (8, 8)
+            return Unitary3qBox(unitary)
+        case _:
+            raise NotImplementedError(
+                f"Conversion of {u_gate.num_qubits}-qubit unitary gates not supported."
+            )
+
+
+def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBox:
+    if type(c_gate.base_gate) is UnitaryGate:
+        base_op: Op = _get_unitary_box(c_gate.base_gate)
+    else:
+        base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
+
+        base_op: Op = Op.create(base_tket_gate, params)
+
+    qiskit_ctrl_state: str = bin(c_gate.ctrl_state)[2:]
+    pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
+        bitstring=qiskit_ctrl_state, n_bits=c_gate.num_ctrl_qubits
+    )
+    return QControlBox(
+        base_op, n_controls=c_gate.num_ctrl_qubits, control_state=pytket_ctrl_state
+    )
+
+
 def _add_state_preparation(
     tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
@@ -475,35 +517,7 @@ class CircuitBuilder:
 
             if optype == OpType.QControlBox:
                 params = [param_to_tk(p) for p in instr.base_gate.params]
-                n_base_qubits = instr.base_gate.num_qubits
-                sub_circ = Circuit(n_base_qubits)
-                # use base gate name for the CircBox (shows in renderer)
-                sub_circ.name = instr.base_gate.name.capitalize()
-
-                if type(instr.base_gate) is UnitaryGate:
-                    assert len(cargs) == 0
-                    add_qiskit_unitary_to_tkc(
-                        sub_circ, instr.base_gate, sub_circ.qubits, condition_kwargs
-                    )
-                else:
-                    base_tket_gate: OpType = _known_qiskit_gate[
-                        instr.base_gate.base_class
-                    ]
-
-                    sub_circ.add_gate(
-                        base_tket_gate, params, list(range(n_base_qubits))
-                    )
-                c_box = CircBox(sub_circ)
-
-                qiskit_ctrl_state: str = bin(instr.ctrl_state)[2:]
-                pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
-                    bitstring=qiskit_ctrl_state, n_bits=instr.num_ctrl_qubits
-                )
-                q_ctrl_box = QControlBox(
-                    c_box,
-                    n_controls=instr.num_ctrl_qubits,
-                    control_state=pytket_ctrl_state,
-                )
+                q_ctrl_box = _get_qcontrol_box(c_gate=instr, params=params)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
             elif isinstance(instr, (Initialize, StatePreparation)):
@@ -664,9 +678,6 @@ def append_tk_command_to_qiskit(
     if optype == OpType.Reset:
         qb = qregmap[args[0].reg_name][args[0].index[0]]
         return qcirc.reset(qb)
-    
-    if optype == OpType.QControlBox:
-
 
     if optype in [OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate]:
         subcircuit = op.get_circuit()  # type: ignore

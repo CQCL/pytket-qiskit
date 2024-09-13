@@ -378,17 +378,17 @@ def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
 
 
 def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBox:
-    if type(c_gate.base_gate) is UnitaryGate:
+    qiskit_ctrl_state: str = bin(c_gate.ctrl_state)[2:]
+    pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
+        bitstring=qiskit_ctrl_state, n_bits=c_gate.num_ctrl_qubits
+    )
+    if isinstance(c_gate.base_gate, UnitaryGate):
         base_op: Op = _get_unitary_box(c_gate.base_gate)
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 
         base_op: Op = Op.create(base_tket_gate, params)
 
-    qiskit_ctrl_state: str = bin(c_gate.ctrl_state)[2:]
-    pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
-        bitstring=qiskit_ctrl_state, n_bits=c_gate.num_ctrl_qubits
-    )
     return QControlBox(
         base_op, n_controls=c_gate.num_ctrl_qubits, control_state=pytket_ctrl_state
     )

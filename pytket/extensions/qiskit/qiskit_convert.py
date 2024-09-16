@@ -24,7 +24,6 @@ from typing import (
     cast,
     TypeVar,
     TYPE_CHECKING,
-    Union,
 )
 from inspect import signature
 from uuid import UUID
@@ -357,7 +356,7 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
         )
 
 
-UnitaryBox = Union[Unitary1qBox, Unitary2qBox, Unitary3qBox]
+UnitaryBox = Unitary1qBox | Unitary2qBox | Unitary3qBox
 
 
 def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:

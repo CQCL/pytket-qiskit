@@ -82,7 +82,11 @@ from pytket.circuit import (
 from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.architecture import Architecture, FullyConnected
-from pytket.utils import QubitPauliOperator, gen_term_sequence_circuit
+from pytket.utils import (
+    QubitPauliOperator,
+    gen_term_sequence_circuit,
+    permute_rows_cols_in_unitary,
+)
 from pytket.passes import AutoRebase
 
 if TYPE_CHECKING:
@@ -361,16 +365,19 @@ def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
     assert len(params) == 1
     unitary = cast(NDArray[np.complex128], params[0])
     assert isinstance(u_gate.num_qubits, int)
+    pytket_unitary: NDArray[np.complex128] = permute_rows_cols_in_unitary(
+        unitary, tuple(reversed(range(u_gate.num_qubits)))
+    )
     match u_gate.num_qubits:
         case 1:
             assert unitary.shape == (2, 2)
-            return Unitary1qBox(unitary)
+            return Unitary1qBox(pytket_unitary)
         case 2:
             assert unitary.shape == (4, 4)
-            return Unitary2qBox(unitary)
+            return Unitary2qBox(pytket_unitary)
         case 3:
             assert unitary.shape == (8, 8)
-            return Unitary3qBox(unitary)
+            return Unitary3qBox(pytket_unitary)
         case _:
             raise NotImplementedError(
                 f"Conversion of {u_gate.num_qubits}-qubit unitary gates not supported."

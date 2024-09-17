@@ -44,11 +44,13 @@ from pytket.circuit import (
     Unitary2qBox,
     Unitary3qBox,
     OpType,
+    Op,
     Qubit,
     Bit,
     CustomGateDef,
     reg_eq,
     StatePreparationBox,
+    QControlBox,
 )
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.backends import qiskit_aer_backend
@@ -863,6 +865,20 @@ def test_controlled_unitary_conversion() -> None:
     tkc = qiskit_to_tk(qc)
     u_tkc = tkc.get_unitary()
     assert np.allclose(u_qc, u_tkc)
+
+
+def test_qcontrol_box_conversion_to_qiskit() -> None:
+    h_op = Op.create(OpType.H)
+    multi_controlled_h = QControlBox(
+        h_op, n_controls=3, control_state=(False, False, True)
+    )
+    circ = Circuit(4, name="CCH test")
+    circ.add_gate(multi_controlled_h, [0, 1, 2, 3])
+    qc = tk_to_qiskit(circ)
+    circ2 = qiskit_to_tk(qc)
+    DecomposeBoxes().apply(circ)
+    DecomposeBoxes().apply(circ2)
+    assert circ == circ2
 
 
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates

@@ -79,7 +79,7 @@ jobs:
     - name: Install docs dependencies
       if:  (matrix.os == 'ubuntu-22.04') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
       run: |
-        cd docs && poetry install
+        cd docs && bash ./install.sh
     - name: Build docs
       if:  (matrix.os == 'ubuntu-22.04') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
       timeout-minutes: 20

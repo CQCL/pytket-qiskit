@@ -387,8 +387,9 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
     )
     if isinstance(c_gate.base_gate, UnitaryGate):
         unitary = c_gate.base_gate.params[0]
-        new_unitary = permute_rows_cols_in_unitary(
-            unitary, tuple(reversed(range(c_gate.base_gate.num_qubits)))
+        new_unitary: NDArray[np.complex128] = permute_rows_cols_in_unitary(
+            matrix=unitary,
+            permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),
         )
         u_gate = UnitaryGate(new_unitary)
         base_op: Op = _get_unitary_box(u_gate)
@@ -540,8 +541,9 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                if instr.num_qubits == 0:
-                    add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
+                unitary = instr.params[0]
+                if len(qubits) == 0:
+                    self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
                 else:
                     unitary_box = _get_unitary_box(instr)
                     self.tkc.add_gate(

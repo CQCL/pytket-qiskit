@@ -359,8 +359,7 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
 UnitaryBox = Unitary1qBox | Unitary2qBox | Unitary3qBox
 
 
-def _get_unitary_box(unitary: NDArray[np.complex128]) -> UnitaryBox:
-    num_qubits = int(np.log2(unitary.shape[0]))
+def _get_unitary_box(unitary: NDArray[np.complex128], num_qubits: int) -> UnitaryBox:
     match num_qubits:
         case 1:
             assert unitary.shape == (2, 2)
@@ -388,7 +387,7 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
             matrix=unitary,
             permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),
         )
-        base_op: Op = _get_unitary_box(new_unitary)
+        base_op: Op = _get_unitary_box(new_unitary, c_gate.base_gate.num_qubits)
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 
@@ -544,7 +543,9 @@ class CircuitBuilder:
                     # If the UnitaryGate acts on no qubits, we add a phase.
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
                 else:
-                    unitary_box = _get_unitary_box(unitary=unitary)
+                    unitary_box = _get_unitary_box(
+                        unitary=unitary, num_qubits=instr.num_qubits
+                    )
                     self.tkc.add_gate(
                         unitary_box,
                         list(reversed(qubits)),

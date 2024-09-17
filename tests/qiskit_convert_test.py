@@ -872,13 +872,14 @@ def test_qcontrol_box_conversion_to_qiskit() -> None:
     multi_controlled_h = QControlBox(
         h_op, n_controls=3, control_state=(False, False, True)
     )
-    circ = Circuit(4, name="CCH test")
-    circ.add_gate(multi_controlled_h, [0, 1, 2, 3])
-    qc = tk_to_qiskit(circ)
+    circ1 = Circuit(4, name="CCH test")
+    circ1.add_gate(multi_controlled_h, [0, 1, 2, 3])
+    qc = tk_to_qiskit(circ1)
     circ2 = qiskit_to_tk(qc)
-    DecomposeBoxes().apply(circ)
+    DecomposeBoxes().apply(circ1)
     DecomposeBoxes().apply(circ2)
-    assert circ == circ2
+    assert circ1 == circ2
+    assert compare_unitaries(circ1.get_unitary(), circ2.get_unitary())
 
 
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates

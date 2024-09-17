@@ -388,11 +388,11 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
             matrix=unitary,
             permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),
         )
-        base_op: Op = _get_unitary_box(new_unitary)
+        base_op: Op = _get_unitary_box(new_unitary)  # type: ignore
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 
-        base_op: Op = Op.create(base_tket_gate, params)
+        base_op: Op = Op.create(base_tket_gate, params)  # type: ignore
 
     return QControlBox(
         base_op, n_controls=c_gate.num_ctrl_qubits, control_state=pytket_ctrl_state

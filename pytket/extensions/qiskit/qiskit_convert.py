@@ -359,12 +359,9 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
 UnitaryBox = Unitary1qBox | Unitary2qBox | Unitary3qBox
 
 
-def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
-    params = u_gate.params
-    assert len(params) == 1
-    unitary = cast(NDArray[np.complex128], params[0])
-    assert isinstance(u_gate.num_qubits, int)
-    match u_gate.num_qubits:
+def _get_unitary_box(unitary: NDArray[np.complex128]) -> UnitaryBox:
+    num_qubits = int(np.log2(unitary.shape[0]))
+    match num_qubits:
         case 1:
             assert unitary.shape == (2, 2)
             return Unitary1qBox(unitary)
@@ -376,7 +373,7 @@ def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
             return Unitary3qBox(unitary)
         case _:
             raise NotImplementedError(
-                f"Conversion of {u_gate.num_qubits}-qubit unitary gates not supported."
+                f"Conversion of {num_qubits}-qubit unitary gates not supported."
             )
 
 
@@ -391,8 +388,7 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
             matrix=unitary,
             permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),
         )
-        u_gate = UnitaryGate(new_unitary)
-        base_op: Op = _get_unitary_box(u_gate)
+        base_op: Op = _get_unitary_box(new_unitary)
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 
@@ -541,11 +537,11 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                unitary = instr.params[0]
+                unitary = cast(NDArray[np.complex128], instr.params[0])
                 if len(qubits) == 0:
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
                 else:
-                    unitary_box = _get_unitary_box(instr)
+                    unitary_box = _get_unitary_box(unitary=unitary)
                     self.tkc.add_gate(
                         unitary_box,
                         list(reversed(qubits)),

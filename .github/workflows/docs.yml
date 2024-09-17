@@ -27,7 +27,7 @@ jobs:
     - name: Install pytket qiskit
       run: cd docs && poetry run pip install ../.
     - name: Test building docs
-      timeout-minutes: 20
+      timeout-minutes: 10
       run: |
         cd docs
         poetry run bash build-docs.sh

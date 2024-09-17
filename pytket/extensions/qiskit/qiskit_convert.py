@@ -709,7 +709,8 @@ def append_tk_command_to_qiskit(
             base_qiskit_gate, phase = _known_gate_rev_phase[op.get_op().type]
         except KeyError:
             raise NotImplementedError(
-                f"Conversion of QControlBox with base gate {op.get_op()} not supported by tk_to_qiskit."
+                "Conversion of QControlBox with base gate"
+                + f"{op.get_op()} not supported by tk_to_qiskit."
             )
 
         qiskit_controlled_gate: ControlledGate = base_qiskit_gate().control(

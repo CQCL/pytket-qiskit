@@ -31,7 +31,3 @@ jobs:
       run: |
         cd docs
         poetry run bash build-docs.sh
-    - uses: actions/upload-artifact@v4
-      with:
-        name: pytket-extension-docs
-        path: .github/workflows/docs/extensions/

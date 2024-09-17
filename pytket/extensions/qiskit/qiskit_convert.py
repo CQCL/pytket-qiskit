@@ -364,19 +364,16 @@ def _get_unitary_box(u_gate: UnitaryGate) -> UnitaryBox:
     assert len(params) == 1
     unitary = cast(NDArray[np.complex128], params[0])
     assert isinstance(u_gate.num_qubits, int)
-    pytket_unitary: NDArray[np.complex128] = permute_rows_cols_in_unitary(
-        unitary, tuple(reversed(range(u_gate.num_qubits)))
-    )
     match u_gate.num_qubits:
         case 1:
             assert unitary.shape == (2, 2)
-            return Unitary1qBox(pytket_unitary)
+            return Unitary1qBox(unitary)
         case 2:
             assert unitary.shape == (4, 4)
-            return Unitary2qBox(pytket_unitary)
+            return Unitary2qBox(unitary)
         case 3:
             assert unitary.shape == (8, 8)
-            return Unitary3qBox(pytket_unitary)
+            return Unitary3qBox(unitary)
         case _:
             raise NotImplementedError(
                 f"Conversion of {u_gate.num_qubits}-qubit unitary gates not supported."
@@ -389,7 +386,12 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
         bitstring=qiskit_ctrl_state, n_bits=c_gate.num_ctrl_qubits
     )
     if isinstance(c_gate.base_gate, UnitaryGate):
-        base_op: Op = _get_unitary_box(c_gate.base_gate)
+        unitary = c_gate.base_gate.params[0]
+        new_unitary = permute_rows_cols_in_unitary(
+            unitary, tuple(reversed(range(c_gate.base_gate.num_qubits)))
+        )
+        u_gate = UnitaryGate(new_unitary)
+        base_op: Op = _get_unitary_box(u_gate)
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 
@@ -538,8 +540,16 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                assert len(cargs) == 0
-                add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
+                if instr.num_qubits == 0:
+                    add_qiskit_unitary_to_tkc(self.tkc, instr, qubits, condition_kwargs)
+                else:
+                    unitary_box = _get_unitary_box(instr)
+                    self.tkc.add_gate(
+                        unitary_box,
+                        list(reversed(qubits)),
+                        **condition_kwargs,
+                    )
+
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
             elif optype == OpType.CircBox:

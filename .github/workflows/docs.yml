@@ -18,19 +18,17 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - name: Upgrade pip and install wheel
-      run: pip install --upgrade pip wheel
-    - name: Install pytket qiskit
-      run: pip install .
+    - name: install poetry
+      run: pip install poetry
     - name: Install docs dependencies
-      run: |
-        pip install -r .github/workflows/docs/requirements.txt
+      run: cd docs && bash install.sh
+    - name: Install pytket qiskit
+      run: poetry run pip install .
     - name: Test building docs
       timeout-minutes: 20
       run: |
-        cd .github/workflows/docs
-        mkdir extensions
-        ./build-docs -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions
+        cd docs
+        poetry run bash build-docs.sh
     - uses: actions/upload-artifact@v4
       with:
         name: pytket-extension-docs

@@ -3,6 +3,10 @@ Changelog
 
 .. currentmodule:: pytket.extensions.qiskit
 
+Unreleased
+----------
+* Added handling of generalised controlled gates to :py:func:`qiskit_to_tk` and :py:func:`tk_to_qiskit`. The `control_state` is handled directly instead of using additional `X` gates.
+
 
 0.56.0 (September 2024)
 -----------------------

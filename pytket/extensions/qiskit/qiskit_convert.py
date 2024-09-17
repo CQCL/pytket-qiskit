@@ -388,7 +388,7 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
             matrix=unitary,
             permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),
         )
-        base_op: Op = _get_unitary_box(new_unitary)  # type: ignore
+        base_op: Op = _get_unitary_box(new_unitary)
     else:
         base_tket_gate: OpType = _known_qiskit_gate[c_gate.base_gate.base_class]
 

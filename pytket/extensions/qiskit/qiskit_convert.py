@@ -383,6 +383,7 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
     )
     if isinstance(c_gate.base_gate, UnitaryGate):
         unitary = c_gate.base_gate.params[0]
+        # Here we reverse the order of the columns to correct for endianness.
         new_unitary: NDArray[np.complex128] = permute_rows_cols_in_unitary(
             matrix=unitary,
             permutation=tuple(reversed(range(c_gate.base_gate.num_qubits))),

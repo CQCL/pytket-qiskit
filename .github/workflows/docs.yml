@@ -23,9 +23,9 @@ jobs:
     - name: install poetry
       run: pip install poetry
     - name: Install docs dependencies
-      run: cd docs && bash install.sh
+      run: cd docs && bash install.sh 
     - name: Install pytket qiskit
-      run: cd .. && poetry run pip install .
+      run: cd docs && poetry run pip install ../.
     - name: Test building docs
       timeout-minutes: 20
       run: |

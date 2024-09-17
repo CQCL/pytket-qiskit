@@ -104,7 +104,7 @@ To see which devices you can access, use the :py:meth:`IBMQBackend.available_dev
 
     backend = IBMQBackend("ibm_kyiv") # Initialise backend for an IBM device
 
-    backendinfo_list = backend.available_devices(instance=my_instance) 
+    backendinfo_list = backend.available_devices(instance=inst) 
     print([backend.device_name for backend in backendinfo_list])
 
 For more information, see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`_.

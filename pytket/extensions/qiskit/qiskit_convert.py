@@ -586,40 +586,6 @@ class CircuitBuilder:
                 self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)  # type: ignore
 
 
-def add_qiskit_unitary_to_tkc(
-    tkc: Circuit,
-    u_gate: UnitaryGate,
-    qubits: list[Qubit],
-    condition_kwargs: dict[str, Any],
-) -> None:
-    # Note reversal of qubits, to account for endianness (pytket unitaries
-    # are ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
-    params = u_gate.params
-    assert len(params) == 1
-    u = cast(np.ndarray, params[0])
-
-    n = len(qubits)
-    if n == 0:
-        assert u.shape == (1, 1)
-        tkc.add_phase(np.angle(u[0][0]) / np.pi)
-    elif n == 1:
-        assert u.shape == (2, 2)
-        u1box = Unitary1qBox(u)
-        tkc.add_unitary1qbox(u1box, qubits[0], **condition_kwargs)
-    elif n == 2:
-        assert u.shape == (4, 4)
-        u2box = Unitary2qBox(u)
-        tkc.add_unitary2qbox(u2box, qubits[1], qubits[0], **condition_kwargs)
-    elif n == 3:
-        assert u.shape == (8, 8)
-        u3box = Unitary3qBox(u)
-        tkc.add_unitary3qbox(u3box, qubits[2], qubits[1], qubits[0], **condition_kwargs)
-    else:
-        raise NotImplementedError(
-            f"Conversion of {n}-qubit unitary gates not supported."
-        )
-
-
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
     """
     Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.

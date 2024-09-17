@@ -218,27 +218,14 @@ Using TKET directly on qiskit circuits
 
 For usage of :py:class:`~pytket.extensions.qiskit.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
 
-.. currentmodule:: pytket.extensions.qiskit.tket_backend
-
 .. autosummary::
     :nosignatures:
 
-    TketBackend
+    ~tket_backend.TketBackend
+    ~tket_pass.TketPass
+    ~tket_pass.TketAutoPass
+    ~tket_job.TketJob
 
-.. currentmodule:: pytket.extensions.qiskit.tket_pass
-
-.. autosummary::
-    :nosignatures:
-
-    TketPass
-    TketAutoPass
-
-.. currentmodule:: pytket.extensions.qiskit.tket_job
-
-.. autosummary::
-    :nosignatures:
-
-    TketJob
 
 
 .. toctree::

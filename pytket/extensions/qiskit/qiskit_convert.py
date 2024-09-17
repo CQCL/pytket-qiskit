@@ -538,7 +538,10 @@ class CircuitBuilder:
 
             elif type(instr) is UnitaryGate:
                 unitary = cast(NDArray[np.complex128], instr.params[0])
+                dim: int = 2**instr.num_qubits
+                assert unitary.shape == (dim, dim)
                 if len(qubits) == 0:
+                    # If the UnitaryGate acts on no qubits, we add a phase.
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
                 else:
                     unitary_box = _get_unitary_box(unitary=unitary)

@@ -215,8 +215,11 @@ Noise Modelling
 
 Using TKET directly on qiskit circuits
 ======================================
+.. currentmodule:: pytket.extensions.qiskit
 
-For usage of :py:class:`~pytket.extensions.qiskit.tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+
+.. currentmodule:: pytket.extensions.qiskit
 
 .. autosummary::
     :nosignatures:

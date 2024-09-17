@@ -614,6 +614,10 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     return builder.circuit()
 
 
+def _get_qiskit_control_state(bool_list: list[bool]) -> str:
+    return "".join(str(int(b)) for b in bool_list)[::-1]
+
+
 def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         symexpr = p._symbol_expr
@@ -695,6 +699,26 @@ def append_tk_command_to_qiskit(
         else:
             qiskit_state_prep_box = StatePreparation(statevector_array)
             return qcirc.append(qiskit_state_prep_box, qargs=list(reversed(qargs)))
+
+    if optype == OpType.QControlBox:
+        assert isinstance(op, QControlBox)
+        qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
+        pytket_control_state: list[bool] = op.get_control_state_bits()
+        qiskit_control_state: str = _get_qiskit_control_state(pytket_control_state)
+        try:
+            base_qiskit_gate, phase = _known_gate_rev_phase[op.get_op().type]
+        except KeyError:
+            raise NotImplementedError(
+                f"Conversion of QControlBox with base gate {op.get_op()} not supported by tk_to_qiskit."
+            )
+
+        qiskit_controlled_gate: ControlledGate = base_qiskit_gate().control(
+            num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
+        )
+        return qcirc.append(
+            qiskit_controlled_gate,
+            qargs=qargs,
+        )
 
     if optype == OpType.Barrier:
         if any(q.type == UnitType.bit for q in args):
@@ -816,7 +840,12 @@ _additional_multi_controlled_gates = {OpType.CnY, OpType.CnZ, OpType.CnRy}
 _protected_tket_gates = (
     _supported_tket_gates
     | _additional_multi_controlled_gates
-    | {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}
+    | {
+        OpType.Unitary1qBox,
+        OpType.Unitary2qBox,
+        OpType.Unitary3qBox,
+        OpType.QControlBox,
+    }
     | {OpType.CustomGate}
 )
 

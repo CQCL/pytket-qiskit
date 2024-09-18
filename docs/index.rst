@@ -236,5 +236,5 @@ For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration n
 .. toctree::
    :caption: Useful links
 
-   Issue tracker <https://github.com/CQCL/pytket-cutensornet/issues>
-   PyPi <https://pypi.org/project/pytket-cutensornet/>
+   Issue tracker <https://github.com/CQCL/pytket-qiskit/issues>
+   PyPi <https://pypi.org/project/pytket-qiskit/>

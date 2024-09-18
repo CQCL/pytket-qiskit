@@ -104,7 +104,7 @@ To see which devices you can access, use the :py:meth:`IBMQBackend.available_dev
 
     backend = IBMQBackend("ibm_kyiv") # Initialise backend for an IBM device
 
-    backendinfo_list = backend.available_devices(instance=my_instance) 
+    backendinfo_list = backend.available_devices(instance=inst) 
     print([backend.device_name for backend in backendinfo_list])
 
 For more information, see the documentation for `qiskit-ibm-runtime <https://docs.quantum.ibm.com/api/qiskit-ibm-runtime>`_.
@@ -215,30 +215,18 @@ Noise Modelling
 
 Using TKET directly on qiskit circuits
 ======================================
+.. currentmodule:: pytket.extensions.qiskit
 
-For usage of :py:class:`~pytket.extensions.qiskit.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
-
-.. currentmodule:: pytket.extensions.qiskit.tket_backend
-
-.. autosummary::
-    :nosignatures:
-
-    TketBackend
-
-.. currentmodule:: pytket.extensions.qiskit.tket_pass
+For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
 
 .. autosummary::
     :nosignatures:
 
-    TketPass
-    TketAutoPass
+    ~tket_backend.TketBackend
+    ~tket_pass.TketPass
+    ~tket_pass.TketAutoPass
+    ~tket_job.TketJob
 
-.. currentmodule:: pytket.extensions.qiskit.tket_job
-
-.. autosummary::
-    :nosignatures:
-
-    TketJob
 
 
 .. toctree::

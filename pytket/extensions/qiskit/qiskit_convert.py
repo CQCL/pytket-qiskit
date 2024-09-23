@@ -24,7 +24,6 @@ from typing import (
     cast,
     TypeVar,
     TYPE_CHECKING,
-    Type,
 )
 from inspect import signature
 from uuid import UUID

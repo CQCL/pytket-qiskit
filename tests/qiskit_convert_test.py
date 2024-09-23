@@ -868,12 +868,23 @@ def test_controlled_unitary_conversion() -> None:
 
 
 def test_qcontrol_box_conversion_to_qiskit() -> None:
-    h_op = Op.create(OpType.H)
-    multi_controlled_h = QControlBox(
-        h_op, n_controls=3, control_state=(False, False, True)
+    ccch_001 = QControlBox(
+        Op.create(OpType.H), n_controls=3, control_state=(False, False, True)
     )
-    circ1 = Circuit(4, name="CCH test")
-    circ1.add_gate(multi_controlled_h, [0, 1, 2, 3])
+    cccs_110 = QControlBox(
+        Op.create(OpType.S), n_controls=3, control_state=(True, True, False)
+    )
+    cccRy_100 = QControlBox(
+        Op.create(OpType.Ry, 0.73), n_controls=3, control_state=(True, False, False)
+    )
+    ccU3_10 = QControlBox(
+        Op.create(OpType.U3, [0.1, 0.2, 0.3]), n_controls=2, control_state=(True, False)
+    )
+    circ1 = Circuit(4, name="test_circ")
+    circ1.add_gate(ccch_001, [0, 1, 2, 3])
+    circ1.add_gate(cccs_110, [0, 1, 2, 3])
+    circ1.add_gate(cccRy_100, [3, 2, 1, 0])
+    circ1.add_gate(ccU3_10, [1, 0, 2])
     qc = tk_to_qiskit(circ1)
     circ2 = qiskit_to_tk(qc)
     DecomposeBoxes().apply(circ1)

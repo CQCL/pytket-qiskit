@@ -24,6 +24,7 @@ from typing import (
     cast,
     TypeVar,
     TYPE_CHECKING,
+    Type,
 )
 from inspect import signature
 from uuid import UUID
@@ -705,18 +706,18 @@ def append_tk_command_to_qiskit(
         pytket_control_state: list[bool] = op.get_control_state_bits()
         qiskit_control_state: str = _get_qiskit_control_state(pytket_control_state)
         try:
-            base_qiskit_gate, phase = _known_gate_rev_phase[op.get_op().type]
+            gatetype, phase = _known_gate_rev_phase[op.get_op().type]
         except KeyError:
             raise NotImplementedError(
                 "Conversion of QControlBox with base gate"
                 + f"{op.get_op()} not supported by tk_to_qiskit."
             )
-
-        qiskit_controlled_gate: ControlledGate = base_qiskit_gate().control(
-            num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
-        )
+        params = _get_params(op.get_op(), symb_map)
+        operation = gatetype(*params)
         return qcirc.append(
-            qiskit_controlled_gate,
+            operation.control(
+                num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
+            ),
             qargs=qargs,
         )
 

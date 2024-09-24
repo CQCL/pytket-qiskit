@@ -135,7 +135,7 @@ jobs:
     - name: Install poetry
       run: pip install poetry
     - name: Install extension
-      run: for w in `find wheelhouse/ -type f -name "*.whl"` ; do pip install $w ; done
+      run: for w in `find wheelhouse/ -type f -name "*.whl"` ; do poetry install $w ; done
     - name: Install docs dependencies
       run: |
         cd docs

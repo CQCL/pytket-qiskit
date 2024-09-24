@@ -886,11 +886,12 @@ def test_qcontrol_box_conversion_to_qiskit() -> None:
     circ1.add_gate(cccRy_100, [3, 2, 1, 0])
     circ1.add_gate(ccU3_10, [1, 0, 2])
     qc = tk_to_qiskit(circ1)
+    qiskit_unitary = permute_rows_cols_in_unitary(Operator(qc).data, (3, 2, 1, 0))
+    assert compare_unitaries(qiskit_unitary, circ1.get_unitary())
     circ2 = qiskit_to_tk(qc)
     DecomposeBoxes().apply(circ1)
     DecomposeBoxes().apply(circ2)
     assert circ1 == circ2
-    assert compare_unitaries(circ1.get_unitary(), circ2.get_unitary())
 
 
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates

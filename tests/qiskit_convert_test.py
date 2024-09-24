@@ -44,11 +44,13 @@ from pytket.circuit import (
     Unitary2qBox,
     Unitary3qBox,
     OpType,
+    Op,
     Qubit,
     Bit,
     CustomGateDef,
     reg_eq,
     StatePreparationBox,
+    QControlBox,
 )
 from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
 from pytket.extensions.qiskit.backends import qiskit_aer_backend
@@ -863,6 +865,33 @@ def test_controlled_unitary_conversion() -> None:
     tkc = qiskit_to_tk(qc)
     u_tkc = tkc.get_unitary()
     assert np.allclose(u_qc, u_tkc)
+
+
+def test_qcontrol_box_conversion_to_qiskit() -> None:
+    ccch_001 = QControlBox(
+        Op.create(OpType.H), n_controls=3, control_state=(False, False, True)
+    )
+    cccs_110 = QControlBox(
+        Op.create(OpType.S), n_controls=3, control_state=(True, True, False)
+    )
+    cccRy_100 = QControlBox(
+        Op.create(OpType.Ry, 0.73), n_controls=3, control_state=(True, False, False)
+    )
+    ccU3_10 = QControlBox(
+        Op.create(OpType.U3, [0.1, 0.2, 0.3]), n_controls=2, control_state=(True, False)
+    )
+    circ1 = Circuit(4, name="test_circ")
+    circ1.add_gate(ccch_001, [0, 1, 2, 3])
+    circ1.add_gate(cccs_110, [0, 1, 2, 3])
+    circ1.add_gate(cccRy_100, [3, 2, 1, 0])
+    circ1.add_gate(ccU3_10, [1, 0, 2])
+    qc = tk_to_qiskit(circ1)
+    qiskit_unitary = permute_rows_cols_in_unitary(Operator(qc).data, (3, 2, 1, 0))
+    assert compare_unitaries(qiskit_unitary, circ1.get_unitary())
+    circ2 = qiskit_to_tk(qc)
+    DecomposeBoxes().apply(circ1)
+    DecomposeBoxes().apply(circ2)
+    assert circ1 == circ2
 
 
 # Ensures that the tk_to_qiskit converter does not cancel redundant gates

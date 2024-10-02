@@ -232,3 +232,9 @@ For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration n
 .. toctree::
     api.rst
     changelog.rst
+
+.. toctree::
+   :caption: Useful links
+
+   Issue tracker <https://github.com/CQCL/pytket-qiskit/issues>
+   PyPi <https://pypi.org/project/pytket-qiskit/>

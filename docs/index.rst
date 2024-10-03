@@ -195,7 +195,7 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
      - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
-* [2] :py:class:`~pytket._tket.passes.AutoRebase` is a rebase to the gateset supported by the backend. For IBM quantum devices and emulators that is either :math:`\{X, SX, Rz, CX\}`, :math:`\{X, SX, Rz, ECR\}`, or :math:`\{X, SX, Rz, CZ\}`. The more idealised Aer simulators have a much broader range of supported gates.
+* [2] :py:class:`~pytket._tket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gateset is either :math:`\{X, SX, Rz, CX\}`, :math:`\{X, SX, Rz, ECR\}`, or :math:`\{X, SX, Rz, CZ\}`. The more idealised Aer simulators have a much broader range of supported gates.
 * [3] Here :py:class:`~pytket._tket.passes.CXMappingPass` maps program qubits to the architecture using a :py:class:`~pytket._tket.placement.NoiseAwarePlacement`
 
 

@@ -169,7 +169,7 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-   * - self.rebase_pass [2]
+   * - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
      - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `FullPeepholeOptimise <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.FullPeepholeOptimise>`_
    * - `CXMappingPass <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
@@ -178,24 +178,24 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
-   * - self.rebase_pass [2]
+   * - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
      - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
-     - self.rebase_pass [2]
+     - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
      - `CliffordSimp(allow_swaps=False) <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CliffordSimp>`_
    * - 
      - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
      - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
    * -
      -
-     - self.rebase_pass [2]
+     - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
    * - 
      -
      - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
-* [2] self.rebase_pass is a rebase to the gateset supported by the backend. For IBM quantum devices and emulators that is either {X, SX, Rz, CX} or {X, SX, Rz, ECR}. The more idealised Aer simulators have a much broader range of supported gates.
+* [2] :py:class:`~pytket._tket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gateset is either :math:`\{X, SX, Rz, CX\}`, :math:`\{X, SX, Rz, ECR\}`, or :math:`\{X, SX, Rz, CZ\}`. The more idealised Aer simulators have a much broader range of supported gates.
 * [3] Here :py:class:`~pytket._tket.passes.CXMappingPass` maps program qubits to the architecture using a :py:class:`~pytket._tket.placement.NoiseAwarePlacement`
 
 

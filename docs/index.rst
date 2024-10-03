@@ -169,7 +169,7 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-   * - self.rebase_pass [2]
+   * - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_
      - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `FullPeepholeOptimise <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.FullPeepholeOptimise>`_
    * - `CXMappingPass <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]

@@ -13,83 +13,85 @@
 # limitations under the License.
 
 import itertools
+import json
 from ast import literal_eval
 from collections import Counter
-import json
+from collections.abc import Sequence
 from time import sleep
 from typing import (
-    cast,
-    Optional,
-    Sequence,
     TYPE_CHECKING,
     Any,
+    Optional,
+    cast,
 )
 from warnings import warn
 
 import numpy as np
+from qiskit_ibm_runtime import (  # type: ignore
+    QiskitRuntimeService,
+    RuntimeJob,
+    SamplerOptions,
+    SamplerV2,
+    Session,
+)
+from qiskit_ibm_runtime.models.backend_configuration import (
+    PulseBackendConfiguration,  # type: ignore
+)
+from qiskit_ibm_runtime.models.backend_properties import (
+    BackendProperties,  # type: ignore
+)
 
+from pytket.architecture import Architecture, FullyConnected
+from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
+from pytket.backends.backendinfo import BackendInfo
+from pytket.backends.backendresult import BackendResult
+from pytket.backends.resulthandle import _ResultIdTuple
+from pytket.circuit import Bit, Circuit, OpType
+from pytket.passes import (
+    AutoRebase,
+    BasePass,
+    CliffordSimp,
+    CXMappingPass,
+    DecomposeBoxes,
+    FullPeepholeOptimise,
+    KAKDecomposition,
+    NaivePlacementPass,
+    RemoveRedundancies,
+    SequencePass,
+    SimplifyInitial,
+    SynthesiseTket,
+)
+from pytket.placement import NoiseAwarePlacement
+from pytket.predicates import (
+    DirectednessPredicate,
+    GateSetPredicate,
+    MaxNQubitsPredicate,
+    NoClassicalControlPredicate,
+    NoFastFeedforwardPredicate,
+    NoMidMeasurePredicate,
+    NoSymbolsPredicate,
+    Predicate,
+)
+from pytket.utils import prepare_circuit
+from pytket.utils.outcomearray import OutcomeArray
+from pytket.utils.results import KwargTypes
 from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
-
 
 # RuntimeJob has no queue_position attribute, which is referenced
 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
 # therefore we can't use job_monitor until fixed
 # from qiskit.tools.monitor import job_monitor  # type: ignore
 from qiskit.result.distributions import QuasiDistribution  # type: ignore
-from qiskit_ibm_runtime import (  # type: ignore
-    QiskitRuntimeService,
-    Session,
-    SamplerOptions,
-    SamplerV2,
-    RuntimeJob,
-)
-from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
-from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
-
-from pytket.circuit import Bit, Circuit, OpType
-from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
-from pytket.backends.backendinfo import BackendInfo
-from pytket.backends.backendresult import BackendResult
-from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.passes import (
-    BasePass,
-    AutoRebase,
-    KAKDecomposition,
-    RemoveRedundancies,
-    SequencePass,
-    SynthesiseTket,
-    CXMappingPass,
-    DecomposeBoxes,
-    FullPeepholeOptimise,
-    CliffordSimp,
-    SimplifyInitial,
-    NaivePlacementPass,
-)
-from pytket.predicates import (
-    NoMidMeasurePredicate,
-    NoSymbolsPredicate,
-    GateSetPredicate,
-    NoClassicalControlPredicate,
-    NoFastFeedforwardPredicate,
-    MaxNQubitsPredicate,
-    Predicate,
-    DirectednessPredicate,
-)
-
-from pytket.architecture import FullyConnected, Architecture
-from pytket.placement import NoiseAwarePlacement
-from pytket.utils import prepare_circuit
-from pytket.utils.outcomearray import OutcomeArray
-from pytket.utils.results import KwargTypes
-from .ibm_utils import _STATUS_MAP, _batch_circuits
-from .config import QiskitConfig
-from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
-from ..qiskit_convert import (
-    get_avg_characterisation,
-    process_characterisation_from_config,
-)
 
 from .._metadata import __extension_version__
+from ..qiskit_convert import (
+    _tk_gate_set,
+    get_avg_characterisation,
+    process_characterisation_from_config,
+    tk_to_qiskit,
+)
+from .config import QiskitConfig
+from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
@@ -183,7 +185,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: "IBMBackend" = self._service.backend(backend_name)
+        self._backend: IBMBackend = self._service.backend(backend_name)
         config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -610,7 +612,7 @@ class IBMQBackend(Backend):
                         print("Job status is", status)
                         sleep(10)
 
-                res = job.result(timeout=kwargs.get("timeout", None))
+                res = job.result(timeout=kwargs.get("timeout"))
             if isinstance(res, SamplerResult):
                 # TODO Is this code still reachable?
                 for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):

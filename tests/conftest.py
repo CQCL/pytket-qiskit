@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import os
-import pytest
 
+import pytest
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
+
 from pytket.extensions.qiskit import (
     IBMQBackend,
     IBMQEmulatorBackend,

@@ -16,12 +16,12 @@ import os
 
 import numpy as np
 import pytest
-
 from qiskit import QuantumCircuit  # type: ignore
 from qiskit.primitives import BackendSamplerV2  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
+from pytket.architecture import Architecture, FullyConnected
 from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,
@@ -29,7 +29,6 @@ from pytket.extensions.qiskit import (
     IBMQEmulatorBackend,
 )
 from pytket.extensions.qiskit.tket_backend import TketBackend
-from pytket.architecture import Architecture, FullyConnected
 
 from .mock_pytket_backend import MockShotBackend
 
@@ -55,9 +54,9 @@ def test_samples() -> None:
         tb = TketBackend(b, comp)
         job = tb.run(qc, shots=100, memory=True)
         shots = job.result().get_memory()
-        assert all(((r[0] == "1" and r[1] == r[2]) for r in shots))
+        assert all((r[0] == "1" and r[1] == r[2]) for r in shots)
         counts = job.result().get_counts()
-        assert all(((r[0] == "1" and r[1] == r[2]) for r in counts.keys()))
+        assert all((r[0] == "1" and r[1] == r[2]) for r in counts.keys())
 
 
 def test_state() -> None:
@@ -133,6 +132,6 @@ def test_architectures() -> None:
         tb = TketBackend(b, b.default_compilation_pass())
         job = tb.run(qc, shots=100, memory=True)
         shots = job.result().get_memory()
-        assert all(((r[0] == "1" and r[1] == r[2]) for r in shots))
+        assert all((r[0] == "1" and r[1] == r[2]) for r in shots)
         counts = job.result().get_counts()
-        assert all(((r[0] == "1" and r[1] == r[2]) for r in counts.keys()))
+        assert all((r[0] == "1" and r[1] == r[2]) for r in counts.keys())

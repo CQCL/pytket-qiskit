@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, ClassVar, Optional, Type
 from dataclasses import dataclass
+from typing import Any, ClassVar, Optional, Type
+
 from pytket.config import PytketExtConfig
 
 
@@ -31,8 +32,8 @@ class QiskitConfig(PytketExtConfig):
         cls: Type["QiskitConfig"], ext_dict: dict[str, Any]
     ) -> "QiskitConfig":
         return cls(
-            ext_dict.get("instance", None),
-            ext_dict.get("ibmq_api_token", None),
+            ext_dict.get("instance"),
+            ext_dict.get("ibmq_api_token"),
         )
 
 

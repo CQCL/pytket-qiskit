@@ -11,73 +11,68 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import cmath
 import json
+import math
 import os
 from collections import Counter
 from typing import cast
-import math
-import cmath
-from hypothesis import given, strategies
+
 import numpy as np
-
 import pytest
-
+from hypothesis import given, strategies
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
 from qiskit.circuit import Parameter  # type: ignore
-from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
+from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
-from qiskit_aer import Aer  # type: ignore
-
-from pytket.circuit import (
-    Circuit,
-    OpType,
-    BasisOrder,
-    Qubit,
-    reg_eq,
-    Unitary2qBox,
-    QControlBox,
-    CircBox,
-)
-from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
-from pytket.pauli import Pauli, QubitPauliString
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
-from pytket.architecture import Architecture
-from pytket.mapping import MappingManager, LexiLabellingMethod, LexiRouteRoutingMethod
-from pytket.transform import Transform
+from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import (
-    ResultHandle,
     CircuitNotRunError,
     CircuitNotValidError,
     CircuitStatus,
+    ResultHandle,
     StatusEnum,
 )
 from pytket.backends.backend import ResultHandleTypeError
-from pytket.extensions.qiskit import (
-    IBMQBackend,
-    AerBackend,
-    AerStateBackend,
-    AerUnitaryBackend,
-    IBMQEmulatorBackend,
-    AerDensityMatrixBackend,
+from pytket.circuit import (
+    BasisOrder,
+    CircBox,
+    Circuit,
+    OpType,
+    QControlBox,
+    Qubit,
+    Unitary2qBox,
+    reg_eq,
 )
 from pytket.extensions.qiskit import (
+    AerBackend,
+    AerDensityMatrixBackend,
+    AerStateBackend,
+    AerUnitaryBackend,
+    IBMQBackend,
+    IBMQEmulatorBackend,
+    process_characterisation,
     qiskit_to_tk,
     tk_to_qiskit,
-    process_characterisation,
 )
 from pytket.extensions.qiskit.backends.crosstalk_model import (
     CrosstalkParams,
-    NoisyCircuitBuilder,
     FractionalUnitary,
+    NoisyCircuitBuilder,
 )
+from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
+from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
+from pytket.transform import Transform
 from pytket.utils.expectations import (
-    get_pauli_expectation_value,
     get_operator_expectation_value,
+    get_pauli_expectation_value,
 )
-from pytket.architecture import FullyConnected
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 
@@ -699,7 +694,7 @@ def test_expectation_bug() -> None:
     backend = AerStateBackend()
     # backend.compile_circuit(circuit)
     circuit = Circuit(16)
-    with open("big_hamiltonian.json", "r") as f:
+    with open("big_hamiltonian.json") as f:
         hamiltonian = QubitPauliOperator.from_list(json.load(f))
     exp = backend.get_operator_expectation_value(circuit, hamiltonian)
     assert np.isclose(exp, 1.4325392)
@@ -729,9 +724,7 @@ def test_aer_result_handle() -> None:
 
     with pytest.raises(CircuitNotRunError) as errorinfoCirc:
         _ = b.get_result(wronghandle)
-    assert "Circuit corresponding to {0!r} ".format(
-        wronghandle
-    ) + "has not been run by this backend instance." in str(errorinfoCirc.value)
+    assert f"Circuit corresponding to {wronghandle!r} " + "has not been run by this backend instance." in str(errorinfoCirc.value)
 
 
 def test_aerstate_result_handle() -> None:

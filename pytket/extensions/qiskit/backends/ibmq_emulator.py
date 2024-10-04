@@ -13,21 +13,20 @@
 # limitations under the License.
 
 from collections import Counter
+from collections.abc import Sequence
 from typing import (
-    Optional,
-    Sequence,
     Any,
+    Optional,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 from pytket.backends.backend import Backend
-from pytket.backends.status import CircuitStatus
-
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
-from pytket.backends.resulthandle import _ResultIdTuple, ResultHandle
+from pytket.backends.resulthandle import ResultHandle, _ResultIdTuple
+from pytket.backends.status import CircuitStatus
 from pytket.circuit import Circuit
 from pytket.passes import BasePass
 from pytket.predicates import Predicate

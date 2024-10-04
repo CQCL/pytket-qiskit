@@ -1,10 +1,12 @@
+.. currentmodule:: pytket.extensions.qiskit
+
 Changelog
 ~~~~~~~~~
 
-.. currentmodule:: pytket.extensions.qiskit
+0.57.0 (October 2024)
+---------------------
 
-Unreleased
-----------
+* Updated pytket version requirement to 1.33.
 * Added handling of generalised controlled gates to :py:func:`qiskit_to_tk` and :py:func:`tk_to_qiskit`. The `control_state` is handled directly instead of using additional `X` gates.
 * A controlled :py:class:`UnitaryGate` will now be converted to a pytket controlled unitary box by :py:func:`qiskit_to_tk` instead of a controlled :py:class:`~pytket.circuit.CircBox` with a unitary box inside.
 

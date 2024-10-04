@@ -551,7 +551,7 @@ class IBMQBackend(Backend):
                         handle_list[ind] = ResultHandle(
                             job_id, i, qcs[i].count_ops()["measure"], ppcirc_strs[i]
                         )
-            batch_id += 1
+            batch_id += 1  # noqa: SIM113
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()

@@ -25,18 +25,20 @@ from pytket.extensions.qiskit import (
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_qiskit_account() -> None:
-    if os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None:
-        # The remote tests require an active IBMQ account
-        # We check if an IBMQ account is already saved, otherwise we try
-        # to enable one using the token in the env variable:
-        # PYTKET_REMOTE_QISKIT_TOKEN
-        # Note: The IBMQ account will only be enabled for the current session
-        if not QiskitRuntimeService.saved_accounts():
-            token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
-            if token:
-                QiskitRuntimeService.save_account(
-                    channel="ibm_quantum", token=token, overwrite=True
-                )
+    # The remote tests require an active IBMQ account
+    # We check if an IBMQ account is already saved, otherwise we try
+    # to enable one using the token in the env variable:
+    # PYTKET_REMOTE_QISKIT_TOKEN
+    # Note: The IBMQ account will only be enabled for the current session
+    if (
+        os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None
+        and not QiskitRuntimeService.saved_accounts()
+    ):
+        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+        if token:
+            QiskitRuntimeService.save_account(
+                channel="ibm_quantum", token=token, overwrite=True
+            )
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +65,7 @@ def qiskit_runtime_service() -> QiskitRuntimeService:
 
     try:
         return QiskitRuntimeService(channel="ibm_quantum", instance="ibm-q/open/main")
-    except:
+    except:  # noqa: E722
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         return QiskitRuntimeService(
             channel="ibm_quantum", token=token, instance="ibm-q/open/main"

@@ -113,7 +113,7 @@ def test_parameterised_circuit_global_phase() -> None:
 
     qc_2 = tk_to_qiskit(tket_qc)
 
-    assert type(qc_2.global_phase) == ParameterExpression
+    assert type(qc_2.global_phase) is ParameterExpression
 
 
 def test_classical_barrier_error() -> None:
@@ -619,7 +619,7 @@ def assert_tket_circuits_identical(circuits: list[Circuit]) -> None:
     circ_copies = []
 
     for nn in range(len(circuits)):
-        assert type(circuits[nn]) == Circuit
+        assert type(circuits[nn]) is Circuit
         circ = circuits[nn].copy()
         circ.name = "tk_circ_must_be_same_name"
         qbs = circ.qubits

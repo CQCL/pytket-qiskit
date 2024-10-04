@@ -506,7 +506,6 @@ def test_gate_str_2_optype() -> None:
         "mcx": OpType.CnX,
         "x": OpType.X,
     }
-    print([(_gate_str_2_optype[key], val) for key, val in samples.items()])
     assert all(_gate_str_2_optype[key] == val for key, val in samples.items())
 
 
@@ -523,7 +522,6 @@ def test_customgate() -> None:
 
     qc1 = tk_to_qiskit(circ)
     newcirc = qiskit_to_tk(qc1)
-    print(repr(newcirc))
 
     qc2 = tk_to_qiskit(newcirc)
     correct_circ = Circuit(3).Rx(0.1, 0).Rx(0.4, 2).CZ(0, 1).Rx(0.2, 1)

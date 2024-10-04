@@ -39,7 +39,7 @@ def _extract_basis_gates(backend: Backend) -> list[str]:
             # Restrict to the gate set accepted by the backend, the converters,
             # and the Target.from_configuration() method.
             for optype in pred.gate_set:
-                if optype in _gate_str_2_optype_rev.keys():
+                if optype in _gate_str_2_optype_rev:
                     gate_name = _gate_str_2_optype_rev[optype]
                     if gate_name in standard_gate_mapping:
                         gate_obj = standard_gate_mapping[gate_name]

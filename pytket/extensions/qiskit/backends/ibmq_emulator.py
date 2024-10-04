@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import Counter
 from collections.abc import Sequence
 from typing import (
+    TYPE_CHECKING,
     Any,
     Optional,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
-from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 from pytket.backends.backend import Backend
 from pytket.backends.backendinfo import BackendInfo
@@ -34,6 +33,11 @@ from pytket.utils.results import KwargTypes
 
 from .aer import AerBackend
 from .ibm import IBMQBackend
+
+if TYPE_CHECKING:
+    from collections import Counter
+
+    from qiskit_ibm_runtime import QiskitRuntimeService
 
 
 class IBMQEmulatorBackend(Backend):

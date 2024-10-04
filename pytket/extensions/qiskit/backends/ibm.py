@@ -609,7 +609,6 @@ class IBMQBackend(Backend):
                     status = job.status()
                     while status not in ["DONE", "CANCELLED", "ERROR"]:
                         status = job.status()
-                        print("Job status is", status)
                         sleep(10)
 
                 res = job.result(timeout=kwargs.get("timeout"))

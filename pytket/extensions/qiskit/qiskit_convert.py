@@ -95,7 +95,7 @@ if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
-    from pytket.circuit import Op, UnitID
+    from pytket.circuit import UnitID
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {
@@ -1014,9 +1014,12 @@ def process_characterisation_from_config(
     K1 = TypeVar("K1")
     K2 = TypeVar("K2")
     V = TypeVar("V")
-    convert_keys_t = Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
+    Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
+
     # convert qubits to architecture Nodes
-    convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
+    def convert_keys(f, d):
+        return {f(k): v for k, v in d.items()}
+
     node_errors = convert_keys(lambda q: Node(q), node_errors)
     link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
     readout_errors = convert_keys(lambda q: Node(q), readout_errors)
@@ -1047,8 +1050,10 @@ def get_avg_characterisation(
     K = TypeVar("K")
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
-    map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
-    map_values: map_values_t = lambda f, d: {k: f(v) for k, v in d.items()}
+    Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
+
+    def map_values(f, d):
+        return {k: f(v) for k, v in d.items()}
 
     node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
     link_errors = cast(
@@ -1058,10 +1063,12 @@ def get_avg_characterisation(
         dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
     )
 
-    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
-    avg_mat: Callable[[list[list[float]]], float] = (
-        lambda xs: (xs[0][1] + xs[1][0]) / 2.0
-    )
+    def avg(xs: dict[Any, float]) -> float:
+        return sum(xs.values()) / len(xs)
+
+    def avg_mat(xs: list[list[float]]) -> float:
+        return (xs[0][1] + xs[1][0]) / 2.0
+
     avg_readout_errors = map_values(avg_mat, readout_errors)
     avg_node_errors = map_values(avg, node_errors)
     avg_link_errors = map_values(avg, link_errors)

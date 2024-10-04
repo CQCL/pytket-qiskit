@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional, Type
+from typing import Any, ClassVar, Optional
 
 from pytket.config import PytketExtConfig
 
@@ -29,7 +29,7 @@ class QiskitConfig(PytketExtConfig):
 
     @classmethod
     def from_extension_dict(
-        cls: Type["QiskitConfig"], ext_dict: dict[str, Any]
+        cls: type["QiskitConfig"], ext_dict: dict[str, Any]
     ) -> "QiskitConfig":
         return cls(
             ext_dict.get("instance"),

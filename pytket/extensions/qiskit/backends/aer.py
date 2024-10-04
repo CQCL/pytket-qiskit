@@ -404,10 +404,8 @@ class _AerBaseBackend(Backend):
         """
         if self._noise_model:
             raise RuntimeError(
-
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-
+                "Snapshot based expectation value not supported with noise model. "
+                "Use shots."
             )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
@@ -434,10 +432,8 @@ class _AerBaseBackend(Backend):
         """
         if self._noise_model:
             raise RuntimeError(
-
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-
+                "Snapshot based expectation value not supported with noise model. "
+                "Use shots."
             )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
@@ -752,11 +748,9 @@ def _process_noise_model(
             raise RuntimeWarning("Error applies to multiple gates.")
         if "gate_qubits" not in error:
             raise RuntimeWarning(
-
-                    "Please define NoiseModel without using the"
-                    " add_all_qubit_quantum_error()"
-                    " or add_all_qubit_readout_error() method."
-
+                "Please define NoiseModel without using the"
+                " add_all_qubit_quantum_error()"
+                " or add_all_qubit_readout_error() method."
             )
         name = name[0]
 

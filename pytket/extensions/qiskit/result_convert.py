@@ -68,10 +68,13 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
         return False
 
     datadict = result.data.to_dict()
-    if len(datadict) == 0 or "memory" in datadict and len(datadict["memory"]) == 0 or "counts" in datadict and len(datadict["counts"]) == 0:
-        return True
-    else:
-        return False
+    return bool(
+        len(datadict) == 0
+        or "memory" in datadict
+        and len(datadict["memory"]) == 0
+        or "counts" in datadict
+        and len(datadict["counts"]) == 0
+    )
 
 
 def qiskit_experimentresult_to_backendresult(

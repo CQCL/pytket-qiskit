@@ -142,8 +142,7 @@ def test_statevector_sim_with_permutation() -> None:
 def test_sim() -> None:
     c = circuit_gen(True)
     b = AerBackend()
-    shots = b.run_circuit(c, n_shots=1024).get_shots()
-    print(shots)
+    b.run_circuit(c, n_shots=1024).get_shots()
 
 
 def test_measures() -> None:
@@ -390,7 +389,6 @@ def test_cancellation_aer() -> None:
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
     b.cancel(h)
-    print(b.circuit_status(h))
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -400,7 +398,6 @@ def test_cancellation_ibmq(brisbane_backend: IBMQBackend) -> None:
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
     b.cancel(h)
-    print(b.circuit_status(h))
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -724,7 +721,11 @@ def test_aer_result_handle() -> None:
 
     with pytest.raises(CircuitNotRunError) as errorinfoCirc:
         _ = b.get_result(wronghandle)
-    assert f"Circuit corresponding to {wronghandle!r} " + "has not been run by this backend instance." in str(errorinfoCirc.value)
+    assert (
+        f"Circuit corresponding to {wronghandle!r} "
+        + "has not been run by this backend instance."
+        in str(errorinfoCirc.value)
+    )
 
 
 def test_aerstate_result_handle() -> None:
@@ -773,7 +774,7 @@ def test_mixed_circuit() -> None:
     backend = AerBackend()
     c = backend.get_compiled_circuit(c)
     counts = backend.run_circuit(c, n_shots=1024).get_counts()
-    for key in counts.keys():
+    for key in counts:
         assert key in {(0, 1), (1, 0)}
 
 

@@ -56,7 +56,7 @@ def test_samples() -> None:
         shots = job.result().get_memory()
         assert all((r[0] == "1" and r[1] == r[2]) for r in shots)
         counts = job.result().get_counts()
-        assert all((r[0] == "1" and r[1] == r[2]) for r in counts.keys())
+        assert all((r[0] == "1" and r[1] == r[2]) for r in counts)
 
 
 def test_state() -> None:
@@ -134,4 +134,4 @@ def test_architectures() -> None:
         shots = job.result().get_memory()
         assert all((r[0] == "1" and r[1] == r[2]) for r in shots)
         counts = job.result().get_counts()
-        assert all((r[0] == "1" and r[1] == r[2]) for r in counts.keys())
+        assert all((r[0] == "1" and r[1] == r[2]) for r in counts)

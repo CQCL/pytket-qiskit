@@ -14,6 +14,7 @@
 
 import os
 import shutil
+from pathlib import Path
 
 from setuptools import find_namespace_packages, setup  # type: ignore
 
@@ -39,7 +40,7 @@ setup(
     },
     description="Extension for pytket, providing translation to and from the Qiskit "
     "framework",
-    long_description=open("README.md").read(),
+    long_description=(Path(__file__).parent / "README.md").read_text(),
     long_description_content_type="text/markdown",
     license="Apache 2",
     packages=find_namespace_packages(include=["pytket.*"]),

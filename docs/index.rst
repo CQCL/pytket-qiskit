@@ -217,7 +217,7 @@ Using TKET directly on qiskit circuits
 ======================================
 .. currentmodule:: pytket.extensions.qiskit
 
-For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/examples/qiskit_integration.html>`_.
+For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/user-guide/examples/backends/qiskit_integration.html>`_.
 
 .. autosummary::
     :nosignatures:

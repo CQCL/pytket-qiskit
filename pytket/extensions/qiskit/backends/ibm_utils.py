@@ -16,13 +16,20 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, TYPE_CHECKING
+from typing import Collection, Optional, Sequence, TYPE_CHECKING, Tuple, List, Callable
 
 import numpy as np
 
 from qiskit.providers import JobStatus  # type: ignore
+from qiskit.transpiler import PassManager, CouplingMap  # type: ignore
+from qiskit.transpiler.preset_passmanagers.builtin_plugins import SabreLayoutPassManager  # type: ignore
+from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
+from pytket import Circuit
+from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
+
+from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
 
 if TYPE_CHECKING:
     from pytket.circuit import Circuit
@@ -70,3 +77,30 @@ def _batch_circuits(
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]
     return batches, batch_order
+
+def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
+
+    # we can make some assumptions from how the Architecture object is
+    # constructed from the Qiskit CouplingMap
+    # 1) All nodes are single indexed
+    # 2) All nodes are default register
+    # 3) Node with index "i" corresponds to integer "i" in the original coupling map
+    # We confirm assumption 1) and 2) while producing the coupling map
+    coupling_map: List[Tuple[int, int]] = []
+    for edge in architecture.coupling:
+        assert len(edge[0].index) == 1
+        assert len(edge[1].index) == 1
+        assert edge[0].reg_name == "node"
+        assert edge[1].reg_name == "node"
+        coupling_map.append((edge[0].index[0], edge[1].index[0]))
+
+    return CouplingMap(coupling_map)
+    
+def _gen_lightsabre_transformation(architecture: Architecture, optimization_level: int = 2, seed = 0) -> Callable[Circuit, Circuit]:
+        
+    config: PassManagerConfig = PassManagerConfig(coupling_map = _architecture_to_couplingmap(architecture), routing_method="sabre", seed_transpiler = seed)
+    def lightsabre(circuit: Circuit) -> Circuit:
+        sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(config, optimization_level=optimization_level)
+        return qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+
+    return lightsabre

@@ -1026,7 +1026,8 @@ def process_characterisation_from_config(
     characterisation["t2times"] = t2_times
     characterisation["Frequencies"] = frequencies
     characterisation["GateTimes"] = gate_times
-
+    characterisation["CouplingMap"] = coupling_map
+    
     return characterisation
 
 

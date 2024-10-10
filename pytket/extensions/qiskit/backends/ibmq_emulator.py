@@ -16,7 +16,6 @@ from collections import Counter
 from typing import (
     Optional,
     Sequence,
-    Any,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
@@ -85,13 +84,12 @@ class IBMQEmulatorBackend(Backend):
     def default_compilation_pass(
         self,
         optimisation_level: int = 2,
-        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
         """
         return self._ibmq.default_compilation_pass(
-            optimisation_level=optimisation_level, placement_options=placement_options
+            optimisation_level=optimisation_level
         )
 
     @property

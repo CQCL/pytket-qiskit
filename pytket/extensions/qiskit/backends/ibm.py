@@ -54,11 +54,11 @@ from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.passes import (
     BasePass,
     AutoRebase,
+    CustomPass,
     KAKDecomposition,
     RemoveRedundancies,
     SequencePass,
     SynthesiseTket,
-    CXMappingPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
     CliffordSimp,
@@ -77,11 +77,10 @@ from pytket.predicates import (
 )
 
 from pytket.architecture import FullyConnected, Architecture
-from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
-from .ibm_utils import _STATUS_MAP, _batch_circuits
+from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 from .config import QiskitConfig
 from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
 from ..qiskit_convert import (
@@ -292,7 +291,7 @@ class IBMQBackend(Backend):
             averaged_node_gate_errors=averaged_errors["node_errors"],
             averaged_edge_gate_errors=averaged_errors["edge_errors"],  # type: ignore
             averaged_readout_errors=averaged_errors["readout_errors"],
-            misc={"characterisation": filtered_characterisation},
+            misc={"characterisation": filtered_characterisation },
         )
         return backend_info
 
@@ -342,7 +341,6 @@ class IBMQBackend(Backend):
     def default_compilation_pass(
         self,
         optimisation_level: int = 2,
-        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         A suggested compilation pass that will will, if possible, produce an equivalent
@@ -356,8 +354,6 @@ class IBMQBackend(Backend):
         is tailored to the backend's requirements.
 
         The default compilation passes for the :py:class:`IBMQBackend` and the
-        Aer simulators support an optional ``placement_options`` dictionary containing
-        arguments to override the default settings in :py:class:`NoiseAwarePlacement`.
 
         :param optimisation_level: The level of optimisation to perform during
             compilation.
@@ -369,22 +365,20 @@ class IBMQBackend(Backend):
               that should give the best results from execution.
 
 
-        :param placement_options: Optional argument allowing the user to override
-          the default settings in :py:class:`NoiseAwarePlacement`.
         :return: Compilation pass guaranteeing required predicates.
         """
         config: PulseBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
-            config, props, optimisation_level, placement_options
+            config, props, optimisation_level
         )
+
 
     @staticmethod
     def default_compilation_pass_offline(
         config: PulseBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
-        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
         primitive_gates = _get_primitive_gates(_tk_gate_set(config))
@@ -406,34 +400,10 @@ class IBMQBackend(Backend):
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
-        mid_measure = backend_info.supports_midcircuit_measurement
         arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
-            if placement_options is not None:
-                noise_aware_placement = NoiseAwarePlacement(
-                    arch,
-                    backend_info.averaged_node_gate_errors,  # type: ignore
-                    backend_info.averaged_edge_gate_errors,  # type: ignore
-                    backend_info.averaged_readout_errors,  # type: ignore
-                    **placement_options,
-                )
-            else:
-                noise_aware_placement = NoiseAwarePlacement(
-                    arch,
-                    backend_info.averaged_node_gate_errors,  # type: ignore
-                    backend_info.averaged_edge_gate_errors,  # type: ignore
-                    backend_info.averaged_readout_errors,  # type: ignore
-                )
-
-            passlist.append(
-                CXMappingPass(
-                    arch,
-                    noise_aware_placement,
-                    directed_cx=True,
-                    delay_measures=(not mid_measure),
-                )
-            )
+            passlist.append(CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)))
             passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())

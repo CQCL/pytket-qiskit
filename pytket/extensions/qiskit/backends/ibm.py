@@ -291,7 +291,7 @@ class IBMQBackend(Backend):
             averaged_node_gate_errors=averaged_errors["node_errors"],
             averaged_edge_gate_errors=averaged_errors["edge_errors"],  # type: ignore
             averaged_readout_errors=averaged_errors["readout_errors"],
-            misc={"characterisation": filtered_characterisation },
+            misc={"characterisation": filtered_characterisation},
         )
         return backend_info
 
@@ -373,7 +373,6 @@ class IBMQBackend(Backend):
             config, props, optimisation_level
         )
 
-
     @staticmethod
     def default_compilation_pass_offline(
         config: PulseBackendConfiguration,
@@ -403,7 +402,9 @@ class IBMQBackend(Backend):
         arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
-            passlist.append(CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)))
+            passlist.append(
+                CustomPass(_gen_lightsabre_transformation(arch, optimisation_level))
+            )
             passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())

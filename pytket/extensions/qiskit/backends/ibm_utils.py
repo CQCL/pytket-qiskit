@@ -78,10 +78,15 @@ def _batch_circuits(
     ]
     return batches, batch_order
 
-def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
+def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
+    """
+    Converts a pytket Architecture object to a Qiskit CouplingMap object.
+
+    :param architecture: Architecture to be converted
+    """
     # we can make some assumptions from how the Architecture object is
-    # constructed from the Qiskit CouplingMap
+    # originally constructed from the Qiskit CouplingMap:
     # 1) All nodes are single indexed
     # 2) All nodes are default register
     # 3) Node with index "i" corresponds to integer "i" in the original coupling map
@@ -93,14 +98,29 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
         assert edge[0].reg_name == "node"
         assert edge[1].reg_name == "node"
         coupling_map.append((edge[0].index[0], edge[1].index[0]))
-
     return CouplingMap(coupling_map)
-    
-def _gen_lightsabre_transformation(architecture: Architecture, optimization_level: int = 2, seed = 0) -> Callable[Circuit, Circuit]:
-        
-    config: PassManagerConfig = PassManagerConfig(coupling_map = _architecture_to_couplingmap(architecture), routing_method="sabre", seed_transpiler = seed)
+
+
+def _gen_lightsabre_transformation(
+    architecture: Architecture, optimization_level: int = 2, seed=0
+) -> Callable[Circuit, Circuit]:
+    """
+    Generates a function that can be passed to CustomPass for running LightSABRE routing.
+
+    :param architecture: Architecture LightSABRE routes circuits to match
+    :param optimization_level: Corresponds to qiskit optmization levels
+    :param seed: LightSABRE routing is stochastic, with this parameter setting the seed
+    """
+    config: PassManagerConfig = PassManagerConfig(
+        coupling_map=_architecture_to_couplingmap(architecture),
+        routing_method="sabre",
+        seed_transpiler=seed,
+    )
+
     def lightsabre(circuit: Circuit) -> Circuit:
-        sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(config, optimization_level=optimization_level)
+        sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(
+            config, optimization_level=optimization_level
+        )
         return qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
 
     return lightsabre

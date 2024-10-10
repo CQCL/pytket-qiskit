@@ -171,8 +171,8 @@ class _AerBaseBackend(Backend):
                     self.rebase_pass(),
                     *arch_specific_passes,
                     self.rebase_pass(),
-                ]
-                , False
+                ],
+                False,
             )
         if optimisation_level == 1:
             return SequencePass(
@@ -181,8 +181,8 @@ class _AerBaseBackend(Backend):
                     SynthesiseTket(),
                     *arch_specific_passes,
                     SynthesiseTket(),
-                ]
-                , False
+                ],
+                False,
             )
         return SequencePass(
             [
@@ -191,8 +191,8 @@ class _AerBaseBackend(Backend):
                 *arch_specific_passes,
                 CliffordSimp(False),
                 SynthesiseTket(),
-            ]
-            , False
+            ],
+            False,
         )
 
     def _arch_independent_default_compilation_pass(

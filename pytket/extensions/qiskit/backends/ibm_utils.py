@@ -16,13 +16,13 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, TYPE_CHECKING
+from collections.abc import Collection, Sequence
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
-from qiskit.providers import JobStatus  # type: ignore
-
 from pytket.backends.status import StatusEnum
+from qiskit.providers import JobStatus  # type: ignore
 
 if TYPE_CHECKING:
     from pytket.circuit import Circuit
@@ -61,7 +61,7 @@ def _batch_circuits(
     n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
 
     order: Collection[int] = np.argsort(n_shots_int)
-    batches: list[tuple[Optional[int], list["Circuit"]]] = [
+    batches: list[tuple[Optional[int], list[Circuit]]] = [
         (n, [circuits[i] for i in indices])
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]

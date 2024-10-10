@@ -105,7 +105,7 @@ def _gen_lightsabre_transformation(
     architecture: Architecture, optimization_level: int = 2, seed=0
 ) -> Callable[Circuit, Circuit]:
     """
-    Generates a function that can be passed to CustomPass for running 
+    Generates a function that can be passed to CustomPass for running
     LightSABRE routing.
 
     :param architecture: Architecture LightSABRE routes circuits to match

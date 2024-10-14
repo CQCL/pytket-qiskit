@@ -421,7 +421,7 @@ class IBMQBackend(Backend):
             passlist.extend(
                 [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
             )
-        return SequencePass(passlist)
+        return SequencePass(passlist, False)
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:

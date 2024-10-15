@@ -28,6 +28,7 @@ from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: igno
 from pytket import Circuit
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
+from pytket.transform import Transform
 
 from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
 
@@ -122,6 +123,7 @@ def _gen_lightsabre_transformation(
         sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(
             config, optimization_level=optimization_level
         )
-        return qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        Transform.DecomposeCXDirected(arch).apply(circuit)
 
     return lightsabre

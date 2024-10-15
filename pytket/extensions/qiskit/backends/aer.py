@@ -55,7 +55,6 @@ from pytket.predicates import (
     DefaultRegisterPredicate,
     Predicate,
 )
-from pytket.transform import Transform
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
 from pytket.utils import prepare_circuit
@@ -163,7 +162,6 @@ class _AerBaseBackend(Backend):
         assert optimisation_level in range(3)
         arch_specific_passes = [
             CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
-            CustomPass(Transform.DecomposeCXDirected(arch)),
             NaivePlacementPass(arch),
         ]
         if optimisation_level == 0:

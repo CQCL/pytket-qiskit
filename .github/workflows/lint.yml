@@ -8,7 +8,7 @@ on:
 jobs:
   lint:
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v4
@@ -21,8 +21,6 @@ jobs:
     - name: Install black and pylint
       run: pip install black pylint
     - name: Check files are formatted with black
-      run: |
-        black --check .
+      run: black --check .
     - name: Run pylint
-      run: |        
-        pylint */
+      run: pylint */

@@ -163,7 +163,7 @@ class _AerBaseBackend(Backend):
         assert optimisation_level in range(3)
         arch_specific_passes = [
             CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
-            passlist.append(CustomPass(Transform.DecomposeCXDirected(arch))),
+            CustomPass(Transform.DecomposeCXDirected(arch)),
             NaivePlacementPass(arch),
         ]
         if optimisation_level == 0:

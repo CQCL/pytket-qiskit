@@ -524,7 +524,7 @@ class CircuitBuilder:
                 q_ctrl_box = _get_qcontrol_box(c_gate=instr, params=params)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
-            elif isinstance(instr, (Initialize, StatePreparation)):
+            elif optype == OpType.StatePreparationBox:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 

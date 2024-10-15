@@ -55,6 +55,7 @@ from pytket.predicates import (
     DefaultRegisterPredicate,
     Predicate,
 )
+from pytket.transform import Transform
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
 from pytket.utils import prepare_circuit
@@ -162,6 +163,7 @@ class _AerBaseBackend(Backend):
         assert optimisation_level in range(3)
         arch_specific_passes = [
             CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
+            passlist.append(CustomPass(Transform.DecomposeCXDirected(arch))),
             NaivePlacementPass(arch),
         ]
         if optimisation_level == 0:
@@ -761,7 +763,7 @@ def _process_noise_model(
             qubits_with_link_errors.add(q0)
             qubits_with_link_errors.add(q1)
             # to simulate a worse reverse direction square the fidelity
-            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid**2)})
+            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid ** 2)})
             generic_2q_qerrors_dict[(q0, q1)].append(
                 [error["instructions"], error["probabilities"]]
             )

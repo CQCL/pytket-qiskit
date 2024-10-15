@@ -75,6 +75,7 @@ from pytket.predicates import (
     Predicate,
     DirectednessPredicate,
 )
+from pytket.transform import Transform
 
 from pytket.architecture import FullyConnected, Architecture
 from pytket.utils import prepare_circuit
@@ -405,6 +406,7 @@ class IBMQBackend(Backend):
             passlist.append(
                 CustomPass(_gen_lightsabre_transformation(arch, optimisation_level))
             )
+            passlist.append(CustomPass(Transform.DecomposeCXDirected(arch)))
             passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())

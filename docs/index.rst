@@ -166,33 +166,33 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - optimisation_level = 0
      - optimisation_level = 1
      - optimisation_level = 2 [1]
-   * - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-     - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-     - `DecomposeBoxes <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-   * - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
-     - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
-     - `FullPeepholeOptimise <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.FullPeepholeOptimise>`_
-   * - `CXMappingPass <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
-     - `CXMappingPass <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
-     - `CXMappingPass <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
-   * - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
-     - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
-     - `NaivePlacementPass <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
-   * - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
-     - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
-     - `KAKDecomposition(allow_swaps=False) <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.KAKDecomposition>`_
-   * - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
-     - `CliffordSimp(allow_swaps=False) <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.CliffordSimp>`_
+   * - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
+     - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
+     - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
+   * - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
+     - `FullPeepholeOptimise <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.FullPeepholeOptimise>`_
+   * - `CXMappingPass <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
+     - `CXMappingPass <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
+   * - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
+     - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
+     - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
+   * - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
+     - `KAKDecomposition(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.KAKDecomposition>`_
+   * - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `CliffordSimp(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CliffordSimp>`_
    * - 
-     - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `SynthesiseTket <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
+     - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
+     - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
    * -
      -
-     - `AutoRebase <https://tket.quantinuum.com/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
    * - 
      -
-     - `RemoveRedundancies <https://tket.quantinuum.com/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
+     - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
 
 * [1] If no value is specified then ``optimisation_level`` defaults to a value of 2.
 * [2] :py:class:`~pytket._tket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gateset is either :math:`\{X, SX, Rz, CX\}`, :math:`\{X, SX, Rz, ECR\}`, or :math:`\{X, SX, Rz, CZ\}`. The more idealised Aer simulators have a much broader range of supported gates.
@@ -217,7 +217,7 @@ Using TKET directly on qiskit circuits
 ======================================
 .. currentmodule:: pytket.extensions.qiskit
 
-For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://tket.quantinuum.com/user-guide/examples/backends/qiskit_integration.html>`_.
+For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration notebook example <https://docs.quantinuum.com/tket/user-guide/examples/backends/qiskit_integration.html>`_.
 
 .. autosummary::
     :nosignatures:

@@ -169,7 +169,7 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
      - `DecomposeBoxes <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DecomposeBoxes>`_
-   * - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+   * - `AutoRebase`_ [2]
      - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `FullPeepholeOptimise <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.FullPeepholeOptimise>`_
    * - `CXMappingPass <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CXMappingPass>`_ [3]
@@ -182,14 +182,14 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
      - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase>`_ [2]
+     - `AutoRebase`_ [2]
      - `CliffordSimp(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CliffordSimp>`_
    * - 
      - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
      - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
    * -
      -
-     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase>`_ [2]
+     - `AutoRebase`_ [2]
    * - 
      -
      - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 
@@ -238,3 +238,6 @@ For usage of :py:class:`~tket_backend.TketBackend` see the `qiskit integration n
 
    Issue tracker <https://github.com/CQCL/pytket-qiskit/issues>
    PyPi <https://pypi.org/project/pytket-qiskit/>
+
+
+.. _AutoRebase:  https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase

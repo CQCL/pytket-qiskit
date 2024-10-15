@@ -763,7 +763,7 @@ def _process_noise_model(
             qubits_with_link_errors.add(q0)
             qubits_with_link_errors.add(q1)
             # to simulate a worse reverse direction square the fidelity
-            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid ** 2)})
+            link_errors[(Node(q1), Node(q0))].update({optype: float(1 - gate_fid**2)})
             generic_2q_qerrors_dict[(q0, q1)].append(
                 [error["instructions"], error["probabilities"]]
             )

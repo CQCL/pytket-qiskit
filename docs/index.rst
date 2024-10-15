@@ -178,18 +178,18 @@ Every :py:class:`~pytket.backends.backend.Backend` in pytket has its own :py:met
    * - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
      - `NaivePlacementPass <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.NaivePlacementPass>`_
-   * - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+   * - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase>`_ [2]
      - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
      - `KAKDecomposition(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.KAKDecomposition>`_
    * - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
-     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase>`_ [2]
      - `CliffordSimp(allow_swaps=False) <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.CliffordSimp>`_
    * - 
      - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_
      - `SynthesiseTket <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.SynthesiseTket>`_
    * -
      -
-     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/placement.html#pytket.passes.AutoRebase>`_ [2]
+     - `AutoRebase <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.AutoRebase>`_ [2]
    * - 
      -
      - `RemoveRedundancies <https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.RemoveRedundancies>`_ 

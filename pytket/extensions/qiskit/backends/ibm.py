@@ -417,10 +417,9 @@ class IBMQBackend(Backend):
                 ]
             )
 
-        if supports_rz:
-            passlist.extend(
-                [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
-            )
+        passlist.extend(
+            [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
+        )
         return SequencePass(passlist, False)
 
     @property

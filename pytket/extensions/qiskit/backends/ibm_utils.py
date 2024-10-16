@@ -29,6 +29,7 @@ from pytket.circuit import Circuit, Node
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
 from pytket.transform import Transform
+from pytket.passes import RebaseTket
 
 from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
 
@@ -126,6 +127,7 @@ def _gen_lightsabre_transformation(
         c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
+        RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
         return c
 

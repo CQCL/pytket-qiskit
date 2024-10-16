@@ -25,7 +25,7 @@ from qiskit.transpiler import PassManager, CouplingMap  # type: ignore
 from qiskit.transpiler.preset_passmanagers.builtin_plugins import SabreLayoutPassManager  # type: ignore
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
-from pytket import Circuit
+from pytket import Circuit, Node
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
 from pytket.transform import Transform
@@ -124,6 +124,7 @@ def _gen_lightsabre_transformation(
             config, optimization_level=optimization_level
         )
         c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         Transform.DecomposeCXDirected(architecture).apply(c)
         return c
 

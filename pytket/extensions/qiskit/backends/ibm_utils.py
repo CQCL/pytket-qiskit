@@ -124,6 +124,7 @@ def _gen_lightsabre_transformation(
             config, optimization_level=optimization_level
         )
         c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         Transform.DecomposeCXDirected(architecture).apply(c)
         return c

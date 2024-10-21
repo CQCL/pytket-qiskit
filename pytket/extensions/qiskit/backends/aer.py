@@ -161,6 +161,7 @@ class _AerBaseBackend(Backend):
     ) -> BasePass:
         assert optimisation_level in range(3)
         arch_specific_passes = [
+            AutoRebase({OpType.CX, OpType.TK1}),
             CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
             NaivePlacementPass(arch),
         ]

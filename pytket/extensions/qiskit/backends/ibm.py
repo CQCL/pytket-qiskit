@@ -402,6 +402,7 @@ class IBMQBackend(Backend):
         arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
+            passlist.append(AutoRebase(primitive_gates))
             passlist.append(
                 CustomPass(_gen_lightsabre_transformation(arch, optimisation_level))
             )

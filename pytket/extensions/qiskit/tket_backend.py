@@ -67,7 +67,8 @@ class TketBackend(BackendV2):
     :py:class:`qiskit.transpiler.PassManager` with a
     :py:class:`qiskit.transpiler.passes.Unroller`. For examples, see the `user manual
     <https://docs.quantinuum.com/tket/user-guide/manual/manual_backend.html#embedding-into-
-    qiskit>`_ or the `Qiskit integration example <https://docs.quantinuum.com/tket/user-guide/examples/backends/qiskit_integration.html>`_.
+    qiskit>`_ or the `Qiskit integration example <https://docs.quantinuum.com/tket/user-
+    guide/examples/backends/qiskit_integration.html>`_.
     """
 
     def __init__(self, backend: Backend, comp_pass: Optional[BasePass] = None):

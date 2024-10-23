@@ -254,7 +254,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 .. currentmodule:: pytket.extensions.qiskit
 ```
 
-For usage of {py:class}`~tket_backend.TketBackend` see the [qiskit integration notebook example](https://tket.quantinuum.com/user-guide/examples/backends/qiskit_integration.html).
+For usage of {py:class}`~tket_backend.TketBackend` see the [qiskit integration notebook example](https://docs.quantinuum.com/tket/user-guide/examples/backends/qiskit_integration.html).
 
 ```{eval-rst}
 .. autosummary::

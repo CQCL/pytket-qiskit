@@ -192,7 +192,7 @@ For instance those familiar with qiskit may wish to convert their circuits to py
 
 Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:meth}`~pytket.backends.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an `optimisation_level` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the {py:class}`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below.
 
-:::{list-table} **Default compilation pass for the IBMQBackend**
+:::{list-table} **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
 :widths: 25 25 25
 :header-rows: 1
 
@@ -226,7 +226,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * -
   -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  
+
 :::
 
 - \[1\] If no value is specified then `optimisation_level` defaults to a value of 2.

@@ -66,9 +66,9 @@ class TketBackend(BackendV2):
     :py:class:`qiskit.aqua.QuantumInstance`, providing a custom
     :py:class:`qiskit.transpiler.PassManager` with a
     :py:class:`qiskit.transpiler.passes.Unroller`. For examples, see the `user manual
-    <https://docs.quantinuum.com/tket/user-manual/manual_backend.html#embedding-into-
-    qiskit>`_ or the `Qiskit integration example <ht
-    tps://github.com/CQCL/pytket/blob/main/examples/qiskit_integration. ipynb>`_.
+    <https://docs.quantinuum.com/tket/user-guide/manual/manual_backend.html#embedding-into-
+    qiskit>`_ or the `Qiskit integration example <https://docs.quantinuum.com/tket/user-
+    guide/examples/backends/qiskit_integration.html>`_.
     """
 
     def __init__(self, backend: Backend, comp_pass: Optional[BasePass] = None):

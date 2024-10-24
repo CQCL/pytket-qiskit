@@ -22,13 +22,8 @@ from typing import (
 
 import numpy as np
 
-from qiskit.result import Result  # type: ignore
-from qiskit.result.models import ExperimentResult  # type: ignore
-
-from pytket.circuit import Bit, Qubit, UnitID
-
 from pytket.backends.backendresult import BackendResult
-from pytket.circuit import Bit, Circuit, Qubit, UnitID
+from pytket.circuit import Bit, Qubit, UnitID
 from pytket.utils.outcomearray import OutcomeArray
 from qiskit.result import Result  # type: ignore
 from qiskit.result.models import ExperimentResult  # type: ignore

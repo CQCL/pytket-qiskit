@@ -83,7 +83,6 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
 
 def qiskit_experimentresult_to_backendresult(
     result: ExperimentResult,
-    ppcirc: Optional[Circuit] = None,
 ) -> BackendResult:
     if not result.success:
         raise RuntimeError(result.status)
@@ -140,7 +139,7 @@ def qiskit_experimentresult_to_backendresult(
         state=state,
         unitary=unitary,
         density_matrix=density_matrix,
-        ppcirc=ppcirc,
+        ppcirc=None,
     )
 
 

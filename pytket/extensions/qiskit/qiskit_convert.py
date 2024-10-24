@@ -1012,11 +1012,12 @@ def process_characterisation_from_config(
     K1 = TypeVar("K1")
     K2 = TypeVar("K2")
     V = TypeVar("V")
-    Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
+    convert_keys_t = Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
 
     # convert qubits to architecture Nodes
-    def convert_keys(f, d):
-        return {f(k): v for k, v in d.items()}
+    convert_keys: convert_keys_t = lambda f, d: {  # noqa: E731
+        f(k): v for k, v in d.items()
+    }
 
     node_errors = convert_keys(lambda q: Node(q), node_errors)
     link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
@@ -1048,10 +1049,10 @@ def get_avg_characterisation(
     K = TypeVar("K")
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
-    Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
-
-    def map_values(f, d):
-        return {k: f(v) for k, v in d.items()}
+    map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
+    map_values: map_values_t = lambda f, d: {  # noqa: E731
+        k: f(v) for k, v in d.items()
+    }
 
     node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
     link_errors = cast(
@@ -1061,11 +1062,12 @@ def get_avg_characterisation(
         dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
     )
 
-    def avg(xs: dict[Any, float]) -> float:
-        return sum(xs.values()) / len(xs)
-
-    def avg_mat(xs: list[list[float]]) -> float:
-        return (xs[0][1] + xs[1][0]) / 2.0
+    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731
+        xs.values()
+    ) / len(xs)
+    avg_mat: Callable[[list[list[float]]], float] = (  # noqa: E731
+        lambda xs: (xs[0][1] + xs[1][0]) / 2.0
+    )
 
     avg_readout_errors = map_values(avg_mat, readout_errors)
     avg_node_errors = map_values(avg, node_errors)

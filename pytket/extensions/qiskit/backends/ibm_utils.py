@@ -16,13 +16,22 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, TYPE_CHECKING
+from typing import Collection, Optional, Sequence, TYPE_CHECKING, Tuple, List, Callable
 
 import numpy as np
 
 from qiskit.providers import JobStatus  # type: ignore
+from qiskit.transpiler import PassManager, CouplingMap  # type: ignore
+from qiskit.transpiler.preset_passmanagers.builtin_plugins import SabreLayoutPassManager  # type: ignore
+from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
+from pytket.circuit import Circuit, Node
+from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
+from pytket.transform import Transform
+from pytket.passes import RebaseTket
+
+from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
 
 if TYPE_CHECKING:
     from pytket.circuit import Circuit
@@ -70,3 +79,56 @@ def _batch_circuits(
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]
     return batches, batch_order
+
+
+def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
+    """
+    Converts a pytket Architecture object to a Qiskit CouplingMap object.
+
+    :param architecture: Architecture to be converted
+    """
+    # we can make some assumptions from how the Architecture object is
+    # originally constructed from the Qiskit CouplingMap:
+    # 1) All nodes are single indexed
+    # 2) All nodes are default register
+    # 3) Node with index "i" corresponds to integer "i" in the original coupling map
+    # We confirm assumption 1) and 2) while producing the coupling map
+    coupling_map: List[Tuple[int, int]] = []
+    for edge in architecture.coupling:
+        assert len(edge[0].index) == 1
+        assert len(edge[1].index) == 1
+        assert edge[0].reg_name == "node"
+        assert edge[1].reg_name == "node"
+        coupling_map.append((edge[0].index[0], edge[1].index[0]))
+    return CouplingMap(coupling_map)
+
+
+def _gen_lightsabre_transformation(
+    architecture: Architecture, optimization_level: int = 2, seed=0
+) -> Callable[Circuit, Circuit]:
+    """
+    Generates a function that can be passed to CustomPass for running
+    LightSABRE routing.
+
+    :param architecture: Architecture LightSABRE routes circuits to match
+    :param optimization_level: Corresponds to qiskit optmization levels
+    :param seed: LightSABRE routing is stochastic, with this parameter setting the seed
+    """
+    config: PassManagerConfig = PassManagerConfig(
+        coupling_map=_architecture_to_couplingmap(architecture),
+        routing_method="sabre",
+        seed_transpiler=seed,
+    )
+
+    def lightsabre(circuit: Circuit) -> Circuit:
+        sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(
+            config, optimization_level=optimization_level
+        )
+        c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        c.remove_blank_wires()
+        c.rename_units({q: Node(q.index[0]) for q in c.qubits})
+        RebaseTket().apply(c)
+        Transform.DecomposeCXDirected(architecture).apply(c)
+        return c
+
+    return lightsabre

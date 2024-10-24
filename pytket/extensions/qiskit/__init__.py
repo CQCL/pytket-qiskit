@@ -14,17 +14,17 @@
 """Module for conversion between IBM Qiskit and tket primitives."""
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__
+from ._metadata import __extension_name__, __extension_version__
 from .backends import (
-    IBMQBackend,
-    NoIBMQCredentialsError,
     AerBackend,
+    AerDensityMatrixBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    AerDensityMatrixBackend,
+    IBMQBackend,
     IBMQEmulatorBackend,
+    NoIBMQCredentialsError,
 )
 from .backends.config import set_ibmq_config
-from .qiskit_convert import qiskit_to_tk, tk_to_qiskit, process_characterisation
+from .qiskit_convert import process_characterisation, qiskit_to_tk, tk_to_qiskit
 
 # from .tket_pass import TketPass

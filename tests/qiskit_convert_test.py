@@ -14,61 +14,69 @@
 import os
 from collections import Counter
 from math import pi
-import pytest
-from sympy import Symbol
+
 import numpy as np
-from qiskit import (  # type: ignore
+import pytest
+import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
+from qiskit import (
+    ClassicalRegister,
     QuantumCircuit,
     QuantumRegister,
-    ClassicalRegister,
     transpile,
 )
-from qiskit.quantum_info import SparsePauliOp, Statevector, Operator  # type: ignore
-from qiskit.transpiler import PassManager  # type: ignore
-from qiskit.circuit.library import RYGate, MCMT, XXPlusYYGate, PauliEvolutionGate, UnitaryGate, RealAmplitudes  # type: ignore
-import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit.circuit import Parameter
-from qiskit.synthesis import SuzukiTrotter  # type: ignore
-from qiskit_aer import Aer  # type: ignore
-from qiskit.transpiler.passes import BasisTranslator  # type: ignore
-from qiskit.circuit.equivalence_library import StandardEquivalenceLibrary  # type: ignore
-from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
+from qiskit.circuit.equivalence_library import (  # type: ignore
+    StandardEquivalenceLibrary,
+)
+from qiskit.circuit.library import (
+    MCMT,
+    PauliEvolutionGate,
+    RealAmplitudes,
+    RYGate,
+    TwoLocal,
+    UnitaryGate,
+    XXPlusYYGate,
+)
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
-from qiskit.circuit.library import TwoLocal
-from qiskit import transpile
+from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
+from qiskit.synthesis import SuzukiTrotter  # type: ignore
+from qiskit.transpiler import PassManager  # type: ignore
+from qiskit.transpiler.passes import BasisTranslator  # type: ignore
+from qiskit_aer import Aer  # type: ignore
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
+from sympy import Symbol
 
 from pytket.circuit import (
-    Circuit,
+    Bit,
     CircBox,
+    Circuit,
+    CustomGateDef,
+    Op,
+    OpType,
+    QControlBox,
+    Qubit,
+    StatePreparationBox,
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
-    OpType,
-    Op,
-    Qubit,
-    Bit,
-    CustomGateDef,
     reg_eq,
-    StatePreparationBox,
-    QControlBox,
 )
-from pytket.extensions.qiskit import tk_to_qiskit, qiskit_to_tk, IBMQBackend
+from pytket.extensions.qiskit import IBMQBackend, qiskit_to_tk, tk_to_qiskit
 from pytket.extensions.qiskit.backends import qiskit_aer_backend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
-from pytket.extensions.qiskit.tket_pass import TketPass, TketAutoPass
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
+from pytket.extensions.qiskit.tket_pass import TketAutoPass, TketPass
 from pytket.passes import (
-    RebaseTket,
+    CliffordSimp,
     DecomposeBoxes,
     FullPeepholeOptimise,
+    RebaseTket,
     SequencePass,
-    CliffordSimp,
 )
-
 from pytket.utils.results import (
     compare_statevectors,
-    permute_rows_cols_in_unitary,
     compare_unitaries,
+    permute_rows_cols_in_unitary,
 )
 
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
@@ -105,7 +113,7 @@ def test_parameterised_circuit_global_phase() -> None:
 
     qc_2 = tk_to_qiskit(tket_qc)
 
-    assert type(qc_2.global_phase) == ParameterExpression
+    assert type(qc_2.global_phase) is ParameterExpression
 
 
 def test_classical_barrier_error() -> None:
@@ -498,7 +506,6 @@ def test_gate_str_2_optype() -> None:
         "mcx": OpType.CnX,
         "x": OpType.X,
     }
-    print([(_gate_str_2_optype[key], val) for key, val in samples.items()])
     assert all(_gate_str_2_optype[key] == val for key, val in samples.items())
 
 
@@ -515,7 +522,6 @@ def test_customgate() -> None:
 
     qc1 = tk_to_qiskit(circ)
     newcirc = qiskit_to_tk(qc1)
-    print(repr(newcirc))
 
     qc2 = tk_to_qiskit(newcirc)
     correct_circ = Circuit(3).Rx(0.1, 0).Rx(0.4, 2).CZ(0, 1).Rx(0.2, 1)
@@ -618,7 +624,7 @@ def assert_tket_circuits_identical(circuits: list[Circuit]) -> None:
     circ_copies = []
 
     for nn in range(len(circuits)):
-        assert type(circuits[nn]) == Circuit
+        assert type(circuits[nn]) is Circuit
         circ = circuits[nn].copy()
         circ.name = "tk_circ_must_be_same_name"
         qbs = circ.qubits

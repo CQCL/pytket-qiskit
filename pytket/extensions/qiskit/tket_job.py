@@ -13,16 +13,17 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Optional, Any, TYPE_CHECKING, cast
-from qiskit.providers import JobStatus, JobV1  # type: ignore
-from qiskit.result import Result  # type: ignore
+from typing import TYPE_CHECKING, Any, Optional, cast
+
 from pytket.backends import ResultHandle, StatusEnum
 from pytket.backends.backend import Backend, KwargTypes
-from pytket.circuit import UnitID, Qubit, Bit
+from pytket.circuit import Bit, Qubit, UnitID
 from pytket.extensions.qiskit.result_convert import (
-    backendresult_to_qiskit_resultdata,
     _get_header_info,
+    backendresult_to_qiskit_resultdata,
 )
+from qiskit.providers import JobStatus, JobV1  # type: ignore
+from qiskit.result import Result  # type: ignore
 
 if TYPE_CHECKING:
     from pytket.extensions.qiskit.tket_backend import TketBackend
@@ -108,13 +109,13 @@ class TketJob(JobV1):
 
     def status(self) -> Any:
         status_list = [self._pytket_backend.circuit_status(h) for h in self._handles]
-        if any((s.status == StatusEnum.RUNNING for s in status_list)):
+        if any(s.status == StatusEnum.RUNNING for s in status_list):
             return JobStatus.RUNNING
-        elif any((s.status == StatusEnum.ERROR for s in status_list)):
+        elif any(s.status == StatusEnum.ERROR for s in status_list):
             return JobStatus.ERROR
-        elif any((s.status == StatusEnum.CANCELLED for s in status_list)):
+        elif any(s.status == StatusEnum.CANCELLED for s in status_list):
             return JobStatus.CANCELLED
-        elif all((s.status == StatusEnum.COMPLETED for s in status_list)):
+        elif all(s.status == StatusEnum.COMPLETED for s in status_list):
             return JobStatus.DONE
         else:
             return JobStatus.INITIALIZING

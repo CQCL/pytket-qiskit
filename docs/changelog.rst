@@ -3,6 +3,14 @@
 Changelog
 ~~~~~~~~~
 
+0.58.0 (October 2024)
+---------------------
+
+* Updated pytket version requirement to 1.33.1.
+* Require qiskit >= 1.2.4.
+* Require qiskit-ibm-runtime >= 0.30.0.
+* Require qiskit-aer >= 0.15.1.
+
 0.57.0 (October 2024)
 ---------------------
 

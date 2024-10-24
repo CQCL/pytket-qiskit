@@ -26,7 +26,7 @@ import numpy as np
 from qiskit.result import Result  # type: ignore
 from qiskit.result.models import ExperimentResult  # type: ignore
 
-from pytket.circuit import Bit, Qubit, UnitID, Circuit
+from pytket.circuit import Bit, Qubit, UnitID
 
 from pytket.backends.backendresult import BackendResult
 from pytket.utils.outcomearray import OutcomeArray

@@ -353,7 +353,14 @@ class _AerBaseBackend(Backend):
                 raise CircuitNotRunError(handle)
 
             res = job.result()
-            backresults = qiskit_result_to_backendresult(res)
+            backresults = qiskit_result_to_backendresult(
+                res,
+                include_shots=self._supports_shots,
+                include_counts=self._supports_counts,
+                include_state=self._supports_state,
+                include_unitary=self._supports_unitary,
+                include_density_matrix=self._supports_density_matrix,
+            )
             for circ_index, backres in enumerate(backresults):
                 self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
                     "result"

@@ -555,12 +555,17 @@ def test_convert_result() -> None:
     qc1.save_state()
     qisk_result = simulator.run(qc1, shots=10).result()
 
-    tk_res = next(qiskit_result_to_backendresult(qisk_result))
+    # exclude counts from result (we don't expect them
+    # for the statevector sim after all)
+    tk_res = next(qiskit_result_to_backendresult(qisk_result, include_counts=False))
 
     state = tk_res.get_state([Qubit("q2", 1), Qubit("q1", 0), Qubit("q2", 0)])
     correct_state = np.zeros(1 << 3, dtype=complex)
     correct_state[6] = 1 + 0j
     assert compare_statevectors(state, correct_state)
+    # also check that we don't return counts in tket result
+    # even if the qiskit result includes them
+    assert tk_res._counts is None
 
     # check measured
     qc.measure(qr1[0], cr[0])

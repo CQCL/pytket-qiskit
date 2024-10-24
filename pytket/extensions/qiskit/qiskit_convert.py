@@ -464,6 +464,16 @@ def _get_pytket_condition_kwargs(
         raise NotImplementedError("condition must contain classical bit or register")
 
 
+def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
+    qregs = [QuantumRegister(instr.num_qubits, "q")] if instr.num_qubits > 0 else []
+    cregs = [ClassicalRegister(instr.num_clbits, "c")] if instr.num_clbits > 0 else []
+    builder = CircuitBuilder(qregs, cregs)
+    builder.add_qiskit_data(circuit, instr.definition)
+    subc = builder.circuit()
+    subc.name = instr.name
+    return CircBox(subc)
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -524,7 +534,7 @@ class CircuitBuilder:
                 q_ctrl_box = _get_qcontrol_box(c_gate=instr, params=params)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
-            elif isinstance(instr, (Initialize, StatePreparation)):
+            elif optype == OpType.StatePreparationBox:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 
@@ -552,22 +562,10 @@ class CircuitBuilder:
 
             elif optype == OpType.Barrier:
                 self.tkc.add_barrier(qubits)
+
             elif optype == OpType.CircBox:
-                qregs = (
-                    [QuantumRegister(instr.num_qubits, "q")]
-                    if instr.num_qubits > 0
-                    else []
-                )
-                cregs = (
-                    [ClassicalRegister(instr.num_clbits, "c")]
-                    if instr.num_clbits > 0
-                    else []
-                )
-                builder = CircuitBuilder(qregs, cregs)
-                builder.add_qiskit_data(circuit, instr.definition)
-                subc = builder.circuit()
-                subc.name = instr.name
-                self.tkc.add_circbox(CircBox(subc), qubits + bits, **condition_kwargs)  # type: ignore
+                circbox = _build_circbox(instr, circuit)
+                self.tkc.add_circbox(circbox, qubits + bits, **condition_kwargs)  # type: ignore
 
             elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:

@@ -18,17 +18,17 @@ from math import pi
 import numpy as np
 import pytest
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
-from qiskit import (  # type: ignore
+from qiskit import (
     ClassicalRegister,
     QuantumCircuit,
     QuantumRegister,
     transpile,
 )
 from qiskit.circuit import Parameter
-from qiskit.circuit.equivalence_library import (
-    StandardEquivalenceLibrary,  # type: ignore
+from qiskit.circuit.equivalence_library import (  # type: ignore
+    StandardEquivalenceLibrary,
 )
-from qiskit.circuit.library import (  # type: ignore
+from qiskit.circuit.library import (
     MCMT,
     PauliEvolutionGate,
     RealAmplitudes,

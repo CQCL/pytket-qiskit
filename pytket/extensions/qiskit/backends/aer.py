@@ -59,8 +59,8 @@ from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
 from qiskit import transpile  # type: ignore
 from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
-from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import (
-    SparsePauliOp,  # type: ignore
+from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import (  # type: ignore
+    SparsePauliOp,
 )
 
 from .._metadata import __extension_version__
@@ -77,8 +77,8 @@ from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 if TYPE_CHECKING:
     from qiskit_aer import AerJob
-    from qiskit_aer.backends.aerbackend import (
-        AerBackend as QiskitAerBackend,  # type: ignore
+    from qiskit_aer.backends.aerbackend import (  # type: ignore
+        AerBackend as QiskitAerBackend,
     )
 
 

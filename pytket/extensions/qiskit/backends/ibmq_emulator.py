@@ -37,7 +37,7 @@ from .ibm import IBMQBackend
 if TYPE_CHECKING:
     from collections import Counter
 
-    from qiskit_ibm_runtime import QiskitRuntimeService
+    from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
 
 
 class IBMQEmulatorBackend(Backend):

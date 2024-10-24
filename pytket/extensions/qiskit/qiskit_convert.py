@@ -31,11 +31,11 @@ from uuid import UUID
 import numpy as np
 import sympy
 from numpy.typing import NDArray
-from qiskit_ibm_runtime.models.backend_configuration import (
-    PulseBackendConfiguration,  # type: ignore
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    PulseBackendConfiguration,
 )
-from qiskit_ibm_runtime.models.backend_properties import (
-    BackendProperties,  # type: ignore
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
 )
 from symengine import sympify  # type: ignore
 from symengine.lib import symengine_wrapper  # type: ignore

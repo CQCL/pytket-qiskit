@@ -34,11 +34,11 @@ from qiskit_ibm_runtime import (  # type: ignore
     SamplerV2,
     Session,
 )
-from qiskit_ibm_runtime.models.backend_configuration import (
-    PulseBackendConfiguration,  # type: ignore
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    PulseBackendConfiguration,
 )
-from qiskit_ibm_runtime.models.backend_properties import (
-    BackendProperties,  # type: ignore
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
 )
 
 from pytket.architecture import Architecture, FullyConnected

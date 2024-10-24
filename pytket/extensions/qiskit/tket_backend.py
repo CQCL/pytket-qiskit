@@ -22,8 +22,8 @@ from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype_rev, qisk
 from pytket.extensions.qiskit.tket_job import JobInfo, TketJob
 from pytket.passes import BasePass
 from pytket.predicates import CompilationUnit, GateSetPredicate
-from qiskit.circuit.library.standard_gates import (
-    get_standard_gate_name_mapping,  # type: ignore
+from qiskit.circuit.library.standard_gates import (  # type: ignore
+    get_standard_gate_name_mapping,
 )
 from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
 from qiskit.providers import Options  # type: ignore

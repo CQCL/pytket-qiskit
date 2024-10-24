@@ -26,8 +26,8 @@ from pytket.passes import BasePass
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit.dagcircuit import DAGCircuit  # type: ignore
 from qiskit.providers import BackendV2  # type: ignore
-from qiskit.transpiler.basepasses import BasePass as qBasePass
-from qiskit.transpiler.basepasses import TransformationPass  # type: ignore
+from qiskit.transpiler.basepasses import BasePass as qBasePass  # type: ignore
+from qiskit.transpiler.basepasses import TransformationPass
 
 from .qiskit_convert import qiskit_to_tk, tk_to_qiskit
 

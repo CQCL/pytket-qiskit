@@ -102,10 +102,10 @@ if TYPE_CHECKING:
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
 
-def _gen_debug_results(n_qubits: int, shots: int) -> PrimitiveResult:
-    n_u8s = (n_qubits - 1) // 8 + 1
+def _gen_debug_results(n_bits: int, shots: int) -> PrimitiveResult:
+    n_u8s = (n_bits - 1) // 8 + 1
     arr = np.array([[0] * n_u8s for _ in range(shots)], dtype=np.uint8)
-    return PrimitiveResult([SamplerPubResult(DataBin(c=BitArray(arr, n_qubits)))])
+    return PrimitiveResult([SamplerPubResult(DataBin(c=BitArray(arr, n_bits)))])
 
 
 class NoIBMQCredentialsError(Exception):
@@ -457,7 +457,7 @@ class IBMQBackend(Backend):
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
-        # IBMQ job ID, index, number of measurements per shot, post-processing circuit
+        # IBMQ job ID, index, number of bits, post-processing circuit
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
@@ -538,7 +538,7 @@ class IBMQBackend(Backend):
                         handle_list[ind] = ResultHandle(
                             _DEBUG_HANDLE_PREFIX + str((n_shots, batch_id)),
                             i,
-                            batch_chunk[i].n_qubits,
+                            batch_chunk[i].n_bits,
                             ppcirc_strs[i],
                         )
                 else:
@@ -547,7 +547,7 @@ class IBMQBackend(Backend):
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
-                            job_id, i, qcs[i].count_ops()["measure"], ppcirc_strs[i]
+                            job_id, i, qcs[i].num_clbits, ppcirc_strs[i]
                         )
             batch_id += 1  # noqa: SIM113
         for handle in handle_list:
@@ -584,7 +584,7 @@ class IBMQBackend(Backend):
             cached_result = self._cache[handle]
             if "result" in cached_result:
                 return cast(BackendResult, cached_result["result"])
-        jobid, index, n_meas, ppcirc_str = handle
+        jobid, index, n_bits, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None
         cache_key = (jobid, index)
@@ -592,7 +592,7 @@ class IBMQBackend(Backend):
             if self._MACHINE_DEBUG or jobid.startswith(_DEBUG_HANDLE_PREFIX):
                 shots: int
                 shots, _ = literal_eval(jobid[len(_DEBUG_HANDLE_PREFIX) :])
-                res = _gen_debug_results(n_meas, shots)
+                res = _gen_debug_results(n_bits, shots)
             else:
                 try:
                     job = self._retrieve_job(jobid)
@@ -636,7 +636,7 @@ class IBMQBackend(Backend):
         for outcome_key, sample_count in counts.items():
             array = OutcomeArray.from_ints(
                 ints=[outcome_key],
-                width=n_meas,
+                width=n_bits,
                 big_endian=False,
             )
             tket_counts[array] = sample_count

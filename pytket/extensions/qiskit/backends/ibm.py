@@ -397,7 +397,7 @@ class IBMQBackend(Backend):
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
         # then please update this page accordingly
-        # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
+        # https://docs.quantinuum.com/tket/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
             if supports_rz:

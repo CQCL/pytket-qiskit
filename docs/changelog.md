@@ -4,6 +4,10 @@
 
 # Changelog
 
+## Unreleased
+
+-  Fix handling of non-default registers when selecting bits in results.
+
 ## 0.58.0 (October 2024)
 
 - Updated pytket version requirement to 1.33.1.

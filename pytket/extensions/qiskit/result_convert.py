@@ -13,23 +13,20 @@
 # limitations under the License.
 
 
-from typing import (
-    Iterator,
-    Sequence,
-    Optional,
-    Any,
-)
 from collections import Counter, defaultdict
+from collections.abc import Iterator, Sequence
+from typing import (
+    Any,
+    Optional,
+)
 
 import numpy as np
 
+from pytket.backends.backendresult import BackendResult
+from pytket.circuit import Bit, Qubit, UnitID
+from pytket.utils.outcomearray import OutcomeArray
 from qiskit.result import Result  # type: ignore
 from qiskit.result.models import ExperimentResult  # type: ignore
-
-from pytket.circuit import Bit, Qubit, UnitID
-
-from pytket.backends.backendresult import BackendResult
-from pytket.utils.outcomearray import OutcomeArray
 
 
 def _get_registers_from_uids(uids: list[UnitID]) -> dict[str, set[UnitID]]:
@@ -71,14 +68,13 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
         return False
 
     datadict = result.data.to_dict()
-    if len(datadict) == 0:
-        return True
-    elif "memory" in datadict and len(datadict["memory"]) == 0:
-        return True
-    elif "counts" in datadict and len(datadict["counts"]) == 0:
-        return True
-    else:
-        return False
+    return bool(
+        len(datadict) == 0
+        or "memory" in datadict
+        and len(datadict["memory"]) == 0
+        or "counts" in datadict
+        and len(datadict["counts"]) == 0
+    )
 
 
 # In some cases, Qiskit returns a result with fields we don't expect -

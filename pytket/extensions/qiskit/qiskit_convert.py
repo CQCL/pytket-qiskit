@@ -16,25 +16,55 @@
 """Methods to allow conversion between Qiskit and pytket circuit classes
 """
 from collections import defaultdict
+from collections.abc import Iterable
+from inspect import signature
 from typing import (
+    TYPE_CHECKING,
+    Any,
     Callable,
     Optional,
-    Any,
-    Iterable,
-    cast,
     TypeVar,
-    TYPE_CHECKING,
+    cast,
 )
-from inspect import signature
 from uuid import UUID
 
 import numpy as np
+import sympy
 from numpy.typing import NDArray
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    PulseBackendConfiguration,
+)
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
+)
 from symengine import sympify  # type: ignore
 from symengine.lib import symengine_wrapper  # type: ignore
 
-import sympy
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
+from pytket.architecture import Architecture, FullyConnected
+from pytket.circuit import (
+    Bit,
+    CircBox,
+    Circuit,
+    Node,
+    Op,
+    OpType,
+    QControlBox,
+    Qubit,
+    StatePreparationBox,
+    Unitary1qBox,
+    Unitary2qBox,
+    Unitary3qBox,
+    UnitType,
+)
+from pytket.passes import AutoRebase
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.utils import (
+    QubitPauliOperator,
+    gen_term_sequence_circuit,
+    permute_rows_cols_in_unitary,
+)
 from qiskit import (
     ClassicalRegister,
     QuantumCircuit,
@@ -42,57 +72,31 @@ from qiskit import (
 )
 from qiskit.circuit import (
     Barrier,
+    Clbit,
+    ControlledGate,
+    Gate,
     Instruction,
     InstructionSet,
-    Gate,
-    ControlledGate,
     Measure,
     Parameter,
     ParameterExpression,
     Reset,
-    Clbit,
 )
 from qiskit.circuit.library import (
     CRYGate,
-    RYGate,
+    Initialize,
     PauliEvolutionGate,
+    RYGate,
     StatePreparation,
     UnitaryGate,
-    Initialize,
 )
-from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
-from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
-
-from pytket.circuit import (
-    CircBox,
-    Circuit,
-    Node,
-    Op,
-    OpType,
-    Unitary1qBox,
-    Unitary2qBox,
-    Unitary3qBox,
-    UnitType,
-    Bit,
-    Qubit,
-    QControlBox,
-    StatePreparationBox,
-)
-from pytket.unit_id import _TEMP_BIT_NAME
-from pytket.pauli import Pauli, QubitPauliString
-from pytket.architecture import Architecture, FullyConnected
-from pytket.utils import (
-    QubitPauliOperator,
-    gen_term_sequence_circuit,
-    permute_rows_cols_in_unitary,
-)
-from pytket.passes import AutoRebase
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
     from qiskit_ibm_runtime.models.backend_properties import Nduv
+
+    from pytket.circuit import UnitID
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
-    from pytket.circuit import Op, UnitID
 
 _qiskit_gates_1q = {
     # Exact equivalents (same signature except for factor of pi in each parameter):
@@ -233,7 +237,7 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOpe
     qpodict = {}
     for p, c in zip(op.paulis, op.coeffs):
         if np.iscomplex(c):
-            raise ValueError("Coefficient for Pauli {} is non-real.".format(p))
+            raise ValueError(f"Coefficient for Pauli {p} is non-real.")
         coeff = param_to_tk(t) * c
         qpslist = []
         pstr = p.to_label()
@@ -891,7 +895,7 @@ def tk_to_qiskit(
             cregmap.update({c_reg.name: qis_reg})
             qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
-    range_preds: dict[Bit, tuple[list["UnitID"], int]] = dict()
+    range_preds: dict[Bit, tuple[list[UnitID], int]] = dict()
 
     # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
@@ -1009,8 +1013,12 @@ def process_characterisation_from_config(
     K2 = TypeVar("K2")
     V = TypeVar("V")
     convert_keys_t = Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
+
     # convert qubits to architecture Nodes
-    convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
+    convert_keys: convert_keys_t = lambda f, d: {  # noqa: E731
+        f(k): v for k, v in d.items()
+    }
+
     node_errors = convert_keys(lambda q: Node(q), node_errors)
     link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
     readout_errors = convert_keys(lambda q: Node(q), readout_errors)
@@ -1042,7 +1050,9 @@ def get_avg_characterisation(
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
     map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
-    map_values: map_values_t = lambda f, d: {k: f(v) for k, v in d.items()}
+    map_values: map_values_t = lambda f, d: {  # noqa: E731
+        k: f(v) for k, v in d.items()
+    }
 
     node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
     link_errors = cast(
@@ -1052,10 +1062,13 @@ def get_avg_characterisation(
         dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
     )
 
-    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
-    avg_mat: Callable[[list[list[float]]], float] = (
+    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731
+        xs.values()
+    ) / len(xs)
+    avg_mat: Callable[[list[list[float]]], float] = (  # noqa: E731
         lambda xs: (xs[0][1] + xs[1][0]) / 2.0
     )
+
     avg_readout_errors = map_values(avg_mat, readout_errors)
     avg_node_errors = map_values(avg, node_errors)
     avg_link_errors = map_values(avg, link_errors)

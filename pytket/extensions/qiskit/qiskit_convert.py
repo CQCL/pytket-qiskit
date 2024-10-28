@@ -72,6 +72,8 @@ from pytket.utils import (
     gen_term_sequence_circuit,
     permute_rows_cols_in_unitary,
 )
+from pytket.backends.backendinfo import BackendInfo
+
 from qiskit import (
     ClassicalRegister,
     QuantumCircuit,

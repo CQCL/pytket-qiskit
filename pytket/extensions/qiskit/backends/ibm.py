@@ -268,6 +268,9 @@ class IBMQBackend(Backend):
             and "reset" in config.supported_instructions
         )
         gate_set = _tk_gate_set(config)
+        misc = {"characterisation": filtered_characterisation}
+        if props is not None:
+            misc["backend_properties"] = props.to_dict()
         backend_info = BackendInfo(
             cls.__name__,
             config.backend_name,
@@ -292,7 +295,7 @@ class IBMQBackend(Backend):
             averaged_node_gate_errors=averaged_errors["node_errors"],
             averaged_edge_gate_errors=averaged_errors["edge_errors"],  # type: ignore
             averaged_readout_errors=averaged_errors["readout_errors"],
-            misc={"characterisation": filtered_characterisation},
+            misc=misc,
         )
         return backend_info
 

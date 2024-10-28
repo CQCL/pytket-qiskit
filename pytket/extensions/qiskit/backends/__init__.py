@@ -13,12 +13,12 @@
 # limitations under the License.
 """Backends for connecting to IBM devices and simulators directly from pytket"""
 
-from .ibm import IBMQBackend, NoIBMQCredentialsError
 from .aer import (
     AerBackend,
+    AerDensityMatrixBackend,
     AerStateBackend,
     AerUnitaryBackend,
-    AerDensityMatrixBackend,
     qiskit_aer_backend,
 )
+from .ibm import IBMQBackend, NoIBMQCredentialsError
 from .ibmq_emulator import IBMQEmulatorBackend

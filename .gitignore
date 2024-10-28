@@ -15,3 +15,5 @@ pytket/extensions/qiskit/_metadata.py
 *.ipynb
 docs/pyproject.toml
 docs/poetry.lock
+.jupyter_cache/
+jupyter_execute/

@@ -13,23 +13,20 @@
 # limitations under the License.
 
 
-from typing import (
-    Iterator,
-    Sequence,
-    Optional,
-    Any,
-)
 from collections import Counter, defaultdict
+from collections.abc import Iterator, Sequence
+from typing import (
+    Any,
+    Optional,
+)
 
 import numpy as np
 
+from pytket.backends.backendresult import BackendResult
+from pytket.circuit import Bit, Qubit, UnitID
+from pytket.utils.outcomearray import OutcomeArray
 from qiskit.result import Result  # type: ignore
 from qiskit.result.models import ExperimentResult  # type: ignore
-
-from pytket.circuit import Bit, Qubit, UnitID, Circuit
-
-from pytket.backends.backendresult import BackendResult
-from pytket.utils.outcomearray import OutcomeArray
 
 
 def _get_registers_from_uids(uids: list[UnitID]) -> dict[str, set[UnitID]]:
@@ -71,19 +68,26 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
         return False
 
     datadict = result.data.to_dict()
-    if len(datadict) == 0:
-        return True
-    elif "memory" in datadict and len(datadict["memory"]) == 0:
-        return True
-    elif "counts" in datadict and len(datadict["counts"]) == 0:
-        return True
-    else:
-        return False
+    return bool(
+        len(datadict) == 0
+        or "memory" in datadict
+        and len(datadict["memory"]) == 0
+        or "counts" in datadict
+        and len(datadict["counts"]) == 0
+    )
 
 
+# In some cases, Qiskit returns a result with fields we don't expect -
+# for example, a circuit with classical bits run on AerStateBackend will
+# return counts (whether or not there were measurements). The include_foo
+# arguments should be set based on what the backend supports.
 def qiskit_experimentresult_to_backendresult(
     result: ExperimentResult,
-    ppcirc: Optional[Circuit] = None,
+    include_counts: bool = True,
+    include_shots: bool = True,
+    include_state: bool = True,
+    include_unitary: bool = True,
+    include_density_matrix: bool = True,
 ) -> BackendResult:
     if not result.success:
         raise RuntimeError(result.status)
@@ -105,16 +109,16 @@ def qiskit_experimentresult_to_backendresult(
 
     shots, counts, state, unitary, density_matrix = (None,) * 5
     datadict = result.data.to_dict()
-    if _result_is_empty_shots(result):
+    if _result_is_empty_shots(result) and include_shots:
         n_bits = len(c_bits) if c_bits else 0
         shots = OutcomeArray.from_readouts(
             np.zeros((result.shots, n_bits), dtype=np.uint8)
         )
     else:
-        if "memory" in datadict:
+        if "memory" in datadict and include_shots:
             memory = datadict["memory"]
             shots = _hex_to_outar(memory, width)
-        elif "counts" in datadict:
+        elif "counts" in datadict and include_counts:
             qis_counts = datadict["counts"]
             counts = Counter(
                 dict(
@@ -123,13 +127,13 @@ def qiskit_experimentresult_to_backendresult(
                 )
             )
 
-        if "statevector" in datadict:
+        if "statevector" in datadict and include_state:
             state = datadict["statevector"].reverse_qargs().data
 
-        if "unitary" in datadict:
+        if "unitary" in datadict and include_unitary:
             unitary = datadict["unitary"].reverse_qargs().data
 
-        if "density_matrix" in datadict:
+        if "density_matrix" in datadict and include_density_matrix:
             density_matrix = datadict["density_matrix"].reverse_qargs().data
 
     return BackendResult(
@@ -140,13 +144,27 @@ def qiskit_experimentresult_to_backendresult(
         state=state,
         unitary=unitary,
         density_matrix=density_matrix,
-        ppcirc=ppcirc,
+        ppcirc=None,
     )
 
 
-def qiskit_result_to_backendresult(res: Result) -> Iterator[BackendResult]:
+def qiskit_result_to_backendresult(
+    res: Result,
+    include_counts: bool = True,
+    include_shots: bool = True,
+    include_state: bool = True,
+    include_unitary: bool = True,
+    include_density_matrix: bool = True,
+) -> Iterator[BackendResult]:
     for result in res.results:
-        yield qiskit_experimentresult_to_backendresult(result)
+        yield qiskit_experimentresult_to_backendresult(
+            result,
+            include_counts,
+            include_shots,
+            include_state,
+            include_unitary,
+            include_density_matrix,
+        )
 
 
 def backendresult_to_qiskit_resultdata(

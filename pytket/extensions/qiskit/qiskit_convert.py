@@ -17,6 +17,7 @@
 """
 from collections import defaultdict
 from typing import (
+    List,
     Callable,
     Optional,
     Any,
@@ -27,6 +28,7 @@ from typing import (
 )
 from inspect import signature
 from uuid import UUID
+from datetime import datetime
 
 import numpy as np
 from numpy.typing import NDArray
@@ -61,7 +63,9 @@ from qiskit.circuit.library import (
     Initialize,
 )
 from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
-from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
+from qiskit_ibm_runtime.models.backend_properties import BackendProperties, GateProperties, Nduv  # type: ignore
+from qiskit.providers.models.backendproperties import BackendProperties as LegacyBackendProperties  # type: ignore
+from qiskit_aer.noise import NoiseModel  # type: ignore
 
 from pytket.circuit import (
     CircBox,
@@ -87,6 +91,7 @@ from pytket.utils import (
     permute_rows_cols_in_unitary,
 )
 from pytket.passes import AutoRebase
+from pytket.backends.backendinfo import BackendInfo
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
@@ -1067,3 +1072,112 @@ def get_avg_characterisation(
         "edge_errors": avg_link_errors,
         "readout_errors": avg_readout_errors,
     }
+
+
+def backend_properties_from_legacy_backendinfo(
+    backend_info: BackendInfo,
+) -> BackendProperties:
+    """Construct a :py:class:`qiskit_ibm_runtime.models.backend_properties.BackendProperties`
+    from an early version of `BackendInfo` where a serialised `BackendProperties` is not stored
+    in the `misc` field.
+
+    :param backend_info: a pytket-qiskit `BackendInfo`
+    :return: a `BackendProperties`
+    """
+    backend_name = backend_info.device_name
+    # backend_version is not stored in BackendInfo
+    backend_version = ""
+    # last_update_date is not stored in BackendInfo
+    time_now = datetime.now()
+    n_qubits = len(backend_info.misc["characterisation"]["t1times"])
+    # populate qubit data
+    qubits: List[List[Nduv]] = [[]] * n_qubits
+    for i in range(n_qubits):
+        q_index, t1 = backend_info.misc["characterisation"]["t1times"][i]
+        if t1 is not None:
+            qubits[q_index].append(Nduv(time_now, "T1", "us", t1))
+        q_index, t2 = backend_info.misc["characterisation"]["t2times"][i]
+        if t2 is not None:
+            qubits[q_index].append(Nduv(time_now, "T2", "us", t2))
+        q_index, freq = backend_info.misc["characterisation"]["Frequencies"][i]
+        if freq is not None:
+            qubits[q_index].append(Nduv(time_now, "frequency", "GHz", freq))
+        if backend_info.all_readout_errors is not None:
+            readout_error = backend_info.all_readout_errors[Node(i)]
+            if readout_error is not None:
+                # readout_error[0][1] is an off-diagonal entry
+                qubits[i].append(
+                    Nduv(time_now, "readout_error", "", readout_error[0][1])
+                )
+            # anharmonicity, prob_meas0_prep1, prob_meas1_prep0, readout_length are not stored
+    # serialised GateProperties
+    gate_dict = {}
+    # populate gatetimes
+    for g, g_qbs, g_len in backend_info.misc["characterisation"]["GateTimes"]:
+        gate_qubit_id = g + "_".join(map(str, g_qbs))
+        gate_dict[gate_qubit_id] = {
+            "name": gate_qubit_id,
+            "gate": g,
+            "qubits": g_qbs,
+            "parameters": [Nduv(time_now, "gate_length", "ns", g_len).to_dict()],
+        }
+    # populate 1-q gate errors
+    if backend_info.all_node_gate_errors is not None:
+        for node, g_errors in backend_info.all_node_gate_errors.items():
+            for g_optype, g_error in g_errors.items():
+                g = _gate_str_2_optype_rev[g_optype]
+                gate_qubit_id = f"{g}{node.index[0]}"
+                gate_dict[gate_qubit_id]["parameters"].append(
+                    Nduv(time_now, "gate_error", "", g_error).to_dict()
+                )
+    # populate 2-q gate errors
+    if backend_info.all_edge_gate_errors is not None:
+        for (n1, n2), g_errors in backend_info.all_edge_gate_errors.items():
+            for g_optype, g_error in g_errors.items():
+                g = _gate_str_2_optype_rev[g_optype]
+                gate_qubit_id = f"{g}{n1.index[0]}_{n2.index[0]}"
+                if gate_qubit_id not in gate_dict:
+                    # this gate is not in the original BackendProperties, and is
+                    # added in `process_characterisation_from_config`
+                    # to simulate worse reverse direction noise.
+                    continue
+                gate_dict[gate_qubit_id]["parameters"].append(
+                    Nduv(time_now, "gate_error", "", g_error).to_dict()
+                )
+    gates = [GateProperties.from_dict(v) for v in gate_dict.values()]
+    # general and kwargs are not stored
+    return BackendProperties(backend_name, backend_version, time_now, qubits, gates, [])
+
+
+def backend_properties_from_backendinfo(
+    backend_info: BackendInfo,
+) -> BackendProperties:
+    """Construct a :py:class:`qiskit_ibm_runtime.models.backend_properties.BackendProperties`
+    from a `BackendInfo` by directly deserialising the `backend_properties` field in `misc`.
+
+    :param backend_info: a pytket-qiskit `BackendInfo`
+    :return: a `BackendProperties`
+    """
+    if "backend_properties" not in backend_info.misc:
+        raise ValueError(
+            """The `backend_info` object is missing the `backend_properties` field within `misc`.
+            For older versions of `BackendInfo`, consider using `backend_properties_from_legacy_backendinfo` instead."""
+        )
+    return BackendProperties.from_dict(backend_info.misc["backend_properties"])
+
+
+def noise_model_from_backend_properties(
+    backend_properties: BackendProperties,
+) -> NoiseModel:
+    """Construct a :py:class:`qiskit_aer.noise.NoiseModel` from a
+    :py:class:`qiskit_ibm_runtime.models.backend_properties.BackendProperties`.
+    """
+    # `NoiseModel.from_backend_properties` only takes the deprecated
+    # `qiskit.providers.models.backendproperties.BackendProperties`
+    # instead of `qiskit_ibm_runtime.models.backend_properties.BackendProperties` even though
+    # they appear to have the same interface. We hack the `__class__` attribute to
+    # circumvent this.
+    backend_properties.__class__ = LegacyBackendProperties
+    noise_model = NoiseModel.from_backend_properties(backend_properties)
+    backend_properties.__class__ = BackendProperties
+    return noise_model

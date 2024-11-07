@@ -86,54 +86,6 @@ from qiskit.primitives import (  # type: ignore
 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
 # therefore we can't use job_monitor until fixed
 # from qiskit.tools.monitor import job_monitor  # type: ignore
-from qiskit.result.distributions import QuasiDistribution  # type: ignore
-from qiskit_ibm_runtime import (  # type: ignore
-    QiskitRuntimeService,
-    Session,
-    SamplerOptions,
-    SamplerV2,
-    RuntimeJob,
-)
-from qiskit_ibm_runtime.models.backend_configuration import PulseBackendConfiguration  # type: ignore
-from qiskit_ibm_runtime.models.backend_properties import BackendProperties  # type: ignore
-
-from pytket.circuit import Bit, Circuit, OpType
-from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
-from pytket.backends.backendinfo import BackendInfo
-from pytket.backends.backendresult import BackendResult
-from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.passes import (
-    BasePass,
-    AutoRebase,
-    CustomPass,
-    KAKDecomposition,
-    RemoveRedundancies,
-    SequencePass,
-    SynthesiseTket,
-    DecomposeBoxes,
-    FullPeepholeOptimise,
-    CliffordSimp,
-    SimplifyInitial,
-    NaivePlacementPass,
-)
-from pytket.predicates import (
-    NoMidMeasurePredicate,
-    NoSymbolsPredicate,
-    GateSetPredicate,
-    NoClassicalControlPredicate,
-    NoFastFeedforwardPredicate,
-    MaxNQubitsPredicate,
-    Predicate,
-    DirectednessPredicate,
-)
-
-from pytket.architecture import FullyConnected, Architecture
-from pytket.utils import prepare_circuit
-from pytket.utils.outcomearray import OutcomeArray
-from pytket.utils.results import KwargTypes
-from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
-from .config import QiskitConfig
-from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
 from .._metadata import __extension_version__
 from ..qiskit_convert import (
     _tk_gate_set,
@@ -148,6 +100,7 @@ if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
+
 
 
 def _gen_debug_results(n_bits: int, shots: int) -> PrimitiveResult:

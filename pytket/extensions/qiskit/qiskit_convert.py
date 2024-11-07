@@ -29,7 +29,7 @@ from typing import (
 from uuid import UUID
 
 import numpy as np
-import sympy # type: ignore
+import sympy  # type: ignore
 from numpy.typing import NDArray
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
     PulseBackendConfiguration,
@@ -69,7 +69,7 @@ from qiskit import (
     ClassicalRegister,
     QuantumCircuit,
     QuantumRegister,
-) # type: ignore
+)  # type: ignore
 from qiskit.circuit import (
     Barrier,
     Clbit,

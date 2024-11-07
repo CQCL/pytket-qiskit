@@ -90,6 +90,7 @@ from qiskit.circuit.library import (
     StatePreparation,
     UnitaryGate,
 )
+import warnings
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
@@ -855,6 +856,11 @@ _protected_tket_gates = (
 supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
+def _has_implicit_perumtation(circ: Circuit) -> bool:
+    impl_dict: dict[Qubit, Qubit] = circ.implicit_qubit_permutation()
+    return tuple(impl_dict.keys()) != tuple(impl_dict.values())
+
+
 def tk_to_qiskit(
     tkcirc: Circuit, replace_implicit_swaps: bool = False
 ) -> QuantumCircuit:
@@ -873,6 +879,15 @@ def tk_to_qiskit(
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
+
+    if _has_implicit_perumtation(tkcirc) and not replace_implicit_swaps:
+        warnings.warn(
+            "The pytket Circuit contains implicit qubit permutations"
+            + " which aren't handled by default."
+            + " Consider using the replace_implicit_swaps flag in tk_to_qiskit or"
+            + " replacing them using Circuit.replace_implicit_swaps()."
+        )
+
     qcirc = QuantumCircuit(name=tkc.name)
     qreg_sizes: dict[str, int] = {}
     for qb in tkc.qubits:

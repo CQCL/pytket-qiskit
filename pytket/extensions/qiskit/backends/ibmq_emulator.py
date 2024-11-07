@@ -14,10 +14,9 @@
 
 from collections.abc import Sequence
 from typing import (
-    Optional,
-    Sequence,
     TYPE_CHECKING,
     Any,
+    Optional,
 )
 
 from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
@@ -39,7 +38,6 @@ if TYPE_CHECKING:
     from collections import Counter
 
     from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
-
 
 class IBMQEmulatorBackend(Backend):
     """A backend which uses the AerBackend to loaclly emulate the behaviour of

@@ -225,7 +225,7 @@ class _AerBaseBackend(Backend):
             and self._backend_info.get_misc("characterisation")
         ):
             return self._arch_dependent_default_compilation_pass(
-                arch,
+                arch,  # type: ignore
                 optimisation_level,  # type: ignore
             )
 
@@ -343,9 +343,9 @@ class _AerBaseBackend(Backend):
                 include_density_matrix=self._supports_density_matrix,
             )
             for circ_index, backres in enumerate(backresults):
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
-                    "result"
-                ] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
+                    backres
+                )
 
             return cast(BackendResult, self._cache[handle]["result"])
 

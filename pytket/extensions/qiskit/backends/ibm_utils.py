@@ -30,7 +30,7 @@ from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import SabreLayout, SetLayout  # type: ignore
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
-from qiskit.transpiler.preset_passmanagers import common
+from qiskit.transpiler.preset_passmanagers import common  # type: ignore
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 
@@ -103,7 +103,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 def _gen_lightsabre_transformation(
     architecture: Architecture, optimization_level: int = 2, seed=0, attempts=20
-) -> Callable[Circuit, Circuit]:
+) -> Callable[[Circuit], Circuit]:
     """
     Generates a function that can be passed to CustomPass for running
     LightSABRE routing.

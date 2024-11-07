@@ -25,18 +25,12 @@ from pytket.backends.status import StatusEnum
 from pytket.circuit import Circuit, Node
 from pytket.passes import RebaseTket
 from pytket.transform import Transform
+from qiskit.passmanager.flow_controllers import ConditionalController  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import SabreLayout, SetLayout  # type: ignore
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
-from qiskit.transpiler.preset_passmanagers.builtin_plugins import (
-    SabreLayoutPassManager,  # type: ignore
-)
-from qiskit.passmanager.flow_controllers import ConditionalController  # type: ignore
-
-
 from qiskit.transpiler.preset_passmanagers import common
-
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 

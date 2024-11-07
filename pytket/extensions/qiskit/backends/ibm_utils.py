@@ -101,7 +101,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
     return CouplingMap(coupling_map)
 
 
-def _gen_lightsabre_transformation(
+def _gen_lightsabre_transformation(  # type: ignore
     architecture: Architecture, optimization_level: int = 2, seed=0, attempts=20
 ) -> Callable[[Circuit], Circuit]:
     """

@@ -35,16 +35,15 @@ from pytket.passes import (
     AutoRebase,
     BasePass,
     CliffordSimp,
+    CXMappingPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
     NaivePlacementPass,
     SequencePass,
     SynthesiseTket,
-    AutoRebase,
-    NaivePlacementPass,
-    CustomPass,
 )
 from pytket.pauli import Pauli, QubitPauliString
+from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     ConnectivityPredicate,
     DefaultRegisterPredicate,
@@ -64,7 +63,6 @@ from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import (  # type: 
     SparsePauliOp,
 )
 
-from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 from .._metadata import __extension_version__
 from ..qiskit_convert import (
     _gate_str_2_optype,
@@ -82,6 +80,7 @@ if TYPE_CHECKING:
     from qiskit_aer.backends.aerbackend import (  # type: ignore
         AerBackend as QiskitAerBackend,
     )
+
 
 
 def _default_q_index(q: Qubit) -> int:

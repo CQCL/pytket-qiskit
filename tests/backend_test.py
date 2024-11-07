@@ -65,7 +65,7 @@ from pytket.extensions.qiskit.backends.crosstalk_model import (
     NoisyCircuitBuilder,
 )
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
-from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
+from pytket.passes import CliffordSimp
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
 from pytket.transform import Transform

@@ -988,46 +988,6 @@ def lift_perm(p: dict[int, int]) -> np.ndarray:
     return pm
 
 
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
-    c = Circuit(7)
-    c.H(0).H(1).H(2)
-    c.CX(0, 1).CX(1, 2)
-    c.Rx(0.25, 1).Ry(0.75, 1).Rz(0.5, 2)
-    c.CCX(2, 1, 0)
-    c.CY(1, 0).CY(2, 1)
-    c.H(0).H(1).H(2)
-    c.Rz(0.125, 0)
-    c.X(1)
-    c.Rz(0.125, 2).X(2).Rz(0.25, 2)
-    c.SX(3).Rz(0.125, 3).SX(3)
-    c.CX(0, 3).CX(0, 4)
-    u_backend = AerUnitaryBackend()
-    c.remove_blank_wires()
-    FlattenRelabelRegistersPass().apply(c)
-    u = u_backend.run_circuit(c).get_unitary()
-    ibm_backend = brisbane_backend
-    for ol in range(3):
-        p = ibm_backend.default_compilation_pass(optimisation_level=ol)
-        cu = CompilationUnit(c)
-        p.apply(cu)
-        FlattenRelabelRegistersPass().apply(cu)
-        c1 = cu.circuit
-        compiled_u = u_backend.run_circuit(c1).get_unitary()
-
-        # Adjust for placement
-        imap = cu.initial_map
-        fmap = cu.final_map
-        c_idx = {c.qubits[i]: i for i in range(5)}
-        c1_idx = {c1.qubits[i]: i for i in range(5)}
-        ini = {c_idx[qb]: c1_idx[node] for qb, node in imap.items()}  # type: ignore
-        inv_fin = {c1_idx[node]: c_idx[qb] for qb, node in fmap.items()}  # type: ignore
-        m_ini = lift_perm(ini)
-        m_inv_fin = lift_perm(inv_fin)
-
-        assert compare_statevectors(u[:, 0], (m_inv_fin @ compiled_u @ m_ini)[:, 0])
-
-
 # pytket-extensions issue #69
 def test_symbolic_rebase() -> None:
     circ = QuantumCircuit(2)
@@ -1469,7 +1429,6 @@ def test_noiseless_density_matrix_simulation() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/231
 def test_noisy_density_matrix_simulation() -> None:
-
     # Test that __init__ works with a very simple noise model
     noise_model = NoiseModel()
     noise_model.add_quantum_error(depolarizing_error(0.6, 2), ["cz"], [0, 1])

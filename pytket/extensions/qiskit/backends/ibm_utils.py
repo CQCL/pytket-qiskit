@@ -33,6 +33,7 @@ from pytket.passes import RebaseTket
 
 from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
 
+
 if TYPE_CHECKING:
     from pytket.circuit import Circuit
 
@@ -70,7 +71,7 @@ def _batch_circuits(
     n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
 
     order: Collection[int] = np.argsort(n_shots_int)
-    batches: list[tuple[Optional[int], list["Circuit"]]] = [
+    batches: list[tuple[Optional[int], list[Circuit]]] = [
         (n, [circuits[i] for i in indices])
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]

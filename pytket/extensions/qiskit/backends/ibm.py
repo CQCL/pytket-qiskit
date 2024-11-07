@@ -13,23 +13,74 @@
 # limitations under the License.
 
 import itertools
-from ast import literal_eval
-from collections import Counter
 import json
+from ast import literal_eval
+from collections import Counter, OrderedDict
+from collections.abc import Sequence
 from time import sleep
 from typing import (
-    cast,
-    Optional,
-    Sequence,
     TYPE_CHECKING,
     Any,
+    Optional,
+    cast,
 )
 from warnings import warn
 
 import numpy as np
+from qiskit_ibm_runtime import (  # type: ignore
+    QiskitRuntimeService,
+    RuntimeJob,
+    SamplerOptions,
+    SamplerV2,
+    Session,
+)
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    PulseBackendConfiguration,
+)
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
+)
 
-from qiskit.primitives import PrimitiveResult, SamplerResult  # type: ignore
-
+from pytket.architecture import Architecture, FullyConnected
+from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
+from pytket.backends.backendinfo import BackendInfo
+from pytket.backends.backendresult import BackendResult
+from pytket.backends.resulthandle import _ResultIdTuple
+from pytket.circuit import Bit, Circuit, OpType
+from pytket.passes import (
+    AutoRebase,
+    BasePass,
+    CliffordSimp,
+    CXMappingPass,
+    DecomposeBoxes,
+    FullPeepholeOptimise,
+    KAKDecomposition,
+    NaivePlacementPass,
+    RemoveRedundancies,
+    SequencePass,
+    SimplifyInitial,
+    SynthesiseTket,
+)
+from pytket.placement import NoiseAwarePlacement
+from pytket.predicates import (
+    DirectednessPredicate,
+    GateSetPredicate,
+    MaxNQubitsPredicate,
+    NoClassicalControlPredicate,
+    NoFastFeedforwardPredicate,
+    NoMidMeasurePredicate,
+    NoSymbolsPredicate,
+    Predicate,
+)
+from pytket.utils import prepare_circuit
+from pytket.utils.outcomearray import OutcomeArray
+from pytket.utils.results import KwargTypes
+from qiskit.primitives import (  # type: ignore
+    BitArray,
+    DataBin,
+    PrimitiveResult,
+    SamplerPubResult,
+)
 
 # RuntimeJob has no queue_position attribute, which is referenced
 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
@@ -83,12 +134,15 @@ from pytket.utils.results import KwargTypes
 from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 from .config import QiskitConfig
 from ..qiskit_convert import tk_to_qiskit, _tk_gate_set
+from .._metadata import __extension_version__
 from ..qiskit_convert import (
+    _tk_gate_set,
     get_avg_characterisation,
     process_characterisation_from_config,
+    tk_to_qiskit,
 )
-
-from .._metadata import __extension_version__
+from .config import QiskitConfig
+from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
@@ -96,14 +150,10 @@ if TYPE_CHECKING:
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
 
 
-def _gen_debug_results(n_qubits: int, shots: int, index: int) -> SamplerResult:
-    debug_dist = {n: 0.0 for n in range(pow(2, n_qubits))}
-    debug_dist[0] = 1.0
-    qd = QuasiDistribution(debug_dist)
-    return SamplerResult(
-        quasi_dists=[qd] * (index + 1),
-        metadata=[{"header_metadata": {}, "shots": shots}] * (index + 1),
-    )
+def _gen_debug_results(n_bits: int, shots: int) -> PrimitiveResult:
+    n_u8s = (n_bits - 1) // 8 + 1
+    arr = np.array([[0] * n_u8s for _ in range(shots)], dtype=np.uint8)
+    return PrimitiveResult([SamplerPubResult(DataBin(c=BitArray(arr, n_bits)))])
 
 
 class NoIBMQCredentialsError(Exception):
@@ -182,7 +232,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: "IBMBackend" = self._service.backend(backend_name)
+        self._backend: IBMBackend = self._service.backend(backend_name)
         config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -202,7 +252,9 @@ class IBMQBackend(Backend):
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: dict[
+            tuple[str, int], tuple[Counter, Optional[list[Bit]]]
+        ] = dict()
 
         if sampler_options is None:
             sampler_options = SamplerOptions()
@@ -387,7 +439,7 @@ class IBMQBackend(Backend):
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
         # then please update this page accordingly
-        # https://tket.quantinuum.com/extensions/pytket-qiskit/index.html#default-compilation
+        # https://docs.quantinuum.com/tket/extensions/pytket-qiskit/index.html#default-compilation
         # Edit this docs source file -> pytket-qiskit/docs/intro.txt
         if optimisation_level == 0:
             if supports_rz:
@@ -425,7 +477,7 @@ class IBMQBackend(Backend):
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
-        # IBMQ job ID, index, number of measurements per shot, post-processing circuit
+        # IBMQ job ID, index, number of bits, post-processing circuit
         return (str, int, int, str)
 
     def rebase_pass(self) -> BasePass:
@@ -490,14 +542,11 @@ class IBMQBackend(Backend):
 
                 qcs, ppcirc_strs = [], []
                 for tkc in batch_chunk:
-                    tkc1 = tkc.copy()
-                    # Flatten bits to default register in lexicographic order:
-                    tkc1.rename_units({bit: Bit(i) for i, bit in enumerate(tkc1.bits)})
                     if postprocess:
-                        c0, ppcirc = prepare_circuit(tkc1, allow_classical=False)
+                        c0, ppcirc = prepare_circuit(tkc, allow_classical=False)
                         ppcirc_rep = ppcirc.to_dict()
                     else:
-                        c0, ppcirc_rep = tkc1, None
+                        c0, ppcirc_rep = tkc, None
                     if simplify_initial:
                         SimplifyInitial(
                             allow_classical=False, create_all_qubits=True
@@ -509,7 +558,7 @@ class IBMQBackend(Backend):
                         handle_list[ind] = ResultHandle(
                             _DEBUG_HANDLE_PREFIX + str((n_shots, batch_id)),
                             i,
-                            batch_chunk[i].n_qubits,
+                            batch_chunk[i].n_bits,
                             ppcirc_strs[i],
                         )
                 else:
@@ -518,9 +567,9 @@ class IBMQBackend(Backend):
                     job_id = job.job_id()
                     for i, ind in enumerate(indices_chunk):
                         handle_list[ind] = ResultHandle(
-                            job_id, i, qcs[i].count_ops()["measure"], ppcirc_strs[i]
+                            job_id, i, qcs[i].num_clbits, ppcirc_strs[i]
                         )
-            batch_id += 1
+            batch_id += 1  # noqa: SIM113
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
@@ -555,7 +604,7 @@ class IBMQBackend(Backend):
             cached_result = self._cache[handle]
             if "result" in cached_result:
                 return cast(BackendResult, cached_result["result"])
-        jobid, index, n_meas, ppcirc_str = handle
+        jobid, index, n_bits, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None
         cache_key = (jobid, index)
@@ -563,7 +612,7 @@ class IBMQBackend(Backend):
             if self._MACHINE_DEBUG or jobid.startswith(_DEBUG_HANDLE_PREFIX):
                 shots: int
                 shots, _ = literal_eval(jobid[len(_DEBUG_HANDLE_PREFIX) :])
-                res = _gen_debug_results(n_meas, shots, index)
+                res = _gen_debug_results(n_bits, shots)
             else:
                 try:
                     job = self._retrieve_job(jobid)
@@ -578,36 +627,41 @@ class IBMQBackend(Backend):
                     status = job.status()
                     while status not in ["DONE", "CANCELLED", "ERROR"]:
                         status = job.status()
-                        print("Job status is", status)
                         sleep(10)
 
-                res = job.result(timeout=kwargs.get("timeout", None))
-            if isinstance(res, SamplerResult):
-                # TODO Is this code still reachable?
-                for circ_index, (r, d) in enumerate(zip(res.quasi_dists, res.metadata)):
-                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                        {n: int(0.5 + d["shots"] * p) for n, p in r.items()}
-                    )
-            else:
-                assert isinstance(res, PrimitiveResult)
-                for circ_index, pub_result in enumerate(res._pub_results):
-                    readouts = pub_result.data.c.array
-                    self._ibm_res_cache[(jobid, circ_index)] = Counter(
-                        _int_from_readout(readout) for readout in readouts
-                    )
+                res = job.result(timeout=kwargs.get("timeout"))
+            assert isinstance(res, PrimitiveResult)
+            for circ_index, pub_result in enumerate(res._pub_results):
+                data = pub_result.data
+                c_regs = OrderedDict(
+                    (reg_name, data.__getattribute__(reg_name).num_bits)
+                    for reg_name in sorted(data.keys())
+                )
+                readouts = BitArray.concatenate_bits(
+                    [data.__getattribute__(reg_name) for reg_name in c_regs]
+                ).array
+                self._ibm_res_cache[(jobid, circ_index)] = (
+                    Counter(_int_from_readout(readout) for readout in readouts),
+                    list(
+                        itertools.chain.from_iterable(
+                            [Bit(reg_name, i) for i in range(reg_size)]
+                            for reg_name, reg_size in c_regs.items()
+                        )
+                    ),
+                )
 
-        counts = self._ibm_res_cache[cache_key]  # Counter[int]
+        counts, c_bits = self._ibm_res_cache[cache_key]  # Counter[int], list[Bit]
         # Convert to `OutcomeArray`:
         tket_counts: Counter = Counter()
         for outcome_key, sample_count in counts.items():
             array = OutcomeArray.from_ints(
                 ints=[outcome_key],
-                width=n_meas,
+                width=n_bits,
                 big_endian=False,
             )
             tket_counts[array] = sample_count
         # Convert to `BackendResult`:
-        result = BackendResult(counts=tket_counts, ppcirc=ppcirc)
+        result = BackendResult(c_bits=c_bits, counts=tket_counts, ppcirc=ppcirc)
 
         self._cache[handle] = {"result": result}
         return result

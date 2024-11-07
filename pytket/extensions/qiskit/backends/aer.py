@@ -13,20 +13,18 @@
 # limitations under the License.
 
 import itertools
-from collections import defaultdict
-from dataclasses import dataclass
 import json
-from logging import warning
-from typing import Optional, Sequence, Any, cast, TYPE_CHECKING
 import warnings
+from collections import defaultdict
+from collections.abc import Sequence
+from dataclasses import dataclass
+from logging import warning
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import numpy as np
-from qiskit import transpile  # type: ignore
-from qiskit_aer.noise import NoiseModel  # type: ignore
-from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
-from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import SparsePauliOp  # type: ignore
 from qiskit_aer import Aer  # type: ignore
-from qiskit_aer.library import save_expectation_value  # type: ignore # pylint: disable=unused-import
+from qiskit_aer.noise import NoiseModel  # type: ignore
+
 from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitNotRunError, CircuitStatus, ResultHandle
 from pytket.backends.backendinfo import BackendInfo
@@ -34,10 +32,12 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, Node, OpType, Qubit
 from pytket.passes import (
+    AutoRebase,
     BasePass,
     CliffordSimp,
     DecomposeBoxes,
     FullPeepholeOptimise,
+    NaivePlacementPass,
     SequencePass,
     SynthesiseTket,
     AutoRebase,
@@ -47,33 +47,41 @@ from pytket.passes import (
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import (
     ConnectivityPredicate,
+    DefaultRegisterPredicate,
     GateSetPredicate,
-    NoClassicalControlPredicate,
     NoBarriersPredicate,
+    NoClassicalControlPredicate,
     NoFastFeedforwardPredicate,
     NoSymbolsPredicate,
-    DefaultRegisterPredicate,
     Predicate,
 )
+from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import KwargTypes
-from pytket.utils import prepare_circuit
+from qiskit import transpile  # type: ignore
+from qiskit.quantum_info.operators import Pauli as qk_Pauli  # type: ignore
+from qiskit.quantum_info.operators.symplectic.sparse_pauli_op import (  # type: ignore
+    SparsePauliOp,
+)
 
 from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 from .._metadata import __extension_version__
 from ..qiskit_convert import (
-    tk_to_qiskit,
     _gate_str_2_optype,
+    tk_to_qiskit,
 )
 from ..result_convert import qiskit_result_to_backendresult
 from .crosstalk_model import (
-    NoisyCircuitBuilder,
     CrosstalkParams,
+    NoisyCircuitBuilder,
 )
+from .ibm_utils import _STATUS_MAP, _batch_circuits
 
 if TYPE_CHECKING:
     from qiskit_aer import AerJob
-    from qiskit_aer.backends.aerbackend import AerBackend as QiskitAerBackend  # type: ignore
+    from qiskit_aer.backends.aerbackend import (  # type: ignore
+        AerBackend as QiskitAerBackend,
+    )
 
 
 def _default_q_index(q: Qubit) -> int:
@@ -306,14 +314,14 @@ class _AerBaseBackend(Backend):
         return cast(list[ResultHandle], handle_list)
 
     def cancel(self, handle: ResultHandle) -> None:
-        job: "AerJob" = self._cache[handle]["job"]
+        job: AerJob = self._cache[handle]["job"]
         cancelled = job.cancel()
         if not cancelled:
             warning(f"Unable to cancel job {cast(str, handle[0])}")
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
-        job: "AerJob" = self._cache[handle]["job"]
+        job: AerJob = self._cache[handle]["job"]
         ibmstatus = job.status()
         return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus.value)
 
@@ -323,12 +331,19 @@ class _AerBaseBackend(Backend):
         except CircuitNotRunError:
             jobid, _, qubit_n, ppc = handle
             try:
-                job: "AerJob" = self._cache[handle]["job"]
+                job: AerJob = self._cache[handle]["job"]
             except KeyError:
                 raise CircuitNotRunError(handle)
 
             res = job.result()
-            backresults = qiskit_result_to_backendresult(res)
+            backresults = qiskit_result_to_backendresult(
+                res,
+                include_shots=self._supports_shots,
+                include_counts=self._supports_counts,
+                include_state=self._supports_state,
+                include_unitary=self._supports_unitary,
+                include_density_matrix=self._supports_density_matrix,
+            )
             for circ_index, backres in enumerate(backresults):
                 self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
                     "result"
@@ -379,10 +394,8 @@ class _AerBaseBackend(Backend):
         """
         if self._noise_model:
             raise RuntimeError(
-                (
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-                )
+                "Snapshot based expectation value not supported with noise model. "
+                "Use shots."
             )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
@@ -409,10 +422,8 @@ class _AerBaseBackend(Backend):
         """
         if self._noise_model:
             raise RuntimeError(
-                (
-                    "Snapshot based expectation value not supported with noise model. "
-                    "Use shots."
-                )
+                "Snapshot based expectation value not supported with noise model. "
+                "Use shots."
             )
         if not self._supports_expectation:
             raise NotImplementedError("Cannot get expectation value from this backend")
@@ -727,11 +738,9 @@ def _process_noise_model(
             raise RuntimeWarning("Error applies to multiple gates.")
         if "gate_qubits" not in error:
             raise RuntimeWarning(
-                (
-                    "Please define NoiseModel without using the"
-                    " add_all_qubit_quantum_error()"
-                    " or add_all_qubit_readout_error() method."
-                )
+                "Please define NoiseModel without using the"
+                " add_all_qubit_quantum_error()"
+                " or add_all_qubit_readout_error() method."
             )
         name = name[0]
 

@@ -13,18 +13,19 @@
 # limitations under the License.
 
 
-from typing import Optional, Sequence, cast
 import json
+from collections.abc import Sequence
+from typing import Optional, cast
 
-from pytket.circuit import Circuit, OpType
-from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
-from pytket.backends.backendinfo import BackendInfo
 from pytket.architecture import Architecture, FullyConnected
-from pytket.predicates import Predicate, GateSetPredicate
-from pytket.passes import BasePass, CustomPass
-from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.backends.backendresult import BackendResult
+from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes, ResultCache
+from pytket.backends.backendinfo import BackendInfo
+from pytket.backends.backendresult import BackendResult
+from pytket.backends.resulthandle import _ResultIdTuple
+from pytket.circuit import Circuit, OpType
+from pytket.passes import BasePass, CustomPass
+from pytket.predicates import GateSetPredicate, Predicate
 from pytket.utils.outcomearray import OutcomeArray
 
 

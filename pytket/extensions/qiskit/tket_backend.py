@@ -13,19 +13,22 @@
 # limitations under the License.
 
 import inspect
-from typing import Optional, Any
-from qiskit.circuit.library.standard_gates import get_standard_gate_name_mapping  # type: ignore
-from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
-from qiskit.providers.backend import BackendV2  # type: ignore
-from qiskit.providers import Options  # type: ignore
-from qiskit.transpiler import CouplingMap, Target  # type: ignore
-from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
-from pytket.extensions.qiskit.qiskit_convert import qiskit_to_tk, _gate_str_2_optype_rev
-from pytket.extensions.qiskit.tket_job import TketJob, JobInfo
-from pytket.backends import Backend
-from pytket.passes import BasePass
-from pytket.predicates import GateSetPredicate, CompilationUnit
+from typing import Any, Optional
+
 from pytket.architecture import FullyConnected
+from pytket.backends import Backend
+from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
+from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype_rev, qiskit_to_tk
+from pytket.extensions.qiskit.tket_job import JobInfo, TketJob
+from pytket.passes import BasePass
+from pytket.predicates import CompilationUnit, GateSetPredicate
+from qiskit.circuit.library.standard_gates import (  # type: ignore
+    get_standard_gate_name_mapping,
+)
+from qiskit.circuit.quantumcircuit import QuantumCircuit  # type: ignore
+from qiskit.providers import Options  # type: ignore
+from qiskit.providers.backend import BackendV2  # type: ignore
+from qiskit.transpiler import CouplingMap, Target  # type: ignore
 
 
 def _extract_basis_gates(backend: Backend) -> list[str]:
@@ -36,7 +39,7 @@ def _extract_basis_gates(backend: Backend) -> list[str]:
             # Restrict to the gate set accepted by the backend, the converters,
             # and the Target.from_configuration() method.
             for optype in pred.gate_set:
-                if optype in _gate_str_2_optype_rev.keys():
+                if optype in _gate_str_2_optype_rev:
                     gate_name = _gate_str_2_optype_rev[optype]
                     if gate_name in standard_gate_mapping:
                         gate_obj = standard_gate_mapping[gate_name]
@@ -66,9 +69,9 @@ class TketBackend(BackendV2):
     :py:class:`qiskit.aqua.QuantumInstance`, providing a custom
     :py:class:`qiskit.transpiler.PassManager` with a
     :py:class:`qiskit.transpiler.passes.Unroller`. For examples, see the `user manual
-    <https://tket.quantinuum.com/user-manual/manual_backend.html#embedding-into-
-    qiskit>`_ or the `Qiskit integration example <ht
-    tps://github.com/CQCL/pytket/blob/main/examples/qiskit_integration. ipynb>`_.
+    <https://docs.quantinuum.com/tket/user-guide/manual/manual_backend.html#embedding-into-
+    qiskit>`_ or the `Qiskit integration example <https://docs.quantinuum.com/tket/user-
+    guide/examples/backends/qiskit_integration.html>`_.
     """
 
     def __init__(self, backend: Backend, comp_pass: Optional[BasePass] = None):
@@ -123,7 +126,7 @@ class TketBackend(BackendV2):
     ) -> TketJob:
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]
-        n_shots = options.get("shots", None)
+        n_shots = options.get("shots")
         circ_list = []
         jobinfos = []
         for qc in run_input:

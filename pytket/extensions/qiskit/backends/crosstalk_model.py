@@ -13,27 +13,29 @@
 # limitations under the License.
 
 
-from typing import Optional
 from dataclasses import dataclass
-
-from qiskit_aer.noise import NoiseModel  # type: ignore
-from qiskit_aer.noise.errors.standard_errors import amplitude_damping_error, phase_damping_error  # type: ignore
+from typing import Optional
 
 import numpy as np
+from qiskit_aer.noise import NoiseModel  # type: ignore
+from qiskit_aer.noise.errors.standard_errors import (  # type: ignore
+    amplitude_damping_error,
+    phase_damping_error,
+)
 from scipy.linalg import fractional_matrix_power  # type: ignore
 
+from pytket.backends.backendinfo import BackendInfo
 from pytket.circuit import (
     Circuit,
-    Qubit,
-    Node,
     Command,
-    OpType,
+    Node,
     Op,
+    OpType,
+    Qubit,
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
 )
-from pytket.backends.backendinfo import BackendInfo
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
 

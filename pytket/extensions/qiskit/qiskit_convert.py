@@ -755,13 +755,13 @@ def append_tk_command_to_qiskit(
             if a.reg_name != regname:
                 raise NotImplementedError("Conditions can only use a single register")
         instruction = append_tk_command_to_qiskit(
-            op.op,
+            op.op,  # type: ignore
             args[width:],
             qcirc,
             qregmap,
             cregmap,
             symb_map,
-            range_preds,  # type: ignore
+            range_preds,
         )
         if len(cregmap[regname]) == width:
             for i, a in enumerate(args[:width]):

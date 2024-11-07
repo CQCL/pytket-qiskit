@@ -226,7 +226,7 @@ class _AerBaseBackend(Backend):
         ):
             return self._arch_dependent_default_compilation_pass(
                 arch,  # type: ignore
-                optimisation_level,  # type: ignore
+                optimisation_level,
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)

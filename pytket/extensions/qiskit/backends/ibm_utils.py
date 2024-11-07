@@ -16,23 +16,13 @@
 """
 
 import itertools
-from typing import Collection, Optional, Sequence, TYPE_CHECKING, Tuple, List, Callable
+from collections.abc import Collection, Sequence
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
-from qiskit.providers import JobStatus  # type: ignore
-from qiskit.transpiler import PassManager, CouplingMap  # type: ignore
-from qiskit.transpiler.preset_passmanagers.builtin_plugins import SabreLayoutPassManager  # type: ignore
-from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
-
-from pytket.circuit import Circuit, Node
-from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
-from pytket.transform import Transform
-from pytket.passes import RebaseTket
-
-from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
-
+from qiskit.providers import JobStatus  # type: ignore
 
 if TYPE_CHECKING:
     from pytket.circuit import Circuit
@@ -53,7 +43,6 @@ _STATUS_MAP = {
     "QUEUED": StatusEnum.QUEUED,
     "RUNNING": StatusEnum.RUNNING,
 }
-
 
 def _batch_circuits(
     circuits: Sequence["Circuit"],

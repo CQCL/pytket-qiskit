@@ -205,12 +205,9 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-* - [CXMappingPass [3]](inv:#*.passes.CXMappingPass)
-  - [CXMappingPass [3]](inv:#*.passes.CXMappingPass) 
-  - [CXMappingPass [3]](inv:#*.passes.CXMappingPass)
-* - [NaivePlacementPass](inv:#*.passes.NaivePlacementPass)
-  - [NaivePlacementPass](inv:#*.passes.NaivePlacementPass)
-  - [NaivePlacementPass](inv:#*.passes.NaivePlacementPass)
+* - LightSabre [3]
+  - LightSabre [3]
+  - LightSabre [3]
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [KAKDecomposition(allow_swaps=False)](inv:#*.passes.KAKDecomposition)
@@ -231,7 +228,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 
 - \[1\] If no value is specified then `optimisation_level` defaults to a value of 2.
 - \[2\] {py:class}`~pytket._tket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gate set is either $\{X, SX, Rz, CX\}$, $\{X, SX, Rz, ECR\}$, or $\{X, SX, Rz, CZ\}$. The more idealised Aer simulators have a much broader range of supported gates.
-- \[3\] Here [CXMappingPass](inv:#*.passes.CXMappingPass) maps program qubits to the architecture using a [NoiseAwarePlacement](inv:#*.NoiseAwarePlacement)
+- \[3\] This is imported from qiskit and corresponds to the method in "LightSABRE: A Lightweight and Enhanced SABRE Algorithm", Henry Zou, Matthew Treinish, Kevin Hartman, Alexander Ivrii, Jake Lishman, arXiv:2409.08368.
 
 **Note:** The {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend` is the same as above.
 

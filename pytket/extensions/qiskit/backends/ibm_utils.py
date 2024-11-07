@@ -27,10 +27,16 @@ from pytket.passes import RebaseTket
 from pytket.transform import Transform
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
+from qiskit.transpiler.passes import SabreLayout, SetLayout  # type: ignore
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 from qiskit.transpiler.preset_passmanagers.builtin_plugins import (
     SabreLayoutPassManager,  # type: ignore
 )
+from qiskit.passmanager.flow_controllers import ConditionalController  # type: ignore
+
+
+from qiskit.transpiler.preset_passmanagers import common
+
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 
@@ -102,7 +108,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 
 def _gen_lightsabre_transformation(
-    architecture: Architecture, optimization_level: int = 2, seed=0
+    architecture: Architecture, optimization_level: int = 2, seed=0, attempts=20
 ) -> Callable[Circuit, Circuit]:
     """
     Generates a function that can be passed to CustomPass for running
@@ -111,17 +117,45 @@ def _gen_lightsabre_transformation(
     :param architecture: Architecture LightSABRE routes circuits to match
     :param optimization_level: Corresponds to qiskit optmization levels
     :param seed: LightSABRE routing is stochastic, with this parameter setting the seed
+    :param attempts: Number of generated random solutions to pick from.
     """
     config: PassManagerConfig = PassManagerConfig(
         coupling_map=_architecture_to_couplingmap(architecture),
         routing_method="sabre",
         seed_transpiler=seed,
     )
+    vf2_call_limit, vf2_max_trials = common.get_vf2_limits(
+        optimization_level,
+        config.layout_method,
+        config.initial_layout,
+    )
+
+    sabre_pass: PassManager = PassManager(
+        [
+            SetLayout(config.initial_layout),
+            ConditionalController(
+                [
+                    SabreLayout(
+                        config.coupling_map,
+                        max_iterations=2,
+                        seed=config.seed_transpiler,
+                        swap_trials=attempts,
+                        layout_trials=attempts,
+                        skip_routing=False,
+                    )
+                ],
+                condition=lambda property_set: not property_set["layout"],
+            ),
+            ConditionalController(
+                common.generate_embed_passmanager(
+                    config.coupling_map
+                ).to_flow_controller(),
+                condition=lambda property_set: property_set["final_layout"] is None,
+            ),
+        ]
+    )
 
     def lightsabre(circuit: Circuit) -> Circuit:
-        sabre_pass: PassManager = SabreLayoutPassManager().pass_manager(
-            config, optimization_level=optimization_level
-        )
         c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})

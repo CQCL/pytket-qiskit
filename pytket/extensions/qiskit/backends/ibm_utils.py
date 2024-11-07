@@ -118,12 +118,6 @@ def _gen_lightsabre_transformation(
         routing_method="sabre",
         seed_transpiler=seed,
     )
-    vf2_call_limit, vf2_max_trials = common.get_vf2_limits(
-        optimization_level,
-        config.layout_method,
-        config.initial_layout,
-    )
-
     sabre_pass: PassManager = PassManager(
         [
             SetLayout(config.initial_layout),

@@ -7,6 +7,7 @@
 ## Unreleased
 
 -  Fix handling of non-default registers when selecting bits in results.
+- The {py:func}`tk_to_qiskit` converter gives a warning if the input {py:class}`~pytket.circuit.Circuit` contains [implicit qubit permutations](https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#implicit-qubit-permutations). 
 
 ## 0.58.0 (October 2024)
 

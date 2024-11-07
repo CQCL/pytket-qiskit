@@ -12,20 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Shared utility methods for ibm backends.
-"""
+"""Shared utility methods for ibm backends."""
 
 import itertools
 from collections.abc import Collection, Sequence
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, list, tuple, Callable
 
 import numpy as np
 
-from pytket.backends.status import StatusEnum
 from qiskit.providers import JobStatus  # type: ignore
+from qiskit.transpiler import PassManager, CouplingMap  # type: ignore
+from qiskit.transpiler.preset_passmanagers.builtin_plugins import SabreLayoutPassManager  # type: ignore
+from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
-if TYPE_CHECKING:
-    from pytket.circuit import Circuit
+from pytket.circuit import Circuit, Node
+from pytket.architecture import Architecture
+from pytket.backends.status import StatusEnum
+from pytket.transform import Transform
+from pytket.passes import RebaseTket
+
+from ..qiskit_convert import tk_to_qiskit, qiskit_to_tk
+
 
 _STATUS_MAP = {
     JobStatus.CANCELLED: StatusEnum.CANCELLED,
@@ -43,6 +50,7 @@ _STATUS_MAP = {
     "QUEUED": StatusEnum.QUEUED,
     "RUNNING": StatusEnum.RUNNING,
 }
+
 
 def _batch_circuits(
     circuits: Sequence["Circuit"],
@@ -83,7 +91,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
     # 2) All nodes are default register
     # 3) Node with index "i" corresponds to integer "i" in the original coupling map
     # We confirm assumption 1) and 2) while producing the coupling map
-    coupling_map: List[Tuple[int, int]] = []
+    coupling_map: list[tuple[int, int]] = []
     for edge in architecture.coupling:
         assert len(edge[0].index) == 1
         assert len(edge[1].index) == 1

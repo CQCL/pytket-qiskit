@@ -51,7 +51,7 @@ from pytket.passes import (
     AutoRebase,
     BasePass,
     CliffordSimp,
-    CXMappingPass,
+    CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
     KAKDecomposition,
@@ -61,7 +61,6 @@ from pytket.passes import (
     SimplifyInitial,
     SynthesiseTket,
 )
-from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     DirectednessPredicate,
     GateSetPredicate,
@@ -94,13 +93,12 @@ from ..qiskit_convert import (
     tk_to_qiskit,
 )
 from .config import QiskitConfig
-from .ibm_utils import _STATUS_MAP, _batch_circuits
+from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
 
 _DEBUG_HANDLE_PREFIX = "_MACHINE_DEBUG_"
-
 
 
 def _gen_debug_results(n_bits: int, shots: int) -> PrimitiveResult:

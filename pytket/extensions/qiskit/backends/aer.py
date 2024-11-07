@@ -35,7 +35,7 @@ from pytket.passes import (
     AutoRebase,
     BasePass,
     CliffordSimp,
-    CXMappingPass,
+    CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
     NaivePlacementPass,
@@ -43,7 +43,6 @@ from pytket.passes import (
     SynthesiseTket,
 )
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     ConnectivityPredicate,
     DefaultRegisterPredicate,
@@ -73,14 +72,13 @@ from .crosstalk_model import (
     CrosstalkParams,
     NoisyCircuitBuilder,
 )
-from .ibm_utils import _STATUS_MAP, _batch_circuits
+from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 
 if TYPE_CHECKING:
     from qiskit_aer import AerJob
     from qiskit_aer.backends.aerbackend import (  # type: ignore
         AerBackend as QiskitAerBackend,
     )
-
 
 
 def _default_q_index(q: Qubit) -> int:
@@ -227,7 +225,8 @@ class _AerBaseBackend(Backend):
             and self._backend_info.get_misc("characterisation")
         ):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level  # type: ignore
+                arch,
+                optimisation_level,  # type: ignore
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)
@@ -344,9 +343,9 @@ class _AerBaseBackend(Backend):
                 include_density_matrix=self._supports_density_matrix,
             )
             for circ_index, backres in enumerate(backresults):
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
-                    "result"
-                ] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
+                    backres
+                )
 
             return cast(BackendResult, self._cache[handle]["result"])
 

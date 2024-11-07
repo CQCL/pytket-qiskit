@@ -15,7 +15,6 @@
 from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
-    Any,
     Optional,
 )
 
@@ -38,6 +37,7 @@ if TYPE_CHECKING:
     from collections import Counter
 
     from qiskit_ibm_runtime import QiskitRuntimeService  # type: ignore
+
 
 class IBMQEmulatorBackend(Backend):
     """A backend which uses the AerBackend to loaclly emulate the behaviour of

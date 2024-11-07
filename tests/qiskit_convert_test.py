@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import warnings
 from collections import Counter
 from math import pi
 
@@ -1171,4 +1172,11 @@ def test_nonregister_bits() -> None:
     c = Circuit(1).X(0).measure_all()
     c.rename_units({Bit(0): Bit(1)})
     with pytest.raises(NotImplementedError):
+        tk_to_qiskit(c)
+
+
+def test_implicit_swap_warning() -> None:
+    c = Circuit(2).H(0).SWAP(0, 1)
+    c.replace_SWAPs()
+    with pytest.warns(UserWarning, match="The pytket Circuit contains implicit qubit"):
         tk_to_qiskit(c)

@@ -6,7 +6,8 @@
 
 ## Unreleased
 
--  Fix handling of non-default registers when selecting bits in results.
+- Fix handling of non-default registers when selecting bits in results.
+- Update default compilation to use `Qiskit` `SabreLayoutPassManager` as a `CustomPass`.
 
 ## 0.58.0 (October 2024)
 

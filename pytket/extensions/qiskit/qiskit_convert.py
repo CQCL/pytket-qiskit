@@ -15,6 +15,7 @@
 
 """Methods to allow conversion between Qiskit and pytket circuit classes
 """
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from inspect import signature
@@ -90,7 +91,6 @@ from qiskit.circuit.library import (
     StatePreparation,
     UnitaryGate,
 )
-import warnings
 
 if TYPE_CHECKING:
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore

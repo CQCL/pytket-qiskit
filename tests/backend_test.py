@@ -65,9 +65,13 @@ from pytket.extensions.qiskit.backends.crosstalk_model import (
     NoisyCircuitBuilder,
 )
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
-from pytket.passes import CliffordSimp
+from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.predicates import CompilationUnit, NoMidMeasurePredicate
+from pytket.predicates import (
+    CompilationUnit,
+    ConnectivityPredicate,
+    NoMidMeasurePredicate,
+)
 from pytket.transform import Transform
 from pytket.utils.expectations import (
     get_operator_expectation_value,
@@ -986,6 +990,31 @@ def lift_perm(p: dict[int, int]) -> np.ndarray:
                 j |= 1 << (n - 1 - p[q])
         pm[j][i] = 1
     return pm
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
+    # of routing
+    c = Circuit(7)
+    c.H(0).H(1).H(2)
+    c.CX(0, 1).CX(1, 2)
+    c.Rx(0.25, 1).Ry(0.75, 1).Rz(0.5, 2)
+    c.CCX(2, 1, 0)
+    c.CY(1, 0).CY(2, 1)
+    c.H(0).H(1).H(2)
+    c.Rz(0.125, 0)
+    c.X(1)
+    c.Rz(0.125, 2).X(2).Rz(0.25, 2)
+    c.SX(3).Rz(0.125, 3).SX(3)
+    c.CX(0, 3).CX(0, 4)
+    c.remove_blank_wires()
+    FlattenRelabelRegistersPass().apply(c)
+    c_pred = ConnectivityPredicate(brisbane_backend.backend_info.architecture)
+    for ol in range(3):
+        p = brisbane_backend.default_compilation_pass(optimisation_level=ol)
+        cu = CompilationUnit(c)
+        p.apply(cu)
+        assert c_pred.verify(cu.circuit)
 
 
 # pytket-extensions issue #69

@@ -1009,7 +1009,7 @@ def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
     c.CX(0, 3).CX(0, 4)
     c.remove_blank_wires()
     FlattenRelabelRegistersPass().apply(c)
-    c_pred = ConnectivityPredicate(brisbane_backend.backend_info.architecture)
+    c_pred = ConnectivityPredicate(cast(Architecture, brisbane_backend.backend_info.architecture))
     for ol in range(3):
         p = brisbane_backend.default_compilation_pass(optimisation_level=ol)
         cu = CompilationUnit(c)

@@ -857,7 +857,7 @@ supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
 def _has_implicit_permutation(circ: Circuit) -> bool:
-    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permuation().items())
+    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
 
 
 def tk_to_qiskit(

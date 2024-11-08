@@ -84,6 +84,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
     Converts a pytket Architecture object to a Qiskit CouplingMap object.
 
     :param architecture: Architecture to be converted
+    :return: A Qiskit CouplingMap object corresponding to the same connectivity
     """
     # we can make some assumptions from how the Architecture object is
     # originally constructed from the Qiskit CouplingMap:
@@ -112,6 +113,8 @@ def _gen_lightsabre_transformation(  # type: ignore
     :param optimization_level: Corresponds to qiskit optmization levels
     :param seed: LightSABRE routing is stochastic, with this parameter setting the seed
     :param attempts: Number of generated random solutions to pick from.
+    :return: A function that accepts a pytket Circuit and returns a new Circuit that
+        has been routed to the architecture using LightSABRE
     """
     config: PassManagerConfig = PassManagerConfig(
         coupling_map=_architecture_to_couplingmap(architecture),

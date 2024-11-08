@@ -35,7 +35,7 @@ from pytket.passes import (
     AutoRebase,
     BasePass,
     CliffordSimp,
-    CXMappingPass,
+    CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
     NaivePlacementPass,
@@ -43,7 +43,6 @@ from pytket.passes import (
     SynthesiseTket,
 )
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     ConnectivityPredicate,
     DefaultRegisterPredicate,
@@ -73,7 +72,7 @@ from .crosstalk_model import (
     CrosstalkParams,
     NoisyCircuitBuilder,
 )
-from .ibm_utils import _STATUS_MAP, _batch_circuits
+from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 
 if TYPE_CHECKING:
     from qiskit_aer import AerJob
@@ -164,32 +163,11 @@ class _AerBaseBackend(Backend):
         self,
         arch: Architecture,
         optimisation_level: int = 2,
-        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         assert optimisation_level in range(3)
-        if placement_options is not None:
-            noise_aware_placement = NoiseAwarePlacement(
-                arch,
-                self._backend_info.averaged_node_gate_errors,  # type: ignore
-                self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                self._backend_info.averaged_readout_errors,  # type: ignore
-                **placement_options,
-            )
-        else:
-            noise_aware_placement = NoiseAwarePlacement(
-                arch,
-                self._backend_info.averaged_node_gate_errors,  # type: ignore
-                self._backend_info.averaged_edge_gate_errors,  # type: ignore
-                self._backend_info.averaged_readout_errors,  # type: ignore
-            )
-
         arch_specific_passes = [
-            CXMappingPass(
-                arch,
-                noise_aware_placement,
-                directed_cx=True,
-                delay_measures=False,
-            ),
+            AutoRebase({OpType.CX, OpType.TK1}),
+            CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
             NaivePlacementPass(arch),
         ]
         if optimisation_level == 0:
@@ -199,7 +177,8 @@ class _AerBaseBackend(Backend):
                     self.rebase_pass(),
                     *arch_specific_passes,
                     self.rebase_pass(),
-                ]
+                ],
+                False,
             )
         if optimisation_level == 1:
             return SequencePass(
@@ -208,7 +187,8 @@ class _AerBaseBackend(Backend):
                     SynthesiseTket(),
                     *arch_specific_passes,
                     SynthesiseTket(),
-                ]
+                ],
+                False,
             )
         return SequencePass(
             [
@@ -217,7 +197,8 @@ class _AerBaseBackend(Backend):
                 *arch_specific_passes,
                 CliffordSimp(False),
                 SynthesiseTket(),
-            ]
+            ],
+            False,
         )
 
     def _arch_independent_default_compilation_pass(
@@ -233,7 +214,6 @@ class _AerBaseBackend(Backend):
     def default_compilation_pass(
         self,
         optimisation_level: int = 2,
-        placement_options: Optional[dict[str, Any]] = None,
     ) -> BasePass:
         """
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
@@ -245,7 +225,8 @@ class _AerBaseBackend(Backend):
             and self._backend_info.get_misc("characterisation")
         ):
             return self._arch_dependent_default_compilation_pass(
-                arch, optimisation_level, placement_options=placement_options  # type: ignore
+                arch,  # type: ignore
+                optimisation_level,
             )
 
         return self._arch_independent_default_compilation_pass(optimisation_level)

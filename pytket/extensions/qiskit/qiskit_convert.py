@@ -756,7 +756,13 @@ def append_tk_command_to_qiskit(
             if a.reg_name != regname:
                 raise NotImplementedError("Conditions can only use a single register")
         instruction = append_tk_command_to_qiskit(
-            op.op, args[width:], qcirc, qregmap, cregmap, symb_map, range_preds  # type: ignore
+            op.op,  # type: ignore
+            args[width:],
+            qcirc,
+            qregmap,
+            cregmap,
+            symb_map,
+            range_preds,
         )
         if len(cregmap[regname]) == width:
             for i, a in enumerate(args[:width]):
@@ -1051,7 +1057,7 @@ def process_characterisation_from_config(
 
 
 def get_avg_characterisation(
-    characterisation: dict[str, Any]
+    characterisation: dict[str, Any],
 ) -> dict[str, dict[Node, float]]:
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors

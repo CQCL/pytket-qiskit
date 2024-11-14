@@ -4,8 +4,9 @@
 
 # Changelog
 
-## Unreleased
+## 0.59.0 (November 2024)
 
+- Updated pytket version requirement to 1.34.0.
 - Fix handling of non-default registers when selecting bits in results.
 - Update default compilation to use `Qiskit` `SabreLayoutPassManager` as a `CustomPass`.
 - Fix handling of non-default registers when selecting bits in results.

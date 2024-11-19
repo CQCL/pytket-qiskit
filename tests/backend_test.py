@@ -59,12 +59,12 @@ from pytket.extensions.qiskit import (
     qiskit_to_tk,
     tk_to_qiskit,
 )
-from pytket.extensions.qiskit.backends.ibm_utils import _gen_lightsabre_transformation
 from pytket.extensions.qiskit.backends.crosstalk_model import (
     CrosstalkParams,
     FractionalUnitary,
     NoisyCircuitBuilder,
 )
+from pytket.extensions.qiskit.backends.ibm_utils import _gen_lightsabre_transformation
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
 from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass, SequencePass
 from pytket.pauli import Pauli, QubitPauliString

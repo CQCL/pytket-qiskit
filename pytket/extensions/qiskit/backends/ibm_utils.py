@@ -103,14 +103,13 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 
 def _gen_lightsabre_transformation(  # type: ignore
-    architecture: Architecture, optimization_level: int = 2, seed=0, attempts=20
+    architecture: Architecture, seed=0, attempts=20
 ) -> Callable[[Circuit], Circuit]:
     """
     Generates a function that can be passed to CustomPass for running
     LightSABRE routing.
 
     :param architecture: Architecture LightSABRE routes circuits to match
-    :param optimization_level: Corresponds to qiskit optmization levels
     :param seed: LightSABRE routing is stochastic, with this parameter setting the seed
     :param attempts: Number of generated random solutions to pick from.
     :return: A function that accepts a pytket Circuit and returns a new Circuit that
@@ -147,7 +146,7 @@ def _gen_lightsabre_transformation(  # type: ignore
     )
 
     def lightsabre(circuit: Circuit) -> Circuit:
-        c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit)))
+        c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit, replace_implicit_swaps = True)))
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         RebaseTket().apply(c)

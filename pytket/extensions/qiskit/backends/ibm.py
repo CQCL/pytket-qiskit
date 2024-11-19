@@ -55,7 +55,6 @@ from pytket.passes import (
     DecomposeBoxes,
     FullPeepholeOptimise,
     KAKDecomposition,
-    NaivePlacementPass,
     RemoveBarriers,
     RemoveRedundancies,
     SequencePass,
@@ -412,7 +411,7 @@ class IBMQBackend(Backend):
             passlist.append(RemoveBarriers())
             passlist.append(AutoRebase({OpType.CX, OpType.H, OpType.Rz}).apply(c))
             passlist.append(
-                GreedyPauliSimp(thread_timeout=timeout, no_reduce=True, trials=10)
+                GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10)
             )
         arch = backend_info.architecture
         assert arch is not None
@@ -424,7 +423,6 @@ class IBMQBackend(Backend):
                     "lightsabre",
                 )
             )
-            passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:
@@ -440,7 +438,7 @@ class IBMQBackend(Backend):
         passlist.extend(
             [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
         )
-        return SequencePass(passlist, False)
+        return SequencePass(passlist)
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:

@@ -38,7 +38,8 @@ from pytket.passes import (
     CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
-    NaivePlacementPass,
+    GreedyPauliSimp,
+    RemoveBarriers,
     SequencePass,
     SynthesiseTket,
 )
@@ -168,8 +169,7 @@ class _AerBaseBackend(Backend):
         assert optimisation_level in range(4)
         arch_specific_passes = [
             AutoRebase({OpType.CX, OpType.TK1}),
-            CustomPass(_gen_lightsabre_transformation(arch, optimisation_level)),
-            NaivePlacementPass(arch),
+            CustomPass(_gen_lightsabre_transformation(arch), label="lightsabrepass"),
         ]
         if optimisation_level == 0:
             return SequencePass(
@@ -179,7 +179,6 @@ class _AerBaseBackend(Backend):
                     *arch_specific_passes,
                     self.rebase_pass(),
                 ],
-                False,
             )
         if optimisation_level == 1:
             return SequencePass(
@@ -189,7 +188,6 @@ class _AerBaseBackend(Backend):
                     *arch_specific_passes,
                     SynthesiseTket(),
                 ],
-                False,
             )
         if optimisation_level == 2:
             return SequencePass(
@@ -200,22 +198,22 @@ class _AerBaseBackend(Backend):
                     CliffordSimp(False),
                     SynthesiseTket(),
                 ],
-                False,
             )
         return SequencePass(
             [
-                DecomposesBoxes(),
+                DecomposeBoxes(),
                 RemoveBarriers(),
                 AutoRebase({OpType.CX, OpType.H, OpType.Rz}),
-                GreedyPauliSimp(thread_timeout=timeout, no_reduce=True, trials=10),
+                GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10),
                 *arch_specific_passes,
                 SynthesiseTket(),
-                False,
-            ]
+            ],
         )
 
     def _arch_independent_default_compilation_pass(
-        self, optimisation_level: int = 2, timeout: int = 300,
+        self,
+        optimisation_level: int = 2,
+        timeout: int = 300,
     ) -> BasePass:
         assert optimisation_level in range(4)
         if optimisation_level == 0:
@@ -230,8 +228,10 @@ class _AerBaseBackend(Backend):
                     DecomposeBoxes(),
                     RemoveBarriers(),
                     AutoRebase({OpType.CX, OpType.H, OpType.Rz}),
-                    GreedyPauliSimp(thread_timeout=timeout, no_reduce=True, trials=10),
-                ]
+                    GreedyPauliSimp(
+                        thread_timeout=timeout, only_reduce=True, trials=10
+                    ),
+                ],
             )
 
     def default_compilation_pass(
@@ -243,17 +243,12 @@ class _AerBaseBackend(Backend):
         See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
         """
         arch = self._backend_info.architecture
-        if (
-            self._has_arch
-            and arch.coupling  # type: ignore
-            and self._backend_info.get_misc("characterisation")
-        ):
+        if self._has_arch and arch.coupling:  # type: ignore
             return self._arch_dependent_default_compilation_pass(
                 arch,  # type: ignore
                 optimisation_level,
                 timeout,
             )
-
         return self._arch_independent_default_compilation_pass(
             optimisation_level, timeout
         )

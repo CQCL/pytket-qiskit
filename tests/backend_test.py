@@ -59,13 +59,14 @@ from pytket.extensions.qiskit import (
     qiskit_to_tk,
     tk_to_qiskit,
 )
+from pytket.extensions.qiskit.backends.ibm_utils import _gen_lightsabre_transformation
 from pytket.extensions.qiskit.backends.crosstalk_model import (
     CrosstalkParams,
     FractionalUnitary,
     NoisyCircuitBuilder,
 )
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
-from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass
+from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass, SequencePass
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import (
     CompilationUnit,
@@ -1496,3 +1497,47 @@ def test_mc_gate_on_aer() -> None:
     c.measure_all()
     r = b.run_circuit(c, n_shots=10)
     assert r.get_counts() == Counter({(1, 1, 1): 10})
+
+
+def test_optimisation_level_3_compilation() -> None:
+    b = AerBackend()
+    a = Architecture([(0, 1), (0, 2), (0, 3), (3, 4), (4, 5), (4, 6), (4, 7)])
+    b._has_arch = True
+    b._backend_info.architecture = a
+
+    c = Circuit(6)
+    for _ in range(6):
+        for i in range(4):
+            for j in range(i + 1, 4):
+                c.CX(i, j)
+                c.Rz(0.23, j)
+                c.S(j)
+            c.H(i)
+
+    compiled_2 = b.get_compiled_circuit(c, 2)
+    compiled_3 = b.get_compiled_circuit(c, 3)
+
+    assert compiled_2.n_2qb_gates() == 78
+    assert compiled_2.n_gates == 205
+    assert compiled_2.depth() == 147
+    assert compiled_3.n_2qb_gates() == 61
+    assert compiled_3.n_gates == 164
+    assert compiled_3.depth() == 114
+
+
+def test_optimisation_level_3_serialisation() -> None:
+    b = AerBackend()
+    a = Architecture([(0, 1), (0, 2), (0, 3), (3, 4), (4, 5), (4, 6), (4, 7)])
+    b._has_arch = True
+    b._backend_info.architecture = a
+
+    p_dict = b.default_compilation_pass(3).to_dict()
+    passlist = SequencePass.from_dict(
+        p_dict,
+        {
+            "lightsabrepass": _gen_lightsabre_transformation(
+                b._backend_info.architecture
+            )
+        },
+    )
+    assert p_dict == passlist.to_dict()

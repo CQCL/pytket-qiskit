@@ -146,7 +146,9 @@ def _gen_lightsabre_transformation(  # type: ignore
     )
 
     def lightsabre(circuit: Circuit) -> Circuit:
-        c: Circuit = qiskit_to_tk(sabre_pass.run(tk_to_qiskit(circuit, replace_implicit_swaps = True)))
+        c: Circuit = qiskit_to_tk(
+            sabre_pass.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
+        )
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         RebaseTket().apply(c)

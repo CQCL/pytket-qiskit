@@ -54,6 +54,7 @@ from pytket.passes import (
     CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
+    GreedyPauliSimp,
     KAKDecomposition,
     RemoveBarriers,
     RemoveRedundancies,
@@ -409,7 +410,7 @@ class IBMQBackend(Backend):
             passlist.append(FullPeepholeOptimise())
         elif optimisation_level == 3:
             passlist.append(RemoveBarriers())
-            passlist.append(AutoRebase({OpType.CX, OpType.H, OpType.Rz}).apply(c))
+            passlist.append(AutoRebase({OpType.CX, OpType.H, OpType.Rz}))
             passlist.append(
                 GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10)
             )

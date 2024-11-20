@@ -4,6 +4,9 @@
 
 # Changelog
 
+## 0.60.0 (November 2024)
+- Add new level 3 optimisation that uses `GreedyPauliSimp`
+
 ## 0.59.0 (November 2024)
 
 - Updated pytket version requirement to 1.34.0.
@@ -11,7 +14,6 @@
 - Update default compilation to use `Qiskit` `SabreLayoutPassManager` as a `CustomPass`.
 - Fix handling of non-default registers when selecting bits in results.
 - The {py:func}`tk_to_qiskit` converter gives a warning if the input {py:class}`~pytket.circuit.Circuit` contains [implicit qubit permutations](https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#implicit-qubit-permutations). 
-- Add new level 3 optimisation that uses `GreedyPauliSimp`
 
 ## 0.58.0 (October 2024)
 

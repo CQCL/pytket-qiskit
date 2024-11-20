@@ -230,7 +230,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 - \[2\] {py:class}`~pytket._tket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gate set is either $\{X, SX, Rz, CX\}$, $\{X, SX, Rz, ECR\}$, or $\{X, SX, Rz, CZ\}$. The more idealised Aer simulators have a much broader range of supported gates.
 - \[3\] This is imported from qiskit and corresponds to the method in "LightSABRE: A Lightweight and Enhanced SABRE Algorithm", Henry Zou, Matthew Treinish, Kevin Hartman, Alexander Ivrii, Jake Lishman, arXiv:2409.08368.
 
-**Note:** The {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend` is the same as above.
+**Note:** The {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend` is the same as above if a {py:class}`NoiseModel` is used. A {py:class}`NoiseModel` implicitly defines connectivity constraints via edge errors. If no {py:class}`NoiseModel` is used then then any passes related to connectivity constraints are omitted from the {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend`.
 
 ## Noise Modelling
 

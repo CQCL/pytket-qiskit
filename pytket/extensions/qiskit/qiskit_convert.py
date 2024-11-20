@@ -871,6 +871,10 @@ def tk_to_qiskit(
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
+    Please note that implicit swaps in a pytket Circuit are not handled by default.
+    Consider using the replace_implicit_swaps to replace these implicit swaps with
+    SWAP gates.
+
     :param tkcirc: A :py:class:`Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.

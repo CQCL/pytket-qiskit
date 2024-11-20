@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.60.0 (Unreleased)
+
+- Revert a change made in release v0.59.0 where users are warned about implicit qubit permutations in {py:func}`tk_to_qiskit`. This avoids spamming the user with unhelpful warnings when using pytket-qiskit backends. These backends handle implicit permutations automatically.
+
 ## 0.59.0 (November 2024)
 
 - Updated pytket version requirement to 1.34.0.

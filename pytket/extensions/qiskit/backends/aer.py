@@ -227,9 +227,7 @@ class _AerBaseBackend(Backend):
                 DecomposeBoxes(),
                 RemoveBarriers(),
                 AutoRebase({OpType.CX, OpType.H, OpType.Rz}),
-                GreedyPauliSimp(
-                    thread_timeout=timeout, only_reduce=True, trials=10
-                ),
+                GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10),
             ],
         )
 

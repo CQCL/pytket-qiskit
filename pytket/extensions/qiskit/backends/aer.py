@@ -222,17 +222,16 @@ class _AerBaseBackend(Backend):
             return SequencePass([DecomposeBoxes(), SynthesiseTket()])
         if optimisation_level == 2:
             return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
-        if optimisation_level == 3:
-            return SequencePass(
-                [
-                    DecomposeBoxes(),
-                    RemoveBarriers(),
-                    AutoRebase({OpType.CX, OpType.H, OpType.Rz}),
-                    GreedyPauliSimp(
-                        thread_timeout=timeout, only_reduce=True, trials=10
-                    ),
-                ],
-            )
+        return SequencePass(
+            [
+                DecomposeBoxes(),
+                RemoveBarriers(),
+                AutoRebase({OpType.CX, OpType.H, OpType.Rz}),
+                GreedyPauliSimp(
+                    thread_timeout=timeout, only_reduce=True, trials=10
+                ),
+            ],
+        )
 
     def default_compilation_pass(
         self,

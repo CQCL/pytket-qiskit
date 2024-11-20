@@ -190,7 +190,8 @@ For instance those familiar with qiskit may wish to convert their circuits to py
 
 ## Default Compilation
 
-Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:meth}`~pytket.backends.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an `optimisation_level` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the {py:class}`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below.
+Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:meth}`~pytket.backends.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an `optimisation_level` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the {py:class}`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below. Note that optimisation levels 0, 1 and
+2 preserve barriers in a circuit, while optimisation level 3 will remove them.
 
 :::{list-table} **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
 :widths: 25 25 25
@@ -199,28 +200,42 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * - optimisation_level = 0
   - optimisation_level = 1
   - optimisation_level = 2 [1]
+  - optimisation_level = 3
 * - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
+  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
   - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
   - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
+  - [RemoveBarriers](inv:#*.passes.RmoveBarriers)
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]
+  - [AutoRebase [2]](inv:#*.AutoRebase)
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [KAKDecomposition(allow_swaps=False)](inv:#*.passes.KAKDecomposition)
+  - [GreedyPauliSimp](inv:#*.passes.GreedyPauliSimp)
 * - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
   - [AutoRebase [2]](inv:#*.AutoRebase)
   - [CliffordSimp(allow_swaps=False)](inv:#*.passes.CliffordSimp)
+  - [AutoRebase [2]](inv:#*.AutoRebase)
 * -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - LightSabre [3]
 * -
   -
   - [AutoRebase [2]](inv:#*.AutoRebase)
+  - [SynthesiseTket](inv:#*.SynthesiseTket)
 * -
+  -
+  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
+  - [AutoRebase [2]](inv:#*.AutoRebase)
+
+* -
+  -
   -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
 

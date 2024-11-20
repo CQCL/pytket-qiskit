@@ -54,8 +54,9 @@ from pytket.passes import (
     CustomPass,
     DecomposeBoxes,
     FullPeepholeOptimise,
+    GreedyPauliSimp,
     KAKDecomposition,
-    NaivePlacementPass,
+    RemoveBarriers,
     RemoveRedundancies,
     SequencePass,
     SimplifyInitial,
@@ -344,6 +345,7 @@ class IBMQBackend(Backend):
     def default_compilation_pass(
         self,
         optimisation_level: int = 2,
+        timeout: int = 300,
     ) -> BasePass:
         """
         A suggested compilation pass that will will, if possible, produce an equivalent
@@ -360,12 +362,15 @@ class IBMQBackend(Backend):
 
         :param optimisation_level: The level of optimisation to perform during
             compilation.
+        :param timeout: Parameter for optimisation level 3, given in seconds.
 
             - Level 0 does the minimum required to solves the device constraints,
               without any optimisation.
             - Level 1 additionally performs some light optimisations.
             - Level 2 (the default) adds more computationally intensive optimisations
               that should give the best results from execution.
+            - Level 3 re-synthesises the circuit using the computationally intensive
+              `GreedyPauliSimp`. This will remove any barriers while optimising.
 
 
         :return: Compilation pass guaranteeing required predicates.
@@ -373,7 +378,7 @@ class IBMQBackend(Backend):
         config: PulseBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
-            config, props, optimisation_level
+            config, props, optimisation_level, timeout
         )
 
     @staticmethod
@@ -381,12 +386,13 @@ class IBMQBackend(Backend):
         config: PulseBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
+        timeout: int = 300,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
         primitive_gates = _get_primitive_gates(_tk_gate_set(config))
         supports_rz = OpType.Rz in primitive_gates
 
-        assert optimisation_level in range(3)
+        assert optimisation_level in range(4)
         passlist = [DecomposeBoxes()]
         # If you make changes to the default_compilation_pass,
         # then please update this page accordingly
@@ -402,14 +408,22 @@ class IBMQBackend(Backend):
             passlist.append(SynthesiseTket())
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
+        elif optimisation_level == 3:
+            passlist.append(RemoveBarriers())
+            passlist.append(AutoRebase({OpType.CX, OpType.H, OpType.Rz}))
+            passlist.append(
+                GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10)
+            )
         arch = backend_info.architecture
         assert arch is not None
         if not isinstance(arch, FullyConnected):
             passlist.append(AutoRebase(primitive_gates))
             passlist.append(
-                CustomPass(_gen_lightsabre_transformation(arch, optimisation_level))
+                CustomPass(
+                    _gen_lightsabre_transformation(arch, optimisation_level),
+                    "lightsabre",
+                )
             )
-            passlist.append(NaivePlacementPass(arch))
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:
@@ -420,11 +434,12 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-
+        if optimisation_level == 3:
+            passlist.append(SynthesiseTket())
         passlist.extend(
             [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
         )
-        return SequencePass(passlist, False)
+        return SequencePass(passlist)
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:

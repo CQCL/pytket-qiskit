@@ -207,30 +207,35 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - [RemoveBarriers](inv:#*.passes.RmoveBarriers)
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]
-  - GreedyPauliSimp
+  - [AutoRebase [2]](inv:#*.AutoRebase)
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [KAKDecomposition(allow_swaps=False)](inv:#*.passes.KAKDecomposition)
-  - LightSabre [3]
+  - [GreedyPauliSimp](inv:#*.passes.GreedyPauliSimp)
 * - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
   - [AutoRebase [2]](inv:#*.AutoRebase)
   - [CliffordSimp(allow_swaps=False)](inv:#*.passes.CliffordSimp)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - [AutoRebase [2]](inv:#*.AutoRebase)
 * -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - LightSabre [3]
 * -
   -
   - [AutoRebase [2]](inv:#*.AutoRebase)
-  -
+  - [SynthesiseTket](inv:#*.SynthesiseTket)
 * -
   -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
+  - [AutoRebase [2]](inv:#*.AutoRebase)
+
+* -
+  -
+  -
   - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
 
 :::

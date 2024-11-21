@@ -145,7 +145,9 @@ class _AerBaseBackend(Backend):
 
     # Map from (job ID, circuit index) to (number of qubits, postprocessing circuit),
     # i.e. from the first two components of the ResultHandle to the last two.
-    _circuit_data: dict[tuple[str, int], tuple[int, str]] = {}
+    _circuit_data: dict[
+        tuple[int | float | complex | str | bool | bytes, int], tuple[int, str]
+    ] = {}
 
     @property
     def required_predicates(self) -> list[Predicate]:

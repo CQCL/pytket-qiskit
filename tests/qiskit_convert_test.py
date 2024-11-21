@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import warnings
 from collections import Counter
 from math import pi
 
@@ -64,7 +65,6 @@ from pytket.circuit import (
 from pytket.extensions.qiskit import IBMQBackend, qiskit_to_tk, tk_to_qiskit
 from pytket.extensions.qiskit.backends import (
     qiskit_aer_backend,
-    AerStateBackend,
     AerBackend,
 )
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
@@ -1178,9 +1178,9 @@ def test_implicit_swap_warning() -> None:
         tk_to_qiskit(c)
 
     shots_backend = AerBackend()
-    with pytest.warns(UserWarning) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         shots_backend.run_circuit(c)
-        assert len(record) == 0
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/337

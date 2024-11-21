@@ -64,8 +64,8 @@ from pytket.circuit import (
 )
 from pytket.extensions.qiskit import IBMQBackend, qiskit_to_tk, tk_to_qiskit
 from pytket.extensions.qiskit.backends import (
-    qiskit_aer_backend,
     AerBackend,
+    qiskit_aer_backend,
 )
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult

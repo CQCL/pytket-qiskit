@@ -868,7 +868,9 @@ def _has_implicit_permutation(circ: Circuit) -> bool:
 
 
 def tk_to_qiskit(
-    tkcirc: Circuit, replace_implicit_swaps: bool = False, perm_warning: bool = True,
+    tkcirc: Circuit,
+    replace_implicit_swaps: bool = False,
+    perm_warning: bool = True,
 ) -> QuantumCircuit:
     """
     Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
@@ -892,7 +894,11 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
 
-    if _has_implicit_permutation(tkcirc) and perm_warning and not replace_implicit_swaps:
+    if (
+        _has_implicit_permutation(tkcirc)
+        and perm_warning
+        and not replace_implicit_swaps
+    ):
         warnings.warn(
             "The pytket Circuit contains implicit qubit permutations"
             + " which aren't handled by default."

@@ -861,8 +861,12 @@ _protected_tket_gates = (
 supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
+def _has_implicit_permutation(circ: Circuit) -> bool:
+    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
+
+
 def tk_to_qiskit(
-    tkcirc: Circuit, replace_implicit_swaps: bool = False
+    tkcirc: Circuit, replace_implicit_swaps: bool = False, perm_warning: bool = True,
 ) -> QuantumCircuit:
     """
     Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
@@ -871,7 +875,7 @@ def tk_to_qiskit(
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    Please note that implicit swaps in a pytket Circuit are not handled by default.
+    Note that implicit swaps in a pytket Circuit are not handled by default.
     Consider using the replace_implicit_swaps flag to replace these implicit swaps with
     SWAP gates.
 
@@ -883,6 +887,14 @@ def tk_to_qiskit(
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
+
+    if _has_implicit_permutation(tkcirc) and perm_warning and not replace_implicit_swaps:
+        warnings.warn(
+            "The pytket Circuit contains implicit qubit permutations"
+            + " which aren't handled by default."
+            + " Consider using the replace_implicit_swaps flag in tk_to_qiskit or"
+            + " replacing them using Circuit.replace_implicit_swaps()."
+        )
 
     qcirc = QuantumCircuit(name=tkc.name)
     qreg_sizes: dict[str, int] = {}

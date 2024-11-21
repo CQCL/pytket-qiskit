@@ -8,6 +8,7 @@
 
 - Revert a change made in release v0.59.0 where users are warned about implicit qubit permutations in {py:func}`tk_to_qiskit`. This avoids spamming the user with unhelpful warnings when using pytket-qiskit backends. These backends handle implicit permutations automatically.
 - Add new level 3 optimisation that uses `GreedyPauliSimp`
+- Fix `get_results()` for Aer backends when circuits with different numbers of qubits or postprocessing circuits submitted together.
 
 ## 0.59.0 (November 2024)
 

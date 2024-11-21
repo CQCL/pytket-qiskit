@@ -286,7 +286,6 @@ class _AerBaseBackend(Backend):
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
-        perm_warning = False
 
         for (n_shots, batch), indices in zip(circuit_batches, batch_order):
             qcs, ppcirc_strs, tkc_qubits_count = [], [], []
@@ -297,7 +296,7 @@ class _AerBaseBackend(Backend):
                 else:
                     c0, ppcirc_rep = tkc, None
 
-                qc = tk_to_qiskit(c0, replace_implicit_swaps, perm_warning)
+                qc = tk_to_qiskit(c0, replace_implicit_swaps, perm_warning=False)
 
                 if self.supports_state:
                     qc.save_state()

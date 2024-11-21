@@ -884,7 +884,7 @@ def tk_to_qiskit(
     :param tkcirc: A :py:class:`Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
-    :param perm_warnings: Warn on if input circuit has implicit qubit permutations, True by
+    :param perm_warnings: Warn if an input circuit has implicit qubit permutations, True by
         default.
     :return: The converted circuit
     """

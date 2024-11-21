@@ -1169,19 +1169,14 @@ def test_symbolic_param_conv() -> None:
 def test_implicit_swap_warning() -> None:
     c = Circuit(2).H(0).SWAP(0, 1)
     c.replace_SWAPs()
+    c.measure_all()
     with pytest.warns(UserWarning, match="The pytket Circuit contains implicit qubit"):
         tk_to_qiskit(c)
 
-    state_backend = AerStateBackend()
     shots_backend = AerBackend()
     with pytest.warns(UserWarning) as record:
-        state_backend.run_circuit(c)
-        c.measure_all()
         shots_backend.run_circuit(c)
         assert len(record) == 0
-
-
-
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/337

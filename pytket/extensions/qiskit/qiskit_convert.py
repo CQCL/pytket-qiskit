@@ -15,6 +15,7 @@
 
 """Methods to allow conversion between Qiskit and pytket circuit classes
 """
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from inspect import signature
@@ -862,6 +863,7 @@ supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
 def _has_implicit_permutation(circ: Circuit) -> bool:
+    """Returns True if a Circuit has a non-trivial permutation of qubits, false otherwise."""
     return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
 
 

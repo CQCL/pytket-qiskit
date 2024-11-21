@@ -892,7 +892,7 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
 
-    if _has_implicit_permutation(tkcirc) and perm_warning not replace_implicit_swaps:
+    if _has_implicit_permutation(tkcirc) and perm_warning and not replace_implicit_swaps:
         warnings.warn(
             "The pytket Circuit contains implicit qubit permutations"
             + " which aren't handled by default."

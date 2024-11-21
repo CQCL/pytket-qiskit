@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import warnings
 from collections import Counter
 from math import pi
 
@@ -62,7 +63,7 @@ from pytket.circuit import (
     reg_eq,
 )
 from pytket.extensions.qiskit import IBMQBackend, qiskit_to_tk, tk_to_qiskit
-from pytket.extensions.qiskit.backends import qiskit_aer_backend
+from pytket.extensions.qiskit.backends import qiskit_aer_backend, AerStateBackend, AerBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 from pytket.extensions.qiskit.result_convert import qiskit_result_to_backendresult
 from pytket.extensions.qiskit.tket_pass import TketAutoPass, TketPass
@@ -1164,6 +1165,23 @@ def test_symbolic_param_conv() -> None:
             for i in range(len(qc_transpiled_again.parameters))
         }
     )
+
+def test_implicit_swap_warning() -> None:
+    c = Circuit(2).H(0).SWAP(0, 1)
+    c.replace_SWAPs()
+    with pytest.warns(UserWarning, match="The pytket Circuit contains implicit qubit"):
+        tk_to_qiskit(c)
+
+    state_backend = AerStateBackend()
+    shots_backend = AerBackend()
+    with pytest.warns(UserWarning) as record:
+        state_backend.run_circuit(c)
+        c.measure_all()
+        shots_backend.run_circuit(c)
+        assert len(record) == 0
+
+
+
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/337

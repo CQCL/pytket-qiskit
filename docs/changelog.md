@@ -6,7 +6,8 @@
 
 ## 0.60.0 (Unreleased)
 
-- Revert a change made in release v0.59.0 where users are warned about implicit qubit permutations in {py:func}`tk_to_qiskit`. This avoids spamming the user with unhelpful warnings when using pytket-qiskit backends. These backends handle implicit permutations automatically.
+- Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`AerBackend`
+- Add a boolean `perm_warn` argument to {py:func}`tk_to_qiskit` indicating whether to give a warning if the input {py:class}`Circuit` has an implicit qubit permutation.
 - Add new level 3 optimisation that uses `GreedyPauliSimp`
 
 ## 0.59.0 (November 2024)

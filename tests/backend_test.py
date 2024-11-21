@@ -1541,3 +1541,13 @@ def test_optimisation_level_3_serialisation() -> None:
         },
     )
     assert p_dict == passlist.to_dict()
+
+
+def test_process_circuits_n_qubits() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/420
+    circs = [Circuit(1).X(0).measure_all(), Circuit(2).X(0).measure_all()]
+    b = AerBackend()
+    hs = b.process_circuits(circs, n_shots=10)
+    rs = b.get_results(hs)
+    assert rs[0].get_counts() == Counter({(1,): 10})
+    assert rs[1].get_counts() == Counter({(1, 0): 10})

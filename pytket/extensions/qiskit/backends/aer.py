@@ -302,7 +302,7 @@ class _AerBaseBackend(Backend):
                 else:
                     c0, ppcirc_rep = tkc, None
 
-                qc = tk_to_qiskit(c0, replace_implicit_swaps)
+                qc = tk_to_qiskit(c0, replace_implicit_swaps, perm_warning=False)
 
                 if self.supports_state:
                     qc.save_state()

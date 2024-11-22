@@ -9,6 +9,7 @@
 - Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`AerBackend`
 - Add a boolean `perm_warning` argument to {py:func}`tk_to_qiskit` indicating whether to give a warning if the input {py:class}`Circuit` has an implicit qubit permutation.
 - Add new level 3 optimisation that uses `GreedyPauliSimp`
+- Fix `get_results()` for Aer backends when circuits with different numbers of qubits or postprocessing circuits submitted together.
 
 ## 0.59.0 (November 2024)
 

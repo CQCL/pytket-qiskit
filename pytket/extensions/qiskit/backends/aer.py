@@ -143,6 +143,12 @@ class _AerBaseBackend(Backend):
     _has_arch: bool = False
     _needs_transpile: bool = False
 
+    # Map from (job ID, circuit index) to (number of qubits, postprocessing circuit),
+    # i.e. from the first two components of the ResultHandle to the last two.
+    _circuit_data: dict[
+        tuple[int | float | complex | str | bool | bytes, int], tuple[int, str]
+    ] = {}
+
     @property
     def required_predicates(self) -> list[Predicate]:
         return self._required_predicates
@@ -327,6 +333,7 @@ class _AerBaseBackend(Backend):
             for i, ind in enumerate(indices):
                 handle = ResultHandle(jobid, i, tkc_qubits_count[i], ppcirc_strs[i])
                 handle_list[ind] = handle
+                self._circuit_data[(jobid, i)] = (tkc_qubits_count[i], ppcirc_strs[i])
                 self._cache[handle] = {"job": job}
         return cast(list[ResultHandle], handle_list)
 
@@ -346,7 +353,7 @@ class _AerBaseBackend(Backend):
         try:
             return super().get_result(handle)
         except CircuitNotRunError:
-            jobid, _, qubit_n, ppc = handle
+            jobid = handle[0]
             try:
                 job: AerJob = self._cache[handle]["job"]
             except KeyError:
@@ -362,6 +369,7 @@ class _AerBaseBackend(Backend):
                 include_density_matrix=self._supports_density_matrix,
             )
             for circ_index, backres in enumerate(backresults):
+                qubit_n, ppc = self._circuit_data[(jobid, circ_index)]
                 self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
                     "result"
                 ] = backres

@@ -410,7 +410,34 @@ class IBMQBackend(Backend):
             passlist.append(FullPeepholeOptimise())
         elif optimisation_level == 3:
             passlist.append(RemoveBarriers())
-            passlist.append(AutoRebase({OpType.CX, OpType.H, OpType.Rz}))
+            passlist.append(
+                AutoRebase(
+                    {
+                        OpType.Z,
+                        OpType.X,
+                        OpType.Y,
+                        OpType.S,
+                        OpType.Sdg,
+                        OpType.V,
+                        OpType.Vdg,
+                        OpType.H,
+                        OpType.CX,
+                        OpType.CY,
+                        OpType.CZ,
+                        OpType.SWAP,
+                        OpType.Rz,
+                        OpType.Rx,
+                        OpType.Ry,
+                        OpType.T,
+                        OpType.Tdg,
+                        OpType.ZZMax,
+                        OpType.ZZPhase,
+                        OpType.XXPhase,
+                        OpType.YYPhase,
+                        OpType.PhasedX,
+                    }
+                ),
+            )
             passlist.append(
                 GreedyPauliSimp(thread_timeout=timeout, only_reduce=True, trials=10)
             )

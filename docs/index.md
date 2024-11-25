@@ -194,7 +194,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 2 preserve barriers in a circuit, while optimisation level 3 will remove them.
 
 :::{list-table} **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
-:widths: 25 25 25
+:widths: 25 25 25 25
 :header-rows: 1
 
 * - optimisation_level = 0
@@ -208,7 +208,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-  - [RemoveBarriers](inv:#*.passes.RmoveBarriers)
+  - [RemoveBarriers](inv:#*pytket._tket.passes.RemoveBarriers)
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]

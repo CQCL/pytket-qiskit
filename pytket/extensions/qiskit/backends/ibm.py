@@ -461,7 +461,7 @@ class IBMQBackend(Backend):
         """
         return_circuit = circuit.copy()
         if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:
-            warnings.warn(
+            warn(
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."
             )

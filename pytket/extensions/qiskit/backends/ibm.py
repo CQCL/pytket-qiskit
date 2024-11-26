@@ -447,8 +447,8 @@ class IBMQBackend(Backend):
             passlist.append(AutoRebase(primitive_gates))
             passlist.append(
                 CustomPass(
-                    _gen_lightsabre_transformation(arch, optimisation_level),
-                    "lightsabre",
+                    _gen_lightsabre_transformation(arch),
+                    "lightsabrepass",
                 )
             )
         if optimisation_level == 1:

@@ -1516,6 +1516,7 @@ def test_optimisation_level_3_compilation() -> None:
 
     compiled_2 = b.get_compiled_circuit(c, 2)
     compiled_3 = b.get_compiled_circuit(c, 3)
+    compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
     assert compiled_2.n_2qb_gates() == 78
     assert compiled_2.n_gates == 205
@@ -1523,6 +1524,9 @@ def test_optimisation_level_3_compilation() -> None:
     assert compiled_3.n_2qb_gates() == 61
     assert compiled_3.n_gates == 164
     assert compiled_3.depth() == 114
+    assert compiled_3_timeout.n_2qb_gates() == 69
+    assert compiled_3_timeout.n_gates == 171
+    assert compiled_3_timeout.depth() == 125
 
 
 def test_optimisation_level_3_serialisation() -> None:

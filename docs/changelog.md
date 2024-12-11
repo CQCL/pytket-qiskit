@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.61.0 (December 2024)
+
+- Restrict qiskit version to ~= 1.24. to avoid braking changes in 1.3.0
+
 ## 0.60.0 (November 2024)
 
 - Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`AerBackend`

@@ -645,15 +645,15 @@ def test_swaps_basisorder() -> None:
     qbs = c.qubits
     for result in b.get_results(handles):
         assert (
-            result.get_state([qbs[1], qbs[2], qbs[3], qbs[0]]).real.tolist().index(1.0)
+            result.get_state([qbs[1], qbs[2], qbs[3], qbs[0]]).real.tolist().index(1.0)  # type: ignore
             == 6
         )
         assert (
-            result.get_state([qbs[2], qbs[1], qbs[0], qbs[3]]).real.tolist().index(1.0)
+            result.get_state([qbs[2], qbs[1], qbs[0], qbs[3]]).real.tolist().index(1.0)  # type: ignore
             == 9
         )
         assert (
-            result.get_state([qbs[2], qbs[3], qbs[0], qbs[1]]).real.tolist().index(1.0)
+            result.get_state([qbs[2], qbs[3], qbs[0], qbs[1]]).real.tolist().index(1.0)  # type: ignore
             == 12
         )
 

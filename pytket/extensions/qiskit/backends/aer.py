@@ -48,6 +48,7 @@ from pytket.predicates import (
     ConnectivityPredicate,
     DefaultRegisterPredicate,
     GateSetPredicate,
+    MaxNQubitsPredicate,
     NoBarriersPredicate,
     NoClassicalControlPredicate,
     NoFastFeedforwardPredicate,
@@ -695,6 +696,7 @@ class AerBackend(_AerBaseBackend):
         self._required_predicates = [
             NoSymbolsPredicate(),
             GateSetPredicate(self._backend_info.gate_set),
+            MaxNQubitsPredicate(n_qubits),
         ]
         if self._crosstalk_params is not None:
             self._required_predicates.extend(

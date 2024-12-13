@@ -1052,7 +1052,7 @@ def _verify_single_q_rebase(
     circ.add_gate(OpType.TK1, [a, b, c], [0])
     backend.rebase_pass().apply(circ)
     u_after = backend.run_circuit(circ).get_unitary()
-    return np.allclose(u_before, u_after)
+    return compare_unitaries(u_before, u_after)
 
 
 def test_rebase_phase() -> None:

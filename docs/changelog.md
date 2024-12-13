@@ -6,7 +6,7 @@
 
 ## unreleased
 
-- AerBackend now reject circuits with too qubits 
+- AerBackend now reject circuits with too many qubits 
 
 ## 0.61.0 (December 2024)
 

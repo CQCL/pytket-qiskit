@@ -6,7 +6,9 @@
 
 ## unreleased
 
-- AerBackend now reject circuits with too many qubits 
+- AerBackend now reject circuits with too many qubits
+- Update pytket version requirement to 1.37.0.
+- Update qiskit version requirement to 1.3.1.
 
 ## 0.61.0 (December 2024)
 

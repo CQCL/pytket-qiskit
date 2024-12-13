@@ -21,6 +21,7 @@ from qiskit.primitives import BackendSamplerV2  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
+from pytket import Circuit
 from pytket.architecture import Architecture, FullyConnected
 from pytket.extensions.qiskit import (
     AerBackend,
@@ -57,6 +58,15 @@ def test_samples() -> None:
         assert all((r[0] == "1" and r[1] == r[2]) for r in shots)
         counts = job.result().get_counts()
         assert all((r[0] == "1" and r[1] == r[2]) for r in counts)
+
+
+def test_maxnqubits() -> None:
+    backend = AerBackend(n_qubits=1)
+    with pytest.raises(Exception):
+        backend.run_circuit(
+            circuit=Circuit(2).CX(0, 1).measure_all(),
+            n_shots=1,
+        )
 
 
 def test_state() -> None:

@@ -30,7 +30,7 @@ from qiskit.circuit.equivalence_library import (  # type: ignore
     StandardEquivalenceLibrary,
 )
 from qiskit.circuit.library import (
-    MCMT,
+    MCMTGate,
     PauliEvolutionGate,
     RealAmplitudes,
     RYGate,
@@ -613,7 +613,7 @@ def add_cnry(
         else:
             # param was "raw", so needs an extra PI.
             new_ry_gate = RYGate(param * pi)
-            new_gate = MCMT(
+            new_gate = MCMTGate(
                 gate=new_ry_gate, num_ctrl_qubits=len(qbits) - 1, num_target_qubits=1
             )
             circ.append(new_gate, [qr[nn] for nn in qbits])
@@ -691,7 +691,6 @@ def qcirc_to_tcirc(qcirc: QuantumCircuit) -> Circuit:
     return tcirc
 
 
-@pytest.mark.xfail(reason="https://github.com/Qiskit/qiskit/issues/13563")
 def test_cnry_conversion() -> None:
     """This is for TKET-991.
     Maintain parallel circuits, check equivalence at each stage.

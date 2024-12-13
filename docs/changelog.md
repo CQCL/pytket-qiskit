@@ -4,6 +4,10 @@
 
 # Changelog
 
+## unreleased
+
+- AerBackend now reject circuits with too qubits 
+
 ## 0.61.0 (December 2024)
 
 - Restrict qiskit version to ~= 1.2.4, to avoid breaking changes in 1.3.0

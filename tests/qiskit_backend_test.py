@@ -21,8 +21,8 @@ from qiskit.primitives import BackendSamplerV2  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
-from pytket import Circuit
 from pytket.architecture import Architecture, FullyConnected
+from pytket.circuit import Circuit
 from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,

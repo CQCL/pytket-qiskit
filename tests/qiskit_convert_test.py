@@ -691,6 +691,7 @@ def qcirc_to_tcirc(qcirc: QuantumCircuit) -> Circuit:
     return tcirc
 
 
+@pytest.mark.xfail(reason="https://github.com/Qiskit/qiskit/issues/13563")
 def test_cnry_conversion() -> None:
     """This is for TKET-991.
     Maintain parallel circuits, check equivalence at each stage.

@@ -184,7 +184,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: IBMBackend = self._service.backend(backend_name, use_fractional_gates=True)
+        self._backend: IBMBackend = self._service.backend(backend_name)
         config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 

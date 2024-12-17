@@ -193,7 +193,9 @@ class IBMQBackend(Backend):
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance=instance, 
+            channel="ibm_quantum",
+            token=token,
+            instance=instance,
         )
         self._session = Session(backend=self._backend)
 

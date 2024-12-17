@@ -481,25 +481,24 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
 
 
 # TODO refactor to reduce duplication
-def _pytket_boxes_from_IfElseOp(instr: Instruction) -> tuple[CircBox, CircBox]:
+def _pytket_boxes_from_IfElseOp(
+    qregs: list[QuantumRegister], cregs: list[ClassicalRegister], instr: Instruction
+) -> tuple[CircBox, CircBox]:
     if_qc: QuantumCircuit = instr.params[0]
     else_qc: QuantumCircuit = instr.params[1]
 
     # TODO handle non-simple register case?
-    default_qreg_if = QuantumRegister(if_qc.num_qubits, "q")
-    default_creg_if = ClassicalRegister(if_qc.num_clbits, "c")
-    default_qreg_else = QuantumRegister(else_qc.num_qubits, "q")
-    default_creg_else = ClassicalRegister(else_qc.num_clbits, "c")
+    # default_qreg_if = QuantumRegister(if_qc.num_qubits, "q")
+    # default_creg_if = ClassicalRegister(if_qc.num_clbits, "c")
+    # default_qreg_else = QuantumRegister(else_qc.num_qubits, "q")
+    # default_creg_else = ClassicalRegister(else_qc.num_clbits, "c")
 
-    new_if_qc = QuantumCircuit(default_qreg_if, default_creg_if)
-    new_else_qc = QuantumCircuit(default_qreg_else, default_creg_else)
-
-    if_builder = CircuitBuilder(new_if_qc.qregs, new_if_qc.cregs)
+    if_builder = CircuitBuilder(qregs, cregs)
     if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
     if_circuit.name = "If"
 
-    else_builder = CircuitBuilder(new_else_qc.qregs, new_else_qc.cregs)
+    else_builder = CircuitBuilder(qregs, cregs)
     else_builder.add_qiskit_data(else_qc)
     else_circuit = else_builder.circuit()
     else_circuit.name = "Else"
@@ -552,7 +551,9 @@ class CircuitBuilder:
             condition_kwargs = {}
             if instr.condition is not None:
                 if type(instr) is IfElseOp:
-                    if_box, else_box = _pytket_boxes_from_IfElseOp(instr)
+                    if_box, else_box = _pytket_boxes_from_IfElseOp(
+                        self.qregs, self.cregs, instr
+                    )
                     print(if_box.get_circuit().get_commands())
                     print(else_box.get_circuit().get_commands())
 

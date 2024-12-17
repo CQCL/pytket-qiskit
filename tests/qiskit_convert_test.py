@@ -77,6 +77,7 @@ from pytket.passes import (
     RebaseTket,
     SequencePass,
 )
+from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.utils.results import (
     compare_statevectors,
     compare_unitaries,
@@ -1190,3 +1191,16 @@ def test_nonregister_bits() -> None:
     c.rename_units({Bit(0): Bit(1)})
     with pytest.raises(NotImplementedError):
         tk_to_qiskit(c)
+
+
+def test_range_preds_with_conditionals():
+    # https://github.com/CQCL/pytket-qiskit/issues/375
+    c = Circuit(1, 1)
+    treg = c.add_c_register(_TEMP_BIT_NAME, 1)
+    c.add_c_range_predicate(1, 1, [Bit(0)], treg[0])
+    c.add_gate(OpType.X, [Qubit(0)], condition_bits=[treg[0]], condition_value=1)
+    c.add_gate(OpType.Y, [Qubit(0)], condition_bits=[treg[0]], condition_value=1)
+    qkc = tk_to_qiskit(c)
+    assert len(qkc) == 2
+    assert len(qkc.qubits) == 1
+    assert len(qkc.clbits) == 1

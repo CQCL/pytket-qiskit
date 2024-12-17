@@ -1192,6 +1192,7 @@ def test_nonregister_bits() -> None:
     with pytest.raises(NotImplementedError):
         tk_to_qiskit(c)
 
+
 def test_ifelseop_handling() -> None:
     qubits = QuantumRegister(2)
     clbits = ClassicalRegister(2)

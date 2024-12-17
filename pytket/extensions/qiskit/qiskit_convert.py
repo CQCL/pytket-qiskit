@@ -82,6 +82,7 @@ from qiskit.circuit import (
     Parameter,
     ParameterExpression,
     Reset,
+    IfElseOp,
 )
 from qiskit.circuit.library import (
     CRYGate,
@@ -478,6 +479,37 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     subc.name = instr.name
     return CircBox(subc)
 
+from pytket.circuit.display import view_browser as draw
+
+
+# TODO refactor to reduce duplication
+def _pytket_boxes_from_IfElseOp(instr: Instruction) -> tuple[CircBox, CircBox]:
+    if_qc: QuantumCircuit = instr.params[0]
+    else_qc: QuantumCircuit = instr.params[1]
+
+    default_qreg_if  = QuantumRegister(if_qc.num_qubits, "q")
+    default_creg_if  = ClassicalRegister(if_qc.num_clbits, "c")
+    default_qreg_else  = QuantumRegister(else_qc.num_qubits, "q")
+    default_creg_else  = ClassicalRegister(else_qc.num_clbits, "c")
+
+    new_if_qc = QuantumCircuit(default_qreg_if, default_creg_if)
+    new_else_qc = QuantumCircuit(default_qreg_else, default_creg_else)
+
+    if_builder = CircuitBuilder(new_if_qc.qregs, new_if_qc.cregs)
+    if_builder.add_qiskit_data(new_if_qc)
+    if_circuit = if_builder.circuit()
+    if_circuit.name = "If"
+
+
+    else_builder = CircuitBuilder(new_else_qc.qregs, new_else_qc.cregs)
+    else_builder.add_qiskit_data(new_else_qc)
+    else_circuit = else_builder.circuit()
+    else_circuit.name = "Else"
+
+    return CircBox(if_circuit), CircBox(else_circuit)
+
+
+
 
 class CircuitBuilder:
     def __init__(
@@ -523,6 +555,11 @@ class CircuitBuilder:
 
             condition_kwargs = {}
             if instr.condition is not None:
+                if type(instr) is IfElseOp:
+                    if_box, else_box = _pytket_boxes_from_IfElseOp(instr)
+                    draw(if_box.get_circuit())
+                    draw(else_box.get_circuit())
+
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,
                     cregmap=self.cregmap,

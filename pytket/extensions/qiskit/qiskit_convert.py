@@ -496,13 +496,13 @@ def _pytket_boxes_from_IfElseOp(instr: Instruction) -> tuple[CircBox, CircBox]:
     new_else_qc = QuantumCircuit(default_qreg_else, default_creg_else)
 
     if_builder = CircuitBuilder(new_if_qc.qregs, new_if_qc.cregs)
-    if_builder.add_qiskit_data(new_if_qc)
+    if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
     if_circuit.name = "If"
 
 
     else_builder = CircuitBuilder(new_else_qc.qregs, new_else_qc.cregs)
-    else_builder.add_qiskit_data(new_else_qc)
+    else_builder.add_qiskit_data(else_qc)
     else_circuit = else_builder.circuit()
     else_circuit.name = "Else"
 

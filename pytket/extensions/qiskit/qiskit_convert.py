@@ -479,9 +479,6 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     subc.name = instr.name
     return CircBox(subc)
 
-from pytket.circuit.display import view_browser as draw
-
-
 # TODO refactor to reduce duplication
 def _pytket_boxes_from_IfElseOp(instr: Instruction) -> tuple[CircBox, CircBox]:
     if_qc: QuantumCircuit = instr.params[0]
@@ -557,8 +554,8 @@ class CircuitBuilder:
             if instr.condition is not None:
                 if type(instr) is IfElseOp:
                     if_box, else_box = _pytket_boxes_from_IfElseOp(instr)
-                    draw(if_box.get_circuit())
-                    draw(else_box.get_circuit())
+                    print(if_box.get_circuit().get_commands())
+                    print(else_box.get_circuit().get_commands())
 
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,

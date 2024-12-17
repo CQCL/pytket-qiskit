@@ -662,6 +662,8 @@ def append_tk_command_to_qiskit(
         bit = args[1]
         qb = qregmap[qubit.reg_name][qubit.index[0]]
         b = cregmap[bit.reg_name][bit.index[0]]
+        # If the bit is storing a range predicate it should be invalidated:
+        range_preds.pop(bit, None)
         return qcirc.measure(qb, b)
 
     if optype == OpType.Reset:

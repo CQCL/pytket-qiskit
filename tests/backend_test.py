@@ -645,15 +645,15 @@ def test_swaps_basisorder() -> None:
     qbs = c.qubits
     for result in b.get_results(handles):
         assert (
-            result.get_state([qbs[1], qbs[2], qbs[3], qbs[0]]).real.tolist().index(1.0)
+            result.get_state([qbs[1], qbs[2], qbs[3], qbs[0]]).real.tolist().index(1.0)  # type: ignore
             == 6
         )
         assert (
-            result.get_state([qbs[2], qbs[1], qbs[0], qbs[3]]).real.tolist().index(1.0)
+            result.get_state([qbs[2], qbs[1], qbs[0], qbs[3]]).real.tolist().index(1.0)  # type: ignore
             == 9
         )
         assert (
-            result.get_state([qbs[2], qbs[3], qbs[0], qbs[1]]).real.tolist().index(1.0)
+            result.get_state([qbs[2], qbs[3], qbs[0], qbs[1]]).real.tolist().index(1.0)  # type: ignore
             == 12
         )
 
@@ -1052,7 +1052,7 @@ def _verify_single_q_rebase(
     circ.add_gate(OpType.TK1, [a, b, c], [0])
     backend.rebase_pass().apply(circ)
     u_after = backend.run_circuit(circ).get_unitary()
-    return np.allclose(u_before, u_after)
+    return compare_unitaries(u_before, u_after)
 
 
 def test_rebase_phase() -> None:

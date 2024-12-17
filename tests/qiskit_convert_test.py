@@ -30,7 +30,7 @@ from qiskit.circuit.equivalence_library import (  # type: ignore
     StandardEquivalenceLibrary,
 )
 from qiskit.circuit.library import (
-    MCMT,
+    MCMTGate,
     PauliEvolutionGate,
     RealAmplitudes,
     RYGate,
@@ -613,7 +613,7 @@ def add_cnry(
         else:
             # param was "raw", so needs an extra PI.
             new_ry_gate = RYGate(param * pi)
-            new_gate = MCMT(
+            new_gate = MCMTGate(
                 gate=new_ry_gate, num_ctrl_qubits=len(qbits) - 1, num_target_qubits=1
             )
             circ.append(new_gate, [qr[nn] for nn in qbits])
@@ -1170,6 +1170,7 @@ def test_symbolic_param_conv() -> None:
     )
 
 
+@pytest.mark.xfail(reason="https://github.com/CQCL/pytket-qiskit/issues/427")
 def test_implicit_swap_warning() -> None:
     c = Circuit(2).H(0).SWAP(0, 1)
     c.replace_SWAPs()

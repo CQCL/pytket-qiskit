@@ -4,6 +4,16 @@
 
 # Changelog
 
+## unreleased
+
+- AerBackend now reject circuits with too many qubits
+- Update pytket version requirement to 1.37.0.
+- Update qiskit version requirement to 1.3.1.
+
+## 0.61.0 (December 2024)
+
+- Restrict qiskit version to ~= 1.2.4, to avoid breaking changes in 1.3.0
+
 ## 0.60.0 (November 2024)
 
 - Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`AerBackend`

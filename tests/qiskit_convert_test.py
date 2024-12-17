@@ -1189,3 +1189,22 @@ def test_nonregister_bits() -> None:
     c.rename_units({Bit(0): Bit(1)})
     with pytest.raises(NotImplementedError):
         tk_to_qiskit(c)
+
+
+def test_ifelseop_handling() -> None:
+    qubits = QuantumRegister(2)
+    clbits = ClassicalRegister(2)
+    circuit = QuantumCircuit(qubits, clbits)
+    (q0, q1) = qubits
+    (c0, c1) = clbits
+    
+    circuit.h(q0)
+    circuit.measure(q0, c0)
+
+    with circuit.if_test((c0, 1)) as else_:
+        circuit.h(q1)
+    with else_:
+        circuit.x(q1)
+    circuit.measure(q1, c1)
+
+    tkc = qiskit_to_tk(circuit)

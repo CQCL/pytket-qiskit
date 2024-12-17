@@ -1197,7 +1197,7 @@ def test_ifelseop_handling() -> None:
     circuit = QuantumCircuit(qubits, clbits)
     (q0, q1) = qubits
     (c0, c1) = clbits
-    
+
     circuit.h(q0)
     circuit.measure(q0, c0)
 

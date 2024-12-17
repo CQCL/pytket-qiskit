@@ -478,7 +478,7 @@ class IBMQBackend(Backend):
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
         :type optimisation_level: int, optional
-        :param timeout: Only valid for optimisation level 3, gives a maximimum time
+        :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
         :type timeout: int, optional
@@ -526,7 +526,7 @@ class IBMQBackend(Backend):
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
         :type optimisation_level: int, optional
-        :param timeout: Only valid for optimisation level 3, gives a maximimum time
+        :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
         :type timeout: int, optional

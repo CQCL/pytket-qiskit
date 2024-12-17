@@ -484,6 +484,7 @@ def _pytket_boxes_from_IfElseOp(instr: Instruction) -> tuple[CircBox, CircBox]:
     if_qc: QuantumCircuit = instr.params[0]
     else_qc: QuantumCircuit = instr.params[1]
 
+    # TODO handle non-simple register case?
     default_qreg_if  = QuantumRegister(if_qc.num_qubits, "q")
     default_creg_if  = ClassicalRegister(if_qc.num_clbits, "c")
     default_qreg_else  = QuantumRegister(else_qc.num_qubits, "q")

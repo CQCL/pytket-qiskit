@@ -184,7 +184,7 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: IBMBackend = self._service.backend(backend_name)
+        self._backend: IBMBackend = self._service.backend(backend_name, use_fractional_gates=True)
         config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
@@ -193,7 +193,7 @@ class IBMQBackend(Backend):
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance=instance
+            channel="ibm_quantum", token=token, instance=instance, 
         )
         self._session = Session(backend=self._backend)
 
@@ -478,7 +478,7 @@ class IBMQBackend(Backend):
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
         :type optimisation_level: int, optional
-        :param timeout: Only valid for optimisation level 3, gives a maximimum time
+        :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
         :type timeout: int, optional
@@ -526,7 +526,7 @@ class IBMQBackend(Backend):
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
         :type optimisation_level: int, optional
-        :param timeout: Only valid for optimisation level 3, gives a maximimum time
+        :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
         :type timeout: int, optional

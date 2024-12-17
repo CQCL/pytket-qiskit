@@ -745,7 +745,6 @@ def append_tk_command_to_qiskit(
         if args[0] in range_preds:
             assert op.value == 1  # type: ignore
             condition_bits, value = range_preds[args[0]]  # type: ignore
-            del range_preds[args[0]]  # type: ignore
             args = condition_bits + args[1:]
             width = len(condition_bits)
         else:

@@ -511,7 +511,7 @@ def build_if_else_circuit(
     circ = circ_builder.circuit()
     circ.add_circbox(
         circbox=if_box,
-        args=qubits,
+        args=qubits + bits,
         condition_bits=bits,
         condition_value=if_else_op.condition[1],
     )

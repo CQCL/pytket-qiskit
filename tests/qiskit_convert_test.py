@@ -1193,7 +1193,7 @@ def test_nonregister_bits() -> None:
         tk_to_qiskit(c)
 
 
-def test_range_preds_with_conditionals():
+def test_range_preds_with_conditionals() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/375
     c = Circuit(1, 1)
     treg = c.add_c_register(_TEMP_BIT_NAME, 1)

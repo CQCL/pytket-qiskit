@@ -1193,6 +1193,9 @@ def test_nonregister_bits() -> None:
         tk_to_qiskit(c)
 
 
+from pytket.circuit.display import view_browser as draw
+
+
 def test_ifelseop_handling() -> None:
     qubits = QuantumRegister(2)
     clbits = ClassicalRegister(2)
@@ -1210,6 +1213,7 @@ def test_ifelseop_handling() -> None:
     circuit.measure(q1, c1)
 
     tkc = qiskit_to_tk(circuit)
+    assert tkc.n_gates_of_type(OpType.Conditional) == 2
 
 
 def test_range_preds_with_conditionals():

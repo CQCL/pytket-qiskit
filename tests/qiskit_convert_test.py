@@ -1193,9 +1193,6 @@ def test_nonregister_bits() -> None:
         tk_to_qiskit(c)
 
 
-from pytket.circuit.display import view_browser as draw
-
-
 def test_ifelseop_handling() -> None:
     qubits = QuantumRegister(2)
     clbits = ClassicalRegister(2)

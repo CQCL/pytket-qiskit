@@ -76,6 +76,7 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Instruction,
     InstructionSet,
     Measure,
@@ -479,6 +480,51 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
+def _pytket_boxes_from_IfElseOp(
+    if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
+) -> tuple[CircBox, CircBox]:
+    if_qc: QuantumCircuit = if_else_op.params[0]
+    else_qc: QuantumCircuit = if_else_op.params[1]
+
+    if_builder = CircuitBuilder(qregs, cregs)
+    if_builder.add_qiskit_data(if_qc)
+    if_circuit = if_builder.circuit()
+    if_circuit.name = "If"
+
+    else_builder = CircuitBuilder(qregs, cregs)
+    else_builder.add_qiskit_data(else_qc)
+    else_circuit = else_builder.circuit()
+    else_circuit.name = "Else"
+
+    return CircBox(if_circuit), CircBox(else_circuit)
+
+
+def build_if_else_circuit(
+    if_else_op: IfElseOp,
+    qregs: list[QuantumRegister],
+    cregs: list[ClassicalRegister],
+    qubits: list[Qubit],
+    bits: list[Bit],
+) -> Circuit:
+    if_box, else_box = _pytket_boxes_from_IfElseOp(if_else_op, qregs, cregs)
+    circ_builder = CircuitBuilder(qregs, cregs)
+    circ = circ_builder.circuit()
+    circ.add_circbox(
+        circbox=if_box,
+        args=qubits + bits,
+        condition_bits=bits,
+        condition_value=if_else_op.condition[1],
+    )
+    circ.add_circbox(
+        circbox=else_box,
+        args=qubits,
+        condition_bits=bits,
+        # TODO negate condition properly
+        condition_value=0,
+    )
+    return circ
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -523,6 +569,16 @@ class CircuitBuilder:
 
             condition_kwargs = {}
             if instr.condition is not None:
+                if type(instr) is IfElseOp:
+                    if_else_circ = build_if_else_circuit(
+                        if_else_op=instr,
+                        qregs=self.qregs,
+                        cregs=self.cregs,
+                        qubits=qubits,
+                        bits=bits,
+                    )
+                    self.tkc.append(if_else_circ)
+
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,
                     cregmap=self.cregmap,

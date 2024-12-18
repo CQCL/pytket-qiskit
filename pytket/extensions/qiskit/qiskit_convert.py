@@ -76,13 +76,13 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Instruction,
     InstructionSet,
     Measure,
     Parameter,
     ParameterExpression,
     Reset,
-    IfElseOp,
 )
 from qiskit.circuit.library import (
     CRYGate,
@@ -510,17 +510,17 @@ def build_if_else_circuit(
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
     circ.add_circbox(
-        if_box,
-        qubits,
-        bits,
-        if_else_op.condition[1],
+        circbox=if_box,
+        args=qubits,
+        condition_bits=bits,
+        condition_value=if_else_op.condition[1],
     )
     circ.add_circbox(
-        else_box,
-        qubits,
-        bits,
+        circbox=else_box,
+        args=qubits,
+        condition_bits=bits,
         # TODO negate condition properly
-        1 - if_else_op.condition[1],
+        condition_value=0,
     )
     return circ
 

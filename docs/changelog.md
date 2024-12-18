@@ -4,7 +4,7 @@
 
 # Changelog
 
-## unreleased
+## 0.62.0 (December 2024)
 
 - AerBackend now reject circuits with too many qubits
 - Update pytket version requirement to 1.37.0.

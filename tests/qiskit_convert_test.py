@@ -1213,7 +1213,7 @@ def test_ifelseop_handling() -> None:
     assert tkc.n_gates_of_type(OpType.Conditional) == 2
 
 
-def test_range_preds_with_conditionals():
+def test_range_preds_with_conditionals() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/375
     c = Circuit(1, 1)
     treg = c.add_c_register(_TEMP_BIT_NAME, 1)

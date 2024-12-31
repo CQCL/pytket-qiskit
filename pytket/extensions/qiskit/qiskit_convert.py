@@ -480,11 +480,11 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
-def _pytket_boxes_from_IfElseOp(
+def _pytket_boxes_from_ifelseop(
     if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
 ) -> tuple[CircBox, CircBox]:
-    if_qc: QuantumCircuit = if_else_op.params[0]
-    else_qc: QuantumCircuit = if_else_op.params[1]
+    if_qc: QuantumCircuit = if_else_op.blocks[0]
+    else_qc: QuantumCircuit = if_else_op.blocks[1]
 
     if_builder = CircuitBuilder(qregs, cregs)
     if_builder.add_qiskit_data(if_qc)
@@ -506,7 +506,7 @@ def build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    if_box, else_box = _pytket_boxes_from_IfElseOp(if_else_op, qregs, cregs)
+    if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
     circ.add_circbox(

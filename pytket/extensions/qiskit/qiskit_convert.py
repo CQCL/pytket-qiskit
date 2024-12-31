@@ -571,17 +571,7 @@ class CircuitBuilder:
             bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             condition_kwargs = {}
-            if instr.condition is not None:
-                if type(instr) is IfElseOp:
-                    if_else_circ = build_if_else_circuit(
-                        if_else_op=instr,
-                        qregs=self.qregs,
-                        cregs=self.cregs,
-                        qubits=qubits,
-                        bits=bits,
-                    )
-                    self.tkc.append(if_else_circ)
-
+            if instr.condition is not None and type(instr) is not IfElseOp:
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,
                     cregmap=self.cregmap,
@@ -601,6 +591,16 @@ class CircuitBuilder:
             elif optype == OpType.StatePreparationBox:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
+
+            elif type(instr) is IfElseOp:
+                if_else_circ = build_if_else_circuit(
+                    if_else_op=instr,
+                    qregs=self.qregs,
+                    cregs=self.cregs,
+                    qubits=qubits,
+                    bits=bits,
+                )
+                self.tkc.append(if_else_circ)
 
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

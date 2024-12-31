@@ -490,11 +490,13 @@ def _pytket_boxes_from_ifelseop(
     if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
     if_circuit.name = "If"
+    if_circuit.remove_blank_wires()
 
     else_builder = CircuitBuilder(qregs, cregs)
     else_builder.add_qiskit_data(else_qc)
     else_circuit = else_builder.circuit()
     else_circuit.name = "Else"
+    else_circuit.remove_blank_wires()
 
     return CircBox(if_circuit), CircBox(else_circuit)
 
@@ -509,9 +511,10 @@ def build_if_else_circuit(
     if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
+
     circ.add_circbox(
         circbox=if_box,
-        args=qubits + bits,
+        args=qubits,
         condition_bits=bits,
         condition_value=if_else_op.condition[1],
     )
@@ -586,7 +589,7 @@ class CircuitBuilder:
                 )
 
             optype = None
-            if type(instr) not in (PauliEvolutionGate, UnitaryGate):
+            if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
                 # Handling of PauliEvolutionGate and UnitaryGate below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 

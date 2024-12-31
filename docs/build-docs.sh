@@ -7,13 +7,19 @@ cp -R pytket-docs-theming/quantinuum-sphinx .
 cp pytket-docs-theming/conf.py .
 
 # Get the name of the project
-EXTENSION_NAME="$(basename "$(dirname `pwd`)")"
+PACKAGE="$(basename "$(dirname `pwd`)")"
 
-# Correct github link in navbar
-sed -i '' 's#CQCL/tket#CQCL/'$EXTENSION_NAME'#' _static/nav-config.js
+# Get pytket extension version
+VERSION="$(pip show $PACKAGE | grep Version | awk '{print $2}')"
 
-# Build the docs. Ensure we have the correct project title.
-sphinx-build -b html -D html_title="$EXTENSION_NAME" . build -W
+# Output package version
+echo extension version $VERSION
+
+# Combine to set title
+PACKAGE+=" $VERSION"
+
+# Build the docs setting the html_title
+sphinx-build -b html . build -D html_title="$PACKAGE API documentation" -W
 
 # Find and replace all generated links that use _tket in the built html.
 # Note that MACOS and linux have differing sed syntax.

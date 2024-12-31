@@ -501,7 +501,7 @@ def _pytket_boxes_from_ifelseop(
     return CircBox(if_circuit), CircBox(else_circuit)
 
 
-def build_if_else_circuit(
+def _build_if_else_circuit(
     if_else_op: IfElseOp,
     qregs: list[QuantumRegister],
     cregs: list[ClassicalRegister],
@@ -580,7 +580,7 @@ class CircuitBuilder:
 
             optype = None
             if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
-                # Handling of PauliEvolutionGate and UnitaryGate below
+                # Handling of PauliEvolutionGate UnitaryGate and IfElseOp below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
@@ -593,7 +593,7 @@ class CircuitBuilder:
                 _add_state_preparation(self.tkc, qubits, instr)
 
             elif type(instr) is IfElseOp:
-                if_else_circ = build_if_else_circuit(
+                if_else_circ = _build_if_else_circuit(
                     if_else_op=instr,
                     qregs=self.qregs,
                     cregs=self.cregs,

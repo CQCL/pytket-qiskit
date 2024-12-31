@@ -15,7 +15,8 @@ sed -i '' 's#CQCL/tket#CQCL/'$EXTENSION_NAME'#' _static/nav-config.js
 # Build the docs. Ensure we have the correct project title.
 sphinx-build -b html -D html_title="$EXTENSION_NAME" . build -W
 
-# Find and replace all generated links that use _tket in the built html
+# Find and replace all generated links that use _tket in the built html.
+# Note that MACOS and linux have differing sed syntax.
 if [[ "$OSTYPE" == "darwin"* ]]; then
     find build/ -type f -name "*.html" | xargs sed -e 's/pytket._tket/pytket/g' -i ""
     sed -i '' 's/pytket._tket/pytket/g' build/searchindex.js

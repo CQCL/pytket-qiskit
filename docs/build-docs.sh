@@ -16,8 +16,13 @@ sed -i '' 's#CQCL/tket#CQCL/'$EXTENSION_NAME'#' _static/nav-config.js
 sphinx-build -b html -D html_title="$EXTENSION_NAME" . build -W
 
 # Find and replace all generated links that use _tket in the built html
-find build/ -type f -name "*.html" | xargs sed -e 's/pytket._tket/pytket/g' -i ""
-sed -i '' 's/pytket._tket/pytket/g' build/searchindex.js
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    find build/ -type f -name "*.html" | xargs sed -e 's/pytket._tket/pytket/g' -i ""
+    sed -i '' 's/pytket._tket/pytket/g' build/searchindex.js
+else
+    find build/ -type f -name "*.html" | xargs sed -i 's/pytket._tket/pytket/g'
+    sed -i 's/pytket._tket/pytket/g' build/searchindex.js
+fi
 
 # Remove copied files. This ensures reusability.
 rm -r _static 

@@ -483,6 +483,7 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
 # Used for handling of IfElseOp
 # docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
 # Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
+# pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
 def _pytket_boxes_from_ifelseop(
     if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
 ) -> tuple[CircBox, Optional[CircBox]]:

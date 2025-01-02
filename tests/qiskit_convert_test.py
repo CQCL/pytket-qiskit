@@ -1193,6 +1193,7 @@ def test_nonregister_bits() -> None:
         tk_to_qiskit(c)
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/415
 def test_ifelseop_two_branches() -> None:
     qubits = QuantumRegister(2)
     clbits = ClassicalRegister(2)
@@ -1213,6 +1214,7 @@ def test_ifelseop_two_branches() -> None:
     assert tkc.n_gates_of_type(OpType.Conditional) == 2
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/415
 def test_ifelseop_one_branch() -> None:
     qubits = QuantumRegister(1, "q1")
     clbits = ClassicalRegister(1, "c1")

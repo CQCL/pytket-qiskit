@@ -1,1 +1,0 @@
-Static theming elements are in the [quantinuum-sphinx](https://github.com/CQCL/quantinuum-sphinx) and [pytket-docs-theming](https://github.com/CQCL/pytket-docs-theming) repositories.

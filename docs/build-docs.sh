@@ -8,6 +8,7 @@ rm -rf build/
 # Move theming elements into the docs folder
 cp -R pytket-docs-theming/quantinuum-sphinx .
 cp pytket-docs-theming/conf.py .
+cp -R pytket-docs-theming/_static . # Currently unused
 
 # Get the name of the project
 PACKAGE="$(basename "$(dirname `pwd`)")"

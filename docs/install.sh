@@ -1,3 +1,5 @@
+set -e
+
 # Copy over poetry dependencies from theming repository
 cp pytket-docs-theming/extensions/pyproject.toml .
 cp pytket-docs-theming/extensions/poetry.lock .
@@ -6,3 +8,4 @@ cp pytket-docs-theming/extensions/poetry.lock .
 poetry install
 
 # NOTE: Editable wheel should be installed separately.
+set +e

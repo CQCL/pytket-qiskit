@@ -1230,7 +1230,25 @@ def test_ifelseop_one_branch() -> None:
     circuit.measure(q0, c0)
 
     tket_circ = qiskit_to_tk(circuit)
-    draw(tket_circ)
+    tket_circ.name = "test_circ"
+
+    expected_circ = Circuit()
+    expected_circ.name = "test_circ"
+    q1 = expected_circ.add_q_register("q1", 1)
+    c0_tk = expected_circ.add_c_register("c0", 1)
+    expected_circ.H(q1[0])
+    expected_circ.Measure(q1[0], c0_tk[0])
+    x_circ = Circuit()
+    x_circ.name = "If"
+    xq1 = x_circ.add_q_register("q1", 1)
+    x_circ.X(xq1[0])
+    expected_circ.add_circbox(
+        CircBox(x_circ), [q1[0]], condition_bits=[c0_tk[0]], condition_value=1
+    )
+
+    expected_circ.Measure(q1[0], c0_tk[0])
+
+    assert tket_circ == expected_circ
 
 
 def test_range_preds_with_conditionals() -> None:

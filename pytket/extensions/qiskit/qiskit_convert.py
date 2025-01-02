@@ -480,17 +480,23 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
+# Used for handling of IfElseOp
+# docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
+# Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
 def _pytket_boxes_from_ifelseop(
     if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
 ) -> tuple[CircBox, Optional[CircBox]]:
+    # Extract the QuantumCircuit implementing true_body
     if_qc: QuantumCircuit = if_else_op.blocks[0]
 
     if_builder = CircuitBuilder(qregs, cregs)
     if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
     if_circuit.name = "If"
+    # Remove blank wires to ensure CircBox is the correct size.
     if_circuit.remove_blank_wires()
 
+    # The false_body arg is optional
     if len(if_else_op.blocks) == 2:
         else_qc: QuantumCircuit = if_else_op.blocks[1]
         else_builder = CircuitBuilder(qregs, cregs)
@@ -500,6 +506,8 @@ def _pytket_boxes_from_ifelseop(
         else_circuit.remove_blank_wires()
         return CircBox(if_circuit), CircBox(else_circuit)
 
+    # If no false_body is specified IfElseOp.blocks is of length 1.
+    # In this case we return a CircBox implementing true_body and None.
     return CircBox(if_circuit), None
 
 
@@ -510,7 +518,10 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
+    # Get two CircBox objects which implement the true_body and false_body.
     if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+    # else_box can be None if no false_body is specified.
+
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
 
@@ -520,13 +531,14 @@ def _build_if_else_circuit(
         condition_bits=bits,
         condition_value=if_else_op.condition[1],
     )
+    # If we have an else_box defined, add it to the circuit
     if else_box is not None:
         circ.add_circbox(
             circbox=else_box,
             args=qubits,
             condition_bits=bits,
-            # TODO negate condition properly
-            condition_value=0,
+            # TODO: handle conditions over multiple bits/registers?
+            condition_value=not bool(if_else_op.condition[1]),
         )
     return circ
 

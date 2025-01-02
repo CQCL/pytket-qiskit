@@ -1213,9 +1213,6 @@ def test_ifelseop_two_branches() -> None:
     assert tkc.n_gates_of_type(OpType.Conditional) == 2
 
 
-from pytket.circuit.display import view_browser as draw
-
-
 def test_ifelseop_one_branch() -> None:
     qubits = QuantumRegister(1)
     clbits = ClassicalRegister(1)

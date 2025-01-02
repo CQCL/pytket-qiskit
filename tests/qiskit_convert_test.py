@@ -1230,7 +1230,7 @@ def test_ifelseop_one_branch() -> None:
     tket_circ_if_else.name = "test_circ"
 
     # Manually build the expected pytket Circuit.
-    # Validate against tket_circ.
+    # Validate against tket_circ_if_else.
     expected_circ = Circuit()
     expected_circ.name = "test_circ"
     q1 = expected_circ.add_q_register("q1", 1)

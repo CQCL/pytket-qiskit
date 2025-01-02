@@ -595,7 +595,7 @@ class CircuitBuilder:
 
             optype = None
             if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
-                # Handling of PauliEvolutionGate UnitaryGate and IfElseOp below
+                # Handling of PauliEvolutionGate, UnitaryGate and IfElseOp below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:

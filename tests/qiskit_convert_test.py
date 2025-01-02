@@ -1225,10 +1225,9 @@ def test_ifelseop_one_branch() -> None:
     with circuit.if_test((c0, 1)):
         circuit.x(q0)
     circuit.measure(q0, c0)
-    print(circuit)
+
     tket_circ_if_else = qiskit_to_tk(circuit)
     tket_circ_if_else.name = "test_circ"
-    print(tket_circ_if_else.get_commands())
 
     # Manually build the expected pytket Circuit.
     # Validate against tket_circ.

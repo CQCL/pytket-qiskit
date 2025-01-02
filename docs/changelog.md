@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.63.0 (January 2025) - UNRELEASED
+
+- Support conversion of qiskit circuits containing `IfElseOp` in the {py:func}`qiskit_to_tk` converter.
+
 ## 0.62.0 (December 2024)
 
 - AerBackend now rejects circuits with too many qubits

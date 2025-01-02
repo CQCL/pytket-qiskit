@@ -85,7 +85,7 @@ jobs:
       if:  (matrix.os == 'ubuntu-latest') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
       timeout-minutes: 20
       run: |
-        cd docs && poetry run bash -e ./build-docs.sh
+        cd docs && poetry run bash ./build-docs.sh
 
 
   publish_to_pypi:

@@ -1,11 +1,11 @@
 #!/bin/bash
+set -e
 rm -rf build/
 
 # This build script is only used for local docs build.
 # The docs build for the website uses a different script.
 
 # Move theming elements into the docs folder
-cp -R pytket-docs-theming/_static .
 cp -R pytket-docs-theming/quantinuum-sphinx .
 cp pytket-docs-theming/conf.py .
 
@@ -35,6 +35,7 @@ else
 fi
 
 # Remove copied files after build is done. This ensures reusability.
-rm -r _static 
 rm -r quantinuum-sphinx
 rm conf.py
+
+set +e

@@ -1214,8 +1214,8 @@ def test_ifelseop_two_branches() -> None:
 
 
 def test_ifelseop_one_branch() -> None:
-    qubits = QuantumRegister(1)
-    clbits = ClassicalRegister(1)
+    qubits = QuantumRegister(1, "q1")
+    clbits = ClassicalRegister(1, "c1")
     circuit = QuantumCircuit(qubits, clbits)
     (q0,) = qubits
     (c0,) = clbits
@@ -1225,16 +1225,17 @@ def test_ifelseop_one_branch() -> None:
     with circuit.if_test((c0, 1)):
         circuit.x(q0)
     circuit.measure(q0, c0)
-
+    print(circuit)
     tket_circ_if_else = qiskit_to_tk(circuit)
     tket_circ_if_else.name = "test_circ"
+    print(tket_circ_if_else.get_commands())
 
     # Manually build the expected pytket Circuit.
     # Validate against tket_circ.
     expected_circ = Circuit()
     expected_circ.name = "test_circ"
     q1 = expected_circ.add_q_register("q1", 1)
-    c0_tk = expected_circ.add_c_register("c0", 1)
+    c0_tk = expected_circ.add_c_register("c1", 1)
     expected_circ.H(q1[0])
     expected_circ.Measure(q1[0], c0_tk[0])
     x_circ = Circuit()

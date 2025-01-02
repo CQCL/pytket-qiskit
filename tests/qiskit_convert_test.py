@@ -1233,19 +1233,19 @@ def test_ifelseop_one_branch() -> None:
     # Validate against tket_circ_if_else.
     expected_circ = Circuit()
     expected_circ.name = "test_circ"
-    q1 = expected_circ.add_q_register("q1", 1)
-    c0_tk = expected_circ.add_c_register("c1", 1)
-    expected_circ.H(q1[0])
-    expected_circ.Measure(q1[0], c0_tk[0])
+    q1_tk = expected_circ.add_q_register("q1", 1)
+    c1_tk = expected_circ.add_c_register("c1", 1)
+    expected_circ.H(q1_tk[0])
+    expected_circ.Measure(q1_tk[0], c1_tk[0])
     x_circ = Circuit()
     x_circ.name = "If"
     xq1 = x_circ.add_q_register("q1", 1)
     x_circ.X(xq1[0])
     expected_circ.add_circbox(
-        CircBox(x_circ), [q1[0]], condition_bits=[c0_tk[0]], condition_value=1
+        CircBox(x_circ), [q1_tk[0]], condition_bits=[c1_tk[0]], condition_value=1
     )
 
-    expected_circ.Measure(q1[0], c0_tk[0])
+    expected_circ.Measure(q1_tk[0], c1_tk[0])
 
     assert tket_circ_if_else == expected_circ
 

@@ -1226,9 +1226,11 @@ def test_ifelseop_one_branch() -> None:
         circuit.x(q0)
     circuit.measure(q0, c0)
 
-    tket_circ = qiskit_to_tk(circuit)
-    tket_circ.name = "test_circ"
+    tket_circ_if_else = qiskit_to_tk(circuit)
+    tket_circ_if_else.name = "test_circ"
 
+    # Manually build the expected pytket Circuit.
+    # Validate against tket_circ.
     expected_circ = Circuit()
     expected_circ.name = "test_circ"
     q1 = expected_circ.add_q_register("q1", 1)
@@ -1245,7 +1247,7 @@ def test_ifelseop_one_branch() -> None:
 
     expected_circ.Measure(q1[0], c0_tk[0])
 
-    assert tket_circ == expected_circ
+    assert tket_circ_if_else == expected_circ
 
 
 def test_range_preds_with_conditionals() -> None:

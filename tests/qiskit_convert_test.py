@@ -1204,3 +1204,15 @@ def test_range_preds_with_conditionals() -> None:
     assert len(qkc) == 2
     assert len(qkc.qubits) == 1
     assert len(qkc.clbits) == 1
+
+
+def test_nested_conditionals() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/442
+    c0 = Circuit(1, 1).X(0, condition_bits=[0], condition_value=1)
+    cbox = CircBox(c0)
+    c = Circuit(1, 2)
+    c.add_circbox(cbox, [Qubit(0), Bit(1)], condition_bits=[Bit(0)], condition_value=1)
+    DecomposeBoxes().apply(c)
+    with pytest.raises(NotImplementedError):
+        # For now we do not support conversion of nested conditionals.
+        _qkc = tk_to_qiskit(c)

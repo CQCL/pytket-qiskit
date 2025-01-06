@@ -741,6 +741,9 @@ def append_tk_command_to_qiskit(
         # subsequent conditional will handle it
         return Instruction("", 0, 0, [])
     if optype == OpType.Conditional:
+        if op.op.type == OpType.Conditional:
+            # See https://github.com/CQCL/pytket-qiskit/issues/442
+            raise NotImplementedError("Nested conditional not supported")
         if op.op.type == OpType.Phase:  # type: ignore
             # conditional phase not supported
             return InstructionSet()

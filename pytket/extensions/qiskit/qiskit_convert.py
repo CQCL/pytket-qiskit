@@ -47,6 +47,7 @@ from pytket.circuit import (
     Bit,
     CircBox,
     Circuit,
+    Conditional,
     Node,
     Op,
     OpType,
@@ -741,26 +742,27 @@ def append_tk_command_to_qiskit(
         # subsequent conditional will handle it
         return Instruction("", 0, 0, [])
     if optype == OpType.Conditional:
+        assert isinstance(op, Conditional)
         if op.op.type == OpType.Conditional:
             # See https://github.com/CQCL/pytket-qiskit/issues/442
             raise NotImplementedError("Nested conditional not supported")
-        if op.op.type == OpType.Phase:  # type: ignore
+        if op.op.type == OpType.Phase:
             # conditional phase not supported
             return InstructionSet()
         if args[0] in range_preds:
-            assert op.value == 1  # type: ignore
+            assert op.value == 1
             condition_bits, value = range_preds[args[0]]  # type: ignore
             args = condition_bits + args[1:]
             width = len(condition_bits)
         else:
-            width = op.width  # type: ignore
-            value = op.value  # type: ignore
+            width = op.width
+            value = op.value
         regname = args[0].reg_name
         for i, a in enumerate(args[:width]):
             if a.reg_name != regname:
                 raise NotImplementedError("Conditions can only use a single register")
         instruction = append_tk_command_to_qiskit(
-            op.op,  # type: ignore
+            op.op,
             args[width:],
             qcirc,
             qregmap,

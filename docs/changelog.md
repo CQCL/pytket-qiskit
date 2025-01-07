@@ -4,6 +4,10 @@
 
 # Changelog
 
+## Unreleased
+
+- Reject circuits containing nested conditionals when converting to qiskit.
+
 ## 0.62.0 (December 2024)
 
 - AerBackend now rejects circuits with too many qubits

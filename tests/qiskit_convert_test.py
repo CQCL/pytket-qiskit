@@ -31,10 +31,10 @@ from qiskit.circuit.equivalence_library import (  # type: ignore
 )
 from qiskit.circuit.library import (
     MCMTGate,
+    n_local,
     PauliEvolutionGate,
     RealAmplitudes,
     RYGate,
-    TwoLocal,
     UnitaryGate,
     XXPlusYYGate,
 )
@@ -1152,7 +1152,7 @@ def test_RealAmplitudes_numeric_params() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/256
 def test_symbolic_param_conv() -> None:
-    qc = TwoLocal(1, "ry", "cz", reps=1, entanglement="linear")
+    qc = n_local(2, "ry", "cz", reps=1, entanglement="linear")
     qc_transpiled = transpile(
         qc, basis_gates=["sx", "rz", "cx", "x"], optimization_level=3
     )

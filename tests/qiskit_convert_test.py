@@ -1222,8 +1222,8 @@ def test_ifelseop_two_branches() -> None:
     exp_if_circ.H(r[0])
 
     exp_else_circ = Circuit()
-    s = exp_else_circ.add_q_register("s", 1)
-    exp_else_circ.H(s[0])
+    r = exp_else_circ.add_q_register("r", 1)
+    exp_else_circ.X(r[0])
 
     assert if_circ == exp_if_circ
     assert else_circ == exp_else_circ

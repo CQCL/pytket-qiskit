@@ -7,6 +7,7 @@
 ## Unreleased
 
 - Reject circuits containing nested conditionals when converting to qiskit.
+- Update pytket version requirement to 1.38.0. 
 
 ## 0.62.0 (December 2024)
 

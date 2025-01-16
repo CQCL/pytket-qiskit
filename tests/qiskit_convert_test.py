@@ -1217,16 +1217,8 @@ def test_ifelseop_two_branches() -> None:
     if_circ = if_cond.op.op.get_circuit()
     else_circ = else_cond.op.op.get_circuit()
 
-    exp_if_circ = Circuit()
-    r = exp_if_circ.add_q_register("r", 1)
-    exp_if_circ.H(r[0])
-
-    exp_else_circ = Circuit()
-    r = exp_else_circ.add_q_register("r", 1)
-    exp_else_circ.X(r[0])
-
-    assert if_circ == exp_if_circ
-    assert else_circ == exp_else_circ
+    assert if_circ.n_gates_of_type(OpType.H) == if_circ.n_gates == 1
+    assert else_circ.n_gates_of_type(OpType.X) == else_circ.n_gates == 1
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/415

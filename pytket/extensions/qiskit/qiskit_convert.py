@@ -527,6 +527,13 @@ def _build_if_else_circuit(
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
 
+    # Coniditions must be on a single bit (for now)
+    assert len(if_else_op.condition) == 2
+    if not isinstance(if_else_op.condition[0], Clbit):
+        raise NotImplementedError(
+            "Handling of register conditions is not yet supported"
+        )
+
     circ.add_circbox(
         circbox=if_box,
         args=qubits,

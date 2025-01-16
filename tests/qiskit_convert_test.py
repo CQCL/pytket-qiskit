@@ -1195,11 +1195,11 @@ def test_nonregister_bits() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/415
 def test_ifelseop_two_branches() -> None:
-    qubits = QuantumRegister(2)
-    clbits = ClassicalRegister(2)
-    circuit = QuantumCircuit(qubits, clbits)
-    (q0, q1) = qubits
-    (c0, c1) = clbits
+    qreg = QuantumRegister(2, "r")
+    creg = ClassicalRegister(2, "s")
+    circuit = QuantumCircuit(qreg, creg)
+    (q0, q1) = qreg
+    (c0, c1) = creg
 
     circuit.h(q0)
     circuit.measure(q0, c0)
@@ -1217,8 +1217,16 @@ def test_ifelseop_two_branches() -> None:
     if_circ = if_cond.op.op.get_circuit()
     else_circ = else_cond.op.op.get_circuit()
 
-    assert if_circ.n_gates == if_circ.n_gates_of_type(OpType.H) == 1
-    assert else_circ.n_gates == else_circ.n_gates_of_type(OpType.X) == 1
+    exp_if_circ = Circuit()
+    r = exp_if_circ.add_q_register("r", 1)
+    exp_if_circ.H(r[0])
+
+    exp_else_circ = Circuit()
+    s = exp_else_circ.add_q_register("s", 1)
+    exp_else_circ.H(s[0])
+
+    assert if_circ == exp_if_circ
+    assert else_circ == exp_else_circ
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/415

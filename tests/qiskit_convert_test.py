@@ -31,12 +31,12 @@ from qiskit.circuit.equivalence_library import (  # type: ignore
 )
 from qiskit.circuit.library import (
     MCMTGate,
-    n_local,
     PauliEvolutionGate,
-    real_amplitudes,
     RYGate,
     UnitaryGate,
     XXPlusYYGate,
+    n_local,
+    real_amplitudes,
 )
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore

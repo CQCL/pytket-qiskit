@@ -32,11 +32,11 @@ from qiskit.circuit.equivalence_library import (  # type: ignore
 from qiskit.circuit.library import (
     MCMTGate,
     PauliEvolutionGate,
-    RealAmplitudes,
     RYGate,
-    TwoLocal,
     UnitaryGate,
     XXPlusYYGate,
+    n_local,
+    real_amplitudes,
 )
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
@@ -1124,22 +1124,17 @@ def test_failed_conversion_error() -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/200
-def test_RealAmplitudes_numeric_params() -> None:
+def test_real_amplitudes_numeric_params() -> None:
     qc = QuantumCircuit(3)
     params = [np.pi / 2] * 9
-    real_amps1 = RealAmplitudes(3, reps=2)
+    real_amps1 = real_amplitudes(3, reps=2)
     real_amps2 = real_amps1.assign_parameters(params)
     qc.compose(real_amps2, qubits=[0, 1, 2], inplace=True)
     # Unitary operator of the qiskit circuit. Order reversed from little -> big endian.
     # The reversal means we can check it for equivalence with a tket unitary
     qiskit_unitary = Operator(qc.reverse_bits()).data
     converted_tkc = qiskit_to_tk(qc)
-    assert converted_tkc.n_gates == 1
-    assert converted_tkc.n_gates_of_type(OpType.CircBox) == 1
-    circbox_op = converted_tkc.get_commands()[0].op
-    assert isinstance(circbox_op, CircBox)
-    assert circbox_op.get_circuit().name == "RealAmplitudes"
-    DecomposeBoxes().apply(converted_tkc)
+    assert converted_tkc.n_gates == 13
     assert converted_tkc.n_gates_of_type(OpType.CX) == 4
     assert converted_tkc.n_gates_of_type(OpType.Ry) == 9
     unitary1 = converted_tkc.get_unitary()
@@ -1152,7 +1147,7 @@ def test_RealAmplitudes_numeric_params() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/256
 def test_symbolic_param_conv() -> None:
-    qc = TwoLocal(1, "ry", "cz", reps=1, entanglement="linear")
+    qc = n_local(2, "ry", "cz", reps=1, entanglement="linear")
     qc_transpiled = transpile(
         qc, basis_gates=["sx", "rz", "cx", "x"], optimization_level=3
     )

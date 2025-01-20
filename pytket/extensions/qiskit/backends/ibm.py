@@ -161,6 +161,9 @@ class IBMQBackend(Backend):
         See the Qiskit documentation at
         https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
         for details and default values.
+    :param use_fractional_gates: Whether to use native "fractional gates" on the device
+        if available. See https://docs.quantum.ibm.com/guides/fractional-gates (default
+        False).
     """
 
     _supports_shots = False
@@ -176,6 +179,7 @@ class IBMQBackend(Backend):
         service: Optional[QiskitRuntimeService] = None,
         token: Optional[str] = None,
         sampler_options: SamplerOptions = None,
+        use_fractional_gates: bool = False,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -184,7 +188,9 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: IBMBackend = self._service.backend(backend_name)
+        self._backend: IBMBackend = self._service.backend(
+            backend_name, use_fractional_gates=use_fractional_gates
+        )
         config: PulseBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 

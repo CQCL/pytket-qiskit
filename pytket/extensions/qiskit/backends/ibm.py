@@ -49,6 +49,7 @@ from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Bit, Circuit, OpType
 from pytket.passes import (
     AutoRebase,
+    AutoSquash,
     BasePass,
     CliffordSimp,
     CustomPass,
@@ -128,13 +129,16 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
         )
 
 
+ALL_PRIMITIVE_1Q_GATES: set[OpType] = {OpType.Rx, OpType.Rz, OpType.SX, OpType.X}
+ALL_PRIMITIVE_2Q_GATES: set[OpType] = {OpType.CX, OpType.CZ, OpType.ECR, OpType.ZZPhase}
+
+
 def _get_primitive_gates(gateset: set[OpType]) -> set[OpType]:
-    if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
-        return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-    elif gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
-        return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-    else:
-        return gateset
+    return gateset & (ALL_PRIMITIVE_1Q_GATES | ALL_PRIMITIVE_2Q_GATES)
+
+
+def _get_primitive_1q_gates(gateset: set[OpType]) -> set[OpType]:
+    return gateset & ALL_PRIMITIVE_1Q_GATES
 
 
 def _int_from_readout(readout: np.ndarray) -> int:
@@ -204,6 +208,7 @@ class IBMQBackend(Backend):
         self._session = Session(backend=self._backend)
 
         self._primitive_gates = _get_primitive_gates(gate_set)
+        self._primitive_1q_gates = _get_primitive_1q_gates(gate_set)
 
         self._supports_rz = OpType.Rz in self._primitive_gates
 
@@ -395,7 +400,9 @@ class IBMQBackend(Backend):
         timeout: int = 300,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        primitive_gates = _get_primitive_gates(_tk_gate_set(config))
+        tk_gate_set = _tk_gate_set(config)
+        primitive_gates = _get_primitive_gates(tk_gate_set)
+        primitive_1q_gates = _get_primitive_1q_gates(tk_gate_set)
         supports_rz = OpType.Rz in primitive_gates
 
         assert optimisation_level in range(4)
@@ -412,6 +419,7 @@ class IBMQBackend(Backend):
                 passlist.append(IBMQBackend.rebase_pass_offline(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
+            passlist.append(IBMQBackend.squash_pass_offline(primitive_1q_gates))
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
         elif optimisation_level == 3:
@@ -470,7 +478,11 @@ class IBMQBackend(Backend):
         if optimisation_level == 3:
             passlist.append(SynthesiseTket())
         passlist.extend(
-            [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
+            [
+                IBMQBackend.rebase_pass_offline(primitive_gates),
+                IBMQBackend.squash_pass_offline(primitive_1q_gates),
+                RemoveRedundancies(),
+            ]
         )
         return SequencePass(passlist)
 
@@ -554,6 +566,10 @@ class IBMQBackend(Backend):
     @staticmethod
     def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
         return AutoRebase(primitive_gates)
+
+    @staticmethod
+    def squash_pass_offline(primitive_1q_gates: set[OpType]) -> BasePass:
+        return AutoSquash(primitive_1q_gates)
 
     def process_circuits(
         self,

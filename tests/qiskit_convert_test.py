@@ -51,6 +51,7 @@ from pytket.circuit import (
     Bit,
     CircBox,
     Circuit,
+    Conditional,
     CustomGateDef,
     Op,
     OpType,
@@ -1208,6 +1209,10 @@ def test_ifelseop_two_branches() -> None:
     tkc = qiskit_to_tk(circuit)
     assert tkc.n_gates_of_type(OpType.Conditional) == 2
     if_cond, else_cond = tuple(tkc.commands_of_type(OpType.Conditional))
+
+    # Some asserts to keep mypy happy
+    assert isinstance(if_cond.op, Conditional) and isinstance(else_cond.op, Conditional)
+    assert isinstance(if_cond.op.op, CircBox) and isinstance(else_cond.op.op, CircBox)
 
     if_circ = if_cond.op.op.get_circuit()
     else_circ = else_cond.op.op.get_circuit()

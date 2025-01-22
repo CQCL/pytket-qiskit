@@ -9,6 +9,7 @@
 - Support conversion of qiskit circuits containing `IfElseOp` in the {py:func}`qiskit_to_tk` converter.
 - Reject circuits containing nested conditionals when converting to qiskit.
 - Update pytket version requirement to 1.38.0. 
+- Add support for fractional gates on backends that support them.
 
 ## 0.62.0 (December 2024)
 

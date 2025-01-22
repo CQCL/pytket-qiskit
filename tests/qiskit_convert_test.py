@@ -1191,34 +1191,50 @@ def test_nonregister_bits() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/415
 def test_ifelseop_two_branches() -> None:
-    qreg = QuantumRegister(2, "r")
-    creg = ClassicalRegister(2, "s")
+    qreg = QuantumRegister(1, "r")
+    creg = ClassicalRegister(1, "s")
     circuit = QuantumCircuit(qreg, creg)
-    (q0, q1) = qreg
-    (c0, c1) = creg
 
-    circuit.h(q0)
-    circuit.measure(q0, c0)
+    circuit.h(qreg[0])
+    circuit.measure(qreg[0], creg[0])
 
-    with circuit.if_test((c0, 1)) as else_:
-        circuit.h(q1)
+    with circuit.if_test((creg[0], 1)) as else_:
+        circuit.h(qreg[0])
     with else_:
-        circuit.x(q1)
-    circuit.measure(q1, c1)
+        circuit.x(qreg[0])
+    circuit.measure(qreg[0], creg[0])
 
     tkc = qiskit_to_tk(circuit)
-    assert tkc.n_gates_of_type(OpType.Conditional) == 2
-    if_cond, else_cond = tuple(tkc.commands_of_type(OpType.Conditional))
+    tkc.name = "test_circ"
 
-    # Some asserts to keep mypy happy
-    assert isinstance(if_cond.op, Conditional) and isinstance(else_cond.op, Conditional)
-    assert isinstance(if_cond.op.op, CircBox) and isinstance(else_cond.op.op, CircBox)
+    # Manually build the expected pytket Circuit.
+    # Validate against tkc.
+    expected_circ = Circuit(name="test_circ")
+    r_reg = expected_circ.add_q_register("r", 1)
+    s_reg = expected_circ.add_c_register("s", 1)
+    expected_circ.H(r_reg[0])
+    expected_circ.Measure(r_reg[0], s_reg[0])
 
-    if_circ = if_cond.op.op.get_circuit()
-    else_circ = else_cond.op.op.get_circuit()
+    h_circ = Circuit()
+    h_reg = h_circ.add_q_register("r", 1)
+    h_circ.name = "If"
+    h_circ.H(h_reg[0])
 
-    assert if_circ.n_gates_of_type(OpType.H) == if_circ.n_gates == 1
-    assert else_circ.n_gates_of_type(OpType.X) == else_circ.n_gates == 1
+    x_circ = Circuit()
+    x_reg = x_circ.add_q_register("r", 1)
+    x_circ.name = "Else"
+    x_circ.X(x_reg[0])
+
+    expected_circ.add_circbox(
+        CircBox(h_circ), [r_reg[0]], condition_bits=[s_reg[0]], condition_value=1
+    )
+    expected_circ.add_circbox(
+        CircBox(x_circ), [r_reg[0]], condition_bits=[s_reg[0]], condition_value=0
+    )
+
+    expected_circ.Measure(r_reg[0], s_reg[0])
+
+    assert expected_circ == tkc
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/415

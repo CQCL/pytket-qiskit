@@ -51,7 +51,6 @@ from pytket.circuit import (
     Bit,
     CircBox,
     Circuit,
-    Conditional,
     CustomGateDef,
     Op,
     OpType,

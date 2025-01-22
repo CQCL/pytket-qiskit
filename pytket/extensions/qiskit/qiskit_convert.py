@@ -490,7 +490,6 @@ def _pytket_boxes_from_ifelseop(
 ) -> tuple[CircBox, Optional[CircBox]]:
     # Extract the QuantumCircuit implementing true_body
     if_qc: QuantumCircuit = if_else_op.blocks[0]
-
     if_builder = CircuitBuilder(qregs, cregs)
     if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
@@ -549,7 +548,6 @@ def _build_if_else_circuit(
                 "A bit must have condition value 0 or 1"
                 + f", got {if_else_op.condition[1]}"
             )
-        # negated_value = 1 ^ if_else_op.condition[1]
         circ.add_circbox(
             circbox=else_box,
             args=qubits,

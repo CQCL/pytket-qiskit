@@ -314,7 +314,7 @@ def _all_bits_set(integer: int, n_bits: int) -> bool:
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
-    """Get a pytket contolled OpType from a qiskit ControlledGate."""
+    """Get a pytket controlled OpType from a qiskit ControlledGate."""
 
     # If the control state is not "all |1>", use QControlBox
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):

@@ -520,7 +520,7 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    # Coniditions must be on a single bit (for now)
+    # Coniditions must be on a single bit (for now) TODO: support multiple bits.
     if len(bits) == 1:
         # Get two CircBox objects which implement the true_body and false_body.
         if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
@@ -549,13 +549,13 @@ def _build_if_else_circuit(
                 "A bit must have condition value 0 or 1"
                 + f", got {if_else_op.condition[1]}"
             )
+        # negated_value = 1 ^ if_else_op.condition[1]
         circ.add_circbox(
             circbox=else_box,
             args=qubits,
             condition_bits=bits,
-            # TODO: handle conditions over multiple bits/registers?
             condition_value=1 ^ if_else_op.condition[1],
-        ),
+        )
     return circ
 
 

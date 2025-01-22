@@ -520,15 +520,17 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    # Get two CircBox objects which implement the true_body and false_body.
-    if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
-    # else_box can be None if no false_body is specified.
-
-    circ_builder = CircuitBuilder(qregs, cregs)
-    circ = circ_builder.circuit()
+    # Coniditions must be on a single bit (for now)
+    if len(bits) == 1:
+        # Get two CircBox objects which implement the true_body and false_body.
+        if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+        # else_box can be None if no false_body is specified.
+        circ_builder = CircuitBuilder(qregs, cregs)
+        circ = circ_builder.circuit()
+    else:
+        raise NotImplementedError("Conditions over multiple bits not yet supported.")
 
     # Coniditions must be on a single bit (for now)
-    assert len(if_else_op.condition) == 2
     if not isinstance(if_else_op.condition[0], Clbit):
         raise NotImplementedError(
             "Handling of register conditions is not yet supported"
@@ -542,13 +544,18 @@ def _build_if_else_circuit(
     )
     # If we have an else_box defined, add it to the circuit
     if else_box is not None:
+        if if_else_op.condition[1] not in {0, 1}:
+            raise ValueError(
+                "A bit must have condition value 0 or 1"
+                + f", got {if_else_op.condition[1]}"
+            )
         circ.add_circbox(
             circbox=else_box,
             args=qubits,
             condition_bits=bits,
             # TODO: handle conditions over multiple bits/registers?
-            condition_value=not bool(if_else_op.condition[1]),
-        )
+            condition_value=1 ^ if_else_op.condition[1],
+        ),
     return circ
 
 

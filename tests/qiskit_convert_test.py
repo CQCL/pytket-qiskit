@@ -1188,6 +1188,113 @@ def test_nonregister_bits() -> None:
         tk_to_qiskit(c)
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/415
+def test_ifelseop_two_branches() -> None:
+    qreg = QuantumRegister(1, "r")
+    creg = ClassicalRegister(1, "s")
+    circuit = QuantumCircuit(qreg, creg)
+
+    circuit.h(qreg[0])
+    circuit.measure(qreg[0], creg[0])
+
+    with circuit.if_test((creg[0], 1)) as else_:
+        circuit.h(qreg[0])
+    with else_:
+        circuit.x(qreg[0])
+    circuit.measure(qreg[0], creg[0])
+
+    tkc = qiskit_to_tk(circuit)
+    tkc.name = "test_circ"
+
+    # Manually build the expected pytket Circuit.
+    # Validate against tkc.
+    expected_circ = Circuit(name="test_circ")
+    r_reg = expected_circ.add_q_register("r", 1)
+    s_reg = expected_circ.add_c_register("s", 1)
+    expected_circ.H(r_reg[0])
+    expected_circ.Measure(r_reg[0], s_reg[0])
+
+    h_circ = Circuit()
+    h_reg = h_circ.add_q_register("r", 1)
+    h_circ.name = "If"
+    h_circ.H(h_reg[0])
+
+    x_circ = Circuit()
+    x_reg = x_circ.add_q_register("r", 1)
+    x_circ.name = "Else"
+    x_circ.X(x_reg[0])
+
+    expected_circ.add_circbox(
+        CircBox(h_circ), [r_reg[0]], condition_bits=[s_reg[0]], condition_value=1
+    )
+    expected_circ.add_circbox(
+        CircBox(x_circ), [r_reg[0]], condition_bits=[s_reg[0]], condition_value=0
+    )
+
+    expected_circ.Measure(r_reg[0], s_reg[0])
+
+    assert expected_circ == tkc
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/415
+def test_ifelseop_one_branch() -> None:
+    qubits = QuantumRegister(1, "q1")
+    clbits = ClassicalRegister(1, "c1")
+    circuit = QuantumCircuit(qubits, clbits)
+    (q0,) = qubits
+    (c0,) = clbits
+
+    circuit.h(q0)
+    circuit.measure(q0, c0)
+    with circuit.if_test((c0, 1)):
+        circuit.x(q0)
+    circuit.measure(q0, c0)
+
+    tket_circ_if_else = qiskit_to_tk(circuit)
+    tket_circ_if_else.name = "test_circ"
+
+    # Manually build the expected pytket Circuit.
+    # Validate against tket_circ_if_else.
+    expected_circ = Circuit()
+    expected_circ.name = "test_circ"
+    q1_tk = expected_circ.add_q_register("q1", 1)
+    c1_tk = expected_circ.add_c_register("c1", 1)
+    expected_circ.H(q1_tk[0])
+    expected_circ.Measure(q1_tk[0], c1_tk[0])
+    x_circ = Circuit()
+    x_circ.name = "If"
+    xq1 = x_circ.add_q_register("q1", 1)
+    x_circ.X(xq1[0])
+    expected_circ.add_circbox(
+        CircBox(x_circ), [q1_tk[0]], condition_bits=[c1_tk[0]], condition_value=1
+    )
+
+    expected_circ.Measure(q1_tk[0], c1_tk[0])
+
+    assert tket_circ_if_else == expected_circ
+
+
+def test_ifelseop_multi_bit_cond() -> None:
+    qreg = QuantumRegister(2, "q")
+    creg = ClassicalRegister(2, "c")
+    circuit = QuantumCircuit(creg, qreg)
+    (q0, q1) = qreg
+    (c0, c1) = creg
+
+    circuit.h(q0)
+    circuit.h(q1)
+    circuit.measure(q0, c0)
+    circuit.measure(q1, c1)
+    with circuit.if_test((creg, 2)):
+        circuit.x(q0)
+        circuit.x(q1)
+    circuit.measure(q0, c0)
+    circuit.measure(q1, c1)
+    # This currently gives an error as register exp not supported.
+    with pytest.raises(NotImplementedError):
+        qiskit_to_tk(circuit)
+
+
 def test_range_preds_with_conditionals() -> None:
     # https://github.com/CQCL/pytket-qiskit/issues/375
     c = Circuit(1, 1)

@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Instruction,
     InstructionSet,
     Measure,
@@ -313,7 +314,7 @@ def _all_bits_set(integer: int, n_bits: int) -> bool:
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
-    """Get a pytket contolled OpType from a qiskit ControlledGate."""
+    """Get a pytket controlled OpType from a qiskit ControlledGate."""
 
     # If the control state is not "all |1>", use QControlBox
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
@@ -480,6 +481,82 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
+# Used for handling of IfElseOp
+# docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
+# Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
+# pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
+def _pytket_boxes_from_ifelseop(
+    if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
+) -> tuple[CircBox, Optional[CircBox]]:
+    # Extract the QuantumCircuit implementing true_body
+    if_qc: QuantumCircuit = if_else_op.blocks[0]
+    if_builder = CircuitBuilder(qregs, cregs)
+    if_builder.add_qiskit_data(if_qc)
+    if_circuit = if_builder.circuit()
+    if_circuit.name = "If"
+    # Remove blank wires to ensure CircBox is the correct size.
+    if_circuit.remove_blank_wires()
+
+    # The false_body arg is optional
+    if len(if_else_op.blocks) == 2:
+        else_qc: QuantumCircuit = if_else_op.blocks[1]
+        else_builder = CircuitBuilder(qregs, cregs)
+        else_builder.add_qiskit_data(else_qc)
+        else_circuit = else_builder.circuit()
+        else_circuit.name = "Else"
+        else_circuit.remove_blank_wires()
+        return CircBox(if_circuit), CircBox(else_circuit)
+
+    # If no false_body is specified IfElseOp.blocks is of length 1.
+    # In this case we return a CircBox implementing true_body and None.
+    return CircBox(if_circuit), None
+
+
+def _build_if_else_circuit(
+    if_else_op: IfElseOp,
+    qregs: list[QuantumRegister],
+    cregs: list[ClassicalRegister],
+    qubits: list[Qubit],
+    bits: list[Bit],
+) -> Circuit:
+    # Coniditions must be on a single bit (for now) TODO: support multiple bits.
+    if len(bits) == 1:
+        # Get two CircBox objects which implement the true_body and false_body.
+        if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+        # else_box can be None if no false_body is specified.
+        circ_builder = CircuitBuilder(qregs, cregs)
+        circ = circ_builder.circuit()
+    else:
+        raise NotImplementedError("Conditions over multiple bits not yet supported.")
+
+    # Coniditions must be on a single bit (for now)
+    if not isinstance(if_else_op.condition[0], Clbit):
+        raise NotImplementedError(
+            "Handling of register conditions is not yet supported"
+        )
+
+    circ.add_circbox(
+        circbox=if_box,
+        args=qubits,
+        condition_bits=bits,
+        condition_value=if_else_op.condition[1],
+    )
+    # If we have an else_box defined, add it to the circuit
+    if else_box is not None:
+        if if_else_op.condition[1] not in {0, 1}:
+            raise ValueError(
+                "A bit must have condition value 0 or 1"
+                + f", got {if_else_op.condition[1]}"
+            )
+        circ.add_circbox(
+            circbox=else_box,
+            args=qubits,
+            condition_bits=bits,
+            condition_value=1 ^ if_else_op.condition[1],
+        )
+    return circ
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -523,7 +600,7 @@ class CircuitBuilder:
             bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             condition_kwargs = {}
-            if instr.condition is not None:
+            if instr.condition is not None and type(instr) is not IfElseOp:
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,
                     cregmap=self.cregmap,
@@ -531,8 +608,8 @@ class CircuitBuilder:
                 )
 
             optype = None
-            if type(instr) not in (PauliEvolutionGate, UnitaryGate):
-                # Handling of PauliEvolutionGate and UnitaryGate below
+            if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
+                # Handling of PauliEvolutionGate, UnitaryGate and IfElseOp below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
@@ -543,6 +620,16 @@ class CircuitBuilder:
             elif optype == OpType.StatePreparationBox:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
+
+            elif type(instr) is IfElseOp:
+                if_else_circ = _build_if_else_circuit(
+                    if_else_op=instr,
+                    qregs=self.qregs,
+                    cregs=self.cregs,
+                    qubits=qubits,
+                    bits=bits,
+                )
+                self.tkc.append(if_else_circ)
 
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

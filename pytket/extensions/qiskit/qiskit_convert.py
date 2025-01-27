@@ -743,6 +743,7 @@ def append_tk_command_to_qiskit(
     cregmap: dict[str, ClassicalRegister],
     symb_map: dict[Parameter, sympy.Symbol],
     range_preds: dict[Bit, tuple[list["UnitID"], int]],
+    condition: tuple[ClassicalRegister | Clbit, int] | None = None,
 ) -> InstructionSet:
     optype = op.type
     if optype == OpType.Measure:
@@ -752,11 +753,21 @@ def append_tk_command_to_qiskit(
         b = cregmap[bit.reg_name][bit.index[0]]
         # If the bit is storing a range predicate it should be invalidated:
         range_preds.pop(bit, None)  # type: ignore
-        return qcirc.measure(qb, b)
+        if condition is None:
+            qcirc.measure(qb, b)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.measure(qb, b)
+        return qcirc
 
     if optype == OpType.Reset:
         qb = qregmap[args[0].reg_name][args[0].index[0]]
-        return qcirc.reset(qb)
+        if condition is None:
+            qcirc.reset(qb)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.reset(qb)
+        return qcirc
 
     if optype in [OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate]:
         subcircuit = op.get_circuit()  # type: ignore
@@ -773,24 +784,44 @@ def append_tk_command_to_qiskit(
             instruc.name = op.get_name()
         else:
             instruc = subqc.to_instruction()
-        return qcirc.append(instruc, qargs, cargs)
+        if condition is None:
+            qcirc.append(instruc, qargs, cargs)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(instruc, qargs, cargs)
+        return qcirc
     if optype in [OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox]:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         u = op.get_matrix()  # type: ignore
         g = UnitaryGate(u, label="unitary")
         # Note reversal of qubits, to account for endianness (pytket unitaries are
         # ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
-        return qcirc.append(g, qargs=list(reversed(qargs)))
+        if condition is None:
+            qcirc.append(g, qargs=list(reversed(qargs)))
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(g, qargs=list(reversed(qargs)))
+        return qcirc
     if optype == OpType.StatePreparationBox:
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         statevector_array = op.get_statevector()  # type: ignore
         # check if the StatePreparationBox contains resets
         if op.with_initial_reset():  # type: ignore
             initializer = Initialize(statevector_array)
-            return qcirc.append(initializer, qargs=list(reversed(qargs)))
+            if condition is None:
+                qcirc.append(initializer, qargs=list(reversed(qargs)))
+            else:
+                with qcirc.if_test(condition):
+                    qcirc.append(initializer, qargs=list(reversed(qargs)))
+            return qcirc
         else:
             qiskit_state_prep_box = StatePreparation(statevector_array)
-            return qcirc.append(qiskit_state_prep_box, qargs=list(reversed(qargs)))
+            if condition is None:
+                qcirc.append(qiskit_state_prep_box, qargs=list(reversed(qargs)))
+            else:
+                with qcirc.if_test(condition):
+                    qcirc.append(qiskit_state_prep_box, qargs=list(reversed(qargs)))
+            return qcirc
 
     if optype == OpType.QControlBox:
         assert isinstance(op, QControlBox)
@@ -806,12 +837,23 @@ def append_tk_command_to_qiskit(
             )
         params = _get_params(op.get_op(), symb_map)
         operation = gatetype(*params)
-        return qcirc.append(
-            operation.control(
-                num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
-            ),
-            qargs=qargs,
-        )
+        if condition is None:
+            qcirc.append(
+                operation.control(
+                    num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
+                ),
+                qargs=qargs,
+            )
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(
+                    operation.control(
+                        num_ctrl_qubits=op.get_n_controls(),
+                        ctrl_state=qiskit_control_state,
+                    ),
+                    qargs=qargs,
+                )
+        return qcirc
 
     if optype == OpType.Barrier:
         if any(q.type == UnitType.bit for q in args):
@@ -820,7 +862,12 @@ def append_tk_command_to_qiskit(
             )
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         g = Barrier(len(args))
-        return qcirc.append(g, qargs=qargs)
+        if condition is None:
+            qcirc.append(g, qargs=qargs)
+        else:
+            with qcirc.if_test(condition):
+                qqcirc.append(g, qargs=qargs)
+        return qcirc
     if optype == OpType.RangePredicate:
         if op.lower != op.upper:  # type: ignore
             raise NotImplementedError
@@ -848,6 +895,21 @@ def append_tk_command_to_qiskit(
         for i, a in enumerate(args[:width]):
             if a.reg_name != regname:
                 raise NotImplementedError("Conditions can only use a single register")
+        if len(cregmap[regname]) == width:
+            for i, a in enumerate(args[:width]):
+                if a.index != [i]:
+                    raise NotImplementedError(
+                        """Conditions must be an entire register in\
+ order or only one bit of one register"""
+                    )
+            condition = (cregmap[regname], value)
+        elif width == 1:
+            condition = (cregmap[regname][args[0].index[0]], value)
+        else:
+            raise NotImplementedError(
+                """Conditions must be an entire register in\
+order or only one bit of one register"""
+            )
         instruction = append_tk_command_to_qiskit(
             op.op,
             args[width:],
@@ -856,35 +918,35 @@ def append_tk_command_to_qiskit(
             cregmap,
             symb_map,
             range_preds,
+            condition=condition,
         )
-        if len(cregmap[regname]) == width:
-            for i, a in enumerate(args[:width]):
-                if a.index != [i]:
-                    raise NotImplementedError(
-                        """Conditions must be an entire register in\
- order or only one bit of one register"""
-                    )
-
-            instruction.c_if(cregmap[regname], value)
-        elif width == 1:
-            instruction.c_if(cregmap[regname][args[0].index[0]], value)
-        else:
-            raise NotImplementedError(
-                """Conditions must be an entire register in\
-order or only one bit of one register"""
-            )
 
         return instruction
     # normal gates
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
     if optype == OpType.CnX:
-        return qcirc.mcx(qargs[:-1], qargs[-1])
+        if condition is None:
+            qcirc.mcx(qargs[:-1], qargs[-1])
+        else:
+            with qcirc.if_test(condition):
+                qcirc.mcx(qargs[:-1], qargs[-1])
+        return qcirc
     if optype == OpType.CnY:
-        return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
+        if condition is None:
+            qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
+        return qcirc
     if optype == OpType.CnZ:
         new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
         new_gate.name = "mcz"
-        return qcirc.append(new_gate, qargs)
+        if condition is None:
+            qcirc.append(new_gate, qargs)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(new_gate, qargs)
+        return qcirc
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
@@ -895,25 +957,43 @@ order or only one bit of one register"""
             new_gate = CRYGate(alpha)
         else:
             new_gate = RYGate(alpha).control(len(qargs) - 1)
-        qcirc.append(new_gate, qargs)
+        if condition is None:
+            qcirc.append(new_gate, qargs)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(new_gate, qargs)
         return qcirc
 
     if optype == OpType.CU3:
         params = _get_params(op, symb_map) + [0]
-        return qcirc.append(qiskit_gates.CUGate(*params), qargs=qargs)
+        if condition is None:
+            qcirc.append(qiskit_gates.CUGate(*params), qargs=qargs)
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(qiskit_gates.CUGate(*params), qargs=qargs)
+        return qcirc
 
     if optype == OpType.TK1:
         params = _get_params(op, symb_map)
         half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
-        return qcirc.append(
-            qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
-            qargs=qargs,
-        )
+        if condition is None:
+            qcirc.append(
+                qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
+                qargs=qargs,
+            )
+        else:
+            with qcirc.if_test(condition):
+                qcirc.append(
+                    qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
+                    qargs=qargs,
+                )
+        return qcirc
 
     if optype == OpType.Phase:
         params = _get_params(op, symb_map)
         assert len(params) == 1
+        # TODO is there a way to make this conditional?
         qcirc.global_phase += params[0]
         return InstructionSet()
 
@@ -930,7 +1010,12 @@ order or only one bit of one register"""
         qcirc.global_phase += phase * np.pi
     else:
         qcirc.global_phase += sympify(phase * sympy.pi)
-    return qcirc.append(g, qargs=qargs)
+    if condition is None:
+        qcirc.append(g, qargs=qargs)
+    else:
+        with qcirc.if_test(condition):
+            qcirc.append(g, qargs=qargs)
+    return qcirc
 
 
 # The set of tket gates that can be converted directly to qiskit gates

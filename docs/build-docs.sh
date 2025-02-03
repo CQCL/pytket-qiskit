@@ -2,20 +2,31 @@
 set -e
 rm -rf build/
 
+# This build script is only used for local docs build.
+# The docs build for the website uses a different script.
+
 # Move theming elements into the docs folder
-cp -R pytket-docs-theming/_static .
 cp -R pytket-docs-theming/quantinuum-sphinx .
 cp pytket-docs-theming/conf.py .
+cp -R pytket-docs-theming/_static . # Currently unused
 
 # Get the name of the project
-EXTENSION_NAME="$(basename "$(dirname `pwd`)")"
+PACKAGE="$(basename "$(dirname `pwd`)")"
 
-# Correct github link in navbar
-sed -i '' 's#CQCL/tket#CQCL/'$EXTENSION_NAME'#' _static/nav-config.js
+# Get pytket extension version
+VERSION="$(pip show $PACKAGE | grep Version | awk '{print $2}')"
 
-# Build the docs. Ensure we have the correct project title.
-sphinx-build -b html -D html_title="$EXTENSION_NAME" . build 
+# Output package version
+echo extension version $VERSION
 
+# Combine to set title
+PACKAGE+=" $VERSION"
+
+# Build the docs setting the html_title
+sphinx-build -b html . build -D html_title="$PACKAGE API documentation" -W
+
+# Find and replace all generated links that use _tket in the built html.
+# Note that MACOS and linux have differing sed syntax.
 if [[ "$OSTYPE" == "darwin"* ]]; then
     find build/ -type f -name "*.html" | xargs sed -e 's/pytket._tket/pytket/g' -i ""
     sed -i '' 's/pytket._tket/pytket/g' build/searchindex.js
@@ -24,8 +35,7 @@ else
     sed -i 's/pytket._tket/pytket/g' build/searchindex.js
 fi
 
-# Remove copied files. This ensures reusability.
-rm -r _static 
+# Remove copied files after build is done. This ensures reusability.
 rm -r quantinuum-sphinx
 rm conf.py
 

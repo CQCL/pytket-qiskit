@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 rm -rf build/
 
 # Move theming elements into the docs folder
@@ -27,3 +28,5 @@ fi
 rm -r _static 
 rm -r quantinuum-sphinx
 rm conf.py
+
+set +e

@@ -80,7 +80,9 @@ jobs:
       if:  (matrix.os == 'ubuntu-latest') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
       run: |
         bash ./docs/install.sh
-        for w in `find wheelhouse/ -type f -name "*.whl"` ; do poetry run pip install $w ; done
+        cd docs
+        for w in `find ../wheelhouse/ -type f -name "*.whl"` ; do poetry run pip install $w ; done
+        cd ..
     - name: Build docs
       if:  (matrix.os == 'ubuntu-latest') && (github.event_name == 'pull_request' || github.event_name == 'schedule' )
       timeout-minutes: 20

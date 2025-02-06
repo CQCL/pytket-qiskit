@@ -31,6 +31,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: '0'
+        # recursive needed as the pytket-docs-theming submodule contains
+        # the quantinuum-sphinx submodule
         submodules: recursive
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
     - name: Set up Python 3.10

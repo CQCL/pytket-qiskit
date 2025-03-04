@@ -4,6 +4,11 @@
 
 # Changelog
 
+
+## 0.64.0 (unreleased)
+
+- Update pytket version requirement to 2.0.1.
+
 ## 0.63.0 (January 2025)
 
 - Support conversion of qiskit circuits containing `IfElseOp` in the {py:func}`qiskit_to_tk` converter. Note: Only conditions on a single bit are supported currently. Handling of more general conditions will be added in future.

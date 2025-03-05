@@ -5,7 +5,7 @@
 # Changelog
 
 
-## 0.64.0 (unreleased)
+## 0.64.0 (March 2025)
 
 - Update pytket version requirement to 2.0.1.
 

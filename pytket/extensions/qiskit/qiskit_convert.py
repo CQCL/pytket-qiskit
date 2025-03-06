@@ -61,7 +61,7 @@ from pytket.circuit import (
 from pytket.circuit.logic_exp import reg_eq, reg_neq
 from pytket.passes import AutoRebase
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.unit_id import _TEMP_BIT_NAME, BitRegister
+from pytket.unit_id import _TEMP_BIT_NAME
 from pytket.utils import (
     QubitPauliOperator,
     gen_term_sequence_circuit,
@@ -99,6 +99,7 @@ if TYPE_CHECKING:
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
     from pytket.circuit import UnitID
+    from pytket.unit_id import BitRegister
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {
@@ -547,9 +548,7 @@ def _build_if_else_circuit(
             )
 
     elif isinstance(if_else_op.condition[0], ClassicalRegister):
-        pytket_bit_reg = BitRegister(
-            if_else_op.condition[0].name, if_else_op.condition[0].size
-        )
+        pytket_bit_reg: BitRegister = circ.get_c_register(if_else_op.condition[0].name)
         circ.add_circbox(
             circbox=if_box,
             args=qubits,

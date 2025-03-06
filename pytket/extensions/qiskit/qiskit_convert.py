@@ -58,9 +58,10 @@ from pytket.circuit import (
     Unitary3qBox,
     UnitType,
 )
+from pytket.circuit.logic_exp import reg_eq, reg_neq
 from pytket.passes import AutoRebase
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.unit_id import _TEMP_BIT_NAME, BitRegister
 from pytket.utils import (
     QubitPauliOperator,
     gen_term_sequence_circuit,
@@ -518,41 +519,52 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    # Coniditions must be on a single bit (for now) TODO: support multiple bits.
-    if len(bits) == 1:
-        # Get two CircBox objects which implement the true_body and false_body.
-        if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
-        # else_box can be None if no false_body is specified.
-        circ_builder = CircuitBuilder(qregs, cregs)
-        circ = circ_builder.circuit()
-    else:
-        raise NotImplementedError("Conditions over multiple bits not yet supported.")
+    # Conditions must be on a single bit (for now) TODO: support multiple bits.
+
+    # Get two CircBox objects which implement the true_body and false_body.
+    if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+    # else_box can be None if no false_body is specified.
+    circ_builder = CircuitBuilder(qregs, cregs)
+    circ = circ_builder.circuit()
 
     # Coniditions must be on a single bit (for now)
-    if not isinstance(if_else_op.condition[0], Clbit):
-        raise NotImplementedError(
-            "Handling of register conditions is not yet supported"
-        )
-
-    circ.add_circbox(
-        circbox=if_box,
-        args=qubits,
-        condition_bits=bits,
-        condition_value=if_else_op.condition[1],
-    )
-    # If we have an else_box defined, add it to the circuit
-    if else_box is not None:
-        if if_else_op.condition[1] not in {0, 1}:
-            raise ValueError(
-                "A bit must have condition value 0 or 1"
-                + f", got {if_else_op.condition[1]}"
-            )
+    if isinstance(if_else_op.condition[0], Clbit):
         circ.add_circbox(
-            circbox=else_box,
+            circbox=if_box,
             args=qubits,
             condition_bits=bits,
-            condition_value=1 ^ if_else_op.condition[1],
+            condition_value=if_else_op.condition[1],
         )
+        # If we have an else_box defined, add it to the circuit
+        if else_box is not None:
+            if if_else_op.condition[1] not in {0, 1}:
+                raise ValueError(
+                    "A bit must have condition value 0 or 1"
+                    + f", got {if_else_op.condition[1]}"
+                )
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition_bits=bits,
+                condition_value=1 ^ if_else_op.condition[1],
+            )
+
+    elif isinstance(if_else_op.condition[0], ClassicalRegister):
+        pytket_bit_reg = BitRegister(
+            if_else_op.condition[0].name, if_else_op.condition[0].size
+        )
+        circ.add_circbox(
+            circbox=if_box,
+            args=qubits,
+            condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
+        )
+        if else_box is not None:
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
+            )
+
     return circ
 
 

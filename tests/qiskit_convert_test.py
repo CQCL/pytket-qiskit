@@ -1274,7 +1274,8 @@ def test_ifelseop_one_branch() -> None:
     assert tket_circ_if_else == expected_circ
 
 
-def test_ifelseop_multi_bit_cond() -> None:
+# https://github.com/CQCL/pytket-qiskit/issues/452
+def test_ifelseop_reg_cond() -> None:
     qreg = QuantumRegister(2, "q")
     creg = ClassicalRegister(2, "c")
     circuit = QuantumCircuit(creg, qreg)
@@ -1285,14 +1286,13 @@ def test_ifelseop_multi_bit_cond() -> None:
     circuit.h(q1)
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
+    # Condition is on a register not a bit
     with circuit.if_test((creg, 2)):
         circuit.x(q0)
         circuit.x(q1)
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
-    # This currently gives an error as register exp not supported.
-    with pytest.raises(NotImplementedError):
-        qiskit_to_tk(circuit)
+    _: Circuit = qiskit_to_tk(circuit)
 
 
 def test_range_preds_with_conditionals() -> None:

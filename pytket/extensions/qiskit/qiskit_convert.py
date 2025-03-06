@@ -519,15 +519,12 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    # Conditions must be on a single bit (for now) TODO: support multiple bits.
-
     # Get two CircBox objects which implement the true_body and false_body.
     if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
     # else_box can be None if no false_body is specified.
     circ_builder = CircuitBuilder(qregs, cregs)
     circ = circ_builder.circuit()
 
-    # Coniditions must be on a single bit (for now)
     if isinstance(if_else_op.condition[0], Clbit):
         circ.add_circbox(
             circbox=if_box,

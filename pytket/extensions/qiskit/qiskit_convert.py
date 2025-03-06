@@ -527,6 +527,8 @@ def _build_if_else_circuit(
     circ = circ_builder.circuit()
 
     if isinstance(if_else_op.condition[0], Clbit):
+        if len(bits) != 1:
+            raise NotImplementedError("Conditions on multiple bits not yet supported")
         circ.add_circbox(
             circbox=if_box,
             args=qubits,
@@ -535,11 +537,6 @@ def _build_if_else_circuit(
         )
         # If we have an else_box defined, add it to the circuit
         if else_box is not None:
-            if if_else_op.condition[1] not in {0, 1}:
-                raise ValueError(
-                    "A bit must have condition value 0 or 1"
-                    + f", got {if_else_op.condition[1]}"
-                )
             circ.add_circbox(
                 circbox=else_box,
                 args=qubits,
@@ -560,6 +557,11 @@ def _build_if_else_circuit(
                 args=qubits,
                 condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
             )
+    else:
+        raise TypeError(
+            "Unrecognized type used to construct IfElseOp. Expected "
+            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
+        )
 
     return circ
 

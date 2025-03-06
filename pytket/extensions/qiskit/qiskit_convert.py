@@ -954,12 +954,6 @@ _protected_tket_gates = (
 supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
-def _has_implicit_permutation(circ: Circuit) -> bool:
-    """Returns True if a Circuit has a non-trivial permutation
-    of qubits, false otherwise."""
-    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
-
-
 def tk_to_qiskit(
     tkcirc: Circuit,
     replace_implicit_swaps: bool = False,
@@ -987,11 +981,7 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
 
-    if (
-        _has_implicit_permutation(tkcirc)
-        and perm_warning
-        and not replace_implicit_swaps
-    ):
+    if tkcirc.has_implicit_wireswaps and perm_warning and not replace_implicit_swaps:
         warnings.warn(
             "The pytket Circuit contains implicit qubit permutations"
             + " which aren't handled by default."

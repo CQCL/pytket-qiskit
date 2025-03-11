@@ -1321,8 +1321,9 @@ def test_ifelseop_reg_cond() -> None:
     y_qreg = y_circ2.add_q_register("q", 2)
     y_circ2.Y(y_qreg[0]).Y(y_qreg[1])
     expected_circ.add_circbox(
-        CircBox(x_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_neq(creg_tk, 2)
+        CircBox(y_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_neq(creg_tk, 2)
     )
+    assert expected_circ == tkc
 
 
 def test_range_preds_with_conditionals() -> None:

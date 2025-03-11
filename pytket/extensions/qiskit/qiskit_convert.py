@@ -528,7 +528,7 @@ def _build_if_else_circuit(
 
     if isinstance(if_else_op.condition[0], Clbit):
         if len(bits) != 1:
-            raise NotImplementedError("Conditions on multiple registers not supported")
+            raise NotImplementedError("Conditions on multiple bits not supported")
         circ.add_circbox(
             circbox=if_box,
             args=qubits,
@@ -545,8 +545,6 @@ def _build_if_else_circuit(
             )
 
     elif isinstance(if_else_op.condition[0], ClassicalRegister):
-        if len(if_else_op.condition[0]) != 1:
-            raise NotImplementedError("Conditions on multiple registers not supported")
         pytket_bit_reg: BitRegister = circ.get_c_register(if_else_op.condition[0].name)
         circ.add_circbox(
             circbox=if_box,

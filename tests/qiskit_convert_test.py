@@ -61,6 +61,7 @@ from pytket.circuit import (
     Unitary2qBox,
     Unitary3qBox,
     reg_eq,
+    reg_neq,
 )
 from pytket.extensions.qiskit import IBMQBackend, qiskit_to_tk, tk_to_qiskit
 from pytket.extensions.qiskit.backends import (
@@ -1287,12 +1288,41 @@ def test_ifelseop_reg_cond() -> None:
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
     # Condition is on a register not a bit
-    with circuit.if_test((creg, 2)):
+    with circuit.if_test((creg, 2)) as else_:
         circuit.x(q0)
         circuit.x(q1)
+    with else_:
+        circuit.y(q0)
+        circuit.y(q1)
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
-    _: Circuit = qiskit_to_tk(circuit)
+    tkc: Circuit = qiskit_to_tk(circuit)
+    tkc.name = "test_circ"
+
+    expected_circ = Circuit()
+    expected_circ.name = "test_circ"
+    qreg_tk = expected_circ.add_q_register("q", 2)
+    creg_tk = expected_circ.add_c_register("c", 2)
+    expected_circ.H(qreg_tk[0])
+    expected_circ.H(qreg_tk[1])
+    expected_circ.Measure(qreg_tk[0], creg_tk[0])
+    expected_circ.Measure(qreg_tk[1], creg_tk[1])
+
+    x_circ2 = Circuit()
+    x_circ2.name = "If"
+    x_qreg = x_circ2.add_q_register("q", 2)
+    x_circ2.X(x_qreg[0]).X(x_qreg[1])
+    expected_circ.add_circbox(
+        CircBox(x_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_eq(creg_tk, 2)
+    )
+
+    y_circ2 = Circuit()
+    y_circ2.name = "Else"
+    y_qreg = y_circ2.add_q_register("q", 2)
+    y_circ2.Y(y_qreg[0]).Y(y_qreg[1])
+    expected_circ.add_circbox(
+        CircBox(x_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_neq(creg_tk, 2)
+    )
 
 
 def test_range_preds_with_conditionals() -> None:

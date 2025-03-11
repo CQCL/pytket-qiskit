@@ -1323,6 +1323,10 @@ def test_ifelseop_reg_cond() -> None:
     expected_circ.add_circbox(
         CircBox(y_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_neq(creg_tk, 2)
     )
+
+    expected_circ.Measure(qreg_tk[0], creg_tk[0])
+    expected_circ.Measure(qreg_tk[1], creg_tk[1])
+
     assert expected_circ == tkc
 
 

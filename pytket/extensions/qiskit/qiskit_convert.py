@@ -630,6 +630,8 @@ class CircuitBuilder:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 
+            # Note: These IfElseOp/if_test type conditions are only handled
+            # for single bit conditions and conditions on entire registers.
             elif type(instr) is IfElseOp:
                 if_else_circ = _build_if_else_circuit(
                     if_else_op=instr,

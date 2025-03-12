@@ -1277,44 +1277,53 @@ def test_ifelseop_one_branch() -> None:
 
 # https://github.com/CQCL/pytket-qiskit/issues/452
 def test_ifelseop_reg_cond_if() -> None:
-    qreg = QuantumRegister(2, "q")
-    creg = ClassicalRegister(2, "c")
+    qreg = QuantumRegister(3, "q")
+    creg = ClassicalRegister(3, "c")
     circuit = QuantumCircuit(creg, qreg)
-    (q0, q1) = qreg
-    (c0, c1) = creg
-
+    (q0, q1, q2) = qreg
+    (c0, c1, c2) = creg
     circuit.h(q0)
     circuit.h(q1)
+    circuit.h(q2)
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
+    circuit.measure(q2, c2)
     # Condition is on a register not a bit
     with circuit.if_test((creg, 2)):
         circuit.x(q0)
-        circuit.x(q1)
+        circuit.y(q1)
+        circuit.z(q2)
     circuit.measure(q0, c0)
     circuit.measure(q1, c1)
+    circuit.measure(q2, c2)
+
     tkc: Circuit = qiskit_to_tk(circuit)
     tkc.name = "test_circ"
 
     expected_circ = Circuit()
     expected_circ.name = "test_circ"
-    qreg_tk = expected_circ.add_q_register("q", 2)
-    creg_tk = expected_circ.add_c_register("c", 2)
+    qreg_tk = expected_circ.add_q_register("q", 3)
+    creg_tk = expected_circ.add_c_register("c", 3)
     expected_circ.H(qreg_tk[0])
     expected_circ.H(qreg_tk[1])
+    expected_circ.H(qreg_tk[2])
     expected_circ.Measure(qreg_tk[0], creg_tk[0])
     expected_circ.Measure(qreg_tk[1], creg_tk[1])
+    expected_circ.Measure(qreg_tk[2], creg_tk[2])
 
-    x_circ2 = Circuit()
-    x_circ2.name = "If"
-    x_qreg = x_circ2.add_q_register("q", 2)
-    x_circ2.X(x_qreg[0]).X(x_qreg[1])
+    pauli_circ = Circuit()
+    pauli_circ.name = "If"
+    pauli_qreg = pauli_circ.add_q_register("q", 3)
+    pauli_circ.X(pauli_qreg[0]).Y(pauli_qreg[1]).Z(pauli_qreg[2])
     expected_circ.add_circbox(
-        CircBox(x_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_eq(creg_tk, 2)
+        CircBox(pauli_circ),
+        [qreg_tk[0], qreg_tk[1], qreg_tk[2]],
+        condition=reg_eq(creg_tk, 2),
     )
 
     expected_circ.Measure(qreg_tk[0], creg_tk[0])
     expected_circ.Measure(qreg_tk[1], creg_tk[1])
+    expected_circ.Measure(qreg_tk[2], creg_tk[2])
 
     assert expected_circ == tkc
 

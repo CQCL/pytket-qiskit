@@ -58,6 +58,7 @@ from pytket.circuit import (
     Unitary3qBox,
     UnitType,
 )
+from pytket.circuit.logic_exp import reg_eq, reg_neq
 from pytket.passes import AutoRebase
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.unit_id import _TEMP_BIT_NAME
@@ -98,6 +99,7 @@ if TYPE_CHECKING:
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
     from pytket.circuit import UnitID
+    from pytket.unit_id import BitRegister
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {
@@ -518,41 +520,49 @@ def _build_if_else_circuit(
     qubits: list[Qubit],
     bits: list[Bit],
 ) -> Circuit:
-    # Coniditions must be on a single bit (for now) TODO: support multiple bits.
-    if len(bits) == 1:
-        # Get two CircBox objects which implement the true_body and false_body.
-        if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
-        # else_box can be None if no false_body is specified.
-        circ_builder = CircuitBuilder(qregs, cregs)
-        circ = circ_builder.circuit()
-    else:
-        raise NotImplementedError("Conditions over multiple bits not yet supported.")
+    # Get two CircBox objects which implement the true_body and false_body.
+    if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+    # else_box can be None if no false_body is specified.
+    circ_builder = CircuitBuilder(qregs, cregs)
+    circ = circ_builder.circuit()
 
-    # Coniditions must be on a single bit (for now)
-    if not isinstance(if_else_op.condition[0], Clbit):
-        raise NotImplementedError(
-            "Handling of register conditions is not yet supported"
-        )
-
-    circ.add_circbox(
-        circbox=if_box,
-        args=qubits,
-        condition_bits=bits,
-        condition_value=if_else_op.condition[1],
-    )
-    # If we have an else_box defined, add it to the circuit
-    if else_box is not None:
-        if if_else_op.condition[1] not in {0, 1}:
-            raise ValueError(
-                "A bit must have condition value 0 or 1"
-                + f", got {if_else_op.condition[1]}"
-            )
+    if isinstance(if_else_op.condition[0], Clbit):
+        if len(bits) != 1:
+            raise NotImplementedError("Conditions on multiple bits not supported")
         circ.add_circbox(
-            circbox=else_box,
+            circbox=if_box,
             args=qubits,
             condition_bits=bits,
-            condition_value=1 ^ if_else_op.condition[1],
+            condition_value=if_else_op.condition[1],
         )
+        # If we have an else_box defined, add it to the circuit
+        if else_box is not None:
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition_bits=bits,
+                condition_value=1 ^ if_else_op.condition[1],
+            )
+
+    elif isinstance(if_else_op.condition[0], ClassicalRegister):
+        pytket_bit_reg: BitRegister = circ.get_c_register(if_else_op.condition[0].name)
+        circ.add_circbox(
+            circbox=if_box,
+            args=qubits,
+            condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
+        )
+        if else_box is not None:
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
+            )
+    else:
+        raise TypeError(
+            "Unrecognized type used to construct IfElseOp. Expected "
+            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
+        )
+
     return circ
 
 
@@ -620,6 +630,8 @@ class CircuitBuilder:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 
+            # Note: These IfElseOp/if_test type conditions are only handled
+            # for single bit conditions and conditions on entire registers.
             elif type(instr) is IfElseOp:
                 if_else_circ = _build_if_else_circuit(
                     if_else_op=instr,
@@ -954,12 +966,6 @@ _protected_tket_gates = (
 supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
-def _has_implicit_permutation(circ: Circuit) -> bool:
-    """Returns True if a Circuit has a non-trivial permutation
-    of qubits, false otherwise."""
-    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
-
-
 def tk_to_qiskit(
     tkcirc: Circuit,
     replace_implicit_swaps: bool = False,
@@ -987,11 +993,7 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
 
-    if (
-        _has_implicit_permutation(tkcirc)
-        and perm_warning
-        and not replace_implicit_swaps
-    ):
+    if tkcirc.has_implicit_wireswaps and perm_warning and not replace_implicit_swaps:
         warnings.warn(
             "The pytket Circuit contains implicit qubit permutations"
             + " which aren't handled by default."

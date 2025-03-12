@@ -1276,7 +1276,51 @@ def test_ifelseop_one_branch() -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/452
-def test_ifelseop_reg_cond() -> None:
+def test_ifelseop_reg_cond_if() -> None:
+    qreg = QuantumRegister(2, "q")
+    creg = ClassicalRegister(2, "c")
+    circuit = QuantumCircuit(creg, qreg)
+    (q0, q1) = qreg
+    (c0, c1) = creg
+
+    circuit.h(q0)
+    circuit.h(q1)
+    circuit.measure(q0, c0)
+    circuit.measure(q1, c1)
+    # Condition is on a register not a bit
+    with circuit.if_test((creg, 2)):
+        circuit.x(q0)
+        circuit.x(q1)
+    circuit.measure(q0, c0)
+    circuit.measure(q1, c1)
+    tkc: Circuit = qiskit_to_tk(circuit)
+    tkc.name = "test_circ"
+
+    expected_circ = Circuit()
+    expected_circ.name = "test_circ"
+    qreg_tk = expected_circ.add_q_register("q", 2)
+    creg_tk = expected_circ.add_c_register("c", 2)
+    expected_circ.H(qreg_tk[0])
+    expected_circ.H(qreg_tk[1])
+    expected_circ.Measure(qreg_tk[0], creg_tk[0])
+    expected_circ.Measure(qreg_tk[1], creg_tk[1])
+
+    x_circ2 = Circuit()
+    x_circ2.name = "If"
+    x_qreg = x_circ2.add_q_register("q", 2)
+    x_circ2.X(x_qreg[0]).X(x_qreg[1])
+    expected_circ.add_circbox(
+        CircBox(x_circ2), [qreg_tk[0], qreg_tk[1]], condition=reg_eq(creg_tk, 2)
+    )
+
+    expected_circ.Measure(qreg_tk[0], creg_tk[0])
+    expected_circ.Measure(qreg_tk[1], creg_tk[1])
+
+    assert expected_circ == tkc
+
+
+# https://github.com/CQCL/pytket-qiskit/issues/452
+def test_ifelseop_reg_cond_if_else() -> None:
     qreg = QuantumRegister(2, "q")
     creg = ClassicalRegister(2, "c")
     circuit = QuantumCircuit(creg, qreg)

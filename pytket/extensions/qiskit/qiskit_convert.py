@@ -32,7 +32,7 @@ import numpy as np
 import sympy
 from numpy.typing import NDArray
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    PulseBackendConfiguration,
+    QasmBackendConfiguration,
 )
 from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
@@ -217,7 +217,7 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(config: PulseBackendConfiguration) -> set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     if config.simulator:
         gate_set = {
@@ -1067,7 +1067,7 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
 
 
 def process_characterisation_from_config(
-    config: PulseBackendConfiguration, properties: Optional[BackendProperties]
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
 ) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 

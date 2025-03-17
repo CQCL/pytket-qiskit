@@ -505,6 +505,19 @@ def test_cnx() -> None:
     assert cmd.qubits[4] == Qubit(qregname, 4)
 
 
+def test_convert_cnz_to_qiskit() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/460
+    circ = Circuit(1).add_gate(OpType.CnZ, [0])
+    qc = tk_to_qiskit(circ)
+    assert qc[0].name == "z"
+    circ = Circuit(2).add_gate(OpType.CnZ, [0, 1])
+    qc = tk_to_qiskit(circ)
+    assert qc[0].name == "cz"
+    circ = Circuit(3).add_gate(OpType.CnZ, [0, 1, 2])
+    qc = tk_to_qiskit(circ)
+    assert qc[0].name == "mcz"
+
+
 def test_gate_str_2_optype() -> None:
     samples = {
         "barrier": OpType.Barrier,

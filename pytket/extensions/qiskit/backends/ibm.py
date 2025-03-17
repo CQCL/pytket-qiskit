@@ -657,14 +657,14 @@ class IBMQBackend(Backend):
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
-        return cast(list[ResultHandle], handle_list)
+        return cast("list[ResultHandle]", handle_list)
 
     def _retrieve_job(self, jobid: str) -> RuntimeJob:
         return self._service.job(jobid)
 
     def cancel(self, handle: ResultHandle) -> None:
         if not self._MACHINE_DEBUG:
-            jobid = cast(str, handle[0])
+            jobid = cast("str", handle[0])
             job = self._retrieve_job(jobid)
             try:
                 job.cancel()
@@ -673,7 +673,7 @@ class IBMQBackend(Backend):
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
-        jobid = cast(str, handle[0])
+        jobid = cast("str", handle[0])
         job = self._service.job(jobid)
         ibmstatus = job.status()
         return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus)
@@ -687,7 +687,7 @@ class IBMQBackend(Backend):
         if handle in self._cache:
             cached_result = self._cache[handle]
             if "result" in cached_result:
-                return cast(BackendResult, cached_result["result"])
+                return cast("BackendResult", cached_result["result"])
         jobid, index, n_bits, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None

@@ -650,7 +650,7 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                unitary = cast(NDArray[np.complex128], instr.params[0])
+                unitary = cast("NDArray[np.complex128]", instr.params[0])
                 if len(qubits) == 0:
                     # If the UnitaryGate acts on no qubits, we add a phase.
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
@@ -703,7 +703,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
         updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}
-        qcirc = cast(QuantumCircuit, qcirc.assign_parameters(updates))
+        qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
         qregs=qcirc.qregs,
@@ -1182,12 +1182,14 @@ def get_avg_characterisation(
         k: f(v) for k, v in d.items()
     }
 
-    node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
+    node_errors = cast(
+        "dict[Node, dict[OpType, float]]", characterisation["NodeErrors"]
+    )
     link_errors = cast(
-        dict[tuple[Node, Node], dict[OpType, float]], characterisation["EdgeErrors"]
+        "dict[tuple[Node, Node], dict[OpType, float]]", characterisation["EdgeErrors"]
     )
     readout_errors = cast(
-        dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
+        "dict[Node, list[list[float]]]", characterisation["ReadoutErrors"]
     )
 
     avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731

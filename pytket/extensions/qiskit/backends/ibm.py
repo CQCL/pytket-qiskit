@@ -35,7 +35,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     Session,
 )
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    PulseBackendConfiguration,
+    QasmBackendConfiguration,
 )
 from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
@@ -195,7 +195,7 @@ class IBMQBackend(Backend):
         self._backend: IBMBackend = self._service.backend(
             backend_name, use_fractional_gates=use_fractional_gates
         )
-        config: PulseBackendConfiguration = self._backend.configuration()
+        config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
@@ -243,7 +243,7 @@ class IBMQBackend(Backend):
     @classmethod
     def _get_backend_info(
         cls,
-        config: PulseBackendConfiguration,
+        config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
     ) -> BackendInfo:
         """Construct a BackendInfo from data returned by the IBMQ API.
@@ -386,7 +386,7 @@ class IBMQBackend(Backend):
 
         :return: Compilation pass guaranteeing required predicates.
         """
-        config: PulseBackendConfiguration = self._backend.configuration()
+        config: QasmBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
             config, props, optimisation_level, timeout
@@ -394,7 +394,7 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def default_compilation_pass_offline(
-        config: PulseBackendConfiguration,
+        config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
         timeout: int = 300,
@@ -657,14 +657,14 @@ class IBMQBackend(Backend):
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
-        return cast(list[ResultHandle], handle_list)
+        return cast("list[ResultHandle]", handle_list)
 
     def _retrieve_job(self, jobid: str) -> RuntimeJob:
         return self._service.job(jobid)
 
     def cancel(self, handle: ResultHandle) -> None:
         if not self._MACHINE_DEBUG:
-            jobid = cast(str, handle[0])
+            jobid = cast("str", handle[0])
             job = self._retrieve_job(jobid)
             try:
                 job.cancel()
@@ -673,7 +673,7 @@ class IBMQBackend(Backend):
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
-        jobid = cast(str, handle[0])
+        jobid = cast("str", handle[0])
         job = self._service.job(jobid)
         ibmstatus = job.status()
         return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus)
@@ -687,7 +687,7 @@ class IBMQBackend(Backend):
         if handle in self._cache:
             cached_result = self._cache[handle]
             if "result" in cached_result:
-                return cast(BackendResult, cached_result["result"])
+                return cast("BackendResult", cached_result["result"])
         jobid, index, n_bits, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None

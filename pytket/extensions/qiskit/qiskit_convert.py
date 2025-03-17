@@ -32,7 +32,7 @@ import numpy as np
 import sympy
 from numpy.typing import NDArray
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    PulseBackendConfiguration,
+    QasmBackendConfiguration,
 )
 from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
@@ -217,7 +217,7 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(config: PulseBackendConfiguration) -> set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     if config.simulator:
         gate_set = {
@@ -650,7 +650,7 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                unitary = cast(NDArray[np.complex128], instr.params[0])
+                unitary = cast("NDArray[np.complex128]", instr.params[0])
                 if len(qubits) == 0:
                     # If the UnitaryGate acts on no qubits, we add a phase.
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
@@ -703,7 +703,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
         updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}
-        qcirc = cast(QuantumCircuit, qcirc.assign_parameters(updates))
+        qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
         qregs=qcirc.qregs,
@@ -1070,7 +1070,7 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
 
 
 def process_characterisation_from_config(
-    config: PulseBackendConfiguration, properties: Optional[BackendProperties]
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
 ) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 
@@ -1185,12 +1185,14 @@ def get_avg_characterisation(
         k: f(v) for k, v in d.items()
     }
 
-    node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
+    node_errors = cast(
+        "dict[Node, dict[OpType, float]]", characterisation["NodeErrors"]
+    )
     link_errors = cast(
-        dict[tuple[Node, Node], dict[OpType, float]], characterisation["EdgeErrors"]
+        "dict[tuple[Node, Node], dict[OpType, float]]", characterisation["EdgeErrors"]
     )
     readout_errors = cast(
-        dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
+        "dict[Node, list[list[float]]]", characterisation["ReadoutErrors"]
     )
 
     avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731

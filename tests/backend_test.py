@@ -324,8 +324,8 @@ def test_process_characterisation_complete_noise_model() -> None:
     back = AerBackend(my_noise_model)
     char = back.backend_info.get_misc("characterisation")
 
-    node_errors = cast(dict, back.backend_info.all_node_gate_errors)
-    link_errors = cast(dict, back.backend_info.all_edge_gate_errors)
+    node_errors = cast("dict", back.backend_info.all_node_gate_errors)
+    link_errors = cast("dict", back.backend_info.all_edge_gate_errors)
     arch = back.backend_info.architecture
     assert node_errors is not None
     assert link_errors is not None
@@ -347,7 +347,7 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert (
         round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375
     )
-    readout_errors = cast(dict, back.backend_info.all_readout_errors)
+    readout_errors = cast("dict", back.backend_info.all_readout_errors)
     assert readout_errors[arch.nodes[0]] == [
         [0.8, 0.2],
         [0.2, 0.8],
@@ -382,9 +382,9 @@ def test_process_model() -> None:
     assert "characterisation" in b.backend_info.misc
     assert "GenericOneQubitQErrors" in b.backend_info.misc["characterisation"]
     assert "GenericTwoQubitQErrors" in b.backend_info.misc["characterisation"]
-    node_gate_errors = cast(dict, b.backend_info.all_node_gate_errors)
+    node_gate_errors = cast("dict", b.backend_info.all_node_gate_errors)
     assert nodes[3] in node_gate_errors
-    edge_gate_errors = cast(dict, b.backend_info.all_edge_gate_errors)
+    edge_gate_errors = cast("dict", b.backend_info.all_edge_gate_errors)
     assert (nodes[7], nodes[8]) in edge_gate_errors
 
 
@@ -419,7 +419,7 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
-            cast(str, hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
+            cast("str", hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
         )
 
         correct_counts = {(0, 0): 4}
@@ -452,7 +452,7 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
-            cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
+            cast("str", hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
             for hand, suffix in zip(
                 handles,
                 [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
@@ -1011,7 +1011,7 @@ def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
     c.remove_blank_wires()
     FlattenRelabelRegistersPass().apply(c)
     c_pred = ConnectivityPredicate(
-        cast(Architecture, brisbane_backend.backend_info.architecture)
+        cast("Architecture", brisbane_backend.backend_info.architecture)
     )
     for ol in range(3):
         p = brisbane_backend.default_compilation_pass(optimisation_level=ol)
@@ -1077,7 +1077,7 @@ def test_postprocess() -> None:
     c.X(0).X(1).measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
+    ppcirc = Circuit.from_dict(json.loads(cast("str", h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
@@ -1092,7 +1092,7 @@ def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None
     c.X(0).X(1).measure_all()
     c = brisbane_emulator_backend.get_compiled_circuit(c)
     h = brisbane_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
+    ppcirc = Circuit.from_dict(json.loads(cast("str", h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)

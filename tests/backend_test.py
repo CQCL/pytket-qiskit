@@ -1513,20 +1513,29 @@ def test_optimisation_level_3_compilation() -> None:
                 c.Rz(0.23, j)
                 c.S(j)
             c.H(i)
-
+    c.rename_units(
+        {
+            Qubit(0): Qubit("a", 0),
+            Qubit(1): Qubit("a", 1),
+            Qubit(2): Qubit("a", 2),
+            Qubit(3): Qubit("a", 3),
+            Qubit(4): Qubit("a", 4),
+            Qubit(5): Qubit("a", 5),
+        }
+    )
     compiled_2 = b.get_compiled_circuit(c, 2)
     compiled_3 = b.get_compiled_circuit(c, 3)
     compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
-    assert compiled_2.n_2qb_gates() == 78
-    assert compiled_2.n_gates == 205
-    assert compiled_2.depth() == 147
-    assert compiled_3.n_2qb_gates() == 61
-    assert compiled_3.n_gates == 164
-    assert compiled_3.depth() == 114
-    assert compiled_3_timeout.n_2qb_gates() == 69
-    assert compiled_3_timeout.n_gates == 171
-    assert compiled_3_timeout.depth() == 125
+    assert compiled_2.n_2qb_gates() == 68
+    assert compiled_2.n_gates == 186
+    assert compiled_2.depth() == 130
+    assert compiled_3.n_2qb_gates() == 70
+    assert compiled_3.n_gates == 195
+    assert compiled_3.depth() == 134
+    assert compiled_3_timeout.n_2qb_gates() == 75
+    assert compiled_3_timeout.n_gates == 180
+    assert compiled_3_timeout.depth() == 132
 
 
 def test_optimisation_level_3_serialisation() -> None:
@@ -1538,7 +1547,7 @@ def test_optimisation_level_3_serialisation() -> None:
     p_dict = b.default_compilation_pass(3).to_dict()
     passlist = SequencePass.from_dict(
         p_dict,
-        {
+        custom_map_deserialisation={
             "lightsabrepass": _gen_lightsabre_transformation(
                 b._backend_info.architecture
             )

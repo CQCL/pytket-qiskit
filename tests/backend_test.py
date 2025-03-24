@@ -42,6 +42,7 @@ from pytket.circuit import (
     BasisOrder,
     CircBox,
     Circuit,
+    Node,
     OpType,
     QControlBox,
     Qubit,
@@ -1564,3 +1565,25 @@ def test_process_circuits_n_qubits() -> None:
     rs = b.get_results(hs)
     assert rs[0].get_counts() == Counter({(1,): 10})
     assert rs[1].get_counts() == Counter({(1, 0): 10})
+
+
+def test_noise_model_relabelling() -> None:
+    prob_ro: float = 0.1
+    noise_model = NoiseModel()
+    error_ro = ReadoutError([[1 - prob_ro, prob_ro], [prob_ro, 1 - prob_ro]])
+
+    for i in range(4):
+        noise_model.add_readout_error(error_ro, [i])
+
+    qubit = Qubit(name="my_qubit", index=0)
+    circuit = Circuit()
+    circuit.add_qubit(qubit)
+    circuit.X(qubit)
+
+    cu = CompilationUnit(circuit)
+    AerBackend(noise_model=noise_model).default_compilation_pass(
+        optimisation_level=1
+    ).apply(cu)
+
+    assert cu.initial_map == {qubit: Node(2)}
+    assert cu.final_map == {qubit: Node(2)}

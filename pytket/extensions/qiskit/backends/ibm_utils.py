@@ -25,7 +25,7 @@ from pytket.backends.status import StatusEnum
 from pytket.circuit import Circuit, Node, Qubit, UnitID
 from pytket.passes import RebaseTket
 from pytket.transform import Transform
-from qiskit import QuantumCircuit  # type: ignore
+from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import (  # type: ignore
@@ -150,23 +150,38 @@ def _gen_lightsabre_transformation(  # type: ignore
     def lightsabre(
         circuit: Circuit,
     ) -> Tuple[Circuit, Tuple[Dict[UnitID, UnitID], Dict[UnitID, UnitID]]]:
-        qiskit_c: QuantumCircuit = tk_to_qiskit(circuit, replace_implicit_swaps=True)
-        applied_c = apply_layout.run(qiskit_c)
+        # route circuit
+        applied_c = apply_layout.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
 
+        # construct initial_map with ancillas
         initial_map: Dict[UnitID, UnitID] = {}
         for index, qubit in apply_layout.property_set["layout"]._p2v.items():
-            initial_map[Qubit(qubit._register.name, qubit._index)] = Qubit("q", index)
+            initial_map[Qubit(qubit._register.name, qubit._index)] = Node(index)
 
+        # construct final_map with ancillas
+        register: QuantumRegister = QuantumRegister(len(initial_map), "q")
         final_map: Dict[UnitID, UnitID] = {}
-        for index, qubit in apply_layout.property_set["final_layout"]._p2v.items():
-            final_map[Qubit(qubit._register.name, qubit._index)] = Qubit("q", index)
+        for qubit in initial_map:
+            final_map[qubit] = Node(
+                apply_layout.property_set["final_layout"]._v2p[
+                    register[initial_map[qubit].index[0]]
+                ]
+            )
 
+        # remove unused ancillas from translated circuit, rename units and decompose swaps
         c: Circuit = qiskit_to_tk(applied_c)
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
 
-        return (c, (initial_map, final_map))
+        # return circuit and cleaned maps
+        return (
+            c,
+            (
+                {k: v for k, v in initial_map.items() if v in set(c.qubits)},
+                {k: v for k, v in final_map.items() if v in set(c.qubits)},
+            ),
+        )
 
     return lightsabre

@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ class MockShotBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """Always return a single readout containing all 1s."""
-        circ_rep = json.loads(cast(str, handle[1]))
+        circ_rep = json.loads(cast("str", handle[1]))
         circ = Circuit.from_dict(circ_rep)
         shots_list = [[1] * circ.n_bits]
         outcome_arr = OutcomeArray.from_readouts(shots_list)

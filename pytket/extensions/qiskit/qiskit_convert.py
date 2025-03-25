@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
 # limitations under the License.
 
 
-"""Methods to allow conversion between Qiskit and pytket circuit classes
-"""
+"""Methods to allow conversion between Qiskit and pytket circuit classes"""
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable
@@ -33,7 +32,7 @@ import numpy as np
 import sympy
 from numpy.typing import NDArray
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    PulseBackendConfiguration,
+    QasmBackendConfiguration,
 )
 from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
@@ -59,6 +58,7 @@ from pytket.circuit import (
     Unitary3qBox,
     UnitType,
 )
+from pytket.circuit.logic_exp import reg_eq, reg_neq
 from pytket.passes import AutoRebase
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.unit_id import _TEMP_BIT_NAME
@@ -77,6 +77,7 @@ from qiskit.circuit import (
     Clbit,
     ControlledGate,
     Gate,
+    IfElseOp,
     Instruction,
     InstructionSet,
     Measure,
@@ -98,6 +99,7 @@ if TYPE_CHECKING:
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
     from pytket.circuit import UnitID
+    from pytket.unit_id import BitRegister
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {
@@ -215,7 +217,7 @@ _gate_str_2_optype_rev = {v: k for k, v in _gate_str_2_optype.items()}
 _gate_str_2_optype_rev[OpType.Unitary1qBox] = "unitary"
 
 
-def _tk_gate_set(config: PulseBackendConfiguration) -> set[OpType]:
+def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
     """Set of tket gate types supported by the qiskit backend"""
     if config.simulator:
         gate_set = {
@@ -313,7 +315,7 @@ def _all_bits_set(integer: int, n_bits: int) -> bool:
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
-    """Get a pytket contolled OpType from a qiskit ControlledGate."""
+    """Get a pytket controlled OpType from a qiskit ControlledGate."""
 
     # If the control state is not "all |1>", use QControlBox
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
@@ -480,6 +482,90 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
+# Used for handling of IfElseOp
+# docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
+# Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
+# pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
+def _pytket_boxes_from_ifelseop(
+    if_else_op: IfElseOp, qregs: list[QuantumRegister], cregs: list[ClassicalRegister]
+) -> tuple[CircBox, Optional[CircBox]]:
+    # Extract the QuantumCircuit implementing true_body
+    if_qc: QuantumCircuit = if_else_op.blocks[0]
+    if_builder = CircuitBuilder(qregs, cregs)
+    if_builder.add_qiskit_data(if_qc)
+    if_circuit = if_builder.circuit()
+    if_circuit.name = "If"
+    # Remove blank wires to ensure CircBox is the correct size.
+    if_circuit.remove_blank_wires()
+
+    # The false_body arg is optional
+    if len(if_else_op.blocks) == 2:
+        else_qc: QuantumCircuit = if_else_op.blocks[1]
+        else_builder = CircuitBuilder(qregs, cregs)
+        else_builder.add_qiskit_data(else_qc)
+        else_circuit = else_builder.circuit()
+        else_circuit.name = "Else"
+        else_circuit.remove_blank_wires()
+        return CircBox(if_circuit), CircBox(else_circuit)
+
+    # If no false_body is specified IfElseOp.blocks is of length 1.
+    # In this case we return a CircBox implementing true_body and None.
+    return CircBox(if_circuit), None
+
+
+def _build_if_else_circuit(
+    if_else_op: IfElseOp,
+    qregs: list[QuantumRegister],
+    cregs: list[ClassicalRegister],
+    qubits: list[Qubit],
+    bits: list[Bit],
+) -> Circuit:
+    # Get two CircBox objects which implement the true_body and false_body.
+    if_box, else_box = _pytket_boxes_from_ifelseop(if_else_op, qregs, cregs)
+    # else_box can be None if no false_body is specified.
+    circ_builder = CircuitBuilder(qregs, cregs)
+    circ = circ_builder.circuit()
+
+    if isinstance(if_else_op.condition[0], Clbit):
+        if len(bits) != 1:
+            raise NotImplementedError("Conditions on multiple bits not supported")
+        circ.add_circbox(
+            circbox=if_box,
+            args=qubits,
+            condition_bits=bits,
+            condition_value=if_else_op.condition[1],
+        )
+        # If we have an else_box defined, add it to the circuit
+        if else_box is not None:
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition_bits=bits,
+                condition_value=1 ^ if_else_op.condition[1],
+            )
+
+    elif isinstance(if_else_op.condition[0], ClassicalRegister):
+        pytket_bit_reg: BitRegister = circ.get_c_register(if_else_op.condition[0].name)
+        circ.add_circbox(
+            circbox=if_box,
+            args=qubits,
+            condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
+        )
+        if else_box is not None:
+            circ.add_circbox(
+                circbox=else_box,
+                args=qubits,
+                condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
+            )
+    else:
+        raise TypeError(
+            "Unrecognized type used to construct IfElseOp. Expected "
+            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
+        )
+
+    return circ
+
+
 class CircuitBuilder:
     def __init__(
         self,
@@ -523,7 +609,7 @@ class CircuitBuilder:
             bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             condition_kwargs = {}
-            if instr.condition is not None:
+            if instr.condition is not None and type(instr) is not IfElseOp:
                 condition_kwargs = _get_pytket_condition_kwargs(
                     instruction=instr,
                     cregmap=self.cregmap,
@@ -531,8 +617,8 @@ class CircuitBuilder:
                 )
 
             optype = None
-            if type(instr) not in (PauliEvolutionGate, UnitaryGate):
-                # Handling of PauliEvolutionGate and UnitaryGate below
+            if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
+                # Handling of PauliEvolutionGate, UnitaryGate and IfElseOp below
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
@@ -544,6 +630,18 @@ class CircuitBuilder:
                 # Append OpType found by stateprep helpers
                 _add_state_preparation(self.tkc, qubits, instr)
 
+            # Note: These IfElseOp/if_test type conditions are only handled
+            # for single bit conditions and conditions on entire registers.
+            elif type(instr) is IfElseOp:
+                if_else_circ = _build_if_else_circuit(
+                    if_else_op=instr,
+                    qregs=self.qregs,
+                    cregs=self.cregs,
+                    qubits=qubits,
+                    bits=bits,
+                )
+                self.tkc.append(if_else_circ)
+
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)
                 empty_circ = Circuit(len(qargs))
@@ -552,7 +650,7 @@ class CircuitBuilder:
                 self.tkc.add_circbox(ccbox, qubits)
 
             elif type(instr) is UnitaryGate:
-                unitary = cast(NDArray[np.complex128], instr.params[0])
+                unitary = cast("NDArray[np.complex128]", instr.params[0])
                 if len(qubits) == 0:
                     # If the UnitaryGate acts on no qubits, we add a phase.
                     self.tkc.add_phase(np.angle(unitary[0][0]) / np.pi)
@@ -605,7 +703,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
         updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}
-        qcirc = cast(QuantumCircuit, qcirc.assign_parameters(updates))
+        qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
         qregs=qcirc.qregs,
@@ -795,8 +893,11 @@ order or only one bit of one register"""
     if optype == OpType.CnY:
         return qcirc.append(qiskit_gates.YGate().control(len(qargs) - 1), qargs)
     if optype == OpType.CnZ:
-        new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
-        new_gate.name = "mcz"
+        if len(qargs) == 2:
+            new_gate = qiskit_gates.CZGate()
+        else:
+            new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
+            new_gate.name = "mcz"
         return qcirc.append(new_gate, qargs)
     if optype == OpType.CnRy:
         # might as well do a bit more checking
@@ -868,12 +969,6 @@ _protected_tket_gates = (
 supported_gate_rebase = AutoRebase(_protected_tket_gates)
 
 
-def _has_implicit_permutation(circ: Circuit) -> bool:
-    """Returns True if a Circuit has a non-trivial permutation
-    of qubits, false otherwise."""
-    return any(q0 != q1 for q0, q1 in circ.implicit_qubit_permutation().items())
-
-
 def tk_to_qiskit(
     tkcirc: Circuit,
     replace_implicit_swaps: bool = False,
@@ -901,11 +996,7 @@ def tk_to_qiskit(
     if replace_implicit_swaps:
         tkc.replace_implicit_wire_swaps()
 
-    if (
-        _has_implicit_permutation(tkcirc)
-        and perm_warning
-        and not replace_implicit_swaps
-    ):
+    if tkcirc.has_implicit_wireswaps and perm_warning and not replace_implicit_swaps:
         warnings.warn(
             "The pytket Circuit contains implicit qubit permutations"
             + " which aren't handled by default."
@@ -979,7 +1070,7 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
 
 
 def process_characterisation_from_config(
-    config: PulseBackendConfiguration, properties: Optional[BackendProperties]
+    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
 ) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 
@@ -1094,12 +1185,14 @@ def get_avg_characterisation(
         k: f(v) for k, v in d.items()
     }
 
-    node_errors = cast(dict[Node, dict[OpType, float]], characterisation["NodeErrors"])
+    node_errors = cast(
+        "dict[Node, dict[OpType, float]]", characterisation["NodeErrors"]
+    )
     link_errors = cast(
-        dict[tuple[Node, Node], dict[OpType, float]], characterisation["EdgeErrors"]
+        "dict[tuple[Node, Node], dict[OpType, float]]", characterisation["EdgeErrors"]
     )
     readout_errors = cast(
-        dict[Node, list[list[float]]], characterisation["ReadoutErrors"]
+        "dict[Node, list[list[float]]]", characterisation["ReadoutErrors"]
     )
 
     avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731

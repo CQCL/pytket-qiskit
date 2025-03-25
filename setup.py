@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket >= 1.38.0",
-        "qiskit ~= 1.3.1",
-        "qiskit-ibm-runtime >= 0.30.0",
+        "pytket >= 2.0.1",
+        "qiskit >= 1.4.2, < 2",
+        "qiskit-ibm-runtime >= 0.37.0",
         "qiskit-aer >= 0.15.1",
         "numpy >= 1.26.4",
     ],

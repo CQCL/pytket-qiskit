@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ class IBMQEmulatorBackend(Backend):
         instance: Optional[str] = None,
         service: Optional["QiskitRuntimeService"] = None,
         token: Optional[str] = None,
+        use_fractional_gates: bool = False,
     ):
         super().__init__()
         self._ibmq = IBMQBackend(
@@ -65,6 +66,7 @@ class IBMQEmulatorBackend(Backend):
             instance=instance,
             service=service,
             token=token,
+            use_fractional_gates=use_fractional_gates,
         )
 
         # Get noise model:

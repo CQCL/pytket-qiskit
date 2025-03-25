@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ from qiskit_ibm_runtime import (  # type: ignore
     Session,
 )
 from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    PulseBackendConfiguration,
+    QasmBackendConfiguration,
 )
 from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
@@ -49,6 +49,7 @@ from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Bit, Circuit, OpType
 from pytket.passes import (
     AutoRebase,
+    AutoSquash,
     BasePass,
     CliffordSimp,
     CustomPassMap,
@@ -128,13 +129,16 @@ def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
         )
 
 
+ALL_PRIMITIVE_1Q_GATES: set[OpType] = {OpType.Rx, OpType.Rz, OpType.SX, OpType.X}
+ALL_PRIMITIVE_2Q_GATES: set[OpType] = {OpType.CX, OpType.CZ, OpType.ECR, OpType.ZZPhase}
+
+
 def _get_primitive_gates(gateset: set[OpType]) -> set[OpType]:
-    if gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.CX}:
-        return {OpType.X, OpType.SX, OpType.Rz, OpType.CX}
-    elif gateset >= {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}:
-        return {OpType.X, OpType.SX, OpType.Rz, OpType.ECR}
-    else:
-        return gateset
+    return gateset & (ALL_PRIMITIVE_1Q_GATES | ALL_PRIMITIVE_2Q_GATES)
+
+
+def _get_primitive_1q_gates(gateset: set[OpType]) -> set[OpType]:
+    return gateset & ALL_PRIMITIVE_1Q_GATES
 
 
 def _int_from_readout(readout: np.ndarray) -> int:
@@ -161,6 +165,9 @@ class IBMQBackend(Backend):
         See the Qiskit documentation at
         https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
         for details and default values.
+    :param use_fractional_gates: Whether to use native "fractional gates" on the device
+        if available. See https://docs.quantum.ibm.com/guides/fractional-gates (default
+        False).
     """
 
     _supports_shots = False
@@ -176,6 +183,7 @@ class IBMQBackend(Backend):
         service: Optional[QiskitRuntimeService] = None,
         token: Optional[str] = None,
         sampler_options: SamplerOptions = None,
+        use_fractional_gates: bool = False,
     ):
         super().__init__()
         self._pytket_config = QiskitConfig.from_default_config_file()
@@ -184,8 +192,10 @@ class IBMQBackend(Backend):
             if service is None
             else service
         )
-        self._backend: IBMBackend = self._service.backend(backend_name)
-        config: PulseBackendConfiguration = self._backend.configuration()
+        self._backend: IBMBackend = self._service.backend(
+            backend_name, use_fractional_gates=use_fractional_gates
+        )
+        config: QasmBackendConfiguration = self._backend.configuration()
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
@@ -198,6 +208,7 @@ class IBMQBackend(Backend):
         self._session = Session(backend=self._backend)
 
         self._primitive_gates = _get_primitive_gates(gate_set)
+        self._primitive_1q_gates = _get_primitive_1q_gates(gate_set)
 
         self._supports_rz = OpType.Rz in self._primitive_gates
 
@@ -232,7 +243,7 @@ class IBMQBackend(Backend):
     @classmethod
     def _get_backend_info(
         cls,
-        config: PulseBackendConfiguration,
+        config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
     ) -> BackendInfo:
         """Construct a BackendInfo from data returned by the IBMQ API.
@@ -375,7 +386,7 @@ class IBMQBackend(Backend):
 
         :return: Compilation pass guaranteeing required predicates.
         """
-        config: PulseBackendConfiguration = self._backend.configuration()
+        config: QasmBackendConfiguration = self._backend.configuration()
         props: Optional[BackendProperties] = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
             config, props, optimisation_level, timeout
@@ -383,13 +394,15 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def default_compilation_pass_offline(
-        config: PulseBackendConfiguration,
+        config: QasmBackendConfiguration,
         props: Optional[BackendProperties],
         optimisation_level: int = 2,
         timeout: int = 300,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        primitive_gates = _get_primitive_gates(_tk_gate_set(config))
+        tk_gate_set = _tk_gate_set(config)
+        primitive_gates = _get_primitive_gates(tk_gate_set)
+        primitive_1q_gates = _get_primitive_1q_gates(tk_gate_set)
         supports_rz = OpType.Rz in primitive_gates
 
         assert optimisation_level in range(4)
@@ -406,6 +419,7 @@ class IBMQBackend(Backend):
                 passlist.append(IBMQBackend.rebase_pass_offline(primitive_gates))
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
+            passlist.append(IBMQBackend.squash_pass_offline(primitive_1q_gates))
         elif optimisation_level == 2:
             passlist.append(FullPeepholeOptimise())
         elif optimisation_level == 3:
@@ -464,7 +478,11 @@ class IBMQBackend(Backend):
         if optimisation_level == 3:
             passlist.append(SynthesiseTket())
         passlist.extend(
-            [IBMQBackend.rebase_pass_offline(primitive_gates), RemoveRedundancies()]
+            [
+                IBMQBackend.rebase_pass_offline(primitive_gates),
+                IBMQBackend.squash_pass_offline(primitive_1q_gates),
+                RemoveRedundancies(),
+            ]
         )
         return SequencePass(passlist)
 
@@ -548,6 +566,10 @@ class IBMQBackend(Backend):
     @staticmethod
     def rebase_pass_offline(primitive_gates: set[OpType]) -> BasePass:
         return AutoRebase(primitive_gates)
+
+    @staticmethod
+    def squash_pass_offline(primitive_1q_gates: set[OpType]) -> BasePass:
+        return AutoSquash(primitive_1q_gates)
 
     def process_circuits(
         self,
@@ -635,14 +657,14 @@ class IBMQBackend(Backend):
         for handle in handle_list:
             assert handle is not None
             self._cache[handle] = dict()
-        return cast(list[ResultHandle], handle_list)
+        return cast("list[ResultHandle]", handle_list)
 
     def _retrieve_job(self, jobid: str) -> RuntimeJob:
         return self._service.job(jobid)
 
     def cancel(self, handle: ResultHandle) -> None:
         if not self._MACHINE_DEBUG:
-            jobid = cast(str, handle[0])
+            jobid = cast("str", handle[0])
             job = self._retrieve_job(jobid)
             try:
                 job.cancel()
@@ -651,7 +673,7 @@ class IBMQBackend(Backend):
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
-        jobid = cast(str, handle[0])
+        jobid = cast("str", handle[0])
         job = self._service.job(jobid)
         ibmstatus = job.status()
         return CircuitStatus(_STATUS_MAP[ibmstatus], ibmstatus)
@@ -665,7 +687,7 @@ class IBMQBackend(Backend):
         if handle in self._cache:
             cached_result = self._cache[handle]
             if "result" in cached_result:
-                return cast(BackendResult, cached_result["result"])
+                return cast("BackendResult", cached_result["result"])
         jobid, index, n_bits, ppcirc_str = handle
         ppcirc_rep = json.loads(ppcirc_str)
         ppcirc = Circuit.from_dict(ppcirc_rep) if ppcirc_rep is not None else None

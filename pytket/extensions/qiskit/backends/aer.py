@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Quantinuum
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -458,13 +458,13 @@ class _AerBaseBackend(Backend):
                 handle_list[ind] = handle
                 self._circuit_data[(jobid, i)] = (tkc_qubits_count[i], ppcirc_strs[i])
                 self._cache[handle] = {"job": job}
-        return cast(list[ResultHandle], handle_list)
+        return cast("list[ResultHandle]", handle_list)
 
     def cancel(self, handle: ResultHandle) -> None:
         job: AerJob = self._cache[handle]["job"]
         cancelled = job.cancel()
         if not cancelled:
-            warning(f"Unable to cancel job {cast(str, handle[0])}")
+            warning(f"Unable to cancel job {cast('str', handle[0])}")
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
@@ -497,7 +497,7 @@ class _AerBaseBackend(Backend):
                     backres
                 )
 
-            return cast(BackendResult, self._cache[handle]["result"])
+            return cast("BackendResult", self._cache[handle]["result"])
 
     def _snapshot_expectation_value(
         self,
@@ -519,7 +519,7 @@ class _AerBaseBackend(Backend):
         qc.save_expectation_value(hamiltonian, qc.qubits, "snap")
         job = self._qiskit_backend.run(qc)
         return cast(
-            complex,
+            "complex",
             job.result().data(qc)["snap"],
         )
 
@@ -906,7 +906,7 @@ def _process_noise_model(
                 )
             elif error["type"] == "roerror":
                 readout_errors[Node(q)] = cast(
-                    list[list[float]], error["probabilities"]
+                    "list[list[float]]", error["probabilities"]
                 )
             else:
                 raise RuntimeWarning("Error type not 'qerror' or 'roerror'.")

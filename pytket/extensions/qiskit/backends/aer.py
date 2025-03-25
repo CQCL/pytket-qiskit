@@ -493,9 +493,9 @@ class _AerBaseBackend(Backend):
             )
             for circ_index, backres in enumerate(backresults):
                 qubit_n, ppc = self._circuit_data[(jobid, circ_index)]
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
-                    "result"
-                ] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
+                    backres
+                )
 
             return cast("BackendResult", self._cache[handle]["result"])
 

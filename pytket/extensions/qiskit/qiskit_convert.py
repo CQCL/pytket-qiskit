@@ -14,6 +14,7 @@
 
 
 """Methods to allow conversion between Qiskit and pytket circuit classes"""
+
 import warnings
 from collections import defaultdict
 from collections.abc import Iterable

@@ -78,7 +78,10 @@ class TketJob(JobV1):
                     "shots": jobinfo.n_shots,
                     "success": True,
                     "data": backendresult_to_qiskit_resultdata(
-                        tk_result, jobinfo.cbits, jobinfo.qbits, fm  # type: ignore
+                        tk_result,
+                        jobinfo.cbits,
+                        jobinfo.qbits,
+                        fm,  # type: ignore
                     ),
                     "header": {
                         "name": jobinfo.circuit_name,

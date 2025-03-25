@@ -16,7 +16,7 @@
 
 import itertools
 from collections.abc import Collection, Sequence
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Optional
 
 import numpy as np
 
@@ -110,7 +110,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 def _gen_lightsabre_transformation(  # type: ignore
     architecture: Architecture, seed=0, attempts=20
 ) -> Callable[
-    [Circuit], Tuple[Circuit, Tuple[Dict[UnitID, UnitID], Dict[UnitID, UnitID]]]
+    [Circuit], tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]
 ]:
     """
     Generates a function that can be passed to CustomPass for running
@@ -149,18 +149,18 @@ def _gen_lightsabre_transformation(  # type: ignore
 
     def lightsabre(
         circuit: Circuit,
-    ) -> Tuple[Circuit, Tuple[Dict[UnitID, UnitID], Dict[UnitID, UnitID]]]:
+    ) -> tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]:
         # route circuit
         applied_c = apply_layout.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
 
         # construct initial_map with ancillas
-        initial_map: Dict[UnitID, UnitID] = {}
+        initial_map: dict[UnitID, UnitID] = {}
         for index, qubit in apply_layout.property_set["layout"]._p2v.items():
             initial_map[Qubit(qubit._register.name, qubit._index)] = Node(index)
 
         # construct final_map with ancillas
         register: QuantumRegister = QuantumRegister(len(initial_map), "q")
-        final_map: Dict[UnitID, UnitID] = {}
+        final_map: dict[UnitID, UnitID] = {}
         for qubit in initial_map:
             final_map[qubit] = Node(
                 apply_layout.property_set["final_layout"]._v2p[

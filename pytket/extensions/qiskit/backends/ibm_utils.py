@@ -30,10 +30,10 @@ from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import (  # type: ignore
     ApplyLayout,
+    EnlargeWithAncilla,
+    FullAncillaAllocation,
     SabreLayout,
     SabreSwap,
-    FullAncillaAllocation,
-    EnlargeWithAncilla,
 )  # type: ignore
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
@@ -168,7 +168,8 @@ def _gen_lightsabre_transformation(  # type: ignore
                 ]
             )
 
-        # remove unused ancillas from translated circuit, rename units and decompose swaps
+        # remove unused ancillas from translated circuit, rename units and
+        # decompose swaps
         c: Circuit = qiskit_to_tk(applied_c)
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})

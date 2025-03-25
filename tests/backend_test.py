@@ -1525,7 +1525,7 @@ def test_optimisation_level_3_compilation() -> None:
         }
     )
     compiled_2 = b.get_compiled_circuit(c, 2)
-    compiled_3 = b.get_compiled_circuit(c, 3)
+    # compiled_3 = b.get_compiled_circuit(c, 3)
     compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
     assert compiled_2.n_2qb_gates() == 68

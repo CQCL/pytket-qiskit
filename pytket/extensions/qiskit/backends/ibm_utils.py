@@ -22,15 +22,20 @@ import numpy as np
 
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
-from pytket.circuit import Circuit, Node
+from pytket.circuit import Circuit, Node, Qubit, UnitID
 from pytket.passes import RebaseTket
 from pytket.transform import Transform
-from qiskit.passmanager.flow_controllers import ConditionalController  # type: ignore
+from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
-from qiskit.transpiler.passes import SabreLayout, SetLayout  # type: ignore
+from qiskit.transpiler.passes import (  # type: ignore
+    ApplyLayout,
+    EnlargeWithAncilla,
+    FullAncillaAllocation,
+    SabreLayout,
+    SabreSwap,
+)
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
-from qiskit.transpiler.preset_passmanagers import common  # type: ignore
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 
@@ -104,7 +109,9 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 def _gen_lightsabre_transformation(  # type: ignore
     architecture: Architecture, seed=0, attempts=20
-) -> Callable[[Circuit], Circuit]:
+) -> Callable[
+    [Circuit], tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]
+]:
     """
     Generates a function that can be passed to CustomPass for running
     LightSABRE routing.
@@ -115,44 +122,67 @@ def _gen_lightsabre_transformation(  # type: ignore
     :return: A function that accepts a pytket Circuit and returns a new Circuit that
         has been routed to the architecture using LightSABRE
     """
+
     config: PassManagerConfig = PassManagerConfig(
         coupling_map=_architecture_to_couplingmap(architecture),
         routing_method="sabre",
         seed_transpiler=seed,
     )
-    sabre_pass: PassManager = PassManager(
+
+    apply_layout: PassManager = PassManager(
         [
-            SetLayout(config.initial_layout),
-            ConditionalController(
-                [
-                    SabreLayout(
-                        config.coupling_map,
-                        max_iterations=2,
-                        seed=config.seed_transpiler,
-                        swap_trials=attempts,
-                        layout_trials=attempts,
-                        skip_routing=False,
-                    )
-                ],
-                condition=lambda property_set: not property_set["layout"],
+            SabreLayout(
+                config.coupling_map,
+                max_iterations=2,
+                seed=config.seed_transpiler,
+                layout_trials=attempts,
+                skip_routing=True,
             ),
-            ConditionalController(
-                common.generate_embed_passmanager(
-                    config.coupling_map
-                ).to_flow_controller(),
-                condition=lambda property_set: property_set["final_layout"] is None,
+            FullAncillaAllocation(config.coupling_map),
+            EnlargeWithAncilla(),
+            ApplyLayout(),
+            SabreSwap(
+                config.coupling_map, seed=config.seed_transpiler, trials=attempts
             ),
         ]
     )
 
-    def lightsabre(circuit: Circuit) -> Circuit:
-        c: Circuit = qiskit_to_tk(
-            sabre_pass.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
-        )
+    def lightsabre(
+        circuit: Circuit,
+    ) -> tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]:
+        # route circuit
+        applied_c = apply_layout.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
+
+        # construct initial_map with ancillas
+        initial_map: dict[UnitID, UnitID] = {}
+        for index, qubit in apply_layout.property_set["layout"]._p2v.items():
+            initial_map[Qubit(qubit._register.name, qubit._index)] = Node(index)
+
+        # construct final_map with ancillas
+        register: QuantumRegister = QuantumRegister(len(initial_map), "q")
+        final_map: dict[UnitID, UnitID] = {}
+        for qubit in initial_map:
+            final_map[qubit] = Node(
+                apply_layout.property_set["final_layout"]._v2p[
+                    register[initial_map[qubit].index[0]]
+                ]
+            )
+
+        # remove unused ancillas from translated circuit, rename units and
+        # decompose swaps
+        c: Circuit = qiskit_to_tk(applied_c)
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
-        return c
+
+        # return circuit and cleaned maps
+        return (
+            c,
+            (
+                {k: v for k, v in initial_map.items() if v in set(c.qubits)},
+                {k: v for k, v in final_map.items() if v in set(c.qubits)},
+            ),
+        )
 
     return lightsabre

@@ -35,7 +35,7 @@ from pytket.passes import (
     AutoRebase,
     BasePass,
     CliffordSimp,
-    CustomPass,
+    CustomPassMap,
     DecomposeBoxes,
     FullPeepholeOptimise,
     GreedyPauliSimp,
@@ -176,7 +176,7 @@ class _AerBaseBackend(Backend):
         assert optimisation_level in range(4)
         arch_specific_passes = [
             AutoRebase({OpType.CX, OpType.TK1}),
-            CustomPass(_gen_lightsabre_transformation(arch), label="lightsabrepass"),
+            CustomPassMap(_gen_lightsabre_transformation(arch), label="lightsabrepass"),
         ]
         if optimisation_level == 0:
             return SequencePass(

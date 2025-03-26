@@ -52,7 +52,7 @@ from pytket.passes import (
     AutoSquash,
     BasePass,
     CliffordSimp,
-    CustomPass,
+    CustomPassMap,
     DecomposeBoxes,
     FullPeepholeOptimise,
     GreedyPauliSimp,
@@ -460,7 +460,7 @@ class IBMQBackend(Backend):
         if not isinstance(arch, FullyConnected):
             passlist.append(AutoRebase(primitive_gates))
             passlist.append(
-                CustomPass(
+                CustomPassMap(
                     _gen_lightsabre_transformation(arch),
                     "lightsabrepass",
                 )

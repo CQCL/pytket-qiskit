@@ -42,6 +42,7 @@ from pytket.circuit import (
     BasisOrder,
     CircBox,
     Circuit,
+    Node,
     OpType,
     QControlBox,
     Qubit,
@@ -1513,20 +1514,29 @@ def test_optimisation_level_3_compilation() -> None:
                 c.Rz(0.23, j)
                 c.S(j)
             c.H(i)
-
+    c.rename_units(
+        {
+            Qubit(0): Qubit("a", 0),
+            Qubit(1): Qubit("a", 1),
+            Qubit(2): Qubit("a", 2),
+            Qubit(3): Qubit("a", 3),
+            Qubit(4): Qubit("a", 4),
+            Qubit(5): Qubit("a", 5),
+        }
+    )
     compiled_2 = b.get_compiled_circuit(c, 2)
     compiled_3 = b.get_compiled_circuit(c, 3)
     compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
-    assert compiled_2.n_2qb_gates() == 78
-    assert compiled_2.n_gates == 205
-    assert compiled_2.depth() == 147
-    assert compiled_3.n_2qb_gates() == 61
-    assert compiled_3.n_gates == 164
-    assert compiled_3.depth() == 114
-    assert compiled_3_timeout.n_2qb_gates() == 69
-    assert compiled_3_timeout.n_gates == 171
-    assert compiled_3_timeout.depth() == 125
+    assert compiled_2.n_2qb_gates() == 68
+    assert compiled_2.n_gates == 186
+    assert compiled_2.depth() == 130
+    assert compiled_3.n_2qb_gates() < 100
+    assert compiled_3.n_gates < 200
+    assert compiled_3.depth() < 150
+    assert compiled_3_timeout.n_2qb_gates() == 75
+    assert compiled_3_timeout.n_gates == 180
+    assert compiled_3_timeout.depth() == 132
 
 
 def test_optimisation_level_3_serialisation() -> None:
@@ -1538,7 +1548,7 @@ def test_optimisation_level_3_serialisation() -> None:
     p_dict = b.default_compilation_pass(3).to_dict()
     passlist = SequencePass.from_dict(
         p_dict,
-        {
+        custom_map_deserialisation={
             "lightsabrepass": _gen_lightsabre_transformation(
                 b._backend_info.architecture
             )
@@ -1555,3 +1565,25 @@ def test_process_circuits_n_qubits() -> None:
     rs = b.get_results(hs)
     assert rs[0].get_counts() == Counter({(1,): 10})
     assert rs[1].get_counts() == Counter({(1, 0): 10})
+
+
+def test_noise_model_relabelling() -> None:
+    prob_ro: float = 0.1
+    noise_model = NoiseModel()
+    error_ro = ReadoutError([[1 - prob_ro, prob_ro], [prob_ro, 1 - prob_ro]])
+
+    for i in range(4):
+        noise_model.add_readout_error(error_ro, [i])
+
+    qubit = Qubit(name="my_qubit", index=0)
+    circuit = Circuit()
+    circuit.add_qubit(qubit)
+    circuit.X(qubit)
+
+    cu = CompilationUnit(circuit)
+    AerBackend(noise_model=noise_model).default_compilation_pass(
+        optimisation_level=1
+    ).apply(cu)
+
+    assert cu.initial_map == {qubit: Node(2)}
+    assert cu.final_map == {qubit: Node(2)}

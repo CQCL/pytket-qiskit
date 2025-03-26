@@ -4,9 +4,11 @@
 
 # Changelog
 
-# Unreleased
+# 0.66.0 (March 2025)
 
 - Update qiskit minimum version requirement to 1.4.2.
+- Uptdate lightsabre pass to be a `CustomPassMap` object.
+- Update pytket version requirement to 2.1.0.
 
 ## 0.65.0 (March 2025)
 

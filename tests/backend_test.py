@@ -1525,15 +1525,15 @@ def test_optimisation_level_3_compilation() -> None:
         }
     )
     compiled_2 = b.get_compiled_circuit(c, 2)
-    # compiled_3 = b.get_compiled_circuit(c, 3)
+    compiled_3 = b.get_compiled_circuit(c, 3)
     compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
     assert compiled_2.n_2qb_gates() == 68
     assert compiled_2.n_gates == 186
     assert compiled_2.depth() == 130
-    # assert compiled_3.n_2qb_gates() == 70
-    # assert compiled_3.n_gates == 193
-    # assert compiled_3.depth() == 134
+    assert compiled_3.n_2qb_gates() < 100
+    assert compiled_3.n_gates < 200
+    assert compiled_3.depth() < 150
     assert compiled_3_timeout.n_2qb_gates() == 75
     assert compiled_3_timeout.n_gates == 180
     assert compiled_3_timeout.depth() == 132

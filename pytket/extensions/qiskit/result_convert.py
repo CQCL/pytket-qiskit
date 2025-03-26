@@ -186,8 +186,6 @@ def backendresult_to_qiskit_resultdata(
             data["unitary"] = stored_res.unitary
     if res.contains_measured_results:
         cbits = _qiskit_ordered_uids(cbits)
-        if final_map:
-            cbits = [final_map[c] for c in cbits]
         stored_res = res.get_result(cbits)
         if stored_res.shots is not None:
             data["memory"] = [hex(i) for i in stored_res.shots.to_intlist()]

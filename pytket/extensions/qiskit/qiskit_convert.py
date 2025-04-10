@@ -844,7 +844,7 @@ def append_tk_command_to_qiskit(
             qcirc.append(g, qargs=qargs)
         else:
             with qcirc.if_test(condition):
-                qqcirc.append(g, qargs=qargs)
+                qcirc.append(g, qargs=qargs)
         return qcirc
     if optype == OpType.RangePredicate:
         if op.lower != op.upper:  # type: ignore

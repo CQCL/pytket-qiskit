@@ -803,7 +803,7 @@ def test_convert_multi_c_reg() -> None:
     c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
-    assert circ.get_commands()[0].args == [m0, q1]
+    assert circ.get_commands()[1].args == [Bit("tk_SCRATCH_BIT", 0), q1]
 
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy

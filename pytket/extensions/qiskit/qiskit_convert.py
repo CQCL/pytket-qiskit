@@ -445,34 +445,6 @@ def _add_state_preparation(
         )
 
 
-def _get_pytket_condition_kwargs(
-    instruction: Instruction,
-    cregmap: dict[str, ClassicalRegister],
-    circuit: QuantumCircuit,
-) -> dict[str, Any]:
-    if type(instruction.condition[0]) is ClassicalRegister:
-        cond_reg = cregmap[instruction.condition[0]]
-        condition_kwargs = {
-            "condition_bits": [cond_reg[k] for k in range(len(cond_reg))],
-            "condition_value": instruction.condition[1],
-        }
-        return condition_kwargs
-    elif type(instruction.condition[0]) is Clbit:
-        # .find_bit() returns type:
-        #    tuple[index, list[tuple[ClassicalRegister, index]]]
-        # We assume each bit belongs to exactly one register.
-        index = circuit.find_bit(instruction.condition[0])[0]
-        register = circuit.find_bit(instruction.condition[0])[1][0][0]
-        cond_reg = cregmap[register]
-        condition_kwargs = {
-            "condition_bits": [cond_reg[index]],
-            "condition_value": instruction.condition[1],
-        }
-        return condition_kwargs
-    else:
-        raise NotImplementedError("condition must contain classical bit or register")
-
-
 def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     qregs = [QuantumRegister(instr.num_qubits, "q")] if instr.num_qubits > 0 else []
     cregs = [ClassicalRegister(instr.num_clbits, "c")] if instr.num_clbits > 0 else []
@@ -609,14 +581,6 @@ class CircuitBuilder:
             qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
             bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
-            condition_kwargs = {}
-            if instr.condition is not None and type(instr) is not IfElseOp:
-                condition_kwargs = _get_pytket_condition_kwargs(
-                    instruction=instr,
-                    cregmap=self.cregmap,
-                    circuit=circuit,
-                )
-
             optype = None
             if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
                 # Handling of PauliEvolutionGate, UnitaryGate and IfElseOp below
@@ -662,7 +626,6 @@ class CircuitBuilder:
                     self.tkc.add_gate(
                         unitary_box,
                         list(reversed(qubits)),
-                        **condition_kwargs,
                     )
 
             elif optype == OpType.Barrier:
@@ -670,7 +633,7 @@ class CircuitBuilder:
 
             elif optype == OpType.CircBox:
                 circbox = _build_circbox(instr, circuit)
-                self.tkc.add_circbox(circbox, qubits + bits, **condition_kwargs)  # type: ignore
+                self.tkc.add_circbox(circbox, qubits + bits)  # type: ignore
 
             elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
@@ -678,13 +641,16 @@ class CircuitBuilder:
                         optype,
                         [param_to_tk(p) for p in instr.params[:-1]],
                         qubits,
-                        **condition_kwargs,
                     )
                 else:
                     raise NotImplementedError("CUGate with nonzero phase")
             else:
                 params = [param_to_tk(p) for p in instr.params]
-                self.tkc.add_gate(optype, params, qubits + bits, **condition_kwargs)  # type: ignore
+                self.tkc.add_gate(
+                    optype,
+                    params,
+                    qubits + bits,
+                )  # type: ignore
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:

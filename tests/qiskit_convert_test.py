@@ -966,7 +966,13 @@ def test_conditional_conversion() -> None:
     c_qiskit = tk_to_qiskit(c)
     c_tket = qiskit_to_tk(c_qiskit)
 
-    assert c_tket.to_dict() == c.to_dict()
+    expected_circ = Circuit(1, 2, "conditional_circ")
+    if_box = CircBox(Circuit(1, name="If").X(0))
+    expected_circ.add_circbox(
+        if_box, [Qubit(0)], condition_bits=[Bit(0)], condition_value=1
+    )
+
+    assert c_tket == expected_circ
 
 
 def test_conditional_conversion_2() -> None:

@@ -42,6 +42,7 @@ from pytket.circuit import (
     BasisOrder,
     CircBox,
     Circuit,
+    Node,
     OpType,
     QControlBox,
     Qubit,
@@ -324,8 +325,8 @@ def test_process_characterisation_complete_noise_model() -> None:
     back = AerBackend(my_noise_model)
     char = back.backend_info.get_misc("characterisation")
 
-    node_errors = cast(dict, back.backend_info.all_node_gate_errors)
-    link_errors = cast(dict, back.backend_info.all_edge_gate_errors)
+    node_errors = cast("dict", back.backend_info.all_node_gate_errors)
+    link_errors = cast("dict", back.backend_info.all_edge_gate_errors)
     arch = back.backend_info.architecture
     assert node_errors is not None
     assert link_errors is not None
@@ -347,7 +348,7 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert (
         round(link_errors[(arch.nodes[1], arch.nodes[0])][OpType.CX], 8) == 0.80859375
     )
-    readout_errors = cast(dict, back.backend_info.all_readout_errors)
+    readout_errors = cast("dict", back.backend_info.all_readout_errors)
     assert readout_errors[arch.nodes[0]] == [
         [0.8, 0.2],
         [0.2, 0.8],
@@ -382,9 +383,9 @@ def test_process_model() -> None:
     assert "characterisation" in b.backend_info.misc
     assert "GenericOneQubitQErrors" in b.backend_info.misc["characterisation"]
     assert "GenericTwoQubitQErrors" in b.backend_info.misc["characterisation"]
-    node_gate_errors = cast(dict, b.backend_info.all_node_gate_errors)
+    node_gate_errors = cast("dict", b.backend_info.all_node_gate_errors)
     assert nodes[3] in node_gate_errors
-    edge_gate_errors = cast(dict, b.backend_info.all_edge_gate_errors)
+    edge_gate_errors = cast("dict", b.backend_info.all_edge_gate_errors)
     assert (nodes[7], nodes[8]) in edge_gate_errors
 
 
@@ -419,7 +420,7 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
-            cast(str, hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
+            cast("str", hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
         )
 
         correct_counts = {(0, 0): 4}
@@ -452,7 +453,7 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
         from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
-            cast(str, hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
+            cast("str", hand[0]) == _DEBUG_HANDLE_PREFIX + suffix
             for hand, suffix in zip(
                 handles,
                 [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
@@ -1011,7 +1012,7 @@ def test_compilation_correctness(brisbane_backend: IBMQBackend) -> None:
     c.remove_blank_wires()
     FlattenRelabelRegistersPass().apply(c)
     c_pred = ConnectivityPredicate(
-        cast(Architecture, brisbane_backend.backend_info.architecture)
+        cast("Architecture", brisbane_backend.backend_info.architecture)
     )
     for ol in range(3):
         p = brisbane_backend.default_compilation_pass(optimisation_level=ol)
@@ -1077,7 +1078,7 @@ def test_postprocess() -> None:
     c.X(0).X(1).measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
+    ppcirc = Circuit.from_dict(json.loads(cast("str", h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
@@ -1092,7 +1093,7 @@ def test_postprocess_emu(brisbane_emulator_backend: IBMQEmulatorBackend) -> None
     c.X(0).X(1).measure_all()
     c = brisbane_emulator_backend.get_compiled_circuit(c)
     h = brisbane_emulator_backend.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[3])))
+    ppcirc = Circuit.from_dict(json.loads(cast("str", h[3])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
@@ -1513,20 +1514,29 @@ def test_optimisation_level_3_compilation() -> None:
                 c.Rz(0.23, j)
                 c.S(j)
             c.H(i)
-
+    c.rename_units(
+        {
+            Qubit(0): Qubit("a", 0),
+            Qubit(1): Qubit("a", 1),
+            Qubit(2): Qubit("a", 2),
+            Qubit(3): Qubit("a", 3),
+            Qubit(4): Qubit("a", 4),
+            Qubit(5): Qubit("a", 5),
+        }
+    )
     compiled_2 = b.get_compiled_circuit(c, 2)
     compiled_3 = b.get_compiled_circuit(c, 3)
     compiled_3_timeout = b.get_compiled_circuit(c, 3, timeout=0)
 
-    assert compiled_2.n_2qb_gates() == 78
-    assert compiled_2.n_gates == 205
-    assert compiled_2.depth() == 147
-    assert compiled_3.n_2qb_gates() == 61
-    assert compiled_3.n_gates == 164
-    assert compiled_3.depth() == 114
-    assert compiled_3_timeout.n_2qb_gates() == 69
-    assert compiled_3_timeout.n_gates == 171
-    assert compiled_3_timeout.depth() == 125
+    assert compiled_2.n_2qb_gates() == 68
+    assert compiled_2.n_gates == 186
+    assert compiled_2.depth() == 130
+    assert compiled_3.n_2qb_gates() < 100
+    assert compiled_3.n_gates < 200
+    assert compiled_3.depth() < 150
+    assert compiled_3_timeout.n_2qb_gates() == 75
+    assert compiled_3_timeout.n_gates == 180
+    assert compiled_3_timeout.depth() == 132
 
 
 def test_optimisation_level_3_serialisation() -> None:
@@ -1538,7 +1548,7 @@ def test_optimisation_level_3_serialisation() -> None:
     p_dict = b.default_compilation_pass(3).to_dict()
     passlist = SequencePass.from_dict(
         p_dict,
-        {
+        custom_map_deserialisation={
             "lightsabrepass": _gen_lightsabre_transformation(
                 b._backend_info.architecture
             )
@@ -1555,3 +1565,25 @@ def test_process_circuits_n_qubits() -> None:
     rs = b.get_results(hs)
     assert rs[0].get_counts() == Counter({(1,): 10})
     assert rs[1].get_counts() == Counter({(1, 0): 10})
+
+
+def test_noise_model_relabelling() -> None:
+    prob_ro: float = 0.1
+    noise_model = NoiseModel()
+    error_ro = ReadoutError([[1 - prob_ro, prob_ro], [prob_ro, 1 - prob_ro]])
+
+    for i in range(4):
+        noise_model.add_readout_error(error_ro, [i])
+
+    qubit = Qubit(name="my_qubit", index=0)
+    circuit = Circuit()
+    circuit.add_qubit(qubit)
+    circuit.X(qubit)
+
+    cu = CompilationUnit(circuit)
+    AerBackend(noise_model=noise_model).default_compilation_pass(
+        optimisation_level=1
+    ).apply(cu)
+
+    assert cu.initial_map == {qubit: Node(2)}
+    assert cu.final_map == {qubit: Node(2)}

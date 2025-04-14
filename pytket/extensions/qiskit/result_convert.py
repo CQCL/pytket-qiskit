@@ -93,7 +93,7 @@ def qiskit_experimentresult_to_backendresult(
         raise RuntimeError(result.status)
 
     header = result.header
-    width = header.memory_slots
+    width = header["memory_slots"]
 
     c_bits, q_bits = None, None
     if hasattr(header, "creg_sizes"):

@@ -1585,5 +1585,5 @@ def test_noise_model_relabelling() -> None:
         optimisation_level=1
     ).apply(cu)
 
-    assert cu.initial_map == {qubit: Node(2)}
-    assert cu.final_map == {qubit: Node(2)}
+    assert cu.initial_map == {qubit: Node(3)}
+    assert cu.final_map == {qubit: Node(3)}

@@ -750,7 +750,7 @@ def append_tk_command_to_qiskit(
 
     if optype == OpType.Reset:
         qb = qregmap[args[0].reg_name][args[0].index[0]]
-        _apply_qiskit_instruction(qcirc, Reset, qb, b, condition)
+        _apply_qiskit_instruction(qcirc, Reset, qb, condition)
         return qcirc
 
     if optype in (OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate):
@@ -831,7 +831,7 @@ def append_tk_command_to_qiskit(
             )
         qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
         barr = Barrier(len(args))
-        _apply_qiskit_instruction(barr, qargs=qargs, condition=condition)
+        _apply_qiskit_instruction(qcirc, instruc=barr, qargs=qargs, condition=condition)
         return qcirc
 
     if optype == OpType.RangePredicate:
@@ -923,7 +923,7 @@ order or only one bit of one register"""
             new_gate = CRYGate(alpha)
         else:
             new_gate = RYGate(alpha).control(len(qargs) - 1)
-        _apply_qiskit_instruction(new_gate, qargs=qargs, condition=condition)
+        _apply_qiskit_instruction(qcirc, new_gate, qargs=qargs, condition=condition)
         return qcirc
 
     if optype == OpType.CU3:
@@ -940,6 +940,7 @@ order or only one bit of one register"""
         half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
         _apply_qiskit_instruction(
+            qcirc,
             qiskit_gates.UGate(params[1], params[0] - half, params[2] + half),
             qargs=qargs,
             condition=condition,

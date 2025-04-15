@@ -777,7 +777,7 @@ def append_tk_command_to_qiskit(
         unitary_gate = UnitaryGate(u, label="unitary")
         # Note reversal of qubits, to account for endianness (pytket unitaries are
         # ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
-        _apply_qiskit_instruction(qcirc, unitary_gate, qargs, condition)
+        _apply_qiskit_instruction(qcirc, unitary_gate, qargs=list(reversed(qargs)), condition=condition)
         return qcirc
 
     if optype == OpType.StatePreparationBox:

@@ -928,11 +928,7 @@ order or only one bit of one register"""
 
     if optype == OpType.CU3:
         params = _get_params(op, symb_map) + [0]
-        if condition is None:
-            qcirc.append(qiskit_gates.CUGate(*params), qargs=qargs)
-        else:
-            with qcirc.if_test(condition):
-                qcirc.append(qiskit_gates.CUGate(*params), qargs=qargs)
+        _apply_qiskit_instruction(qcirc, qiskit_gates.CUGate(*params), qargs=qargs, condition=condition)
         return qcirc
 
     if optype == OpType.TK1:

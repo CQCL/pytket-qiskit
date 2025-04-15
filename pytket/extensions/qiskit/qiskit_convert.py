@@ -736,7 +736,7 @@ def append_tk_command_to_qiskit(
     symb_map: dict[Parameter, sympy.Symbol],
     range_preds: dict[Bit, tuple[list["UnitID"], int]],
     condition: tuple[ClassicalRegister | Clbit, int] | None = None,
-) -> QuantumCircuit:
+) -> InstructionSet:
     optype = op.type
     if optype == OpType.Measure:
         qubit = args[0]
@@ -777,7 +777,9 @@ def append_tk_command_to_qiskit(
         unitary_gate = UnitaryGate(u, label="unitary")
         # Note reversal of qubits, to account for endianness (pytket unitaries are
         # ILO-BE == DLO-LE; qiskit unitaries are ILO-LE == DLO-BE).
-        _apply_qiskit_instruction(qcirc, unitary_gate, qargs=list(reversed(qargs)), condition=condition)
+        _apply_qiskit_instruction(
+            qcirc, unitary_gate, qargs=list(reversed(qargs)), condition=condition
+        )
         return qcirc
 
     if optype == OpType.StatePreparationBox:
@@ -787,7 +789,10 @@ def append_tk_command_to_qiskit(
         if op.with_initial_reset():  # type: ignore
             initializer = Initialize(statevector_array)
             _apply_qiskit_instruction(
-                 qcirc=qcirc, instruc=initializer, qargs=list(reversed(qargs)), condition=condition
+                qcirc=qcirc,
+                instruc=initializer,
+                qargs=list(reversed(qargs)),
+                condition=condition,
             )
             return qcirc
         else:
@@ -814,7 +819,8 @@ def append_tk_command_to_qiskit(
             )
         params = _get_params(op.get_op(), symb_map)
         operation = gatetype(*params)
-        _apply_qiskit_instruction(qcirc=qcirc,
+        _apply_qiskit_instruction(
+            qcirc=qcirc,
             instruc=operation.control(
                 num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
             ),
@@ -891,13 +897,17 @@ order or only one bit of one register"""
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
 
     if optype == OpType.CnX:
-        _apply_qiskit_instruction(qcirc,
-            qiskit_gates.MCXGate(num_ctrl_qubits=len(qargs) - 1), qargs=qargs, condition=condition
+        _apply_qiskit_instruction(
+            qcirc,
+            qiskit_gates.MCXGate(num_ctrl_qubits=len(qargs) - 1),
+            qargs=qargs,
+            condition=condition,
         )
         return qcirc
 
     if optype == OpType.CnY:
-        _apply_qiskit_instruction(qcirc=qcirc,
+        _apply_qiskit_instruction(
+            qcirc=qcirc,
             instruc=qiskit_gates.YGate().control(len(qargs) - 1),
             qargs=qargs,
             condition=condition,
@@ -926,7 +936,9 @@ order or only one bit of one register"""
 
     if optype == OpType.CU3:
         params = _get_params(op, symb_map) + [0]
-        _apply_qiskit_instruction(qcirc, qiskit_gates.CUGate(*params), qargs=qargs, condition=condition)
+        _apply_qiskit_instruction(
+            qcirc, qiskit_gates.CUGate(*params), qargs=qargs, condition=condition
+        )
         return qcirc
 
     if optype == OpType.TK1:

@@ -745,12 +745,12 @@ def append_tk_command_to_qiskit(
         b = cregmap[bit.reg_name][bit.index[0]]
         # If the bit is storing a range predicate it should be invalidated:
         range_preds.pop(bit, None)  # type: ignore
-        _apply_qiskit_instruction(qcirc, Measure, qb, b, condition)
+        _apply_qiskit_instruction(qcirc, Measure(), [qb], [b], condition)
         return qcirc
 
     if optype == OpType.Reset:
         qb = qregmap[args[0].reg_name][args[0].index[0]]
-        _apply_qiskit_instruction(qcirc, Reset, qb, condition)
+        _apply_qiskit_instruction(qcirc, Reset(), qargs=[qb], condition=condition)
         return qcirc
 
     if optype in (OpType.CircBox, OpType.ExpBox, OpType.PauliExpBox, OpType.CustomGate):
@@ -787,14 +787,14 @@ def append_tk_command_to_qiskit(
         if op.with_initial_reset():  # type: ignore
             initializer = Initialize(statevector_array)
             _apply_qiskit_instruction(
-                initializer, qcirc, qargs=list(reversed(qargs)), condition=condition
+                 qcirc=qcirc, instruc=initializer, qargs=list(reversed(qargs)), condition=condition
             )
             return qcirc
         else:
             qiskit_state_prep_box = StatePreparation(statevector_array)
             _apply_qiskit_instruction(
-                qiskit_state_prep_box,
-                qcirc,
+                qcirc=qcirc,
+                instruc=qiskit_state_prep_box,
                 qargs=list(reversed(qargs)),
                 condition=condition,
             )
@@ -814,12 +814,11 @@ def append_tk_command_to_qiskit(
             )
         params = _get_params(op.get_op(), symb_map)
         operation = gatetype(*params)
-        _apply_qiskit_instruction(
-            operation.control(
+        _apply_qiskit_instruction(qcirc=qcirc,
+            instruc=operation.control(
                 num_ctrl_qubits=op.get_n_controls(), ctrl_state=qiskit_control_state
             ),
-            qcirc,
-            qargs,
+            qargs=qargs,
             condition=condition,
         )
         return qcirc
@@ -892,16 +891,15 @@ order or only one bit of one register"""
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
 
     if optype == OpType.CnX:
-        _apply_qiskit_instruction(
-            qiskit_gates.MCXGate, qargs[:-1], qargs[-1], condition=condition
+        _apply_qiskit_instruction(qcirc,
+            qiskit_gates.MCXGate(num_ctrl_qubits=len(qargs) - 1), qargs=qargs, condition=condition
         )
         return qcirc
 
     if optype == OpType.CnY:
-        _apply_qiskit_instruction(
-            qiskit_gates.YGate().control(len(qargs) - 1),
-            qargs[:-1],
-            qargs[-1],
+        _apply_qiskit_instruction(qcirc=qcirc,
+            instruc=qiskit_gates.YGate().control(len(qargs) - 1),
+            qargs=qargs,
             condition=condition,
         )
         return qcirc

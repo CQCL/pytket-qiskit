@@ -12,8 +12,8 @@ representations, simulation and access to the IBM quantum devices and simulators
 run on IBM backends and simulators, as well as conversion to and from Qiskit
 representations.
 
-`pytket-qiskit` is available for Python 3.10, 3.11 and 3.12, on Linux, MacOS and
-Windows. To install, run:
+`pytket-qiskit` is available for Python 3.10, 3.11, 3.12 and 3.13, on Linux,
+MacOS and Windows. To install, run:
 
 ```
 pip install pytket-qiskit

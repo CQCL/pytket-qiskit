@@ -132,10 +132,7 @@ def _gen_lightsabre_transformation(  # type: ignore
         routing_method="sabre",
         seed_transpiler=seed,
     )
-
-    # target = GenericBackendV2(
-    #     num_qubits=len(architecture.nodes), basis_gates=["cx", "id", "rz", "sx", "x"], coupling_map=config.coupling_map, seed=seed
-    # ).target
+    
     apply_layout: PassManager = PassManager(
         [
             SabreLayout(

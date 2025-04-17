@@ -96,14 +96,15 @@ def qiskit_experimentresult_to_backendresult(
     width = header["memory_slots"]
 
     c_bits, q_bits = None, None
-    if hasattr(header, "creg_sizes"):
+    if "creg_sizes" in header:
         c_bits = []
-        for name, size in header.creg_sizes:
+        for name, size in header["creg_sizes"]:
             for index in range(size):
                 c_bits.append(Bit(name, index))
-    if hasattr(header, "qreg_sizes"):
+
+    if "qreg_sizes" in header:
         q_bits = []
-        for name, size in header.qreg_sizes:
+        for name, size in header["qreg_sizes"]:
             for index in range(size):
                 q_bits.append(Qubit(name, index))
 

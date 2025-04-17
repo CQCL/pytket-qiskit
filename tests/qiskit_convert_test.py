@@ -803,7 +803,7 @@ def test_convert_multi_c_reg() -> None:
     c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
-    assert circ.get_commands()[0].args == [m0, q1]
+    assert circ.get_commands()[1].args == [Bit("tk_SCRATCH_BIT", 0), q1]
 
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy
@@ -966,17 +966,28 @@ def test_conditional_conversion() -> None:
     c_qiskit = tk_to_qiskit(c)
     c_tket = qiskit_to_tk(c_qiskit)
 
-    assert c_tket.to_dict() == c.to_dict()
+    expected_circ = Circuit(1, 2, "conditional_circ")
+    if_box = CircBox(Circuit(1, name="If").X(0))
+    expected_circ.add_circbox(
+        if_box, [Qubit(0)], condition_bits=[Bit(0)], condition_value=1
+    )
+
+    assert c_tket == expected_circ
 
 
 def test_conditional_conversion_2() -> None:
     c = Circuit(1, 2, "conditional_circ_2")
     c.X(0, condition_bits=[1], condition_value=1)
-
     c_qiskit = tk_to_qiskit(c)
     c_tket = qiskit_to_tk(c_qiskit)
 
-    assert c_tket.to_dict() == c.to_dict()
+    expected_circ = Circuit(1, 2, "conditional_circ_2")
+    if_box = CircBox(Circuit(1, name="If").X(0))
+    expected_circ.add_circbox(
+        if_box, [Qubit(0)], condition_bits=[Bit(1)], condition_value=1
+    )
+
+    assert c_tket == expected_circ
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/100

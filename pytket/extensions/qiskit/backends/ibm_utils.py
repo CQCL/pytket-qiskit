@@ -27,6 +27,7 @@ from pytket.passes import RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
+from qiskit.providers.fake_provider import GenericBackendV2
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import (  # type: ignore
     ApplyLayout,
@@ -34,7 +35,10 @@ from qiskit.transpiler.passes import (  # type: ignore
     FullAncillaAllocation,
     SabreLayout,
     SabreSwap,
+    VF2PostLayout,
 )
+
+# from qiskit.transpiler.passes.layout.vf2_post_layout import VF2PostLayout
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
@@ -129,6 +133,9 @@ def _gen_lightsabre_transformation(  # type: ignore
         seed_transpiler=seed,
     )
 
+    # target = GenericBackendV2(
+    #     num_qubits=len(architecture.nodes), basis_gates=["cx", "id", "rz", "sx", "x"], coupling_map=config.coupling_map, seed=seed
+    # ).target
     apply_layout: PassManager = PassManager(
         [
             SabreLayout(
@@ -143,6 +150,14 @@ def _gen_lightsabre_transformation(  # type: ignore
             ApplyLayout(),
             SabreSwap(
                 config.coupling_map, seed=config.seed_transpiler, trials=attempts
+            ),
+            VF2PostLayout(
+                GenericBackendV2(
+                    num_qubits=len(architecture.nodes),
+                    basis_gates=["cx", "id", "rz", "sx", "x"],
+                    coupling_map=config.coupling_map,
+                    seed=seed,
+                ).target
             ),
         ]
     )

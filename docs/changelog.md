@@ -4,7 +4,11 @@
 
 # Changelog
 
-# 0.66.0 (March 2025)
+## Unreleased
+
+- Add support for Python 3.13.
+
+## 0.66.0 (March 2025)
 
 - Update qiskit minimum version requirement to 1.4.2.
 - Uptdate lightsabre pass to be a `CustomPassMap` object.

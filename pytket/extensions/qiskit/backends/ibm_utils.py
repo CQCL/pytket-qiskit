@@ -38,7 +38,6 @@ from qiskit.transpiler.passes import (  # type: ignore
     VF2PostLayout,
 )
 
-# from qiskit.transpiler.passes.layout.vf2_post_layout import VF2PostLayout
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
@@ -132,7 +131,6 @@ def _gen_lightsabre_transformation(  # type: ignore
         routing_method="sabre",
         seed_transpiler=seed,
     )
-    
     apply_layout: PassManager = PassManager(
         [
             SabreLayout(

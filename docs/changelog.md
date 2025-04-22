@@ -7,6 +7,9 @@
 ## Unreleased
 
 - Add support for Python 3.13.
+- Support qiskit >=2.0
+- Drop support for conversion of `CircBox`es containing conditional gates to qiskit in the {py:func}`tk_to_qiskit`
+converter.
 
 ## 0.66.0 (March 2025)
 

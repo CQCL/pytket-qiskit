@@ -727,6 +727,10 @@ def _apply_qiskit_instruction(
             qcirc.append(instruc, qargs, cargs)
 
 
+def _has_control_flow(qc: QuantumCircuit) -> bool:
+    return "if_else" in qc.count_ops()
+
+
 def append_tk_command_to_qiskit(
     op: "Op",
     args: list["UnitID"],
@@ -766,9 +770,17 @@ def append_tk_command_to_qiskit(
         if optype == OpType.CustomGate:
             instruc = subqc.to_gate()
             instruc.name = op.get_name()
+            _apply_qiskit_instruction(qcirc, instruc, qargs, condition)
         else:
-            instruc = subqc.to_instruction()
-        _apply_qiskit_instruction(qcirc, instruc, qargs, condition)
+            if _has_control_flow(subqc):
+                # Detect control flow in CircBoxes and raise an error.
+                raise NotImplementedError(
+                    "Conversion of CircBox(es) containing conditional"
+                    + " gates not currently supported by tk_to_qiskit"
+                )
+            else:
+                instruc = subqc.to_instruction()
+                _apply_qiskit_instruction(qcirc, instruc, qargs, condition)
         return qcirc
 
     if optype in (OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox):

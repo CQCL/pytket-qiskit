@@ -436,19 +436,10 @@ def test_conditions() -> None:
     c.add_unitary2qbox(
         ubox, Qubit(0), Qubit(1), condition_bits=[b[0]], condition_value=0
     )
-    c2 = c.copy()
-    qc = tk_to_qiskit(c)
-    c1 = qiskit_to_tk(qc)
-    assert len(c1.get_commands()) == 2
-    DecomposeBoxes().apply(c)
-    DecomposeBoxes().apply(c1)
-    assert c == c1
-
-    c2.Z(1, condition=reg_eq(b, 1))
-    qc = tk_to_qiskit(c2)
-    c1 = qiskit_to_tk(qc)
-    assert len(c1.get_commands()) == 3
-    # conversion loses rangepredicates so equality comparison not valid
+    # Converting a CircBox containing conditional gates gives an error
+    # TODO consider removing this restriction
+    with pytest.raises(NotImplementedError):
+        _ = tk_to_qiskit(c)
 
 
 def test_condition_errors() -> None:

@@ -175,7 +175,7 @@ def _gen_lightsabre_transformation(  # type: ignore
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         # Decompose CircBoxes corresponding to "If" and "Else" blocks in
         #  conditional gates (qiskit IfElseOp).
-        DecomposeBoxes(excluded_types=OpType.BRIDGE).apply(c)
+        DecomposeBoxes(excluded_types={OpType.BRIDGE}).apply(c)
         RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
 

@@ -22,7 +22,7 @@ import numpy as np
 
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
-from pytket.circuit import Circuit, Node, Qubit, UnitID, OpType
+from pytket.circuit import Circuit, Node, OpType, Qubit, UnitID
 from pytket.passes import DecomposeBoxes, RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore

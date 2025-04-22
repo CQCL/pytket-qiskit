@@ -633,7 +633,7 @@ class CircuitBuilder:
 
             elif optype == OpType.CircBox:
                 circbox = _build_circbox(instr, circuit)
-                self.tkc.add_circbox(circbox, qubits + bits)  # type: ignore
+                self.tkc.add_circbox(circbox, qubits + bits)
 
             elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
@@ -650,7 +650,7 @@ class CircuitBuilder:
                     optype,
                     params,
                     qubits + bits,
-                )  # type: ignore
+                )
 
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:

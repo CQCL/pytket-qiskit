@@ -22,7 +22,7 @@ import numpy as np
 
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
-from pytket.circuit import Circuit, Node, Qubit, UnitID
+from pytket.circuit import Circuit, Node, Qubit, UnitID, OpType
 from pytket.passes import DecomposeBoxes, RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore
@@ -175,7 +175,7 @@ def _gen_lightsabre_transformation(  # type: ignore
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
         # Decompose CircBoxes corresponding to "If" and "Else" blocks in
         #  conditional gates (qiskit IfElseOp).
-        DecomposeBoxes().apply(c)
+        DecomposeBoxes(excluded_types=OpType.BRIDGE).apply(c)
         RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
 

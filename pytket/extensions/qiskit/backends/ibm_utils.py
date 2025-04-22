@@ -23,7 +23,7 @@ import numpy as np
 from pytket.architecture import Architecture
 from pytket.backends.status import StatusEnum
 from pytket.circuit import Circuit, Node, Qubit, UnitID
-from pytket.passes import RebaseTket
+from pytket.passes import DecomposeBoxes, RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
@@ -173,6 +173,9 @@ def _gen_lightsabre_transformation(  # type: ignore
         c: Circuit = qiskit_to_tk(applied_c)
         c.remove_blank_wires()
         c.rename_units({q: Node(q.index[0]) for q in c.qubits})
+        # Decompose CircBoxes corresponding to "If" and "Else" blocks in
+        #  conditional gates (qiskit IfElseOp).
+        DecomposeBoxes().apply(c)
         RebaseTket().apply(c)
         Transform.DecomposeCXDirected(architecture).apply(c)
 

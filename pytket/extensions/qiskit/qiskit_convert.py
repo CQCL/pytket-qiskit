@@ -633,7 +633,7 @@ class CircuitBuilder:
 
             elif optype == OpType.CircBox:
                 circbox = _build_circbox(instr, circuit)
-                self.tkc.add_circbox(circbox, qubits + bits)
+                self.tkc.add_circbox(circbox, qubits + bits)  # type: ignore
 
             elif optype == OpType.CU3 and type(instr) is qiskit_gates.CUGate:
                 if instr.params[-1] == 0:
@@ -647,9 +647,9 @@ class CircuitBuilder:
             else:
                 params = [param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(
-                    optype,
+                    optype,  # type: ignore
                     params,
-                    qubits + bits,
+                    qubits + bits,  # type: ignore
                 )
 
 
@@ -716,8 +716,8 @@ def _get_params(
 def _apply_qiskit_instruction(
     qcirc: QuantumCircuit,
     instruc: Instruction,
-    qargs: list[UnitType.qubit],  # type: ignore
-    cargs: list[Clbit] = None,
+    qargs: Iterable[UnitType.qubit],  # type: ignore
+    cargs: Iterable[Clbit] = None,  # type: ignore
     condition: tuple[ClassicalRegister | Clbit, int] | None = None,
 ) -> None:
     if condition is None:
@@ -770,7 +770,7 @@ def append_tk_command_to_qiskit(
         if optype == OpType.CustomGate:
             instruc = subqc.to_gate()
             instruc.name = op.get_name()
-            _apply_qiskit_instruction(qcirc, instruc, qargs, condition)
+            _apply_qiskit_instruction(qcirc, instruc, qargs, condition)  # type: ignore
         else:
             if _has_control_flow(subqc):
                 # Detect control flow in CircBoxes and raise an error.
@@ -780,7 +780,7 @@ def append_tk_command_to_qiskit(
                 )
             else:
                 instruc = subqc.to_instruction()
-                _apply_qiskit_instruction(qcirc, instruc, qargs, condition)
+                _apply_qiskit_instruction(qcirc, instruc, qargs, condition)  # type: ignore
         return qcirc
 
     if optype in (OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox):

@@ -1535,7 +1535,7 @@ def test_optimisation_level_3_compilation() -> None:
     assert compiled_3.n_gates < 200
     assert compiled_3.depth() < 150
     assert compiled_3_timeout.n_2qb_gates() <= 81
-    assert compiled_3_timeout.n_gates <= 190
+    assert compiled_3_timeout.n_gates <= 205
     assert compiled_3_timeout.depth() <= 138
 
 

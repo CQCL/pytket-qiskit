@@ -716,8 +716,8 @@ def _get_params(
 def _apply_qiskit_instruction(
     qcirc: QuantumCircuit,
     instruc: Instruction,
-    qargs: Any,
-    cargs: Any = None,
+    qargs: list[UnitType.qubit],  # type: ignore
+    cargs: list[Clbit] = None,
     condition: tuple[ClassicalRegister | Clbit, int] | None = None,
 ) -> None:
     if condition is None:

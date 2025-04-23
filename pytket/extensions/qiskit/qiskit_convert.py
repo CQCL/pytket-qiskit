@@ -770,7 +770,9 @@ def append_tk_command_to_qiskit(
         if optype == OpType.CustomGate:
             instruc = subqc.to_gate()
             instruc.name = op.get_name()
-            _apply_qiskit_instruction(qcirc, instruc, qargs, condition)  # type: ignore
+            _apply_qiskit_instruction(
+                qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
+            )
         else:
             if _has_control_flow(subqc):
                 # Detect control flow in CircBoxes and raise an error.
@@ -780,7 +782,9 @@ def append_tk_command_to_qiskit(
                 )
             else:
                 instruc = subqc.to_instruction()
-                _apply_qiskit_instruction(qcirc, instruc, qargs, condition)  # type: ignore
+                _apply_qiskit_instruction(
+                    qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
+                )
         return qcirc
 
     if optype in (OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox):

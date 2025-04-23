@@ -41,8 +41,13 @@ from qiskit.circuit.library import (
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
-from qiskit.transpiler import PassManager  # type: ignore
+from qiskit.transpiler import (
+    CouplingMap,
+    PassManager,  # type: ignore
+    PassManagerConfig,
+)
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
+from qiskit.transpiler.preset_passmanagers.level3 import level_3_pass_manager
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
 from sympy import Symbol
@@ -1467,3 +1472,25 @@ def test_qiskitv2_conversions() -> None:
     assert if_prep.condition[1] == 1
     assert if_cnz.condition[1] == 0
     assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)
+
+
+def test_round_trip_with_qiskit_optimisation() -> None:
+    circ = Circuit(4, 1)
+    circ.H(0).Measure(0, 0)
+    circ.U1(1 / 2, Qubit(1), condition_bits=[Bit(0)], condition_value=1)
+    circ.U1(1 / 4, Qubit(2), condition_bits=[Bit(0)], condition_value=1)
+    circ.U1(1 / 8, Qubit(3), condition_bits=[Bit(0)], condition_value=1)
+
+    qc = tk_to_qiskit(circ)
+
+    coupling = CouplingMap(
+        [[0, 1], [1, 0], [1, 2], [2, 1], [2, 3], [3, 2], [3, 4], [4, 3]]
+    )
+    config = PassManagerConfig(
+        coupling_map=coupling,
+        basis_gates=["cx", "sx", "x", "rz", "if_else"],
+        seed_transpiler=0,
+    )
+    pass_manager = level_3_pass_manager(config)
+    compiled_qc = pass_manager.run(qc)
+    tk_circ = qiskit_to_tk(compiled_qc)

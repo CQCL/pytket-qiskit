@@ -39,7 +39,6 @@ from qiskit.transpiler.passes import (  # type: ignore
 )
 
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
-
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 
 _STATUS_MAP = {
@@ -111,7 +110,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 
 def _gen_lightsabre_transformation(  # type: ignore
-    architecture: Architecture, seed=0, attempts=20
+    architecture: Architecture, seed=0, attempts=50
 ) -> Callable[
     [Circuit], tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]
 ]:

@@ -1424,7 +1424,7 @@ def test_nested_conditionals() -> None:
 
 
 def _fetch_if_elses(qc: QuantumCircuit) -> list[IfElseOp]:
-    """Gets all IfElseOp instructions from a QuantumCircuit"""
+    """Get a list of all IfElseOp instructions in a QuantumCircuit."""
     if_else_list = []
     for datum in qc.data:
         instr, _, _ = datum.operation, datum.qubits, datum.clbits

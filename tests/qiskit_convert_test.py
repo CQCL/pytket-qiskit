@@ -25,7 +25,7 @@ from qiskit import (
     QuantumRegister,
     transpile,
 )
-from qiskit.circuit import Clbit, IfElseOp, Parameter
+from qiskit.circuit import IfElseOp, Parameter
 from qiskit.circuit.equivalence_library import (  # type: ignore
     StandardEquivalenceLibrary,
 )

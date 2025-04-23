@@ -931,11 +931,14 @@ order or only one bit of one register"""
         return qcirc
     if optype == OpType.CnZ:
         if len(qargs) == 2:
-            new_gate = qiskit_gates.CZGate()
+            z_gate = qiskit_gates.CZGate()
         else:
-            new_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
-            new_gate.name = "mcz"
-        return qcirc.append(new_gate, qargs)
+            z_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
+            z_gate.name = "mcz"
+        _apply_qiskit_instruction(
+            qcirc=qcirc, instruc=z_gate, qargs=qargs, condition=condition
+        )
+        return qcirc
 
     if optype == OpType.CnRy:
         # might as well do a bit more checking

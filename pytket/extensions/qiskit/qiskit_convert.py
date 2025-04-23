@@ -727,7 +727,8 @@ def _apply_qiskit_instruction(
             qcirc.append(instruc, qargs, cargs)
 
 
-def _has_control_flow(qc: QuantumCircuit) -> bool:
+def _has_if_else(qc: QuantumCircuit) -> bool:
+    """Check if a QuantumCircuit contains an IfElseOp."""
     return "if_else" in qc.count_ops()
 
 
@@ -774,7 +775,7 @@ def append_tk_command_to_qiskit(
                 qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
             )
         else:
-            if _has_control_flow(subqc):
+            if _has_if_else(subqc):
                 # Detect control flow in CircBoxes and raise an error.
                 raise NotImplementedError(
                     "Conversion of CircBox(es) containing conditional"

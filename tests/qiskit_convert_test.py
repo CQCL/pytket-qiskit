@@ -25,7 +25,7 @@ from qiskit import (
     QuantumRegister,
     transpile,
 )
-from qiskit.circuit import Parameter
+from qiskit.circuit import Clbit, IfElseOp, Parameter
 from qiskit.circuit.equivalence_library import (  # type: ignore
     StandardEquivalenceLibrary,
 )
@@ -1421,3 +1421,49 @@ def test_nested_conditionals() -> None:
     with pytest.raises(NotImplementedError):
         # For now we do not support conversion of nested conditionals.
         _qkc = tk_to_qiskit(c)
+
+
+def _fetch_if_elses(qc: QuantumCircuit) -> list[IfElseOp]:
+    """Gets all IfElseOp instructions from a QuantumCircuit"""
+    if_else_list = []
+    for datum in qc.data:
+        instr, _, _ = datum.operation, datum.qubits, datum.clbits
+        if type(instr) is IfElseOp:
+            if_else_list.append(instr)
+    return if_else_list
+
+
+def test_qiskitv2_conversions() -> None:
+    circ = Circuit(4, 2)
+    circ.H(0)
+    circ.Measure(0, 0)
+    circ.Measure(1, 1)
+    prep = StatePreparationBox(1 / np.sqrt(3) * np.array([0, 1, 1, 0, 1, 0, 0, 0]))
+    circ.add_gate(
+        prep,
+        args=[Qubit(0), Qubit(1), Qubit(2)],
+        condition_bits=[Bit(0)],
+        condition_value=1,
+    )
+    circ.add_gate(
+        OpType.CnZ,
+        [Qubit(0), Qubit(1), Qubit(2), Qubit(3)],
+        condition_bits=[Bit(0)],
+        condition_value=0,
+    )
+    circ.TK1(
+        0.7,
+        0.8,
+        0.9,
+        qubit=Qubit(0),
+        condition_bits=[Bit(0), Bit(1)],
+        condition_value=2,
+    )
+    qc = tk_to_qiskit(circ)
+    if_list = _fetch_if_elses(qc)
+    assert qc.count_ops()["if_else"] == 3 == len(if_list)
+    if_prep, if_cnz, if_tk1 = tuple(if_list)
+    # Check condition values of the converted QuantumCircuit
+    assert if_prep.condition[1] == 1
+    assert if_cnz.condition[1] == 0
+    assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)

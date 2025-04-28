@@ -460,83 +460,104 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
 # docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
 # Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
 # pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
-def _pytket_boxes_from_ifelseop(
+def _pytket_circuits_from_ifelseop(
     if_else_op: IfElseOp,
-    qregs: list[QuantumRegister],
-    cregs: list[ClassicalRegister],
+    outer_builder: "CircuitBuilder",
     qargs: list[QCQubit],
     cargs: list[Clbit],
-) -> tuple[CircBox, Optional[CircBox]]:
+) -> tuple[Circuit, Optional[Circuit]]:
     # Extract the QuantumCircuit implementing true_body
     if_qc: QuantumCircuit = if_else_op.blocks[0]
-    if_builder = CircuitBuilder(qregs, cregs)
-    if_builder.add_qiskit_data(if_qc, true_qargs=qargs, true_cargs=cargs)
+    # if_qc can have empty qregs, so build from bits
+    if_builder = CircuitBuilder.from_bits(
+        if_qc.qubits, if_qc.clbits, if_qc.name, param_to_tk(if_qc.global_phase)
+    )
+    if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
+    # if_circuit might have a different set of registers, which might
+    # cause problems when appending to the outer circuit.
+    # We rename the units to make sure the registers in the inner circuit
+    # is a subset of the registers in the ourter circuit.
+    rename_map = {}
+    for i, inner_q in enumerate(if_qc.qubits):
+        rename_map[if_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
+    for i, inner_c in enumerate(if_qc.clbits):
+        rename_map[if_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
+    if_circuit.rename_units(rename_map)
     if_circuit.name = "If"
-    # Remove blank wires to ensure CircBox is the correct size.
     if_circuit.remove_blank_wires()
 
     # The false_body arg is optional
     if len(if_else_op.blocks) == 2:
         else_qc: QuantumCircuit = if_else_op.blocks[1]
-        else_builder = CircuitBuilder(qregs, cregs)
-        else_builder.add_qiskit_data(else_qc, true_qargs=qargs, true_cargs=cargs)
+        else_builder = CircuitBuilder.from_bits(
+            else_qc.qubits,
+            else_qc.clbits,
+            else_qc.name,
+            param_to_tk(else_qc.global_phase),
+        )
+        else_builder.add_qiskit_data(else_qc)
         else_circuit = else_builder.circuit()
+        # else_circuit might have a different set of registers
+        rename_map = {}
+        for i, inner_q in enumerate(else_qc.qubits):
+            rename_map[else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
+        for i, inner_c in enumerate(else_qc.clbits):
+            rename_map[else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
+        else_circuit.rename_units(rename_map)
         else_circuit.name = "Else"
         else_circuit.remove_blank_wires()
-        return CircBox(if_circuit), CircBox(else_circuit)
+        return if_circuit, else_circuit
 
     # If no false_body is specified IfElseOp.blocks is of length 1.
-    # In this case we return a CircBox implementing true_body and None.
-    return CircBox(if_circuit), None
+    # In this case we return a Circuit implementing true_body and None.
+    return if_circuit, None
 
 
-def _build_if_else_circuit(
+def _append_if_else_circuit(
     if_else_op: IfElseOp,
-    qregs: list[QuantumRegister],
-    cregs: list[ClassicalRegister],
+    outer_builder: "CircuitBuilder",
     qubits: list[Qubit],
     bits: list[Bit],
     qargs: list[QCQubit],
     cargs: list[Clbit],
-) -> Circuit:
+) -> None:
     # Get two CircBox objects which implement the true_body and false_body.
-    if_box, else_box = _pytket_boxes_from_ifelseop(
-        if_else_op, qregs, cregs, qargs, cargs
+    if_circ, else_circ = _pytket_circuits_from_ifelseop(
+        if_else_op, outer_builder, qargs, cargs
     )
-    # else_box can be None if no false_body is specified.
-    circ_builder = CircuitBuilder(qregs, cregs)
-    circ = circ_builder.circuit()
-
+    # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition[0], Clbit):
         if len(bits) != 1:
             raise NotImplementedError("Conditions on multiple bits not supported")
-        circ.add_circbox(
-            circbox=if_box,
-            args=qubits,
+        outer_builder.tkc.add_circbox(
+            circbox=CircBox(if_circ),
+            args=if_circ.qubits + if_circ.bits,
             condition_bits=bits,
             condition_value=if_else_op.condition[1],
         )
-        # If we have an else_box defined, add it to the circuit
-        if else_box is not None:
-            circ.add_circbox(
-                circbox=else_box,
-                args=qubits,
+        # If we have an else_circ defined, add it to the circuit
+        if else_circ is not None:
+            outer_builder.tkc.add_circbox(
+                circbox=CircBox(else_circ),
+                args=else_circ.qubits + else_circ.bits,
                 condition_bits=bits,
                 condition_value=1 ^ if_else_op.condition[1],
             )
 
     elif isinstance(if_else_op.condition[0], ClassicalRegister):
-        pytket_bit_reg: BitRegister = circ.get_c_register(if_else_op.condition[0].name)
-        circ.add_circbox(
-            circbox=if_box,
-            args=qubits,
+        pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(
+            if_else_op.condition[0].name
+        )
+        outer_builder.tkc.add_circbox(
+            circbox=CircBox(if_circ),
+            args=if_circ.qubits + if_circ.bits,
             condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
         )
-        if else_box is not None:
-            circ.add_circbox(
-                circbox=else_box,
-                args=qubits,
+        if else_circ is not None:
+            outer_builder.tkc.add_circbox(
+                circbox=CircBox(else_circ),
+                args=else_circ.qubits + else_circ.bits,
                 condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
             )
     else:
@@ -544,8 +565,6 @@ def _build_if_else_circuit(
             "Unrecognized type used to construct IfElseOp. Expected "
             + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
         )
-
-    return circ
 
 
 class CircuitBuilder:
@@ -556,8 +575,6 @@ class CircuitBuilder:
         name: Optional[str] = None,
         phase: Optional[sympy.Expr] = None,
     ):
-        self.qregs = qregs
-        self.cregs = [] if cregs is None else cregs
         self.qbmap = {}
         self.cbmap = {}
         if name is not None:
@@ -571,11 +588,32 @@ class CircuitBuilder:
             for i, qb in enumerate(reg):
                 self.qbmap[qb] = Qubit(reg.name, i)
         self.cregmap = {}
-        for reg in self.cregs:
-            tk_reg = self.tkc.add_c_register(reg.name, len(reg))
-            self.cregmap.update({reg: tk_reg})
-            for i, cb in enumerate(reg):
-                self.cbmap[cb] = Bit(reg.name, i)
+        if cregs is not None:
+            for reg in cregs:
+                tk_reg = self.tkc.add_c_register(reg.name, len(reg))
+                self.cregmap.update({reg: tk_reg})
+                for i, cb in enumerate(reg):
+                    self.cbmap[cb] = Bit(reg.name, i)
+
+    @classmethod
+    def from_bits(
+        cls,
+        qubits: list[QCQubit],
+        bits: list[Clbit],
+        name: Optional[str] = None,
+        phase: Optional[sympy.Expr] = None,
+    ) -> "CircuitBuilder":
+        """Construct a circuit builder from Qiskit's qubits and clbits"""
+        builder = cls([], None, name, phase)
+        for qb in qubits:
+            tk_qb = Qubit(qb._register.name, qb._index)
+            builder.tkc.add_qubit(tk_qb)
+            builder.qbmap[qb] = tk_qb
+        for cb in bits:
+            tk_cb = Bit(cb._register.name, cb._index)
+            builder.tkc.add_bit(tk_cb)
+            builder.cbmap[cb] = tk_cb
+        return builder
 
     def circuit(self) -> Circuit:
         return self.tkc
@@ -584,23 +622,12 @@ class CircuitBuilder:
         self,
         circuit: QuantumCircuit,
         data: Optional["QuantumCircuitData"] = None,
-        true_qargs: list[QCQubit] | None = None,
-        true_cargs: list[Clbit] | None = None,
     ) -> None:
         data = data or circuit.data
         for datum in data:
             instr, qargs, cargs = datum.operation, datum.qubits, datum.clbits
-
-            if true_qargs is not None:
-                qubits: list[Qubit] = [
-                    self.qbmap[true_qargs[i]] for i in range(len(qargs))
-                ]
-            else:
-                qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
-            if true_cargs is not None:
-                bits: list[Bit] = [self.cbmap[true_cargs[i]] for i in range(len(cargs))]
-            else:
-                bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
+            qubits: list[Qubit] = [self.qbmap[qbit] for qbit in qargs]
+            bits: list[Bit] = [self.cbmap[bit] for bit in cargs]
 
             optype = None
             if type(instr) not in (PauliEvolutionGate, UnitaryGate, IfElseOp):
@@ -619,16 +646,14 @@ class CircuitBuilder:
             # Note: These IfElseOp/if_test type conditions are only handled
             # for single bit conditions and conditions on entire registers.
             elif type(instr) is IfElseOp:
-                if_else_circ = _build_if_else_circuit(
+                _append_if_else_circuit(
                     if_else_op=instr,
-                    qregs=self.qregs,
-                    cregs=self.cregs,
+                    outer_builder=self,
                     qubits=qubits,
                     bits=bits,
                     qargs=qargs,
                     cargs=cargs,
                 )
-                self.tkc.append(if_else_circ)
 
             elif type(instr) is PauliEvolutionGate:
                 qpo = _qpo_from_peg(instr, qubits)

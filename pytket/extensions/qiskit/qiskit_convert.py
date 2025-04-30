@@ -456,6 +456,21 @@ def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
     return CircBox(subc)
 
 
+def _build_rename_map(
+    qcirc: QuantumCircuit,
+    if_else_builder: "CircuitBuilder",
+    outer_builder: "CircuitBuilder",
+    qargs: list[QCQubit],
+    cargs: list[Clbit],
+) -> dict[Qubit | Bit, Qubit | Bit]:
+    rename_map: dict[Qubit | Bit, Qubit | Bit] = {}
+    for i, inner_q in enumerate(qcirc.qubits):
+        rename_map[if_else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
+    for i, inner_c in enumerate(qcirc.clbits):
+        rename_map[if_else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
+    return rename_map
+
+
 # Used for handling of IfElseOp
 # docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
 # Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
@@ -478,12 +493,14 @@ def _pytket_circuits_from_ifelseop(
     # cause problems when appending to the outer circuit.
     # We rename the units to make sure the registers in the inner circuit
     # is a subset of the registers in the ourter circuit.
-    rename_map = {}
-    for i, inner_q in enumerate(if_qc.qubits):
-        rename_map[if_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
-    for i, inner_c in enumerate(if_qc.clbits):
-        rename_map[if_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
-    if_circuit.rename_units(rename_map)  # type: ignore
+    if_rename_map = _build_rename_map(
+        qcirc=if_qc,
+        if_else_builder=if_builder,
+        outer_builder=outer_builder,
+        qargs=qargs,
+        cargs=cargs,
+    )
+    if_circuit.rename_units(if_rename_map)  # type: ignore
     if_circuit.name = "If"
     if_circuit.remove_blank_wires(
         keep_blank_classical_wires=False,
@@ -502,12 +519,14 @@ def _pytket_circuits_from_ifelseop(
         else_builder.add_qiskit_data(else_qc)
         else_circuit = else_builder.circuit()
         # else_circuit might have a different set of registers
-        rename_map = {}
-        for i, inner_q in enumerate(else_qc.qubits):
-            rename_map[else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
-        for i, inner_c in enumerate(else_qc.clbits):
-            rename_map[else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
-        else_circuit.rename_units(rename_map)  # type: ignore
+        else_rename_map = _build_rename_map(
+            else_qc,
+            if_else_builder=else_builder,
+            outer_builder=outer_builder,
+            qargs=qargs,
+            cargs=cargs,
+        )
+        if_circuit.rename_units(else_rename_map)  # type: ignore
         else_circuit.name = "Else"
         else_circuit.remove_blank_wires(
             keep_blank_classical_wires=False,

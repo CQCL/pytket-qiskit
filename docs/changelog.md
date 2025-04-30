@@ -8,6 +8,7 @@
 
 - Add support for Python 3.13.
 - Support qiskit >=2.0, drop support for qiskit <2.0.
+- Update minimum pytket version requirement to 2.3.2.
 - Drop support for conversion of `CircBox`es containing conditional gates to qiskit in the {py:func}`tk_to_qiskit`
 converter.
 

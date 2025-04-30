@@ -517,7 +517,6 @@ def _pytket_circuits_from_ifelseop(
 def _append_if_else_circuit(
     if_else_op: IfElseOp,
     outer_builder: "CircuitBuilder",
-    qubits: list[Qubit],
     bits: list[Bit],
     qargs: list[QCQubit],
     cargs: list[Clbit],

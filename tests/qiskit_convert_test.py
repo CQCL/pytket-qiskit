@@ -41,13 +41,15 @@ from qiskit.circuit.library import (
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
-from qiskit.transpiler import (
+from qiskit.transpiler import (  # type: ignore
     CouplingMap,
-    PassManager,  # type: ignore
+    PassManager,
     PassManagerConfig,
 )
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
-from qiskit.transpiler.preset_passmanagers.level3 import level_3_pass_manager
+from qiskit.transpiler.preset_passmanagers.level3 import (  # type: ignore
+    level_3_pass_manager,
+)
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
 from sympy import Symbol
@@ -56,6 +58,7 @@ from pytket.circuit import (
     Bit,
     CircBox,
     Circuit,
+    Conditional,
     CustomGateDef,
     Op,
     OpType,
@@ -1497,6 +1500,8 @@ def test_round_trip_with_qiskit_transpilation() -> None:
     assert tk_circ.n_gates_of_type(OpType.Conditional) == 3
     conditional_cmds = tk_circ.commands_of_type(OpType.Conditional)
     for cmd in conditional_cmds:
+        assert isinstance(cmd.op, Conditional)
+        assert isinstance(cmd.op.op, CircBox)
         if_circ = cmd.op.op.get_circuit()
         # Assert that each "If" block has only one Z-axis rotation
         assert if_circ.name == "If"

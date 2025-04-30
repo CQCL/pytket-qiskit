@@ -483,7 +483,7 @@ def _pytket_circuits_from_ifelseop(
         rename_map[if_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
     for i, inner_c in enumerate(if_qc.clbits):
         rename_map[if_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
-    if_circuit.rename_units(rename_map)
+    if_circuit.rename_units(rename_map)  # type: ignore
     if_circuit.name = "If"
     if_circuit.remove_blank_wires(
         keep_blank_classical_wires=False,
@@ -507,7 +507,7 @@ def _pytket_circuits_from_ifelseop(
             rename_map[else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
         for i, inner_c in enumerate(else_qc.clbits):
             rename_map[else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
-        else_circuit.rename_units(rename_map)
+        else_circuit.rename_units(rename_map)  # type: ignore
         else_circuit.name = "Else"
         else_circuit.remove_blank_wires(
             keep_blank_classical_wires=False,
@@ -537,7 +537,7 @@ def _append_if_else_circuit(
             raise NotImplementedError("Conditions on multiple bits not supported")
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),
-            args=if_circ.qubits + if_circ.bits,
+            args=if_circ.qubits + if_circ.bits,  # type: ignore
             condition_bits=bits,
             condition_value=if_else_op.condition[1],
         )
@@ -545,7 +545,7 @@ def _append_if_else_circuit(
         if else_circ is not None:
             outer_builder.tkc.add_circbox(
                 circbox=CircBox(else_circ),
-                args=else_circ.qubits + else_circ.bits,
+                args=else_circ.qubits + else_circ.bits,  # type: ignore
                 condition_bits=bits,
                 condition_value=1 ^ if_else_op.condition[1],
             )
@@ -556,13 +556,13 @@ def _append_if_else_circuit(
         )
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),
-            args=if_circ.qubits + if_circ.bits,
+            args=if_circ.qubits + if_circ.bits,  # type: ignore
             condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
         )
         if else_circ is not None:
             outer_builder.tkc.add_circbox(
                 circbox=CircBox(else_circ),
-                args=else_circ.qubits + else_circ.bits,
+                args=else_circ.qubits + else_circ.bits,  # type: ignore
                 condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
             )
     else:

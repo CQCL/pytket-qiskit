@@ -485,7 +485,10 @@ def _pytket_circuits_from_ifelseop(
         rename_map[if_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
     if_circuit.rename_units(rename_map)
     if_circuit.name = "If"
-    if_circuit.remove_blank_wires()
+    if_circuit.remove_blank_wires(
+        keep_blank_classical_wires=False,
+        remove_classical_only_at_end_of_register=False,
+    )
 
     # The false_body arg is optional
     if len(if_else_op.blocks) == 2:
@@ -506,7 +509,10 @@ def _pytket_circuits_from_ifelseop(
             rename_map[else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
         else_circuit.rename_units(rename_map)
         else_circuit.name = "Else"
-        else_circuit.remove_blank_wires()
+        else_circuit.remove_blank_wires(
+            keep_blank_classical_wires=False,
+            remove_classical_only_at_end_of_register=False,
+        )
         return if_circuit, else_circuit
 
     # If no false_body is specified IfElseOp.blocks is of length 1.

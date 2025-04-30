@@ -469,7 +469,7 @@ def _pytket_circuits_from_ifelseop(
     # Extract the QuantumCircuit implementing true_body
     if_qc: QuantumCircuit = if_else_op.blocks[0]
     # if_qc can have empty qregs, so build from bits
-    if_builder = CircuitBuilder.from_bits(
+    if_builder = CircuitBuilder.from_qiskit_units(
         if_qc.qubits, if_qc.clbits, if_qc.name, param_to_tk(if_qc.global_phase)
     )
     if_builder.add_qiskit_data(if_qc)
@@ -493,7 +493,7 @@ def _pytket_circuits_from_ifelseop(
     # The false_body arg is optional
     if len(if_else_op.blocks) == 2:
         else_qc: QuantumCircuit = if_else_op.blocks[1]
-        else_builder = CircuitBuilder.from_bits(
+        else_builder = CircuitBuilder.from_qiskit_units(
             else_qc.qubits,
             else_qc.clbits,
             else_qc.name,
@@ -601,7 +601,7 @@ class CircuitBuilder:
                     self.cbmap[cb] = Bit(reg.name, i)
 
     @classmethod
-    def from_bits(
+    def from_qiskit_units(
         cls,
         qubits: list[QCQubit],
         bits: list[Clbit],

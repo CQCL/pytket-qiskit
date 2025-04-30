@@ -648,7 +648,6 @@ class CircuitBuilder:
                 _append_if_else_circuit(
                     if_else_op=instr,
                     outer_builder=self,
-                    qubits=qubits,
                     bits=bits,
                     qargs=qargs,
                     cargs=cargs,

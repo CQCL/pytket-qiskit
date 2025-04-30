@@ -7,11 +7,15 @@
 ## Unreleased
 
 - Add support for Python 3.13.
+- Support qiskit >=2.0, drop support for qiskit <2.0.
+- Update minimum pytket version requirement to 2.3.2.
+- Drop support for conversion of `CircBox`es containing conditional gates to qiskit in the {py:func}`tk_to_qiskit`
+converter.
 
 ## 0.66.0 (March 2025)
 
 - Update qiskit minimum version requirement to 1.4.2.
-- Uptdate lightsabre pass to be a `CustomPassMap` object.
+- Update lightsabre pass to be a `CustomPassMap` object.
 - Update pytket version requirement to 2.1.0.
 
 ## 0.65.0 (March 2025)

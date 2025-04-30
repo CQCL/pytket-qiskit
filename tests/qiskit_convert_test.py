@@ -1474,7 +1474,7 @@ def test_qiskitv2_conversions() -> None:
     assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)
 
 
-def test_round_trip_with_qiskit_optimisation() -> None:
+def test_round_trip_with_qiskit_transpilation() -> None:
     circ = Circuit(4, 1)
     circ.H(0).Measure(0, 0)
     circ.U1(1 / 2, Qubit(1), condition_bits=[Bit(0)], condition_value=1)
@@ -1494,3 +1494,11 @@ def test_round_trip_with_qiskit_optimisation() -> None:
     pass_manager = level_3_pass_manager(config)
     compiled_qc = pass_manager.run(qc)
     tk_circ = qiskit_to_tk(compiled_qc)
+    assert tk_circ.n_gates_of_type(OpType.Conditional) == 3
+    conditional_cmds = tk_circ.commands_of_type(OpType.Conditional)
+    for cmd in conditional_cmds:
+        if_circ = cmd.op.op.get_circuit()
+        # Assert that each "If" block has only one Z-axis rotation
+        assert if_circ.name == "If"
+        assert if_circ.n_gates == 1
+        assert if_circ.n_gates_of_type(OpType.Rz) == 1

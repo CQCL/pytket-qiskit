@@ -526,7 +526,7 @@ def _pytket_circuits_from_ifelseop(
             qargs=qargs,
             cargs=cargs,
         )
-        if_circuit.rename_units(else_rename_map)  # type: ignore
+        else_circuit.rename_units(else_rename_map)  # type: ignore
         else_circuit.name = "Else"
         else_circuit.remove_blank_wires(
             keep_blank_classical_wires=False,

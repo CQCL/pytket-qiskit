@@ -521,7 +521,7 @@ def _append_if_else_circuit(
     qargs: list[QCQubit],
     cargs: list[Clbit],
 ) -> None:
-    # Get two CircBox objects which implement the true_body and false_body.
+    # Get two pytket circuits which implement the true_body and false_body.
     if_circ, else_circ = _pytket_circuits_from_ifelseop(
         if_else_op, outer_builder, qargs, cargs
     )

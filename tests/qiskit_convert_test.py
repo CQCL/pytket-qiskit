@@ -25,7 +25,7 @@ from qiskit import (
     QuantumRegister,
     transpile,
 )
-from qiskit.circuit import Parameter
+from qiskit.circuit import IfElseOp, Parameter
 from qiskit.circuit.equivalence_library import (  # type: ignore
     StandardEquivalenceLibrary,
 )
@@ -41,8 +41,15 @@ from qiskit.circuit.library import (
 from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
-from qiskit.transpiler import PassManager  # type: ignore
+from qiskit.transpiler import (  # type: ignore
+    CouplingMap,
+    PassManager,
+    PassManagerConfig,
+)
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
+from qiskit.transpiler.preset_passmanagers.level3 import (  # type: ignore
+    level_3_pass_manager,
+)
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
 from sympy import Symbol
@@ -51,6 +58,7 @@ from pytket.circuit import (
     Bit,
     CircBox,
     Circuit,
+    Conditional,
     CustomGateDef,
     Op,
     OpType,
@@ -436,19 +444,10 @@ def test_conditions() -> None:
     c.add_unitary2qbox(
         ubox, Qubit(0), Qubit(1), condition_bits=[b[0]], condition_value=0
     )
-    c2 = c.copy()
-    qc = tk_to_qiskit(c)
-    c1 = qiskit_to_tk(qc)
-    assert len(c1.get_commands()) == 2
-    DecomposeBoxes().apply(c)
-    DecomposeBoxes().apply(c1)
-    assert c == c1
-
-    c2.Z(1, condition=reg_eq(b, 1))
-    qc = tk_to_qiskit(c2)
-    c1 = qiskit_to_tk(qc)
-    assert len(c1.get_commands()) == 3
-    # conversion loses rangepredicates so equality comparison not valid
+    # Converting a CircBox containing conditional gates gives an error
+    # TODO consider removing this restriction
+    with pytest.raises(NotImplementedError):
+        _ = tk_to_qiskit(c)
 
 
 def test_condition_errors() -> None:
@@ -803,7 +802,7 @@ def test_convert_multi_c_reg() -> None:
     c.add_gate(OpType.TK1, [0.5, 0.5, 0.5], [q0])
     qcirc = tk_to_qiskit(c)
     circ = qiskit_to_tk(qcirc)
-    assert circ.get_commands()[0].args == [m0, q1]
+    assert circ.get_commands()[1].args == [Bit("tk_SCRATCH_BIT", 0), q1]
 
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy
@@ -966,17 +965,28 @@ def test_conditional_conversion() -> None:
     c_qiskit = tk_to_qiskit(c)
     c_tket = qiskit_to_tk(c_qiskit)
 
-    assert c_tket.to_dict() == c.to_dict()
+    expected_circ = Circuit(1, 2, "conditional_circ")
+    if_box = CircBox(Circuit(1, name="If").X(0))
+    expected_circ.add_circbox(
+        if_box, [Qubit(0)], condition_bits=[Bit(0)], condition_value=1
+    )
+
+    assert c_tket == expected_circ
 
 
 def test_conditional_conversion_2() -> None:
     c = Circuit(1, 2, "conditional_circ_2")
     c.X(0, condition_bits=[1], condition_value=1)
-
     c_qiskit = tk_to_qiskit(c)
     c_tket = qiskit_to_tk(c_qiskit)
 
-    assert c_tket.to_dict() == c.to_dict()
+    expected_circ = Circuit(1, 2, "conditional_circ_2")
+    if_box = CircBox(Circuit(1, name="If").X(0))
+    expected_circ.add_circbox(
+        if_box, [Qubit(0)], condition_bits=[Bit(1)], condition_value=1
+    )
+
+    assert c_tket == expected_circ
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/100
@@ -1419,3 +1429,81 @@ def test_nested_conditionals() -> None:
     with pytest.raises(NotImplementedError):
         # For now we do not support conversion of nested conditionals.
         _qkc = tk_to_qiskit(c)
+
+
+def _fetch_if_elses(qc: QuantumCircuit) -> list[IfElseOp]:
+    """Get a list of all IfElseOp instructions in a QuantumCircuit."""
+    if_else_list = []
+    for datum in qc.data:
+        instr, _, _ = datum.operation, datum.qubits, datum.clbits
+        if type(instr) is IfElseOp:
+            if_else_list.append(instr)
+    return if_else_list
+
+
+def test_qiskitv2_conversions() -> None:
+    circ = Circuit(4, 2)
+    circ.H(0)
+    circ.Measure(0, 0)
+    circ.Measure(1, 1)
+    prep = StatePreparationBox(1 / np.sqrt(3) * np.array([0, 1, 1, 0, 1, 0, 0, 0]))
+    circ.add_gate(
+        prep,
+        args=[Qubit(0), Qubit(1), Qubit(2)],
+        condition_bits=[Bit(0)],
+        condition_value=1,
+    )
+    circ.add_gate(
+        OpType.CnZ,
+        [Qubit(0), Qubit(1), Qubit(2), Qubit(3)],
+        condition_bits=[Bit(0)],
+        condition_value=0,
+    )
+    circ.TK1(
+        0.7,
+        0.8,
+        0.9,
+        qubit=Qubit(0),
+        condition_bits=[Bit(0), Bit(1)],
+        condition_value=2,
+    )
+    qc = tk_to_qiskit(circ)
+    if_list = _fetch_if_elses(qc)
+    assert qc.count_ops()["if_else"] == 3 == len(if_list)
+    if_prep, if_cnz, if_tk1 = tuple(if_list)
+    # Check condition values of the converted QuantumCircuit
+    assert if_prep.condition[1] == 1
+    assert if_cnz.condition[1] == 0
+    assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)
+
+
+def test_round_trip_with_qiskit_transpilation() -> None:
+    circ = Circuit(4, 1)
+    circ.H(0).Measure(0, 0)
+    circ.U1(1 / 2, Qubit(1), condition_bits=[Bit(0)], condition_value=1)
+    circ.U1(1 / 4, Qubit(2), condition_bits=[Bit(0)], condition_value=1)
+    circ.U1(1 / 8, Qubit(3), condition_bits=[Bit(0)], condition_value=1)
+
+    qc = tk_to_qiskit(circ)
+
+    coupling = CouplingMap(
+        [[0, 1], [1, 0], [1, 2], [2, 1], [2, 3], [3, 2], [3, 4], [4, 3]]
+    )
+    config = PassManagerConfig(
+        coupling_map=coupling,
+        basis_gates=["cx", "sx", "x", "rz", "if_else"],
+        seed_transpiler=0,
+    )
+    pass_manager = level_3_pass_manager(config)
+    compiled_qc = pass_manager.run(qc)
+    tk_circ = qiskit_to_tk(compiled_qc)
+    assert tk_circ.n_gates_of_type(OpType.Conditional) == 3
+    conditional_cmds = tk_circ.commands_of_type(OpType.Conditional)
+    for cmd in conditional_cmds:
+        assert isinstance(cmd.op, Conditional)
+        assert isinstance(cmd.op.op, CircBox)
+        if_circ = cmd.op.op.get_circuit()
+        # Assert that each "If" block has only one Z-axis rotation
+        assert if_circ.name == "If"
+        assert if_circ.n_gates == 1
+        assert if_circ.n_gates_of_type(OpType.Rz) == 1

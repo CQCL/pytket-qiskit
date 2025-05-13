@@ -15,8 +15,7 @@
 """Shared utility methods for ibm backends."""
 
 import itertools
-from collections.abc import Collection, Sequence
-from typing import Callable, Optional
+from collections.abc import Callable, Collection, Sequence
 
 import numpy as np
 
@@ -61,8 +60,8 @@ _STATUS_MAP = {
 
 def _batch_circuits(
     circuits: Sequence["Circuit"],
-    n_shots: Sequence[Optional[int]],
-) -> tuple[list[tuple[Optional[int], list["Circuit"]]], list[list[int]]]:
+    n_shots: Sequence[int | None],
+) -> tuple[list[tuple[int | None, list["Circuit"]]], list[list[int]]]:
     """
     Groups circuits into sets of circuits with the same number of shots.
 
@@ -72,10 +71,10 @@ def _batch_circuits(
     :param n_shots: Number of shots for each circuit.
     """
     # take care of None entries
-    n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))
+    n_shots_int = list(map(lambda x: x if x is not None else -1, n_shots))  # noqa: C417
 
     order: Collection[int] = np.argsort(n_shots_int)
-    batches: list[tuple[Optional[int], list[Circuit]]] = [
+    batches: list[tuple[int | None, list[Circuit]]] = [
         (n, [circuits[i] for i in indices])
         for n, indices in itertools.groupby(order, key=lambda i: n_shots[i])
     ]
@@ -164,15 +163,15 @@ def _gen_lightsabre_transformation(  # type: ignore
 
         # construct initial_map with ancillas
         initial_map: dict[UnitID, UnitID] = {}
-        for index, qubit in apply_layout.property_set["layout"]._p2v.items():
-            initial_map[Qubit(qubit._register.name, qubit._index)] = Node(index)
+        for index, qubit in apply_layout.property_set["layout"]._p2v.items():  # noqa: SLF001
+            initial_map[Qubit(qubit._register.name, qubit._index)] = Node(index)  # noqa: SLF001
 
         # construct final_map with ancillas
         register: QuantumRegister = QuantumRegister(len(initial_map), "q")
         final_map: dict[UnitID, UnitID] = {}
         for qubit in initial_map:
             final_map[qubit] = Node(
-                apply_layout.property_set["final_layout"]._v2p[
+                apply_layout.property_set["final_layout"]._v2p[  # noqa: SLF001
                     register[initial_map[qubit].index[0]]
                 ]
             )

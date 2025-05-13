@@ -19,7 +19,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from logging import warning
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from qiskit_aer import Aer  # type: ignore
@@ -126,7 +126,7 @@ def qiskit_aer_backend(backend_name: str) -> "QiskitAerBackend":
     if n_candidates == 0:
         raise ValueError(f"No backend with name '{backend_name}' is available.")
     if n_candidates > 1:
-        warnings.warn(
+        warnings.warn(  # noqa: B028
             f"More than one backend with name '{backend_name}' \
 is available. Picking one."
         )
@@ -140,7 +140,7 @@ class _AerBaseBackend(Backend):
     _backend_info: BackendInfo
     _memory: bool
     _required_predicates: list[Predicate]
-    _noise_model: Optional[NoiseModel] = None
+    _noise_model: NoiseModel | None = None
     _has_arch: bool = False
     _needs_transpile: bool = False
 
@@ -148,7 +148,7 @@ class _AerBaseBackend(Backend):
     # i.e. from the first two components of the ResultHandle to the last two.
     _circuit_data: dict[
         tuple[int | float | complex | str | bool | bytes, int], tuple[int, str]
-    ] = {}
+    ] = {}  # noqa: RUF012
 
     @property
     def required_predicates(self) -> list[Predicate]:
@@ -196,7 +196,7 @@ class _AerBaseBackend(Backend):
                     SynthesiseTket(),
                 ],
             )
-        if optimisation_level == 2:
+        if optimisation_level == 2:  # noqa: PLR2004
             return SequencePass(
                 [
                     DecomposeBoxes(),
@@ -253,7 +253,7 @@ class _AerBaseBackend(Backend):
             return SequencePass([DecomposeBoxes(), self.rebase_pass()])
         if optimisation_level == 1:
             return SequencePass([DecomposeBoxes(), SynthesiseTket()])
-        if optimisation_level == 2:
+        if optimisation_level == 2:  # noqa: PLR2004
             return SequencePass([DecomposeBoxes(), FullPeepholeOptimise()])
         return SequencePass(
             [
@@ -329,8 +329,8 @@ class _AerBaseBackend(Backend):
         :rtype: Circuit
         """
         return_circuit = circuit.copy()
-        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:
-            warnings.warn(
+        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
+            warnings.warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."
             )
@@ -379,10 +379,10 @@ class _AerBaseBackend(Backend):
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
         ]
 
-    def process_circuits(
+    def process_circuits(  # noqa: PLR0912
         self,
         circuits: Sequence[Circuit],
-        n_shots: None | int | Sequence[Optional[int]] = None,
+        n_shots: None | int | Sequence[int | None] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -393,7 +393,7 @@ class _AerBaseBackend(Backend):
         postprocess = kwargs.get("postprocess", False)
 
         circuits = list(circuits)
-        n_shots_list = Backend._get_n_shots_as_list(
+        n_shots_list = Backend._get_n_shots_as_list(  # noqa: SLF001
             n_shots,
             len(circuits),
             optional=True,
@@ -410,13 +410,15 @@ class _AerBaseBackend(Backend):
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits
 
-        handle_list: list[Optional[ResultHandle]] = [None] * len(circuits)
+        handle_list: list[ResultHandle | None] = [None] * len(circuits)
         seed = kwargs.get("seed")
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
 
-        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, batch), indices in zip(  # noqa: PLR1704
+            circuit_batches, batch_order, strict=False
+        ):
             qcs, ppcirc_strs, tkc_qubits_count = [], [], []
             for tkc in batch:
                 if postprocess:
@@ -464,7 +466,7 @@ class _AerBaseBackend(Backend):
         job: AerJob = self._cache[handle]["job"]
         cancelled = job.cancel()
         if not cancelled:
-            warning(f"Unable to cancel job {cast('str', handle[0])}")
+            warning(f"Unable to cancel job {cast('str', handle[0])}")  # noqa: LOG015, G004
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
@@ -480,7 +482,7 @@ class _AerBaseBackend(Backend):
             try:
                 job: AerJob = self._cache[handle]["job"]
             except KeyError:
-                raise CircuitNotRunError(handle)
+                raise CircuitNotRunError(handle)  # noqa: B904
 
             res = job.result()
             backresults = qiskit_result_to_backendresult(
@@ -493,9 +495,9 @@ class _AerBaseBackend(Backend):
             )
             for circ_index, backres in enumerate(backresults):
                 qubit_n, ppc = self._circuit_data[(jobid, circ_index)]
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
-                    "result"
-                ] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
+                    backres
+                )
 
             return cast("BackendResult", self._cache[handle]["result"])
 
@@ -510,9 +512,12 @@ class _AerBaseBackend(Backend):
 
         circ_qbs = circuit.qubits
         q_indices = (_default_q_index(q) for q in circ_qbs)
-        if not all(q_ind == i for q_ind, i in zip(q_indices, range(len(circ_qbs)))):
+        if not all(
+            q_ind == i
+            for q_ind, i in zip(q_indices, range(len(circ_qbs)), strict=False)
+        ):
             raise ValueError(
-                "Circuit must act on default register Qubits, contiguously from 0"
+                "Circuit must act on default register Qubits, contiguously from 0"  # noqa: ISC003
                 + f" onwards. Circuit qubits were: {circ_qbs}"
             )
         qc = tk_to_qiskit(circuit)
@@ -585,25 +590,25 @@ class NoiseModelCharacterisation:
     """Class to hold information from the processing of the noise model"""
 
     architecture: Architecture
-    node_errors: Optional[dict[Node, dict[OpType, float]]] = None
-    edge_errors: Optional[dict[tuple[Node, Node], dict[OpType, float]]] = None
-    readout_errors: Optional[dict[Node, list[list[float]]]] = None
-    averaged_node_errors: Optional[dict[Node, float]] = None
-    averaged_edge_errors: Optional[dict[tuple[Node, Node], float]] = None
-    averaged_readout_errors: Optional[dict[Node, float]] = None
-    generic_q_errors: Optional[dict[str, Any]] = None
+    node_errors: dict[Node, dict[OpType, float]] | None = None
+    edge_errors: dict[tuple[Node, Node], dict[OpType, float]] | None = None
+    readout_errors: dict[Node, list[list[float]]] | None = None
+    averaged_node_errors: dict[Node, float] | None = None
+    averaged_edge_errors: dict[tuple[Node, Node], float] | None = None
+    averaged_readout_errors: dict[Node, float] | None = None
+    generic_q_errors: dict[str, Any] | None = None
 
 
 def _map_trivial_noise_model_to_none(
-    noise_model: Optional[NoiseModel],
-) -> Optional[NoiseModel]:
+    noise_model: NoiseModel | None,
+) -> NoiseModel | None:
     if noise_model and all(value == [] for value in noise_model.to_dict().values()):
         return None
     return noise_model
 
 
 def _get_characterisation_of_noise_model(
-    noise_model: Optional[NoiseModel], gate_set: set[OpType]
+    noise_model: NoiseModel | None, gate_set: set[OpType]
 ) -> NoiseModelCharacterisation:
     if noise_model is None:
         return NoiseModelCharacterisation(architecture=Architecture([]))
@@ -632,7 +637,7 @@ class AerBackend(_AerBaseBackend):
     _memory: bool = True
 
     _qiskit_backend_name: str = "aer_simulator"
-    _allowed_special_gates: set[OpType] = {
+    _allowed_special_gates: set[OpType] = {  # noqa: RUF012
         OpType.Measure,
         OpType.Barrier,
         OpType.Reset,
@@ -641,9 +646,9 @@ class AerBackend(_AerBaseBackend):
 
     def __init__(
         self,
-        noise_model: Optional[NoiseModel] = None,
+        noise_model: NoiseModel | None = None,
         simulation_method: str = "automatic",
-        crosstalk_params: Optional[CrosstalkParams] = None,
+        crosstalk_params: CrosstalkParams | None = None,
         n_qubits: int = 40,
     ):
         super().__init__()
@@ -726,7 +731,7 @@ class AerStateBackend(_AerBaseBackend):
     _supports_expectation: bool = True
     _expectation_allows_nonhermitian: bool = False
 
-    _noise_model: Optional[NoiseModel] = None
+    _noise_model: NoiseModel | None = None
     _memory: bool = False
 
     _qiskit_backend_name: str = "aer_simulator_statevector"
@@ -763,7 +768,7 @@ class AerUnitaryBackend(_AerBaseBackend):
     _supports_unitary: bool = True
 
     _memory: bool = False
-    _noise_model: Optional[NoiseModel] = None
+    _noise_model: NoiseModel | None = None
     _needs_transpile: bool = True
 
     _qiskit_backend_name: str = "aer_simulator_unitary"
@@ -798,13 +803,13 @@ class AerDensityMatrixBackend(_AerBaseBackend):
     _supports_density_matrix: bool = True
     _supports_state: bool = False
     _memory: bool = False
-    _noise_model: Optional[NoiseModel] = None
+    _noise_model: NoiseModel | None = None
     _needs_transpile: bool = True
     _supports_expectation: bool = True
 
     _qiskit_backend_name: str = "aer_simulator_density_matrix"
 
-    _allowed_special_gates: set[OpType] = {
+    _allowed_special_gates: set[OpType] = {  # noqa: RUF012
         OpType.Measure,
         OpType.Barrier,
         OpType.Reset,
@@ -813,7 +818,7 @@ class AerDensityMatrixBackend(_AerBaseBackend):
 
     def __init__(
         self,
-        noise_model: Optional[NoiseModel] = None,
+        noise_model: NoiseModel | None = None,
         n_qubits: int = 40,
     ) -> None:
         super().__init__()
@@ -910,7 +915,7 @@ def _process_noise_model(
                 )
             else:
                 raise RuntimeWarning("Error type not 'qerror' or 'roerror'.")
-        elif len(qubits) == 2:
+        elif len(qubits) == 2:  # noqa: PLR2004
             # note that if multiple multi-qubit errors are added to the CX gate,
             #  the resulting noise channel is composed and reflected in probabilities
             [q0, q1] = qubits
@@ -935,7 +940,7 @@ def _process_noise_model(
             coupling_map.append([lq, q])
 
     for pair in itertools.permutations(free_qubits, 2):
-        coupling_map.append(pair)
+        coupling_map.append(pair)  # noqa: PERF402
 
     generic_q_errors = {
         "GenericOneQubitQErrors": [
@@ -982,7 +987,7 @@ def _qubitpauliop_to_sparsepauliop(
     operator: QubitPauliOperator, n_qubits: int
 ) -> SparsePauliOp:
     strings, coeffs = [], []
-    for term, coeff in operator._dict.items():
+    for term, coeff in operator._dict.items():  # noqa: SLF001
         termmap = term.map
         strings.append(
             "".join(

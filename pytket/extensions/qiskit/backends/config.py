@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from pytket.config import PytketExtConfig
 
@@ -24,8 +24,8 @@ class QiskitConfig(PytketExtConfig):
 
     ext_dict_key: ClassVar[str] = "qiskit"
 
-    instance: Optional[str]
-    ibmq_api_token: Optional[str]
+    instance: str | None
+    ibmq_api_token: str | None
 
     @classmethod
     def from_extension_dict(
@@ -38,8 +38,8 @@ class QiskitConfig(PytketExtConfig):
 
 
 def set_ibmq_config(
-    instance: Optional[str] = None,
-    ibmq_api_token: Optional[str] = None,
+    instance: str | None = None,
+    ibmq_api_token: str | None = None,
 ) -> None:
     """Set default values for any of hub, group, project or API token
     for your IBMQ provider. Can be overridden in backend construction."""

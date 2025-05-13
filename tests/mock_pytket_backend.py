@@ -15,7 +15,7 @@
 
 import json
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
@@ -32,8 +32,8 @@ from pytket.utils.outcomearray import OutcomeArray
 class MockShotBackend(Backend):
     def __init__(
         self,
-        arch: Optional[Architecture | FullyConnected] = None,
-        gate_set: Optional[set[OpType]] = None,
+        arch: Architecture | FullyConnected | None = None,
+        gate_set: set[OpType] | None = None,
     ):
         """Mock shot backend for testing qiskit embedding. This should only be used
         in conjunction with the TketBackend. The readout bitstring will always be 1s.
@@ -65,7 +65,7 @@ class MockShotBackend(Backend):
         return (int, str)
 
     @property
-    def backend_info(self) -> Optional[BackendInfo]:
+    def backend_info(self) -> BackendInfo | None:
         """Returns a BackendInfo constructed with the given architecture."""
         return BackendInfo(
             name="TketBackend",
@@ -78,7 +78,7 @@ class MockShotBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: Optional[int | Sequence[int]] = None,
+        n_shots: int | Sequence[int] | None = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -101,7 +101,7 @@ class MockShotBackend(Backend):
         outcome_arr = OutcomeArray.from_readouts(shots_list)
         return BackendResult(shots=outcome_arr, q_bits=circ.qubits, c_bits=circ.bits)
 
-    def pop_result(self, handle: ResultHandle) -> Optional[ResultCache]:
+    def pop_result(self, handle: ResultHandle) -> ResultCache | None:
         """Does nothing. Implementation is required by TketJob."""
         return None
 

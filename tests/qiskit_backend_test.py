@@ -62,7 +62,7 @@ def test_samples() -> None:
 
 def test_maxnqubits() -> None:
     backend = AerBackend(n_qubits=1)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         backend.run_circuit(
             circuit=Circuit(2).CX(0, 1).measure_all(),
             n_shots=1,

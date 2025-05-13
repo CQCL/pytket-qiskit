@@ -273,7 +273,7 @@ def test_measures() -> None:
     for result, count in counts1.items():
         result_str = result.replace(" ", "")
         if counts0[result_str] != count:
-            assert False
+            assert False  # noqa: B011
 
 
 def test_boxes() -> None:
@@ -400,7 +400,7 @@ def test_tketautopass(brisbane_backend: IBMQBackend) -> None:
         qiskit_aer_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
-    backends.append(brisbane_backend._backend)
+    backends.append(brisbane_backend._backend)  # noqa: SLF001
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(
@@ -549,7 +549,7 @@ def test_customgate() -> None:
     states = []
     for qc in (qc1, qc2, correct_qc):
         qc.save_state()
-        qc = transpile(qc, backend)
+        qc = transpile(qc, backend)  # noqa: PLW2901
         job = backend.run([qc])
         states.append(job.result().get_statevector(qc))
 
@@ -583,7 +583,7 @@ def test_convert_result() -> None:
     assert compare_statevectors(state, correct_state)
     # also check that we don't return counts in tket result
     # even if the qiskit result includes them
-    assert tk_res._counts is None
+    assert tk_res._counts is None  # noqa: SLF001
 
     # check measured
     qc.measure(qr1[0], cr[0])
@@ -785,7 +785,7 @@ def test_parameter_equality() -> None:
 
     assert final_circ.parameters == circ.parameters
 
-    param_dict = dict(zip([param_a, param_b], [1, 2]))
+    param_dict = dict(zip([param_a, param_b], [1, 2], strict=False))
     final_circ.assign_parameters(param_dict, inplace=True)
 
     assert len(final_circ.parameters) == 0

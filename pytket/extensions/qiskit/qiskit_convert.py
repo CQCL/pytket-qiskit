@@ -17,12 +17,11 @@
 
 import warnings
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from inspect import signature
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Optional,
     TypeVar,
     cast,
@@ -195,7 +194,7 @@ _known_gate_rev_phase[OpType.V] = (qiskit_gates.SXGate, -0.25)
 _known_gate_rev_phase[OpType.Vdg] = (qiskit_gates.SXdgGate, 0.25)
 
 # use minor signature hacks to figure out the string names of qiskit Gate objects
-_gate_str_2_optype: dict[str, OpType] = dict()
+_gate_str_2_optype: dict[str, OpType] = dict()  # noqa: C408
 for gate, optype in _known_qiskit_gate.items():
     if gate in (
         UnitaryGate,
@@ -227,21 +226,20 @@ def _tk_gate_set(config: QasmBackendConfiguration) -> set[OpType]:
             for gate_str in config.basis_gates
             if gate_str in _gate_str_2_optype
         }.union({OpType.Measure, OpType.Reset, OpType.Barrier})
-        return gate_set
+        return gate_set  # noqa: RET504
 
-    else:
-        return {
-            _gate_str_2_optype[gate_str]
-            for gate_str in config.supported_instructions
-            if gate_str in _gate_str_2_optype
-        }
+    return {
+        _gate_str_2_optype[gate_str]
+        for gate_str in config.supported_instructions
+        if gate_str in _gate_str_2_optype
+    }
 
 
 def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOperator:
     op = peg.operator
     t = peg.params[0]
     qpodict = {}
-    for p, c in zip(op.paulis, op.coeffs):
+    for p, c in zip(op.paulis, op.coeffs, strict=False):
         if np.iscomplex(c):
             raise ValueError(f"Coefficient for Pauli {p} is non-real.")
         coeff = param_to_tk(t) * c
@@ -297,7 +295,7 @@ def _string_to_circuit(
                 circ.Sdg(qubit_index)
             case _:
                 raise ValueError(
-                    f"Cannot parse string for character {character}. "
+                    f"Cannot parse string for character {character}. "  # noqa: ISC003
                     + "The supported characters are {'0', '1', '+', '-', 'r', 'l'}."
                 )
 
@@ -323,7 +321,7 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
         return OpType.QControlBox
 
-    elif c_gate.base_class in _known_qiskit_gate:
+    if c_gate.base_class in _known_qiskit_gate:
         # First we check if the gate is in _known_qiskit_gate
         # this avoids CZ being converted to CnZ
         return _known_qiskit_gate[c_gate.base_class]
@@ -341,12 +339,11 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
                 or c_gate.base_gate.base_class is UnitaryGate
             ):
                 return OpType.QControlBox
-            else:
-                raise NotImplementedError(
-                    "Conversion of qiskit ControlledGate with base gate "
-                    + f"base gate {c_gate.base_gate}"
-                    + "not implemented."
-                )
+            raise NotImplementedError(
+                "Conversion of qiskit ControlledGate with base gate "  # noqa: ISC003
+                + f"base gate {c_gate.base_gate}"
+                + "not implemented."
+            )
 
 
 def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
@@ -355,10 +352,10 @@ def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
         return _get_controlled_tket_optype(instruction)
     try:
         optype = _known_qiskit_gate[instruction.base_class]
-        return optype
+        return optype  # noqa: RET504
     except KeyError:
-        raise NotImplementedError(
-            f"Conversion of qiskit's {instruction.name} instruction is "
+        raise NotImplementedError(  # noqa: B904
+            f"Conversion of qiskit's {instruction.name} instruction is "  # noqa: ISC003
             + "currently unsupported by qiskit_to_tk. Consider "
             + "using QuantumCircuit.decompose() before attempting "
             + "conversion."
@@ -441,7 +438,7 @@ def _add_state_preparation(
         tkc.add_circuit(circuit, qubits)
     else:
         raise TypeError(
-            "Unrecognised type of Instruction.params "
+            "Unrecognised type of Instruction.params "  # noqa: ISC003
             + "when trying to convert Initialize or StatePreparation instruction."
         )
 
@@ -480,7 +477,7 @@ def _pytket_circuits_from_ifelseop(
     outer_builder: "CircuitBuilder",
     qargs: list[QCQubit],
     cargs: list[Clbit],
-) -> tuple[Circuit, Optional[Circuit]]:
+) -> tuple[Circuit, Circuit | None]:
     # Extract the QuantumCircuit implementing true_body
     if_qc: QuantumCircuit = if_else_op.blocks[0]
     # if_qc can have empty qregs, so build from bits
@@ -508,7 +505,7 @@ def _pytket_circuits_from_ifelseop(
     )
 
     # The false_body arg is optional
-    if len(if_else_op.blocks) == 2:
+    if len(if_else_op.blocks) == 2:  # noqa: PLR2004
         else_qc: QuantumCircuit = if_else_op.blocks[1]
         else_builder = CircuitBuilder.from_qiskit_units(
             else_qc.qubits,
@@ -586,7 +583,7 @@ def _append_if_else_circuit(
             )
     else:
         raise TypeError(
-            "Unrecognized type used to construct IfElseOp. Expected "
+            "Unrecognized type used to construct IfElseOp. Expected "  # noqa: ISC003
             + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
         )
 
@@ -595,9 +592,9 @@ class CircuitBuilder:
     def __init__(
         self,
         qregs: list[QuantumRegister],
-        cregs: Optional[list[ClassicalRegister]] = None,
-        name: Optional[str] = None,
-        phase: Optional[sympy.Expr] = None,
+        cregs: list[ClassicalRegister] | None = None,
+        name: str | None = None,
+        phase: sympy.Expr | None = None,
     ):
         self.qbmap = {}
         self.cbmap = {}
@@ -624,17 +621,17 @@ class CircuitBuilder:
         cls,
         qubits: list[QCQubit],
         bits: list[Clbit],
-        name: Optional[str] = None,
-        phase: Optional[sympy.Expr] = None,
+        name: str | None = None,
+        phase: sympy.Expr | None = None,
     ) -> "CircuitBuilder":
         """Construct a circuit builder from Qiskit's qubits and clbits"""
         builder = cls([], None, name, phase)
         for qb in qubits:
-            tk_qb = Qubit(qb._register.name, qb._index)
+            tk_qb = Qubit(qb._register.name, qb._index)  # noqa: SLF001
             builder.tkc.add_qubit(tk_qb)
             builder.qbmap[qb] = tk_qb
         for cb in bits:
-            tk_cb = Bit(cb._register.name, cb._index)
+            tk_cb = Bit(cb._register.name, cb._index)  # noqa: SLF001
             builder.tkc.add_bit(tk_cb)
             builder.cbmap[cb] = tk_cb
         return builder
@@ -642,7 +639,7 @@ class CircuitBuilder:
     def circuit(self) -> Circuit:
         return self.tkc
 
-    def add_qiskit_data(
+    def add_qiskit_data(  # noqa: PLR0912
         self,
         circuit: QuantumCircuit,
         data: Optional["QuantumCircuitData"] = None,
@@ -740,7 +737,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # Parameter uses a hidden _uuid for equality check
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
-        updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}
+        updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}  # noqa: SLF001
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
@@ -759,7 +756,7 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        symexpr = p._symbol_expr
+        symexpr = p._symbol_expr  # noqa: SLF001
         try:
             return symexpr._sympy_() / sympy.pi
         except AttributeError:
@@ -774,8 +771,7 @@ def param_to_qiskit(
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    else:
-        return ParameterExpression(symb_map, sympify(ppi))
+    return ParameterExpression(symb_map, sympify(ppi))
 
 
 def _get_params(
@@ -788,7 +784,7 @@ def _apply_qiskit_instruction(
     qcirc: QuantumCircuit,
     instruc: Instruction,
     qargs: Iterable[UnitType.qubit],  # type: ignore
-    cargs: Iterable[Clbit] = None,  # type: ignore
+    cargs: Iterable[Clbit] = None,  # type: ignore  # noqa: RUF013
     condition: tuple[ClassicalRegister | Clbit, int] | None = None,
 ) -> None:
     if condition is None:
@@ -803,7 +799,7 @@ def _has_if_else(qc: QuantumCircuit) -> bool:
     return "if_else" in qc.count_ops()
 
 
-def append_tk_command_to_qiskit(
+def append_tk_command_to_qiskit(  # noqa: PLR0911, PLR0912, PLR0913, PLR0915
     op: "Op",
     args: list["UnitID"],
     qcirc: QuantumCircuit,
@@ -845,18 +841,17 @@ def append_tk_command_to_qiskit(
             _apply_qiskit_instruction(
                 qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
             )
+        elif _has_if_else(subqc):
+            # Detect control flow in CircBoxes and raise an error.
+            raise NotImplementedError(
+                "Conversion of CircBox(es) containing conditional"  # noqa: ISC003
+                + " gates not currently supported by tk_to_qiskit"
+            )
         else:
-            if _has_if_else(subqc):
-                # Detect control flow in CircBoxes and raise an error.
-                raise NotImplementedError(
-                    "Conversion of CircBox(es) containing conditional"
-                    + " gates not currently supported by tk_to_qiskit"
-                )
-            else:
-                instruc = subqc.to_instruction()
-                _apply_qiskit_instruction(
-                    qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
-                )
+            instruc = subqc.to_instruction()
+            _apply_qiskit_instruction(
+                qcirc=qcirc, instruc=instruc, qargs=qargs, condition=condition
+            )
         return qcirc
 
     if optype in (OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox):
@@ -883,15 +878,14 @@ def append_tk_command_to_qiskit(
                 condition=condition,
             )
             return qcirc
-        else:
-            qiskit_state_prep_box = StatePreparation(statevector_array)
-            _apply_qiskit_instruction(
-                qcirc=qcirc,
-                instruc=qiskit_state_prep_box,
-                qargs=list(reversed(qargs)),
-                condition=condition,
-            )
-            return qcirc
+        qiskit_state_prep_box = StatePreparation(statevector_array)
+        _apply_qiskit_instruction(
+            qcirc=qcirc,
+            instruc=qiskit_state_prep_box,
+            qargs=list(reversed(qargs)),
+            condition=condition,
+        )
+        return qcirc
 
     if optype == OpType.QControlBox:
         assert isinstance(op, QControlBox)
@@ -901,8 +895,8 @@ def append_tk_command_to_qiskit(
         try:
             gatetype, phase = _known_gate_rev_phase[op.get_op().type]
         except KeyError:
-            raise NotImplementedError(
-                "Conversion of QControlBox with base gate"
+            raise NotImplementedError(  # noqa: B904
+                "Conversion of QControlBox with base gate"  # noqa: ISC003
                 + f"{op.get_op()} not supported by tk_to_qiskit."
             )
         params = _get_params(op.get_op(), symb_map)
@@ -951,7 +945,7 @@ def append_tk_command_to_qiskit(
             width = op.width
             value = op.value
         regname = args[0].reg_name
-        for i, a in enumerate(args[:width]):
+        for i, a in enumerate(args[:width]):  # noqa: B007
             if a.reg_name != regname:
                 raise NotImplementedError("Conditions can only use a single register")
         if len(cregmap[regname]) == width:
@@ -980,7 +974,7 @@ order or only one bit of one register"""
             condition=condition,
         )
 
-        return instruction
+        return instruction  # noqa: RET504
     # normal gates
     qargs = [qregmap[q.reg_name][q.index[0]] for q in args]
 
@@ -1002,7 +996,7 @@ order or only one bit of one register"""
         )
         return qcirc
     if optype == OpType.CnZ:
-        if len(qargs) == 2:
+        if len(qargs) == 2:  # noqa: PLR2004
             z_gate = qiskit_gates.CZGate()
         else:
             z_gate = qiskit_gates.ZGate().control(len(qargs) - 1)
@@ -1016,8 +1010,8 @@ order or only one bit of one register"""
         # might as well do a bit more checking
         assert len(op.params) == 1
         alpha = param_to_qiskit(op.params[0], symb_map)
-        assert len(qargs) >= 2
-        if len(qargs) == 2:
+        assert len(qargs) >= 2  # noqa: PLR2004
+        if len(qargs) == 2:  # noqa: PLR2004
             # presumably more efficient; single control only
             new_gate = CRYGate(alpha)
         else:
@@ -1026,7 +1020,7 @@ order or only one bit of one register"""
         return qcirc
 
     if optype == OpType.CU3:
-        params = _get_params(op, symb_map) + [0]
+        params = _get_params(op, symb_map) + [0]  # noqa: RUF005
         _apply_qiskit_instruction(
             qcirc, qiskit_gates.CUGate(*params), qargs=qargs, condition=condition
         )
@@ -1123,8 +1117,8 @@ def tk_to_qiskit(
         tkc.replace_implicit_wire_swaps()
 
     if tkcirc.has_implicit_wireswaps and perm_warning and not replace_implicit_swaps:
-        warnings.warn(
-            "The pytket Circuit contains implicit qubit permutations"
+        warnings.warn(  # noqa: B028
+            "The pytket Circuit contains implicit qubit permutations"  # noqa: ISC003
             + " which aren't handled by default."
             + " Consider using the replace_implicit_swaps flag in tk_to_qiskit or"
             + " replacing them using Circuit.replace_implicit_swaps()."
@@ -1138,7 +1132,7 @@ def tk_to_qiskit(
         if (qb.reg_name not in qreg_sizes) or (qb.index[0] >= qreg_sizes[qb.reg_name]):
             qreg_sizes.update({qb.reg_name: qb.index[0] + 1})
     c_regs = tkcirc.c_registers
-    if set(bit for reg in c_regs for bit in reg) != set(tkcirc.bits):
+    if set(bit for reg in c_regs for bit in reg) != set(tkcirc.bits):  # noqa: C401
         raise NotImplementedError("Bit registers must be singly indexed from zero")
     qregmap = {}
     for reg_name, size in qreg_sizes.items():
@@ -1152,7 +1146,7 @@ def tk_to_qiskit(
             cregmap.update({c_reg.name: qis_reg})
             qcirc.add_register(qis_reg)
     symb_map = {Parameter(str(s)): s for s in tkc.free_symbols()}
-    range_preds: dict[Bit, tuple[list[UnitID], int]] = dict()
+    range_preds: dict[Bit, tuple[list[UnitID], int]] = dict()  # noqa: C408
 
     # Apply a rebase to the set of pytket gates which have replacements in qiskit
     supported_gate_rebase.apply(tkc)
@@ -1164,19 +1158,19 @@ def tk_to_qiskit(
     qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)
 
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
-    updates = dict()
+    updates = dict()  # noqa: C408
     for p in qcirc.parameters:
         name_spl = p.name.split("_UUID:", 2)
-        if len(name_spl) == 2:
+        if len(name_spl) == 2:  # noqa: PLR2004
             p_name, uuid_str = name_spl
             uuid = UUID(uuid_str)
             # See Parameter.__init__() in qiskit/circuit/parameter.py.
             new_p = Parameter(p_name)
-            new_p._uuid = uuid
-            new_p._parameter_keys = frozenset(
+            new_p._uuid = uuid  # noqa: SLF001
+            new_p._parameter_keys = frozenset(  # noqa: SLF001
                 ((symengine_wrapper.Symbol(p_name), uuid),)
             )
-            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))
+            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))  # noqa: SLF001
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 
@@ -1195,8 +1189,8 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
     return process_characterisation_from_config(config, props)
 
 
-def process_characterisation_from_config(
-    config: QasmBackendConfiguration, properties: Optional[BackendProperties]
+def process_characterisation_from_config(  # noqa: PLR0915
+    config: QasmBackendConfiguration, properties: BackendProperties | None
 ) -> dict[str, Any]:
     """Obtain a dictionary containing device Characteristics given config and props.
 
@@ -1206,7 +1200,7 @@ def process_characterisation_from_config(
     """
 
     # TODO explicitly check for and separate 1 and 2 qubit gates
-    def return_value_if_found(iterator: Iterable["Nduv"], name: str) -> Optional[Any]:
+    def return_value_if_found(iterator: Iterable["Nduv"], name: str) -> Any | None:
         try:
             first_found = next(filter(lambda item: item.name == name, iterator))
         except StopIteration:
@@ -1258,7 +1252,7 @@ def process_characterisation_from_config(
                 # add gate fidelities to their relevant lists
                 if len(qubits) == 1:
                     node_errors[qubits[0]].update({optype: gate_error})
-                elif len(qubits) == 2:
+                elif len(qubits) == 2:  # noqa: PLR2004
                     link_errors[tuple(qubits)].update({optype: gate_error})
                     opposite_link = tuple(qubits[::-1])
                     if opposite_link not in coupling_map:
@@ -1272,15 +1266,13 @@ def process_characterisation_from_config(
     convert_keys_t = Callable[[Callable[[K1], K2], dict[K1, V]], dict[K2, V]]
 
     # convert qubits to architecture Nodes
-    convert_keys: convert_keys_t = lambda f, d: {  # noqa: E731
-        f(k): v for k, v in d.items()
-    }
+    convert_keys: convert_keys_t = lambda f, d: {f(k): v for k, v in d.items()}
 
     node_errors = convert_keys(lambda q: Node(q), node_errors)
     link_errors = convert_keys(lambda p: (Node(p[0]), Node(p[1])), link_errors)
     readout_errors = convert_keys(lambda q: Node(q), readout_errors)
 
-    characterisation: dict[str, Any] = dict()
+    characterisation: dict[str, Any] = dict()  # noqa: C408
     characterisation["NodeErrors"] = node_errors
     characterisation["EdgeErrors"] = link_errors
     characterisation["ReadoutErrors"] = readout_errors
@@ -1307,9 +1299,7 @@ def get_avg_characterisation(
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
     map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
-    map_values: map_values_t = lambda f, d: {  # noqa: E731
-        k: f(v) for k, v in d.items()
-    }
+    map_values: map_values_t = lambda f, d: {k: f(v) for k, v in d.items()}
 
     node_errors = cast(
         "dict[Node, dict[OpType, float]]", characterisation["NodeErrors"]
@@ -1321,10 +1311,8 @@ def get_avg_characterisation(
         "dict[Node, list[list[float]]]", characterisation["ReadoutErrors"]
     )
 
-    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(  # noqa: E731
-        xs.values()
-    ) / len(xs)
-    avg_mat: Callable[[list[list[float]]], float] = (  # noqa: E731
+    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
+    avg_mat: Callable[[list[list[float]]], float] = (
         lambda xs: (xs[0][1] + xs[1][0]) / 2.0
     )
 

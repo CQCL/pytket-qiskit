@@ -37,8 +37,8 @@ from qiskit.transpiler.passes import (  # type: ignore
     SabreSwap,
     VF2PostLayout,
 )
-
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
+
 from ..qiskit_convert import qiskit_to_tk, tk_to_qiskit
 
 _STATUS_MAP = {

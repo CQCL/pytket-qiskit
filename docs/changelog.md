@@ -4,6 +4,13 @@
 
 # Changelog
 
+Unreleased
+----------
+
+Features:
+
+* Add `VF2PostLayout` to default compilation.
+
 ## 0.67.0 (April 2025)
 
 - Add support for Python 3.13.

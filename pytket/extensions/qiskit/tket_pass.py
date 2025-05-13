@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 
 from qiskit_aer.backends import AerSimulator  # type: ignore
 
@@ -59,8 +58,8 @@ class TketPass(TransformationPass):
         circ = qiskit_to_tk(qc)
         self._pass.apply(circ)
         qc = tk_to_qiskit(circ)
-        new_param_lookup = {p._symbol_expr: p for p in qc.parameters}
-        subs_map = {new_param_lookup[p._symbol_expr]: p for p in old_parameters}
+        new_param_lookup = {p._symbol_expr: p for p in qc.parameters}  # noqa: SLF001
+        subs_map = {new_param_lookup[p._symbol_expr]: p for p in old_parameters}  # noqa: SLF001
         qc.assign_parameters(subs_map, inplace=True)
         newdag = circuit_to_dag(qc)
         newdag.name = dag.name
@@ -70,7 +69,7 @@ class TketPass(TransformationPass):
 class TketAutoPass(TketPass):
     """The tket compiler to be plugged in to the Qiskit compilation sequence"""
 
-    _aer_backend_map = {
+    _aer_backend_map = {  # noqa: RUF012
         "aer_simulator": AerBackend,
         "aer_simulator_statevector": AerStateBackend,
         "aer_simulator_unitary": AerUnitaryBackend,
@@ -80,7 +79,7 @@ class TketAutoPass(TketPass):
         self,
         backend: BackendV2,
         optimisation_level: int = 2,
-        token: Optional[str] = None,
+        token: str | None = None,
     ):
         """Identifies a Qiskit backend and provides the corresponding default
         compilation pass from pytket as a

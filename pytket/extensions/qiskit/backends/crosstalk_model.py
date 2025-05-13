@@ -14,7 +14,6 @@
 
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from qiskit_aer.noise import NoiseModel  # type: ignore
@@ -127,7 +126,7 @@ class NoisyCircuitBuilder:
     """Builder used to generate a noisy circuit"""
 
     Ibox = Unitary1qBox(np.eye(2))
-    SUPPORTED_TYPES = {
+    SUPPORTED_TYPES = {  # noqa: RUF012
         OpType.Unitary1qBox,
         OpType.Unitary2qBox,
         OpType.Unitary3qBox,
@@ -163,8 +162,7 @@ class NoisyCircuitBuilder:
     def _get_qubits(inst: Instruction) -> list[Qubit]:
         if isinstance(inst, Command):
             return inst.qubits
-        else:
-            return inst.cmd.qubits
+        return inst.cmd.qubits
 
     def _append(
         self,
@@ -200,7 +198,7 @@ class NoisyCircuitBuilder:
         """Sort splices so each slice only contains independent instructions"""
         old_slices = self._slices.copy()
         self._slices = []
-        frontier = {q: 0 for q in self.all_qubits}
+        frontier = dict.fromkeys(self.all_qubits, 0)
         for s in old_slices:
             for inst in s:
                 self._append(inst, frontier)
@@ -209,11 +207,11 @@ class NoisyCircuitBuilder:
     @staticmethod
     def _get_ubox(u: np.ndarray) -> Unitary1qBox | Unitary2qBox | Unitary3qBox:
         """Return a UnitaryxqBox for a given unitary"""
-        if u.shape[0] == 2:
+        if u.shape[0] == 2:  # noqa: PLR2004
             return Unitary1qBox(u)
-        if u.shape[0] == 4:
+        if u.shape[0] == 4:  # noqa: PLR2004
             return Unitary2qBox(u)
-        if u.shape[0] == 8:
+        if u.shape[0] == 8:  # noqa: PLR2004
             return Unitary3qBox(u)
         raise ValueError(f"Unsupported unitary shape: {u.shape}")
 
@@ -226,7 +224,7 @@ class NoisyCircuitBuilder:
             if cmd.op.type in [OpType.Measure, OpType.Reset]:
                 self._slices.append([cmd])
             else:
-                gt: Optional[float]
+                gt: float | None
                 if self.ct_params.virtual_z and cmd.op.type == OpType.Z:
                     gt = 1 / self.N
                 else:
@@ -237,7 +235,7 @@ class NoisyCircuitBuilder:
                     )
                 u = cmd.op.get_unitary()
                 n_fractions = round(self.N * gt)
-                if abs((self.N * gt) - n_fractions) > 1e-9:
+                if abs((self.N * gt) - n_fractions) > 1e-9:  # noqa: PLR2004
                     raise ValueError(
                         f"Command {cmd} cannot be factorised into equal slices"
                     )
@@ -335,7 +333,7 @@ class NoisyCircuitBuilder:
         self._add_non_markovian(base_noise_slice)
         while i < len(self._slices):
             noise_slice: Slice = []
-            if self.circ.n_qubits > 2:
+            if self.circ.n_qubits > 2:  # noqa: PLR2004
                 self._add_two_q_induced_phase(self._slices[i - 1], noise_slice)
             noise_slice.extend(base_noise_slice)
             self._slices.insert(i, noise_slice)

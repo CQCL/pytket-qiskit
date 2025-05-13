@@ -173,7 +173,7 @@ def test_measures() -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_noise(brisbane_backend: IBMQBackend) -> None:
-    noise_model = NoiseModel.from_backend(brisbane_backend._backend)
+    noise_model = NoiseModel.from_backend(brisbane_backend._backend)  # noqa: SLF001
     n_qbs = 5
     c = Circuit(n_qbs, n_qbs)
     x_qbs = [2, 0, 4]
@@ -215,7 +215,7 @@ def test_noise(brisbane_backend: IBMQBackend) -> None:
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_process_characterisation(brisbane_backend: IBMQBackend) -> None:
-    char = process_characterisation(brisbane_backend._backend)
+    char = process_characterisation(brisbane_backend._backend)  # noqa: SLF001
     arch: Architecture = char.get("Architecture", Architecture([]))
     node_errors: dict = char.get("NodeErrors", {})
     link_errors: dict = char.get("EdgeErrors", {})
@@ -333,7 +333,7 @@ def test_process_characterisation_complete_noise_model() -> None:
     assert arch is not None
 
     gqe2 = {tuple(qs): errs for qs, errs in char["GenericTwoQubitQErrors"]}
-    gqe1 = {q: errs for q, errs in char["GenericOneQubitQErrors"]}
+    gqe1 = {q: errs for q, errs in char["GenericOneQubitQErrors"]}  # noqa: C416
 
     assert round(gqe2[(0, 1)][0][1][15], 5) == 0.0375
     assert round(gqe2[(0, 1)][0][1][0], 5) == 0.4375
@@ -409,7 +409,7 @@ def test_cancellation_ibmq(brisbane_backend: IBMQBackend) -> None:
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
     backend = brisbane_backend
-    backend._MACHINE_DEBUG = True
+    backend._MACHINE_DEBUG = True  # noqa: SLF001
     try:
         c = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         with pytest.raises(CircuitNotValidError) as errorinfo:
@@ -433,13 +433,13 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         assert res.get_counts() == correct_counts
     finally:
         # ensure shared backend is reset for other tests
-        backend._MACHINE_DEBUG = False
+        backend._MACHINE_DEBUG = False  # noqa: SLF001
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
     backend = brisbane_backend
-    backend._MACHINE_DEBUG = True
+    backend._MACHINE_DEBUG = True  # noqa: SLF001
     try:
         c1 = Circuit(2, 2).H(0).CX(0, 1).measure_all()
         c2 = Circuit(2, 2).Rx(0.5, 0).CX(0, 1).measure_all()
@@ -457,11 +457,12 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
             for hand, suffix in zip(
                 handles,
                 [f"{(10, 0)}", f"{(12, 1)}", f"{(10, 0)}", f"{(13, 2)}"],
+                strict=False,
             )
         )
     finally:
         # ensure shared backend is reset for other tests
-        backend._MACHINE_DEBUG = False
+        backend._MACHINE_DEBUG = False  # noqa: SLF001
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=10)
@@ -520,7 +521,7 @@ def test_default_pass(brisbane_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_aer_default_pass(brisbane_backend: IBMQBackend) -> None:
-    noise_model = NoiseModel.from_backend(brisbane_backend._backend)
+    noise_model = NoiseModel.from_backend(brisbane_backend._backend)  # noqa: SLF001
     for nm in [None, noise_model]:
         b = AerBackend(nm)
         for ol in range(3):
@@ -710,7 +711,7 @@ def test_aer_result_handle() -> None:
 
     handles = b.process_circuits([c, c.copy()], n_shots=2)
 
-    ids, indices, _, _ = zip(*(han for han in handles))
+    ids, indices, _, _ = zip(*(han for han in handles), strict=False)
 
     assert all(isinstance(idval, str) for idval in ids)
     assert indices == (0, 1)
@@ -728,7 +729,7 @@ def test_aer_result_handle() -> None:
     with pytest.raises(CircuitNotRunError) as errorinfoCirc:
         _ = b.get_result(wronghandle)
     assert (
-        f"Circuit corresponding to {wronghandle!r} "
+        f"Circuit corresponding to {wronghandle!r} "  # noqa: ISC003
         + "has not been run by this backend instance."
         in str(errorinfoCirc.value)
     )
@@ -757,15 +758,15 @@ def test_cache() -> None:
     c = b.get_compiled_circuit(c)
     h = b.process_circuits([c], 2)[0]
     b.get_result(h).get_shots()
-    assert h in b._cache
+    assert h in b._cache  # noqa: SLF001
     b.pop_result(h)
-    assert h not in b._cache
-    assert not b._cache
+    assert h not in b._cache  # noqa: SLF001
+    assert not b._cache  # noqa: SLF001
 
     b.run_circuit(c, n_shots=2).get_counts()
     b.run_circuit(c.copy(), n_shots=2).get_counts()
     b.empty_cache()
-    assert not b._cache
+    assert not b._cache  # noqa: SLF001
 
 
 def test_mixed_circuit() -> None:
@@ -803,7 +804,7 @@ def test_aer_placed_expectation(brisbane_backend: IBMQBackend) -> None:
     )
     assert b.get_operator_expectation_value(c, operator) == (-0.5 + 0j)
 
-    noise_model = NoiseModel.from_backend(brisbane_backend._backend)
+    noise_model = NoiseModel.from_backend(brisbane_backend._backend)  # noqa: SLF001
 
     noise_b = AerBackend(noise_model)
 
@@ -836,8 +837,8 @@ def test_operator_expectation_value() -> None:
 def test_ibmq_emulator(
     brisbane_emulator_backend: IBMQEmulatorBackend,
 ) -> None:
-    assert brisbane_emulator_backend._noise_model is not None
-    b_ibm = brisbane_emulator_backend._ibmq
+    assert brisbane_emulator_backend._noise_model is not None  # noqa: SLF001
+    b_ibm = brisbane_emulator_backend._ibmq  # noqa: SLF001
     b_aer = AerBackend()
     for ol in range(3):
         comp_pass = brisbane_emulator_backend.default_compilation_pass(ol)
@@ -865,7 +866,7 @@ def test_ibmq_emulator(
     brisbane_emulator_backend.rebase_pass().apply(copy_circ)
     assert brisbane_emulator_backend.required_predicates[1].verify(copy_circ)
     circ = brisbane_emulator_backend.get_compiled_circuit(circ)
-    b_noi = AerBackend(noise_model=brisbane_emulator_backend._noise_model)
+    b_noi = AerBackend(noise_model=brisbane_emulator_backend._noise_model)  # noqa: SLF001
     emu_counts = brisbane_emulator_backend.run_circuit(
         circ, n_shots=10, seed=10
     ).get_counts()
@@ -909,7 +910,7 @@ def test_simulation_method() -> None:
     clifford_circ = Circuit(2).H(0).CX(0, 1).measure_all()
     clifford_T_circ = Circuit(2).H(0).T(1).CX(0, 1).measure_all()
 
-    for b in state_backends + [stabilizer_backend]:
+    for b in state_backends + [stabilizer_backend]:  # noqa: RUF005
         counts = b.run_circuit(clifford_circ, n_shots=4).get_counts()
         assert sum(val for _, val in counts.items()) == 4
 
@@ -1184,7 +1185,7 @@ def test_required_predicates(
     with pytest.raises(CircuitNotValidError) as errorinfo:
         brisbane_emulator_backend.run_circuit(circ, n_shots=100)
         assert (
-            "pytket.backends.backend_exceptions.CircuitNotValidError:"
+            "pytket.backends.backend_exceptions.CircuitNotValidError:"  # noqa: ISC003
             + "Circuit with index 0 in submitted does"
             + "not satisfy MaxNQubitsPredicate(5)"
             in str(errorinfo)
@@ -1258,7 +1259,7 @@ def test_crosstalk_noise_model() -> None:
     N = 10
     gate_times = {}
     for q in circ.qubits:
-        gate_times[(OpType.X, tuple([q]))] = 0.1
+        gate_times[(OpType.X, tuple([q]))] = 0.1  # noqa: C409
     for q0 in circ.qubits:
         for q1 in circ.qubits:
             if q0 != q1:
@@ -1503,8 +1504,8 @@ def test_mc_gate_on_aer() -> None:
 def test_optimisation_level_3_compilation() -> None:
     b = AerBackend()
     a = Architecture([(0, 1), (0, 2), (0, 3), (3, 4), (4, 5), (4, 6), (4, 7)])
-    b._has_arch = True
-    b._backend_info.architecture = a
+    b._has_arch = True  # noqa: SLF001
+    b._backend_info.architecture = a  # noqa: SLF001
 
     c = Circuit(6)
     for _ in range(6):
@@ -1542,15 +1543,15 @@ def test_optimisation_level_3_compilation() -> None:
 def test_optimisation_level_3_serialisation() -> None:
     b = AerBackend()
     a = Architecture([(0, 1), (0, 2), (0, 3), (3, 4), (4, 5), (4, 6), (4, 7)])
-    b._has_arch = True
-    b._backend_info.architecture = a
+    b._has_arch = True  # noqa: SLF001
+    b._backend_info.architecture = a  # noqa: SLF001
 
     p_dict = b.default_compilation_pass(3).to_dict()
     passlist = SequencePass.from_dict(
         p_dict,
         custom_map_deserialisation={
             "lightsabrepass": _gen_lightsabre_transformation(
-                b._backend_info.architecture
+                b._backend_info.architecture  # noqa: SLF001
             )
         },
     )

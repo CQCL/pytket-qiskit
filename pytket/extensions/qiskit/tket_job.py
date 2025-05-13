@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pytket.backends import ResultHandle, StatusEnum
 from pytket.backends.backend import Backend, KwargTypes
@@ -34,7 +34,7 @@ class JobInfo:
     circuit_name: str
     qbits: list[Qubit]
     cbits: list[Bit]
-    n_shots: Optional[int]
+    n_shots: int | None
 
 
 class TketJob(JobV1):
@@ -53,12 +53,12 @@ class TketJob(JobV1):
         super().__init__(backend, str(handles[0]))
         self._handles = handles
         self._jobinfos = jobinfos
-        self._result: Optional[Result] = None
+        self._result: Result | None = None
         self._final_maps = final_maps
 
     @property
     def _pytket_backend(self) -> Backend:
-        return cast("TketBackend", self._backend)._backend
+        return cast("TketBackend", self._backend)._backend  # noqa: SLF001
 
     def submit(self) -> None:
         # Circuits have already been submitted before obtaining the job
@@ -68,7 +68,9 @@ class TketJob(JobV1):
         if self._result is not None:
             return self._result
         result_list = []
-        for h, jobinfo, fm in zip(self._handles, self._jobinfos, self._final_maps):
+        for h, jobinfo, fm in zip(
+            self._handles, self._jobinfos, self._final_maps, strict=False
+        ):
             tk_result = self._pytket_backend.get_result(h)
             creg_sizes, clbit_labels = _get_header_info(jobinfo.cbits)  # type: ignore
             qreg_sizes, qubit_labels = _get_header_info(jobinfo.qbits)  # type: ignore
@@ -114,11 +116,10 @@ class TketJob(JobV1):
         status_list = [self._pytket_backend.circuit_status(h) for h in self._handles]
         if any(s.status == StatusEnum.RUNNING for s in status_list):
             return JobStatus.RUNNING
-        elif any(s.status == StatusEnum.ERROR for s in status_list):
+        if any(s.status == StatusEnum.ERROR for s in status_list):
             return JobStatus.ERROR
-        elif any(s.status == StatusEnum.CANCELLED for s in status_list):
+        if any(s.status == StatusEnum.CANCELLED for s in status_list):
             return JobStatus.CANCELLED
-        elif all(s.status == StatusEnum.COMPLETED for s in status_list):
+        if all(s.status == StatusEnum.COMPLETED for s in status_list):
             return JobStatus.DONE
-        else:
-            return JobStatus.INITIALIZING
+        return JobStatus.INITIALIZING

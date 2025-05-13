@@ -55,9 +55,9 @@ class IBMQEmulatorBackend(Backend):
     def __init__(
         self,
         backend_name: str,
-        instance: Optional[str] = None,
+        instance: str | None = None,
         service: Optional["QiskitRuntimeService"] = None,
-        token: Optional[str] = None,
+        token: str | None = None,
         use_fractional_gates: bool = False,
     ):
         super().__init__()
@@ -70,17 +70,17 @@ class IBMQEmulatorBackend(Backend):
         )
 
         # Get noise model:
-        self._noise_model = NoiseModel.from_backend(self._ibmq._backend)
+        self._noise_model = NoiseModel.from_backend(self._ibmq._backend)  # noqa: SLF001
 
         # Construct AerBackend based on noise model:
         self._aer = AerBackend(noise_model=self._noise_model)
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()
+        self._ibm_res_cache: dict[tuple[str, int], Counter] = dict()  # noqa: C408
 
     @property
     def backend_info(self) -> BackendInfo:
-        return self._ibmq._backend_info
+        return self._ibmq._backend_info  # noqa: SLF001
 
     @property
     def required_predicates(self) -> list[Predicate]:
@@ -99,7 +99,7 @@ class IBMQEmulatorBackend(Backend):
 
     @property
     def _result_id_type(self) -> _ResultIdTuple:
-        return self._aer._result_id_type
+        return self._aer._result_id_type  # noqa: SLF001
 
     def rebase_pass(self) -> BasePass:
         return self._ibmq.rebase_pass()
@@ -107,7 +107,7 @@ class IBMQEmulatorBackend(Backend):
     def process_circuits(
         self,
         circuits: Sequence[Circuit],
-        n_shots: None | int | Sequence[Optional[int]] = None,
+        n_shots: None | int | Sequence[int | None] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -117,7 +117,7 @@ class IBMQEmulatorBackend(Backend):
         """
 
         if valid_check:
-            self._ibmq._check_all_circuits(circuits)
+            self._ibmq._check_all_circuits(circuits)  # noqa: SLF001
         return self._aer.process_circuits(
             circuits, n_shots=n_shots, valid_check=False, **kwargs
         )

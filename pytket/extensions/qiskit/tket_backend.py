@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import inspect
-from typing import Any, Optional
+from typing import Any
 
 from pytket.architecture import FullyConnected
 from pytket.backends import Backend
@@ -74,7 +74,7 @@ class TketBackend(BackendV2):
     guide/examples/backends/qiskit_integration.html>`_.
     """
 
-    def __init__(self, backend: Backend, comp_pass: Optional[BasePass] = None):
+    def __init__(self, backend: Backend, comp_pass: BasePass | None = None):
         """Create a new :py:class:`TketBackend` from a :py:class:`Backend`.
 
         :param backend: The device or simulator to wrap up
@@ -82,7 +82,7 @@ class TketBackend(BackendV2):
          before submitting to the :py:class:`Backend`, defaults to None
         """
         arch = backend.backend_info.architecture if backend.backend_info else None
-        coupling: Optional[list[list[Any]]]
+        coupling: list[list[Any]] | None
         if isinstance(arch, FullyConnected):
             coupling = [
                 [n1.index[0], n2.index[0]]
@@ -131,7 +131,7 @@ class TketBackend(BackendV2):
         jobinfos = []
         for qc in run_input:
             tk_circ = qiskit_to_tk(qc)
-            if isinstance(self._backend, (AerStateBackend, AerUnitaryBackend)):
+            if isinstance(self._backend, (AerStateBackend, AerUnitaryBackend)):  # noqa: UP038
                 tk_circ.remove_blank_wires()
             circ_list.append(tk_circ)
             jobinfos.append(JobInfo(qc.name, tk_circ.qubits, tk_circ.bits, n_shots))

@@ -21,7 +21,6 @@ from time import sleep
 from typing import (
     TYPE_CHECKING,
     Any,
-    Optional,
     cast,
 )
 from warnings import warn
@@ -119,7 +118,7 @@ class NoIBMQCredentialsError(Exception):
         )
 
 
-def _save_ibmq_auth(qiskit_config: Optional[QiskitConfig]) -> None:
+def _save_ibmq_auth(qiskit_config: QiskitConfig | None) -> None:
     token = None
     if qiskit_config is not None:
         token = qiskit_config.ibmq_api_token
@@ -175,13 +174,13 @@ class IBMQBackend(Backend):
     _supports_contextual_optimisation = True
     _persistent_handles = True
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         backend_name: str,
-        instance: Optional[str] = None,
+        instance: str | None = None,
         monitor: bool = True,
-        service: Optional[QiskitRuntimeService] = None,
-        token: Optional[str] = None,
+        service: QiskitRuntimeService | None = None,
+        token: str | None = None,
         sampler_options: SamplerOptions = None,
         use_fractional_gates: bool = False,
     ):
@@ -199,7 +198,7 @@ class IBMQBackend(Backend):
         self._max_per_job = getattr(config, "max_experiments", 1)
 
         gate_set = _tk_gate_set(config)
-        props: Optional[BackendProperties] = self._backend.properties()
+        props: BackendProperties | None = self._backend.properties()
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
@@ -215,9 +214,9 @@ class IBMQBackend(Backend):
         self._monitor = monitor
 
         # cache of results keyed by job id and circuit index
-        self._ibm_res_cache: dict[
-            tuple[str, int], tuple[Counter, Optional[list[Bit]]]
-        ] = dict()
+        self._ibm_res_cache: dict[tuple[str, int], tuple[Counter, list[Bit] | None]] = (
+            dict()  # noqa: C408
+        )
 
         if sampler_options is None:
             sampler_options = SamplerOptions()
@@ -227,14 +226,13 @@ class IBMQBackend(Backend):
 
     @staticmethod
     def _get_service(
-        instance: Optional[str],
-        qiskit_config: Optional[QiskitConfig],
+        instance: str | None,
+        qiskit_config: QiskitConfig | None,
     ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
         if instance is not None:
             return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
-        else:
-            return QiskitRuntimeService(channel="ibm_quantum")
+        return QiskitRuntimeService(channel="ibm_quantum")
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -244,7 +242,7 @@ class IBMQBackend(Backend):
     def _get_backend_info(
         cls,
         config: QasmBackendConfiguration,
-        props: Optional[BackendProperties],
+        props: BackendProperties | None,
     ) -> BackendInfo:
         """Construct a BackendInfo from data returned by the IBMQ API.
 
@@ -308,11 +306,11 @@ class IBMQBackend(Backend):
             averaged_readout_errors=averaged_errors["readout_errors"],
             misc={"characterisation": filtered_characterisation},
         )
-        return backend_info
+        return backend_info  # noqa: RET504
 
     @classmethod
     def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
-        service: Optional[QiskitRuntimeService] = kwargs.get("service")
+        service: QiskitRuntimeService | None = kwargs.get("service")
         if service is None:
             instance = kwargs.get("instance")
             if instance is not None:
@@ -387,7 +385,7 @@ class IBMQBackend(Backend):
         :return: Compilation pass guaranteeing required predicates.
         """
         config: QasmBackendConfiguration = self._backend.configuration()
-        props: Optional[BackendProperties] = self._backend.properties()
+        props: BackendProperties | None = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
             config, props, optimisation_level, timeout
         )
@@ -395,7 +393,7 @@ class IBMQBackend(Backend):
     @staticmethod
     def default_compilation_pass_offline(
         config: QasmBackendConfiguration,
-        props: Optional[BackendProperties],
+        props: BackendProperties | None,
         optimisation_level: int = 2,
         timeout: int = 300,
     ) -> BasePass:
@@ -420,9 +418,9 @@ class IBMQBackend(Backend):
         elif optimisation_level == 1:
             passlist.append(SynthesiseTket())
             passlist.append(IBMQBackend.squash_pass_offline(primitive_1q_gates))
-        elif optimisation_level == 2:
+        elif optimisation_level == 2:  # noqa: PLR2004
             passlist.append(FullPeepholeOptimise())
-        elif optimisation_level == 3:
+        elif optimisation_level == 3:  # noqa: PLR2004
             passlist.append(RemoveBarriers())
             passlist.append(
                 AutoRebase(
@@ -467,7 +465,7 @@ class IBMQBackend(Backend):
             )
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
-        if optimisation_level == 2:
+        if optimisation_level == 2:  # noqa: PLR2004
             passlist.extend(
                 [
                     KAKDecomposition(allow_swaps=False),
@@ -475,7 +473,7 @@ class IBMQBackend(Backend):
                     SynthesiseTket(),
                 ]
             )
-        if optimisation_level == 3:
+        if optimisation_level == 3:  # noqa: PLR2004
             passlist.append(SynthesiseTket())
         passlist.extend(
             [
@@ -505,8 +503,8 @@ class IBMQBackend(Backend):
         :rtype: Circuit
         """
         return_circuit = circuit.copy()
-        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:
-            warn(
+        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
+            warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."
             )
@@ -571,10 +569,10 @@ class IBMQBackend(Backend):
     def squash_pass_offline(primitive_1q_gates: set[OpType]) -> BasePass:
         return AutoSquash(primitive_1q_gates)
 
-    def process_circuits(
+    def process_circuits(  # noqa: PLR0912
         self,
         circuits: Sequence[Circuit],
-        n_shots: None | int | Sequence[Optional[int]] = None,
+        n_shots: None | int | Sequence[int | None] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
@@ -597,13 +595,13 @@ class IBMQBackend(Backend):
         """
         circuits = list(circuits)
 
-        n_shots_list = Backend._get_n_shots_as_list(
+        n_shots_list = Backend._get_n_shots_as_list(  # noqa: SLF001
             n_shots,
             len(circuits),
             optional=False,
         )
 
-        handle_list: list[Optional[ResultHandle]] = [None] * len(circuits)
+        handle_list: list[ResultHandle | None] = [None] * len(circuits)
         circuit_batches, batch_order = _batch_circuits(circuits, n_shots_list)
 
         postprocess = kwargs.get("postprocess", False)
@@ -614,12 +612,14 @@ class IBMQBackend(Backend):
             sampler_options = self._sampler_options
 
         batch_id = 0  # identify batches for debug purposes only
-        for (n_shots, batch), indices in zip(circuit_batches, batch_order):
+        for (n_shots, batch), indices in zip(  # noqa: PLR1704
+            circuit_batches, batch_order, strict=False
+        ):
             for chunk in itertools.zip_longest(
-                *([iter(zip(batch, indices))] * self._max_per_job)
+                *([iter(zip(batch, indices, strict=False))] * self._max_per_job)
             ):
                 filtchunk = list(filter(lambda x: x is not None, chunk))
-                batch_chunk, indices_chunk = zip(*filtchunk)
+                batch_chunk, indices_chunk = zip(*filtchunk, strict=False)
 
                 if valid_check:
                     self._check_all_circuits(batch_chunk)
@@ -656,7 +656,7 @@ class IBMQBackend(Backend):
             batch_id += 1  # noqa: SIM113
         for handle in handle_list:
             assert handle is not None
-            self._cache[handle] = dict()
+            self._cache[handle] = dict()  # noqa: C408
         return cast("list[ResultHandle]", handle_list)
 
     def _retrieve_job(self, jobid: str) -> RuntimeJob:
@@ -668,8 +668,8 @@ class IBMQBackend(Backend):
             job = self._retrieve_job(jobid)
             try:
                 job.cancel()
-            except Exception as e:
-                warn(f"Unable to cancel job {jobid}: {e}")
+            except Exception as e:  # noqa: BLE001
+                warn(f"Unable to cancel job {jobid}: {e}")  # noqa: B028
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
@@ -700,9 +700,9 @@ class IBMQBackend(Backend):
             else:
                 try:
                     job = self._retrieve_job(jobid)
-                except Exception as e:
-                    warn(f"Unable to retrieve job {jobid}: {e}")
-                    raise CircuitNotRunError(handle)
+                except Exception as e:  # noqa: BLE001
+                    warn(f"Unable to retrieve job {jobid}: {e}")  # noqa: B028
+                    raise CircuitNotRunError(handle)  # noqa: B904
                 # RuntimeJob has no queue_position attribute, which is referenced
                 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
                 # therefore we can't use job_monitor until fixed
@@ -715,7 +715,7 @@ class IBMQBackend(Backend):
 
                 res = job.result(timeout=kwargs.get("timeout"))
             assert isinstance(res, PrimitiveResult)
-            for circ_index, pub_result in enumerate(res._pub_results):
+            for circ_index, pub_result in enumerate(res._pub_results):  # noqa: SLF001
                 data = pub_result.data
                 c_regs = OrderedDict(
                     (reg_name, data.__getattribute__(reg_name).num_bits)

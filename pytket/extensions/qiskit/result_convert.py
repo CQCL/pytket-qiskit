@@ -17,7 +17,6 @@ from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
 from typing import (
     Any,
-    Optional,
 )
 
 import numpy as np
@@ -70,10 +69,8 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
     datadict = result.data.to_dict()
     return bool(
         len(datadict) == 0
-        or "memory" in datadict
-        and len(datadict["memory"]) == 0
-        or "counts" in datadict
-        and len(datadict["counts"]) == 0
+        or ("memory" in datadict and len(datadict["memory"]) == 0)
+        or ("counts" in datadict and len(datadict["counts"]) == 0)
     )
 
 
@@ -81,7 +78,7 @@ def _result_is_empty_shots(result: ExperimentResult) -> bool:
 # for example, a circuit with classical bits run on AerStateBackend will
 # return counts (whether or not there were measurements). The include_foo
 # arguments should be set based on what the backend supports.
-def qiskit_experimentresult_to_backendresult(
+def qiskit_experimentresult_to_backendresult(  # noqa: PLR0912, PLR0913
     result: ExperimentResult,
     include_counts: bool = True,
     include_shots: bool = True,
@@ -122,7 +119,7 @@ def qiskit_experimentresult_to_backendresult(
         elif "counts" in datadict and include_counts:
             qis_counts = datadict["counts"]
             counts = Counter(
-                dict(
+                dict(  # noqa: C402
                     (_hex_to_outar([hexst], width), count)
                     for hexst, count in qis_counts.items()
                 )
@@ -149,7 +146,7 @@ def qiskit_experimentresult_to_backendresult(
     )
 
 
-def qiskit_result_to_backendresult(
+def qiskit_result_to_backendresult(  # noqa: PLR0913
     res: Result,
     include_counts: bool = True,
     include_shots: bool = True,
@@ -172,9 +169,9 @@ def backendresult_to_qiskit_resultdata(
     res: BackendResult,
     cbits: list[UnitID],
     qbits: list[UnitID],
-    final_map: Optional[dict[UnitID, UnitID]],
+    final_map: dict[UnitID, UnitID] | None,
 ) -> dict[str, Any]:
-    data: dict[str, Any] = dict()
+    data: dict[str, Any] = dict()  # noqa: C408
     if res.contains_state_results:
         qbits = _qiskit_ordered_uids(qbits)
         qbits.sort(reverse=True)

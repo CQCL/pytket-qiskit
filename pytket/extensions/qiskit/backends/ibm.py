@@ -215,8 +215,8 @@ class IBMQBackend(Backend):
 
         # cache of results keyed by job id and circuit index
         self._ibm_res_cache: dict[tuple[str, int], tuple[Counter, list[Bit] | None]] = (
-            dict()
-        )  # noqa: C408
+            dict()  # noqa: C408
+        )
 
         if sampler_options is None:
             sampler_options = SamplerOptions()
@@ -612,9 +612,9 @@ class IBMQBackend(Backend):
             sampler_options = self._sampler_options
 
         batch_id = 0  # identify batches for debug purposes only
-        for (n_shots, batch), indices in zip(
+        for (n_shots, batch), indices in zip(  # noqa: PLR1704
             circuit_batches, batch_order, strict=False
-        ):  # noqa: PLR1704
+        ):
             for chunk in itertools.zip_longest(
                 *([iter(zip(batch, indices, strict=False))] * self._max_per_job)
             ):

@@ -416,9 +416,9 @@ class _AerBaseBackend(Backend):
 
         replace_implicit_swaps = self.supports_state or self.supports_unitary
 
-        for (n_shots, batch), indices in zip(
+        for (n_shots, batch), indices in zip(  # noqa: PLR1704
             circuit_batches, batch_order, strict=False
-        ):  # noqa: PLR1704
+        ):
             qcs, ppcirc_strs, tkc_qubits_count = [], [], []
             for tkc in batch:
                 if postprocess:

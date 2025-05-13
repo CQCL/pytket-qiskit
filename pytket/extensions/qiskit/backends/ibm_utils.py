@@ -27,7 +27,7 @@ from pytket.passes import DecomposeBoxes, RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
-from qiskit.providers.fake_provider import GenericBackendV2
+from qiskit.providers.fake_provider import GenericBackendV2  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import (  # type: ignore
     ApplyLayout,

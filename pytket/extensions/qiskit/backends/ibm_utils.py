@@ -26,6 +26,7 @@ from pytket.passes import DecomposeBoxes, RebaseTket
 from pytket.transform import Transform
 from qiskit import QuantumRegister  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
+from qiskit.providers.fake_provider import GenericBackendV2  # type: ignore
 from qiskit.transpiler import CouplingMap, PassManager  # type: ignore
 from qiskit.transpiler.passes import (  # type: ignore
     ApplyLayout,
@@ -33,6 +34,7 @@ from qiskit.transpiler.passes import (  # type: ignore
     FullAncillaAllocation,
     SabreLayout,
     SabreSwap,
+    VF2PostLayout,
 )
 from qiskit.transpiler.passmanager_config import PassManagerConfig  # type: ignore
 
@@ -107,7 +109,7 @@ def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
 
 
 def _gen_lightsabre_transformation(  # type: ignore
-    architecture: Architecture, seed=0, attempts=20
+    architecture: Architecture, seed=0, attempts=50
 ) -> Callable[
     [Circuit], tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]
 ]:
@@ -127,7 +129,6 @@ def _gen_lightsabre_transformation(  # type: ignore
         routing_method="sabre",
         seed_transpiler=seed,
     )
-
     apply_layout: PassManager = PassManager(
         [
             SabreLayout(
@@ -142,6 +143,14 @@ def _gen_lightsabre_transformation(  # type: ignore
             ApplyLayout(),
             SabreSwap(
                 config.coupling_map, seed=config.seed_transpiler, trials=attempts
+            ),
+            VF2PostLayout(
+                GenericBackendV2(
+                    num_qubits=len(architecture.nodes),
+                    basis_gates=["cx", "id", "rz", "sx", "x"],
+                    coupling_map=config.coupling_map,
+                    seed=seed,
+                ).target
             ),
         ]
     )

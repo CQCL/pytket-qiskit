@@ -462,9 +462,7 @@ class _AerBaseBackend(Backend):
         job: AerJob = self._cache[handle]["job"]
         cancelled = job.cancel()
         if not cancelled:
-            warning(
-                f"Unable to cancel job {cast('str', handle[0])}"
-            )  # noqa: G004, LOG015
+            warning(f"Unable to cancel job {cast('str', handle[0])}")
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
@@ -493,9 +491,9 @@ class _AerBaseBackend(Backend):
             )
             for circ_index, backres in enumerate(backresults):
                 qubit_n, ppc = self._circuit_data[(jobid, circ_index)]
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
-                    "result"
-                ] = backres
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
+                    backres
+                )
 
             return cast("BackendResult", self._cache[handle]["result"])
 

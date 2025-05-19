@@ -114,7 +114,7 @@ class NoIBMQCredentialsError(Exception):
     def __init__(self) -> None:
         super().__init__(
             "No IBMQ credentials found on disk, store your account using qiskit,"
-            " or using :py:meth:`pytket.extensions.qiskit.set_ibmq_config` first."
+            " or using set_ibmq_config first."
         )
 
 
@@ -500,7 +500,10 @@ class IBMQBackend(Backend):
         :return: An optimised quantum circuit
         """
         return_circuit = circuit.copy()
-        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:
+        if (
+            optimisation_level == 3  # noqa: PLR2004
+            and circuit.n_gates_of_type(OpType.Barrier) > 0
+        ):
             warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."

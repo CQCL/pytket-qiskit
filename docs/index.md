@@ -208,7 +208,7 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
 * - [AutoRebase [2]](inv:#*.AutoRebase)
   - [SynthesiseTket](inv:#*.SynthesiseTket)
   - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-  - [RemoveBarriers](inv:#*pytket._tket.passes.RemoveBarriers)
+  - [RemoveBarriers](inv:#*pytket.passes.RemoveBarriers)
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]

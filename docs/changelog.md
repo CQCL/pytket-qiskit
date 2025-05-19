@@ -4,12 +4,11 @@
 
 # Changelog
 
-Unreleased
-----------
+## Unreleased
 
-Features:
-
-* Add `VF2PostLayout` to default compilation.
+- Add `VF2PostLayout` to default compilation.
+- Fix: don't introduce implicit swaps when transpiling for unitary and density-
+  matrix backends.
 
 ## 0.67.0 (April 2025)
 

@@ -319,17 +319,16 @@ class _AerBaseBackend(Backend):
         :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
 
         :return: An optimised quantum circuit
-        :rtype: Circuit
         """
         return_circuit = circuit.copy()
-        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
+        if (
+            optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0
+        ):  # noqa: PLR2004
             warnings.warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."
@@ -363,17 +362,13 @@ class _AerBaseBackend(Backend):
         circuit.
 
         :param circuits: The circuits to compile.
-        :type circuit: Sequence[Circuit]
         :param optimisation_level: The level of optimisation to perform during
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
         :return: Compiled circuits.
-        :rtype: List[Circuit]
         """
         return [
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
@@ -466,7 +461,9 @@ class _AerBaseBackend(Backend):
         job: AerJob = self._cache[handle]["job"]
         cancelled = job.cancel()
         if not cancelled:
-            warning(f"Unable to cancel job {cast('str', handle[0])}")  # noqa: LOG015, G004
+            warning(
+                f"Unable to cancel job {cast('str', handle[0])}"
+            )  # noqa: LOG015, G004
 
     def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
         self._check_handle_type(handle)
@@ -495,9 +492,9 @@ class _AerBaseBackend(Backend):
             )
             for circ_index, backres in enumerate(backresults):
                 qubit_n, ppc = self._circuit_data[(jobid, circ_index)]
-                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)]["result"] = (
-                    backres
-                )
+                self._cache[ResultHandle(jobid, circ_index, qubit_n, ppc)][
+                    "result"
+                ] = backres
 
             return cast("BackendResult", self._cache[handle]["result"])
 

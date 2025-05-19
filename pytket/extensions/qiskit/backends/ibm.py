@@ -500,9 +500,7 @@ class IBMQBackend(Backend):
         :return: An optimised quantum circuit
         """
         return_circuit = circuit.copy()
-        if (
-            optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0
-        ):  # noqa: PLR2004
+        if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:
             warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."

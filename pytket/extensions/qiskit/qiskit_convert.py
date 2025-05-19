@@ -738,8 +738,9 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
         updates = {
-            p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters
-        }  # noqa: SLF001
+            p: Parameter(f"{p.name}_UUID:{p._uuid}")  # noqa: SLF001
+            for p in qcirc.parameters
+        }
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
@@ -1172,9 +1173,9 @@ def tk_to_qiskit(
             new_p._parameter_keys = frozenset(  # noqa: SLF001
                 ((symengine_wrapper.Symbol(p_name), uuid),)
             )
-            new_p._hash = hash(
-                (new_p._parameter_keys, new_p._symbol_expr)
-            )  # noqa: SLF001
+            new_p._hash = hash(  # noqa: SLF001
+                (new_p._parameter_keys, new_p._symbol_expr)  # noqa: SLF001
+            )
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

@@ -443,7 +443,7 @@ class _AerBaseBackend(Backend):
                 ppcirc_strs.append(json.dumps(ppcirc_rep))
 
             if self._needs_transpile:
-                qcs = transpile(qcs, self._qiskit_backend)
+                qcs = transpile(qcs, self._qiskit_backend, optimization_level=1)
 
             job = self._qiskit_backend.run(
                 qcs,

@@ -4,7 +4,7 @@
 
 # Changelog
 
-## Unreleased
+## 0.68.0 (May 2025)
 
 - Add `VF2PostLayout` to default compilation.
 - Fix: don't introduce implicit swaps when transpiling for unitary and density-

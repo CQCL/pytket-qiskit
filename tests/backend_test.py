@@ -1588,3 +1588,23 @@ def test_noise_model_relabelling() -> None:
 
     assert cu.initial_map == {qubit: Node(3)}
     assert cu.final_map == {qubit: Node(3)}
+
+
+def test_swap_unitary_compilation() -> None:
+    # https://github.com/CQCL/pytket-qiskit/issues/485
+    c = Circuit(2)
+    c.SWAP(0, 1)
+    b = AerUnitaryBackend()
+    h = b.process_circuit(c)
+    result = b.get_result(h)
+    u = result.get_unitary()
+    u_swap = np.array(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+        dtype=complex,
+    )
+    assert np.allclose(u, u_swap)

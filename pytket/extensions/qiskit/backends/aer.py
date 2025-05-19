@@ -327,8 +327,9 @@ class _AerBaseBackend(Backend):
         """
         return_circuit = circuit.copy()
         if (
-            optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0
-        ):  # noqa: PLR2004
+            optimisation_level == 3  # noqa: PLR2004
+            and circuit.n_gates_of_type(OpType.Barrier) > 0
+        ):
             warnings.warn(  # noqa: B028
                 "Barrier operations in this circuit will be removed when using "
                 "optimisation level 3."

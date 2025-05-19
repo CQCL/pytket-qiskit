@@ -723,7 +723,7 @@ class CircuitBuilder:
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
     """
-    Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
+    Converts a qiskit :py:class:`qiskit.circuit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
     :param qcirc: A circuit to be converted
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
@@ -737,7 +737,9 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # Parameter uses a hidden _uuid for equality check
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
-        updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}  # noqa: SLF001
+        updates = {
+            p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters
+        }  # noqa: SLF001
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
@@ -1095,7 +1097,7 @@ def tk_to_qiskit(
     perm_warning: bool = True,
 ) -> QuantumCircuit:
     """
-    Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
+    Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.circuit.QuantumCircuit`.
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.
     If no exact replacement can be found for a part of the circuit then an equivalent
@@ -1170,7 +1172,9 @@ def tk_to_qiskit(
             new_p._parameter_keys = frozenset(  # noqa: SLF001
                 ((symengine_wrapper.Symbol(p_name), uuid),)
             )
-            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))  # noqa: SLF001
+            new_p._hash = hash(
+                (new_p._parameter_keys, new_p._symbol_expr)
+            )  # noqa: SLF001
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

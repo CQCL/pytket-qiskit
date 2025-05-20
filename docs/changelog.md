@@ -9,6 +9,7 @@
 - Add `VF2PostLayout` to default compilation.
 - Fix: don't introduce implicit swaps when transpiling for unitary and density-
   matrix backends.
+- Update minimum pytket version requirement to 2.4.1.
 
 ## 0.67.0 (April 2025)
 

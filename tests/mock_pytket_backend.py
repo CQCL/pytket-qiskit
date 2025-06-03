@@ -15,11 +15,11 @@
 
 import json
 from collections.abc import Sequence
-from typing import cast
+from typing import Any, cast
 
 from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
-from pytket.backends.backend import KwargTypes, ResultCache
+from pytket.backends.backend import KwargTypes
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
@@ -101,7 +101,7 @@ class MockShotBackend(Backend):
         outcome_arr = OutcomeArray.from_readouts(shots_list)
         return BackendResult(shots=outcome_arr, q_bits=circ.qubits, c_bits=circ.bits)
 
-    def pop_result(self, handle: ResultHandle) -> ResultCache | None:
+    def pop_result(self, handle: ResultHandle) -> dict[str, Any] | None:
         """Does nothing. Implementation is required by TketJob."""
         return None
 

@@ -114,7 +114,7 @@ class NoIBMQCredentialsError(Exception):
     def __init__(self) -> None:
         super().__init__(
             "No IBMQ credentials found on disk, store your account using qiskit,"
-            " or using :py:meth:`pytket.extensions.qiskit.set_ibmq_config` first."
+            " or using :py:meth:`pytket.extensions.qiskit.backends.config.set_ibmq_config` first."
         )
 
 
@@ -151,7 +151,7 @@ class IBMQBackend(Backend):
 
     The provider arguments of `hub`, `group` and `project` can
     be specified here as parameters or set in the config file
-    using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
+    using :py:meth:`pytket.extensions.qiskit.backends.config.set_ibmq_config`.
     This function can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
@@ -493,14 +493,11 @@ class IBMQBackend(Backend):
         :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
 
         :return: An optimised quantum circuit
-        :rtype: Circuit
         """
         return_circuit = circuit.copy()
         if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
@@ -526,28 +523,24 @@ class IBMQBackend(Backend):
         :py:meth:`process_circuits`), for example by rebasing to the supported gate set,
         or routing to match the connectivity of the device. However, this is not always
         possible, for example if the circuit contains classical operations that are not
-        supported by the backend. You may use :py:meth:`valid_circuit` to check whether
+        supported by the backend. You may use :py:meth:`~pytket.backends.backend.Backend.valid_circuit` to check whether
         the circuit meets the backend's requirements after compilation. This validity
         check is included in :py:meth:`process_circuits` by default, before any circuits
         are submitted to the backend.
 
         If the validity check fails, you can obtain more information about the failure
         by iterating through the predicates in the `required_predicates` property of the
-        backend, and running the :py:meth:`verify` method on each in turn with your
+        backend, and running the :py:meth:`~pytket.predicates.Predicate.verify` method on each in turn with your
         circuit.
 
         :param circuits: The circuits to compile.
-        :type circuit: Sequence[Circuit]
         :param optimisation_level: The level of optimisation to perform during
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
         :return: Compiled circuits.
-        :rtype: List[Circuit]
         """
         return [
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
@@ -577,7 +570,7 @@ class IBMQBackend(Backend):
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
 
         :Keyword Arguments:
             * `postprocess`:
@@ -680,7 +673,7 @@ class IBMQBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
         Supported kwargs: `timeout`, `wait`.
         """
         self._check_handle_type(handle)

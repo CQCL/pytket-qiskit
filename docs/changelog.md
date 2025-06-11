@@ -16,7 +16,7 @@
 - Add support for Python 3.13.
 - Support qiskit >=2.0, drop support for qiskit <2.0.
 - Update minimum pytket version requirement to 2.3.2.
-- Drop support for conversion of `CircBox`es containing conditional gates to qiskit in the {py:func}`tk_to_qiskit`
+- Drop support for conversion of `CircBox`es containing conditional gates to qiskit in the {py:func}`~.tk_to_qiskit`
 converter.
 
 ## 0.66.0 (March 2025)
@@ -57,8 +57,8 @@ with register conditions. Only conditions on an entire register are supported.
 
 ## 0.60.0 (November 2024)
 
-- Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`AerBackend`
-- Add a boolean `perm_warning` argument to {py:func}`tk_to_qiskit` indicating whether to give a warning if the input {py:class}`Circuit` has an implicit qubit permutation.
+- Fix an unhelpful warning message about implicit swaps when using optimisation level 2 with {py:class}`~.AerBackend`
+- Add a boolean `perm_warning` argument to {py:func}`~.tk_to_qiskit` indicating whether to give a warning if the input {py:class}`~pytket._tket.circuit.Circuit` has an implicit qubit permutation.
 - Add new level 3 optimisation that uses `GreedyPauliSimp`
 - Fix `get_results()` for Aer backends when circuits with different numbers of qubits or postprocessing circuits submitted together.
 - Add `timeout` parameter to `get_compiled_circuit` and `get_compiled_circuits`.
@@ -69,7 +69,7 @@ with register conditions. Only conditions on an entire register are supported.
 - Fix handling of non-default registers when selecting bits in results.
 - Update default compilation to use `Qiskit` `SabreLayoutPassManager` as a `CustomPass`.
 - Fix handling of non-default registers when selecting bits in results.
-- The {py:func}`tk_to_qiskit` converter gives a warning if the input {py:class}`~pytket.circuit.Circuit` contains [implicit qubit permutations](https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#implicit-qubit-permutations). 
+- The {py:func}`~.tk_to_qiskit` converter gives a warning if the input {py:class}`~pytket._tket.circuit.Circuit` contains [implicit qubit permutations](https://docs.quantinuum.com/tket/user-guide/manual/manual_circuit.html#implicit-qubit-permutations). 
 
 ## 0.58.0 (October 2024)
 
@@ -81,12 +81,12 @@ with register conditions. Only conditions on an entire register are supported.
 ## 0.57.0 (October 2024)
 
 - Updated pytket version requirement to 1.33.
-- Added handling of generalised controlled gates to {py:func}`qiskit_to_tk` and {py:func}`tk_to_qiskit`. The `control_state` is handled directly instead of using additional `X` gates.
-- A controlled {py:class}`UnitaryGate` will now be converted to a pytket controlled unitary box by {py:func}`qiskit_to_tk` instead of a controlled {py:class}`~pytket.circuit.CircBox` with a unitary box inside.
+- Added handling of generalised controlled gates to {py:func}`~.qiskit_to_tk` and {py:func}`~.tk_to_qiskit`. The `control_state` is handled directly instead of using additional `X` gates.
+- A controlled {py:class}`qiskit.circuit.library.UnitaryGate` will now be converted to a pytket controlled unitary box by {py:func}`~.qiskit_to_tk` instead of a controlled {py:class}`~pytket.circuit.CircBox` with a unitary box inside.
 
 ## 0.56.0 (September 2024)
 
-- Added {py:class}`AerDensityMatrixBackend` simulator. This simulator has the option to support a {py:class}`NoiseModel`.
+- Added {py:class}`~.AerDensityMatrixBackend` simulator. This simulator has the option to support a {py:class}`~qiskit_aer.noise.NoiseModel`.
 - Fix conversion of symbols into qiskit.
 - Require qiskit >= 1.2.0.
 - Add conversion of controlled unitary gates from qiskit to tket.
@@ -192,7 +192,7 @@ with register conditions. Only conditions on an entire register are supported.
 
 ## 0.44.0 (September 2023)
 
-- Fix to add include Measure, Reset and Conditional operations to the supported operations of {py:class}`AerStateBackend`.
+- Fix to add include Measure, Reset and Conditional operations to the supported operations of {py:class}`~.AerStateBackend`.
 - Update qiskit-ibm-runtime version to 0.12.0.
 - Update qiskit-ibm-provider version to 0.7.0.
 - Update pytket version requirement to 1.19.
@@ -214,17 +214,17 @@ with register conditions. Only conditions on an entire register are supported.
 
 - Update pytket version requirement to 1.17.
 - Fix conversion of qiskit `UnitaryGate` to and from pytket (up to 3 qubits).
-- Fix handling of qiskit controlled gates in the {py:meth}`qiskit_to_tk` converter.
+- Fix handling of qiskit controlled gates in the {py:func}`~.qiskit_to_tk` converter.
 - Handle CCZ and CSX gates in circuit converters.
 
 ## 0.40.0 (June 2023)
 
-- IBM devices are now accessed using the [qiskit-ibm-provider](https://github.com/Qiskit/qiskit-ibm-provider) instead of the deprecated {py:class}`IBMQ`. This allows the newest IBM devices and simulators to be accessed through `pytket-qiskit`. See the updated documentation on [credentials](https://docs.quantinuum.com/tket/extensions/pytket-qiskit/index.html#access-and-credentials).
-- The parameters `hub`, `group` and `project` are no longer handled as separate arguments in {py:class}`IBMQBackend` and {py:meth}`IBMQBackend.available_devices`. Use `"instance=f"{hub}/{group}/{project}"` instead.
-- Added support for the {X, SX, Rz, ECR} in the default compilation pass for {py:class}`IBMQBackend` and {py:class}`IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.
-- Fix to the {py:meth}`tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
-- Handle qiskit circuits with {py:class}`Initialize` and {py:class}`StatePreparation` instructions in the {py:meth}`qiskit_to_tk` converter. The {py:meth}`tk_to_qiskit` converter now handles {py:class}`StatePreparationBox`.
-- Fix handling of control state in {py:meth}`qiskit_to_tk`.
+- IBM devices are now accessed using the [qiskit-ibm-provider](https://github.com/Qiskit/qiskit-ibm-provider) instead of the deprecated `IBMQ`. This allows the newest IBM devices and simulators to be accessed through `pytket-qiskit`. See the updated documentation on [credentials](https://docs.quantinuum.com/tket/extensions/pytket-qiskit/index.html#access-and-credentials).
+- The parameters `hub`, `group` and `project` are no longer handled as separate arguments in {py:class}`~.IBMQBackend` and {py:meth}`~.IBMQBackend.available_devices`. Use `"instance=f"{hub}/{group}/{project}"` instead.
+- Added support for the {X, SX, Rz, ECR} in the default compilation pass for {py:class}`~.IBMQBackend` and {py:class}`~.IBMQEmulatorBackend`. This is the set of gates used by some of the new IBM devices.
+- Fix to the {py:func}`~.tk_to_qiskit` converter to prevent cancellation of redundant gates when converting to qiskit.
+- Handle qiskit circuits with {py:class}`~qiskit.circuit.library.Initialize` and {py:class}`~qiskit.circuit.library.StatePreparation` instructions in the {py:func}`~.qiskit_to_tk` converter. The {py:func}`~.tk_to_qiskit` converter now handles {py:class}`~pytket.circuit.StatePreparationBox`.
+- Fix handling of control state in {py:func}`~.qiskit_to_tk`.
 - Update qiskit version to 0.43.1
 - Update qiskit-ibm-runtime version to 0.11.1
 - Update qiskit-ibm-provider version to 0.6.1
@@ -233,11 +233,11 @@ with register conditions. Only conditions on an entire register are supported.
 ## 0.39.0 (May 2023)
 
 - Updated pytket version requirement to 1.15.
-- The {py:meth}`IBMQBackend.get_compiled_circuit` method now allows for optional arguments to override the default settings in the {py:class}`NoiseAwarePlacement`.
+- The {py:meth}`~.IBMQBackend.get_compiled_circuit` method now allows for optional arguments to override the default settings in the {py:class}`~pytket.placement.NoiseAwarePlacement`.
 
 ## 0.38.0 (April 2023)
 
-- Fix to ensure that the {py:class}`IBMBackend` and {py:class}`IBMQEmulatorBackend` both properly enforce {py:class}`MaxNQubitsPredicate`.
+- Fix to ensure that the {py:class}`~.IBMQBackend` and {py:class}`~.IBMQEmulatorBackend` both properly enforce {py:class}`~pytket._tket.predicates.MaxNQubitsPredicate`.
 - Update qiskit version to 0.42.
 - Updated pytket version requirement to 1.14.
 
@@ -338,11 +338,11 @@ with register conditions. Only conditions on an entire register are supported.
 
 ## 0.22.2 (February 2022)
 
-- Fixed {py:meth}`IBMQEmulatorBackend.rebase_pass`.
+- Fixed {py:meth}`~.IBMQEmulatorBackend.rebase_pass`.
 
 ## 0.22.1 (February 2022)
 
-- Added {py:meth}`IBMQEmulatorBackend.rebase_pass`.
+- Added {py:meth}`~.IBMQEmulatorBackend.rebase_pass`.
 
 ## 0.22.0 (February 2022)
 
@@ -363,8 +363,8 @@ with register conditions. Only conditions on an entire register are supported.
 ## 0.19.0 (October 2021)
 
 - Qiskit version updated to 0.31.
-- Removed deprecated {py:meth}`AerUnitaryBackend.get_unitary`. Use
-  {py:meth}`AerUnitaryBackend.run_circuit` and
+- Removed deprecated `AerUnitaryBackend.get_unitary`. Use
+  {py:meth}`~.AerUnitaryBackend.run_circuit` and
   {py:meth}`pytket.backends.backendresult.BackendResult.get_unitary` instead.
 - Updated pytket version requirement to 0.16.
 
@@ -379,7 +379,7 @@ with register conditions. Only conditions on an entire register are supported.
 
 ## 0.16.1 (July 2021)
 
-- Fix slow/high memory use {py:meth}`AerBackend.get_operator_expectation_value`
+- Fix slow/high memory use {py:meth}`~.AerBackend.get_operator_expectation_value`
 
 ## 0.16.0 (July 2021)
 

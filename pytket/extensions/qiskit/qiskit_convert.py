@@ -723,7 +723,7 @@ class CircuitBuilder:
 
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
     """
-    Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
+    Converts a qiskit :py:class:`qiskit.circuit.QuantumCircuit` to a pytket :py:class:`~pytket._tket.circuit.Circuit`.
 
     :param qcirc: A circuit to be converted
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
@@ -1095,7 +1095,7 @@ def tk_to_qiskit(
     perm_warning: bool = True,
 ) -> QuantumCircuit:
     """
-    Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
+    Converts a pytket :py:class:`~pytket._tket.circuit.Circuit` to a qiskit :py:class:`qiskit.circuit.QuantumCircuit`.
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.
     If no exact replacement can be found for a part of the circuit then an equivalent
@@ -1105,7 +1105,7 @@ def tk_to_qiskit(
     Consider using the replace_implicit_swaps flag to replace these implicit swaps with
     SWAP gates.
 
-    :param tkcirc: A :py:class:`Circuit` to be converted
+    :param tkcirc: A :py:class:`~pytket._tket.circuit.Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
     :param perm_warning: Warn if an input circuit has implicit qubit permutations,

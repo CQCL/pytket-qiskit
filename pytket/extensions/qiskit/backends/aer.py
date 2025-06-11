@@ -297,7 +297,7 @@ class _AerBaseBackend(Backend):
         timeout: int = 300,
     ) -> BasePass:
         """
-        See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
+        See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.
         """
         arch = self._backend_info.architecture
         if self._has_arch and arch.coupling:  # type: ignore
@@ -319,14 +319,11 @@ class _AerBaseBackend(Backend):
         :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
 
         :return: An optimised quantum circuit
-        :rtype: Circuit
         """
         return_circuit = circuit.copy()
         if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
@@ -359,21 +356,17 @@ class _AerBaseBackend(Backend):
 
         If the validity check fails, you can obtain more information about the failure
         by iterating through the predicates in the `required_predicates` property of the
-        backend, and running the :py:meth:`verify` method on each in turn with your
+        backend, and running the :py:meth:`~pytket.predicates.Predicate.verify` method on each in turn with your
         circuit.
 
         :param circuits: The circuits to compile.
-        :type circuit: Sequence[Circuit]
         :param optimisation_level: The level of optimisation to perform during
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
             for running a single thread of the pass `GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
         :return: Compiled circuits.
-        :rtype: List[Circuit]
         """
         return [
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
@@ -387,7 +380,7 @@ class _AerBaseBackend(Backend):
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
         Supported kwargs: `seed`, `postprocess`.
         """
         postprocess = kwargs.get("postprocess", False)

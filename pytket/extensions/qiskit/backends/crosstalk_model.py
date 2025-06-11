@@ -56,6 +56,7 @@ class FractionalUnitary:
 class NoiseGate:
     """
     Wrapper for a gate that simulates noise
+
     :param cmd: gate wrapped in a pytket Command
     :param type: one of zz_crosstalks, single_q_phase, two_q_induced_phase
         and non_markovian.

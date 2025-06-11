@@ -38,7 +38,7 @@ class TketPass(TransformationPass):
         """Wraps a pytket compiler pass as a
         :py:class:`qiskit.transpiler.TransformationPass`. A
         :py:class:`qiskit.dagcircuit.DAGCircuit` is converted to a pytket
-        :py:class:`Circuit`. `tket_pass` will be run and the result is converted back.
+        :py:class:`~pytket._tket.circuit.Circuit`. `tket_pass` will be run and the result is converted back.
 
         :param tket_pass: The pytket compiler pass to run
         """

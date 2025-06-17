@@ -51,6 +51,7 @@ setup(
         "qiskit-ibm-runtime >= 0.37.0",
         "qiskit-aer >= 0.15.1",
         "numpy >= 1.26.4",
+        "symengine >= 0.11",
     ],
     classifiers=[
         "Environment :: Console",

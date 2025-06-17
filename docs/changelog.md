@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.68.1 (June 2025)
+
+- Update minimum pytket version requirement to 2.6.0.
+
 ## 0.68.0 (May 2025)
 
 - Add `VF2PostLayout` to default compilation.

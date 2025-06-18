@@ -65,6 +65,7 @@ from pytket.extensions.qiskit.backends.crosstalk_model import (
     FractionalUnitary,
     NoisyCircuitBuilder,
 )
+from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 from pytket.extensions.qiskit.backends.ibm_utils import _gen_lightsabre_transformation
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
 from pytket.passes import CliffordSimp, FlattenRelabelRegistersPass, SequencePass
@@ -417,7 +418,6 @@ def test_machine_debug(brisbane_backend: IBMQBackend) -> None:
         assert "in submitted does not satisfy GateSetPredicate" in str(errorinfo.value)
         c = backend.get_compiled_circuit(c)
         handles = backend.process_circuits([c, c.copy()], n_shots=4)
-        from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
             cast("str", hand[0]).startswith(_DEBUG_HANDLE_PREFIX) for hand in handles
@@ -449,8 +449,6 @@ def test_nshots_batching(brisbane_backend: IBMQBackend) -> None:
         n_shots = [10, 12, 10, 13]
         cs = backend.get_compiled_circuits(cs)
         handles = backend.process_circuits(cs, n_shots=n_shots)
-
-        from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 
         assert all(
             cast("str", hand[0]) == _DEBUG_HANDLE_PREFIX + suffix

@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.68.3 (June 2025)
+
+- Restrict qiskit version to < 2.1 and
+
 ## 0.68.2 (June 2025)
 
 - Update minimum pytket version requirement to 2.6.0.

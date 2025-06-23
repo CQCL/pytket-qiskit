@@ -6,7 +6,7 @@
 
 ## 0.68.3 (June 2025)
 
-- Restrict qiskit version to < 2.1 and
+- Restrict qiskit version to < 2.1.
 
 ## 0.68.2 (June 2025)
 

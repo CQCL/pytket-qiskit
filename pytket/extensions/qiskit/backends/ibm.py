@@ -124,7 +124,7 @@ def _save_ibmq_auth(qiskit_config: QiskitConfig | None) -> None:
         token = qiskit_config.ibmq_api_token
     if token is not None and not QiskitRuntimeService.saved_accounts():
         QiskitRuntimeService.save_account(
-            channel="ibm_quantum", token=token, overwrite=True
+            channel="ibm_quantum_platform", token=token, overwrite=True
         )
 
 
@@ -202,7 +202,7 @@ class IBMQBackend(Backend):
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance=instance
+            channel="ibm_quantum_platform", token=token, instance=instance
         )
         self._session = Session(backend=self._backend)
 
@@ -231,8 +231,10 @@ class IBMQBackend(Backend):
     ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
         if instance is not None:
-            return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
-        return QiskitRuntimeService(channel="ibm_quantum")
+            return QiskitRuntimeService(
+                channel="ibm_quantum_platform", instance=instance
+            )
+        return QiskitRuntimeService(channel="ibm_quantum_platform")
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -316,7 +318,7 @@ class IBMQBackend(Backend):
             if instance is not None:
                 service = cls._get_service(instance=instance, qiskit_config=None)
             else:
-                service = QiskitRuntimeService(channel="ibm_quantum")
+                service = QiskitRuntimeService(channel="ibm_quantum_platform")
 
         backend_info_list = []
         for backend in service.backends():

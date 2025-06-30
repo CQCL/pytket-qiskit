@@ -37,7 +37,7 @@ def setup_qiskit_account() -> None:
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         if token:
             QiskitRuntimeService.save_account(
-                channel="ibm_quantum", token=token, overwrite=True
+                channel="ibm_quantum_platform", token=token, overwrite=True
             )
 
 
@@ -64,11 +64,13 @@ def qiskit_runtime_service() -> QiskitRuntimeService:
     token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
 
     try:
-        return QiskitRuntimeService(channel="ibm_quantum", instance="ibm-q/open/main")
+        return QiskitRuntimeService(
+            channel="ibm_quantum_platform", instance="ibm-q/open/main"
+        )
     except:  # noqa: E722
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         return QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance="ibm-q/open/main"
+            channel="ibm_quantum_platform", token=token, instance="ibm-q/open/main"
         )
 
 

@@ -112,7 +112,7 @@ tags: [skip-execution]
 ---
 from qiskit_ibm_runtime import QiskitRuntimeService
 
-QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibm_token, instance=inst)
+QiskitRuntimeService.save_account(channel="ibm_quantum_platform", token=ibm_token, instance=inst)
 ```
 
 To see which devices you can access, use the {py:meth}`IBMQBackend.available_devices` method. Note that it is possible to pass an optional `instance` argument to this method. This allows you to see which IBM devices are accessible with your credentials.

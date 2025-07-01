@@ -404,7 +404,7 @@ def test_tketautopass(brussels_backend: IBMQBackend) -> None:
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(
-                back, o_level, token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+                back, o_level, token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
             )
             qc = get_test_circuit(True)
             pm = PassManager(passes=tkpass)

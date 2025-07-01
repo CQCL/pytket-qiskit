@@ -1071,7 +1071,7 @@ def test_postprocess() -> None:
     b = IBMQBackend(
         "ibm_brussels",
         instance=INSTANCE,
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
     assert b.supports_contextual_optimisation
     c = Circuit(2, 2)

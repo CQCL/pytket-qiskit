@@ -8,6 +8,7 @@
 
 - Migrate to upgraded IBM Quantum Platform.
 - Add `instance` parameter for `TketAutoPass`.
+- Update minimum qiskit-ibm-runtime version requirement to 0.40.1.
 
 ## 0.68.3 (June 2025)
 

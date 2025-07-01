@@ -4,7 +4,7 @@
 
 # Changelog
 
-## Unreleased
+## 0.69.0 (July 2025)
 
 - Migrate to upgraded IBM Quantum Platform.
 - Add `instance` parameter for `TketAutoPass`.

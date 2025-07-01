@@ -7,6 +7,7 @@
 ## Unreleased
 
 - Migrate to upgraded IBM Quantum Platform.
+- Add `instance` parameter for `TketAutoPass`.
 
 ## 0.68.3 (June 2025)
 

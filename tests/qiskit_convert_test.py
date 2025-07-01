@@ -97,6 +97,8 @@ skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires IBM configuration)"
 
+INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
+
 
 # helper function for testing
 def _get_qiskit_statevector(qc: QuantumCircuit) -> np.ndarray:
@@ -404,7 +406,10 @@ def test_tketautopass(brussels_backend: IBMQBackend) -> None:
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(
-                back, o_level, token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
+                back,
+                o_level,
+                instance=INSTANCE,
+                token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
             )
             qc = get_test_circuit(True)
             pm = PassManager(passes=tkpass)

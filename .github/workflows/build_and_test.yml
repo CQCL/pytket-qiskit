@@ -18,7 +18,7 @@ on:
     - cron: '0 4 * * 2'
 
 env:
-  PYTKET_REMOTE_QISKIT_TOKEN: ${{ secrets.PYTKET_REMOTE_QISKIT_TOKEN }}
+  PYTKET_REMOTE_IBM_CLOUD_TOKEN: ${{ secrets.PYTKET_REMOTE_IBM_CLOUD_TOKEN }}
 
 jobs:
   qiskit-checks:

@@ -1195,7 +1195,6 @@ def test_symbolic_param_conv() -> None:
     )
 
 
-@pytest.mark.xfail(reason="https://github.com/CQCL/pytket-qiskit/issues/427")
 def test_implicit_swap_warning() -> None:
     c = Circuit(2).H(0).SWAP(0, 1)
     c.replace_SWAPs()

@@ -124,7 +124,7 @@ def _save_ibmq_auth(qiskit_config: QiskitConfig | None) -> None:
         token = qiskit_config.ibmq_api_token
     if token is not None and not QiskitRuntimeService.saved_accounts():
         QiskitRuntimeService.save_account(
-            channel="ibm_quantum", token=token, overwrite=True
+            channel="ibm_quantum_platform", token=token, overwrite=True
         )
 
 
@@ -149,13 +149,12 @@ def _int_from_readout(readout: np.ndarray) -> int:
 class IBMQBackend(Backend):
     """A backend for running circuits on remote IBMQ devices.
 
-    The provider arguments of `hub`, `group` and `project` can
-    be specified here as parameters or set in the config file
-    using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
-    This function can also be used to set the IBMQ API token.
+    The provider `instance` argument can be specified here as a parameter or set in the
+    config file using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`. This function
+    can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
-    :param instance: String containing information about the hub/group/project.
+    :param instance: CRN string for your instance.
     :param monitor: Use the IBM job monitor. Defaults to True.
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
     :param service: A QiskitRuntimeService
@@ -202,7 +201,7 @@ class IBMQBackend(Backend):
         self._backend_info = self._get_backend_info(config, props)
 
         self._service = QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance=instance
+            channel="ibm_quantum_platform", token=token, instance=instance
         )
         self._session = Session(backend=self._backend)
 
@@ -231,8 +230,10 @@ class IBMQBackend(Backend):
     ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
         if instance is not None:
-            return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
-        return QiskitRuntimeService(channel="ibm_quantum")
+            return QiskitRuntimeService(
+                channel="ibm_quantum_platform", instance=instance
+            )
+        return QiskitRuntimeService(channel="ibm_quantum_platform")
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -316,7 +317,7 @@ class IBMQBackend(Backend):
             if instance is not None:
                 service = cls._get_service(instance=instance, qiskit_config=None)
             else:
-                service = QiskitRuntimeService(channel="ibm_quantum")
+                service = QiskitRuntimeService(channel="ibm_quantum_platform")
 
         backend_info_list = []
         for backend in service.backends():

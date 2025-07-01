@@ -28,54 +28,62 @@ def setup_qiskit_account() -> None:
     # The remote tests require an active IBMQ account
     # We check if an IBMQ account is already saved, otherwise we try
     # to enable one using the token in the env variable:
-    # PYTKET_REMOTE_QISKIT_TOKEN
+    # PYTKET_REMOTE_IBM_CLOUD_TOKEN
+    # and the instance in the env variable:
+    # PYTKET_REMOTE_IBM_CLOUD_INSTANCE
     # Note: The IBMQ account will only be enabled for the current session
     if (
         os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None
         and not QiskitRuntimeService.saved_accounts()
     ):
-        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+        instance = os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE")
+        token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         if token:
             QiskitRuntimeService.save_account(
-                channel="ibm_quantum", token=token, overwrite=True
+                channel="ibm_quantum_platform",
+                instance=instance,
+                token=token,
+                overwrite=True,
             )
 
 
 @pytest.fixture(scope="module")
-def brisbane_backend() -> IBMQBackend:
+def brussels_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
-def brisbane_emulator_backend() -> IBMQEmulatorBackend:
+def brussels_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
 def qiskit_runtime_service() -> QiskitRuntimeService:
-    token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+    instance = os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE")
+    token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
 
     try:
-        return QiskitRuntimeService(channel="ibm_quantum", instance="ibm-q/open/main")
+        return QiskitRuntimeService(channel="ibm_quantum_platform", instance=instance)
     except:  # noqa: E722
-        token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
+        token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         return QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance="ibm-q/open/main"
+            channel="ibm_quantum_platform", token=token, instance=instance
         )
 
 
 @pytest.fixture(scope="module")
-def ibm_brisbane_backend() -> IBMQBackend:
+def ibm_brussels_backend() -> IBMQBackend:
     return IBMQBackend(
-        backend_name="ibm_brisbane",
+        backend_name="ibm_brussels",
         monitor=False,
-        token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )

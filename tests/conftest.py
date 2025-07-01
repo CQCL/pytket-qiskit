@@ -40,7 +40,10 @@ def setup_qiskit_account() -> None:
         token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         if token:
             QiskitRuntimeService.save_account(
-                channel="ibm_quantum_platform", instance=instance, token=token, overwrite=True
+                channel="ibm_quantum_platform",
+                instance=instance,
+                token=token,
+                overwrite=True,
             )
 
 

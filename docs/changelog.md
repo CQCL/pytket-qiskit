@@ -4,6 +4,10 @@
 
 # Changelog
 
+## Unreleased
+
+- Migrate to upgraded IBM Quantum Platform.
+
 ## 0.68.3 (June 2025)
 
 - Restrict qiskit version to < 2.1.

@@ -79,5 +79,6 @@ def ibm_brussels_backend() -> IBMQBackend:
     return IBMQBackend(
         backend_name="ibm_brussels",
         monitor=False,
+        instance=INSTANCE,
         token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )

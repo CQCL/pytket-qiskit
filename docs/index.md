@@ -81,7 +81,7 @@ pip install qiskit-aer-gpu
 
 ## Access and Credentials
 
-With the exception of the Aer simulators, accessing devices and simulators through the `pytket-qiskit` extension requires an IBM account. An account can be set up here: <https://quantum.ibm.com/>.
+With the exception of the Aer simulators, accessing devices and simulators through the `pytket-qiskit` extension requires an IBM account. An account can be set up here: <https://cloud.ibm.com/>.
 
 Once you have created an account you can obtain an API token which you can use to configure your credentials locally.
 
@@ -94,12 +94,11 @@ tags: [skip-execution]
 # Replace the placeholders with your actual values
 
 ibm_token = '<your_ibm_token_here>'
-hub = '<your_hub_here>'
-group = '<your_group_here>'
-project = '<your_project_here>'
-
-inst = f"{hub}/{group}/{project}"
+inst = '<your_instance_CRN_here>''
 ```
+
+The instance CRN is the long string beginning with "crn:" which is shown on the
+"Instances" page for your account.
 
 ### Method 1: Using {py:class}`QiskitRuntimeService`
 
@@ -154,7 +153,7 @@ tags: [skip-execution]
 ---
 from pytket.extensions.qiskit import set_ibmq_config
 
-set_ibmq_config(ibmq_api_token=ibm_token, instance=f"{hub}/{group}/{project}")
+set_ibmq_config(ibmq_api_token=ibm_token, instance=inst)
 ```
 
 ```{eval-rst}

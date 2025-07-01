@@ -149,13 +149,12 @@ def _int_from_readout(readout: np.ndarray) -> int:
 class IBMQBackend(Backend):
     """A backend for running circuits on remote IBMQ devices.
 
-    The provider arguments of `hub`, `group` and `project` can
-    be specified here as parameters or set in the config file
-    using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`.
-    This function can also be used to set the IBMQ API token.
+    The provider `instance` argument can be specified here as a parameter or set in the
+    config file using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`. This function
+    can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
-    :param instance: String containing information about the hub/group/project.
+    :param instance: CRN string for your instance.
     :param monitor: Use the IBM job monitor. Defaults to True.
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
     :param service: A QiskitRuntimeService

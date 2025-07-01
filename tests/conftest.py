@@ -22,6 +22,7 @@ from pytket.extensions.qiskit import (
     IBMQEmulatorBackend,
 )
 
+INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_qiskit_account() -> None:
@@ -42,19 +43,19 @@ def setup_qiskit_account() -> None:
 
 
 @pytest.fixture(scope="module")
-def brisbane_backend() -> IBMQBackend:
+def brussels_backend() -> IBMQBackend:
     return IBMQBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
+        "ibm_brussels",
+        instance=INSTANCE,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
-def brisbane_emulator_backend() -> IBMQEmulatorBackend:
+def brussels_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
-        "ibm_brisbane",
-        instance="ibm-q/open/main",
+        "ibm_brussels",
+        instance=INSTANCE,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )
 
@@ -65,19 +66,19 @@ def qiskit_runtime_service() -> QiskitRuntimeService:
 
     try:
         return QiskitRuntimeService(
-            channel="ibm_quantum_platform", instance="ibm-q/open/main"
+            channel="ibm_quantum_platform", instance=INSTANCE
         )
     except:  # noqa: E722
         token = os.getenv("PYTKET_REMOTE_QISKIT_TOKEN")
         return QiskitRuntimeService(
-            channel="ibm_quantum_platform", token=token, instance="ibm-q/open/main"
+            channel="ibm_quantum_platform", token=token, instance=INSTANCE
         )
 
 
 @pytest.fixture(scope="module")
-def ibm_brisbane_backend() -> IBMQBackend:
+def ibm_brussels_backend() -> IBMQBackend:
     return IBMQBackend(
-        backend_name="ibm_brisbane",
+        backend_name="ibm_brussels",
         monitor=False,
         token=os.getenv("PYTKET_REMOTE_QISKIT_TOKEN"),
     )

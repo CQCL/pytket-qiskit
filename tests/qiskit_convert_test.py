@@ -394,13 +394,13 @@ def test_tketpass() -> None:
 
 @pytest.mark.timeout(None)
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_tketautopass(brisbane_backend: IBMQBackend) -> None:
+def test_tketautopass(brussels_backend: IBMQBackend) -> None:
     backends = [
         Aer.get_backend("aer_simulator_statevector"),
         qiskit_aer_backend("aer_simulator"),
         Aer.get_backend("aer_simulator_unitary"),
     ]
-    backends.append(brisbane_backend._backend)  # noqa: SLF001
+    backends.append(brussels_backend._backend)  # noqa: SLF001
     for back in backends:
         for o_level in range(3):
             tkpass = TketAutoPass(

@@ -22,8 +22,6 @@ from pytket.extensions.qiskit import (
     IBMQEmulatorBackend,
 )
 
-INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
-
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_qiskit_account() -> None:
@@ -31,15 +29,18 @@ def setup_qiskit_account() -> None:
     # We check if an IBMQ account is already saved, otherwise we try
     # to enable one using the token in the env variable:
     # PYTKET_REMOTE_IBM_CLOUD_TOKEN
+    # and the instance in the env variable:
+    # PYTKET_REMOTE_IBM_CLOUD_INSTANCE
     # Note: The IBMQ account will only be enabled for the current session
     if (
         os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None
         and not QiskitRuntimeService.saved_accounts()
     ):
+        instance = os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE")
         token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         if token:
             QiskitRuntimeService.save_account(
-                channel="ibm_quantum_platform", token=token, overwrite=True
+                channel="ibm_quantum_platform", instance=instance, token=token, overwrite=True
             )
 
 
@@ -47,7 +48,7 @@ def setup_qiskit_account() -> None:
 def brussels_backend() -> IBMQBackend:
     return IBMQBackend(
         "ibm_brussels",
-        instance=INSTANCE,
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
         token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
 
@@ -56,21 +57,22 @@ def brussels_backend() -> IBMQBackend:
 def brussels_emulator_backend() -> IBMQEmulatorBackend:
     return IBMQEmulatorBackend(
         "ibm_brussels",
-        instance=INSTANCE,
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
         token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
 
 
 @pytest.fixture(scope="module")
 def qiskit_runtime_service() -> QiskitRuntimeService:
+    instance = os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE")
     token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
 
     try:
-        return QiskitRuntimeService(channel="ibm_quantum_platform", instance=INSTANCE)
+        return QiskitRuntimeService(channel="ibm_quantum_platform", instance=instance)
     except:  # noqa: E722
         token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         return QiskitRuntimeService(
-            channel="ibm_quantum_platform", token=token, instance=INSTANCE
+            channel="ibm_quantum_platform", token=token, instance=instance
         )
 
 
@@ -79,6 +81,6 @@ def ibm_brussels_backend() -> IBMQBackend:
     return IBMQBackend(
         backend_name="ibm_brussels",
         monitor=False,
-        instance=INSTANCE,
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
         token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )

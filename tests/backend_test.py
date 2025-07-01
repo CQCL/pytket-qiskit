@@ -87,8 +87,6 @@ skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of IBMQ account)"
 
-INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
-
 
 def circuit_gen(measure: bool = False) -> Circuit:
     c = Circuit(2, 2)
@@ -1071,7 +1069,7 @@ def test_rebase_phase() -> None:
 def test_postprocess() -> None:
     b = IBMQBackend(
         "ibm_brussels",
-        instance=INSTANCE,
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
         token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
     )
     assert b.supports_contextual_optimisation
@@ -1105,14 +1103,11 @@ def test_postprocess_emu(brussels_emulator_backend: IBMQEmulatorBackend) -> None
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_available_devices(qiskit_runtime_service: QiskitRuntimeService) -> None:
-    backend_info_list = IBMQBackend.available_devices(instance=INSTANCE)
+    backend_info_list = IBMQBackend.available_devices(service=qiskit_runtime_service)
     assert len(backend_info_list) > 0
 
     # Check consistency with pytket-qiskit and qiskit runtime service
     assert len(backend_info_list) == len(qiskit_runtime_service.backends())
-
-    backend_info_list = IBMQBackend.available_devices(service=qiskit_runtime_service)
-    assert len(backend_info_list) > 0
     backend_info_list = IBMQBackend.available_devices()
     assert len(backend_info_list) >= 0
 

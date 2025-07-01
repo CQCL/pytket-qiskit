@@ -89,6 +89,7 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of IBMQ accoun
 
 INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
 
+
 def circuit_gen(measure: bool = False) -> Circuit:
     c = Circuit(2, 2)
     c.H(0)

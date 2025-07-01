@@ -24,6 +24,7 @@ from pytket.extensions.qiskit import (
 
 INSTANCE = "crn:v1:bluemix:public:quantum-computing:eu-de:a/18f63f4565ef4a40851959792418cbf2:2a6bcfe2-0f5b-4c25-acd0-c13793935eb5::"
 
+
 @pytest.fixture(autouse=True, scope="session")
 def setup_qiskit_account() -> None:
     # The remote tests require an active IBMQ account
@@ -65,9 +66,7 @@ def qiskit_runtime_service() -> QiskitRuntimeService:
     token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
 
     try:
-        return QiskitRuntimeService(
-            channel="ibm_quantum_platform", instance=INSTANCE
-        )
+        return QiskitRuntimeService(channel="ibm_quantum_platform", instance=INSTANCE)
     except:  # noqa: E722
         token = os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN")
         return QiskitRuntimeService(

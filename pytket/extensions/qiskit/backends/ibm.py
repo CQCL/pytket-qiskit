@@ -200,9 +200,6 @@ class IBMQBackend(Backend):
         props: BackendProperties | None = self._backend.properties()
         self._backend_info = self._get_backend_info(config, props)
 
-        self._service = QiskitRuntimeService(
-            channel="ibm_quantum_platform", token=token, instance=instance
-        )
         self._session = Session(backend=self._backend)
 
         self._primitive_gates = _get_primitive_gates(gate_set)

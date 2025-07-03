@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.70.0rc0 (July 2025)
+
+- Fix overwriting of user-supplied `service` parameter to `IBMQBackend`.
+
 ## 0.69.0 (July 2025)
 
 - Migrate to upgraded IBM Quantum Platform.

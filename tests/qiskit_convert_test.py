@@ -224,6 +224,35 @@ def test_convert() -> None:
     assert np.allclose(state0, state1, atol=1e-10)
 
 
+
+def test_ParameterExpression() -> None:
+
+    # pytest qiskit_convert_test.py::test_symbolic qiskit_convert_test.py::test_ParameterExpression
+
+    pe = ParameterExpression({}, "pi/2")
+    print(pe)
+    print(dir(pe))
+    print(type(pe))
+    print(pe.sympify())
+    print(pe.sympify)
+    print(type(pe.sympify))
+    print(pe._parameter_symbols)
+
+    # see https://quantum.cloud.ibm.com/docs/en/api/qiskit/qiskit.circuit.ParameterExpression
+
+    # -> says The constructor of this object is not a public interface and should not ever be used directly.
+
+    # see https://quantum.cloud.ibm.com/docs/en/api/qiskit/release-notes/2.1
+
+    # https://quantum.cloud.ibm.com/docs/en/api/qiskit/release-notes/2.1#upgrade-notes
+
+    # sympy is no longer a requirement for installing Qiskit. After the migration to a Rust based symbolic engine for the ParameterExpression class the uses of SymPy are isolated to some visualization utilities, the TemplateOptimization transpiler pass, ParameterExpression.sympify() (which is explicitly for SymPy interoperability) and SparsePauliOp.simplify() if using parameterized coefficients. This functionality is not the most commonly used so SymPy is now treated as an optional dependency and those functions will raise a MissingOptionalLibraryError exception if they’re used and SymPy is not installed.
+
+    # The dependency on symengine which was used for building ParameterExpression objects has been removed. It has been replaced by a internal symbolic engine and is no longer required for core functionality in Qiskit. The only exception is that symengine was embedded into QPY formats 10, 11, and 12 so it is still required if you are deserializing those formats. The dependency on symengine for qpy.load() was made explicitly optional in 2.0.0, but if you were previously relying on symengine getting installed by default for this functionality you will now need to manually install it to load the payload. If you were using ParameterExpression.sympify() to get a symengine expression object from a ParameterExpression that will now return a sympy expression. If you need to use this with symengine you can leverage symengine.sympify to convert the sympy expression to a symengine one.
+
+    assert 1 == 2
+
+
 def test_symbolic() -> None:
     pi2 = Symbol("pi2")
     pi3 = Symbol("pi3")

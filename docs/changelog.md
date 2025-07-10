@@ -4,7 +4,7 @@
 
 # Changelog
 
-## 0.70.0rc0 (July 2025)
+## 0.70.0 (July 2025)
 
 - Fix overwriting of user-supplied `service` parameter to `IBMQBackend`.
 

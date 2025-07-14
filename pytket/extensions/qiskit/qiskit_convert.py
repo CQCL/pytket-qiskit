@@ -38,8 +38,8 @@ from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
 )
 from symengine import sympify  # type: ignore
-from symengine.lib import symengine_wrapper  # type: ignore
 
+import qiskit._accelerate.circuit  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from pytket.architecture import Architecture, FullyConnected
 from pytket.circuit import (
@@ -1166,7 +1166,7 @@ def tk_to_qiskit(
             new_p = Parameter(p_name)
             new_p._uuid = uuid  # noqa: SLF001
             new_p._parameter_keys = frozenset(  # noqa: SLF001
-                ((symengine_wrapper.Symbol(p_name), uuid),)
+                ((qiskit._accelerate.circuit.ParameterExpression.Symbol(p_name), uuid),)  # noqa: SLF001
             )
             new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))  # noqa: SLF001
             updates[p] = new_p

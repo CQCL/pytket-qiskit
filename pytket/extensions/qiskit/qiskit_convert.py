@@ -767,7 +767,7 @@ def param_to_qiskit(
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    return ParameterExpression(symb_map, sympify(ppi))
+    return ParameterExpression(symb_map, str(sympify(ppi)))
 
 
 def _get_params(

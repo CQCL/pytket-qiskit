@@ -727,7 +727,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
 
     :param qcirc: A circuit to be converted
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
-        by appending them to the tket Circuit symbol names as "_UUID:<uuid>".
+        by appending them to the tket Circuit symbol names as "_UUID_<uuid_as_hex>".
         This can be useful if you want to reassign Parameters after conversion
         to tket and back, as it is necessary for Parameter object equality
         to be preserved.
@@ -737,7 +737,10 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # Parameter uses a hidden _uuid for equality check
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
-        updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}  # noqa: SLF001
+        updates = {
+            p: Parameter(f"{p.name}_UUID_{p._uuid.hex}")  # noqa: SLF001
+            for p in qcirc.parameters
+        }
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
@@ -1155,7 +1158,7 @@ def tk_to_qiskit(
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()  # noqa: C408
     for p in qcirc.parameters:
-        name_spl = p.name.split("_UUID:", 2)
+        name_spl = p.name.split("_UUID_", 2)
         if len(name_spl) == 2:  # noqa: PLR2004
             p_name, uuid_str = name_spl
             uuid = UUID(uuid_str)

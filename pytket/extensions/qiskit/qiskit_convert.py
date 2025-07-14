@@ -756,9 +756,8 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        return p.sympify() / sympy.pi
-    else:
-        return p / sympy.pi
+        return sympy.sympify(str(p)) / sympy.pi
+    return p / sympy.pi
 
 
 def param_to_qiskit(

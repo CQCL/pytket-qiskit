@@ -756,11 +756,7 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        symexpr = p._symbol_expr  # noqa: SLF001
-        try:
-            return symexpr._sympy_() / sympy.pi
-        except AttributeError:
-            return symexpr / sympy.pi
+        return p.sympify() / sympy.pi
     else:
         return p / sympy.pi
 

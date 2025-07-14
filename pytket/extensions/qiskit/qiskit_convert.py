@@ -1028,7 +1028,7 @@ order or only one bit of one register"""
 
     if optype == OpType.TK1:
         params = _get_params(op, symb_map)
-        half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
+        half = np.pi / 2
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
         _apply_qiskit_instruction(
             qcirc,

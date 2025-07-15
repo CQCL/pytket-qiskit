@@ -952,6 +952,8 @@ def test_ibmq_mid_measure(brussels_backend: IBMQBackend) -> None:
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 def test_ibmq_conditional(brussels_backend: IBMQBackend) -> None:
+    # It seems that conditional operations are no longer supported as of July 2025. See:
+    # https://github.com/CQCL/pytket-qiskit/issues/505
     c = Circuit(3, 2).H(1).CX(1, 2).Measure(0, 0).Measure(1, 1)
     c.add_barrier([0, 1, 2])
     ar = c.add_c_register("a", 1)
@@ -959,9 +961,9 @@ def test_ibmq_conditional(brussels_backend: IBMQBackend) -> None:
 
     b = brussels_backend
     compiled = b.get_compiled_circuit(c)
-    assert b.backend_info.supports_fast_feedforward
+    assert not b.backend_info.supports_fast_feedforward
     assert not NoMidMeasurePredicate().verify(compiled)
-    assert b.valid_circuit(compiled)
+    assert not b.valid_circuit(compiled)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)

@@ -725,6 +725,10 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     """
     Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
+    *Note:* Support for conversion of symbolic circuits is currently limited. In
+    particular, if the circuit contains `ParameterVectorElement` symbols this function
+    will probably fail.
+
     :param qcirc: A circuit to be converted
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
         by appending them to the tket Circuit symbol names as "_UUID_<uuid_as_hex>".
@@ -1102,6 +1106,8 @@ def tk_to_qiskit(
     Note that implicit swaps in a pytket Circuit are not handled by default.
     Consider using the replace_implicit_swaps flag to replace these implicit swaps with
     SWAP gates.
+
+    *Note:* Support for conversion of symbolic circuits is currently limited.
 
     :param tkcirc: A :py:class:`Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs

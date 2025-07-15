@@ -47,8 +47,8 @@ from qiskit.transpiler import (  # type: ignore
     PassManagerConfig,
 )
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
-from qiskit.transpiler.preset_passmanagers.level3 import (  # type: ignore
-    level_3_pass_manager,
+from qiskit.transpiler.preset_passmanagers.level2 import (  # type: ignore
+    level_2_pass_manager,
 )
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
@@ -1496,7 +1496,7 @@ def test_round_trip_with_qiskit_transpilation() -> None:
         basis_gates=["cx", "sx", "x", "rz", "if_else"],
         seed_transpiler=0,
     )
-    pass_manager = level_3_pass_manager(config)
+    pass_manager = level_2_pass_manager(config)
     compiled_qc = pass_manager.run(qc)
     tk_circ = qiskit_to_tk(compiled_qc)
     assert tk_circ.n_gates_of_type(OpType.Conditional) == 3

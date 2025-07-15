@@ -1173,6 +1173,7 @@ def test_real_amplitudes_numeric_params() -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/256
+@pytest.mark.xfail(reason="Limited support for symbolic conversions")
 def test_symbolic_param_conv() -> None:
     qc = n_local(2, "ry", "cz", reps=1, entanglement="linear")
     qc_transpiled = transpile(

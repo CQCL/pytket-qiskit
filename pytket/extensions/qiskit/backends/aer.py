@@ -920,7 +920,6 @@ def _process_noise_model(
             #  the resulting noise channel is composed and reflected in probabilities
             [q0, q1] = qubits
             optype = _gate_str_2_optype[name]
-            link_errors.update()
             link_errors[(Node(q0), Node(q1))].update({optype: float(1 - gate_fid)})
             qubits_with_link_errors.add(q0)
             qubits_with_link_errors.add(q1)

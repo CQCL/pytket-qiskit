@@ -200,7 +200,7 @@ class IBMQBackend(Backend):
         props: BackendProperties | None = self._backend.properties()
         self._backend_info = self._get_backend_info(config, props)
 
-        self._session = Session(backend=self._backend)
+        self._session: Session | None = None
 
         self._primitive_gates = _get_primitive_gates(gate_set)
         self._primitive_1q_gates = _get_primitive_1q_gates(gate_set)
@@ -643,6 +643,7 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
+                    self._session = self._session or Session(backend=self._backend)
                     sampler = SamplerV2(mode=self._session, options=sampler_options)
                     job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()

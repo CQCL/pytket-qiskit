@@ -259,6 +259,25 @@ def test_symbolic() -> None:
     assert np.allclose(state0, state1, atol=1e-10)
 
 
+@pytest.mark.xfail(reason="Limited support for symbolic conversions")
+def test_symbolic_2() -> None:
+    # test if the parametersexpression geenrated during the conversion
+    # can be sympify. See discussion at:
+    # https://github.com/CQCL/pytket-qiskit/issues/499
+    pi2 = Symbol("pi2")
+    pi3 = Symbol("pi3")
+    pi0 = Symbol("pi0")
+    tkc = Circuit(3, 3, name="test").Ry(pi2, 1).Rx(pi3, 1).CX(1, 0)
+    tkc.add_phase(pi0 * 2)
+    RebaseTket().apply(tkc)
+
+    qc = tk_to_qiskit(tkc)
+
+    assert type(qc[0].params[0]) is ParameterExpression
+
+    assert qc[0].params[0].sympify() is not None
+
+
 def test_measures() -> None:
     qc = get_test_circuit(True)
     backend = qiskit_aer_backend("aer_simulator")

@@ -9,11 +9,10 @@ cp pytket-docs-theming/conf.py .
 # Get the name of the project
 EXTENSION_NAME="$(basename "$(dirname `pwd`)")"
 
-# Correct github link in navbar
-sed -i '' 's#CQCL/tket#CQCL/'$EXTENSION_NAME'#' _static/nav-config.js
-
 # Build the docs. Ensure we have the correct project title.
-sphinx-build -b html -D html_title="$EXTENSION_NAME" . build 
+sphinx-build -W -b html -D html_title="$EXTENSION_NAME" . build || exit 1
+
+sphinx-build -W -v -b coverage . build/coverage || exit 1
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     find build/ -type f -name "*.html" | xargs sed -e 's/pytket._tket/pytket/g' -i ""

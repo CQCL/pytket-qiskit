@@ -50,36 +50,33 @@ def _extract_basis_gates(backend: Backend) -> list[str]:
 
 
 class TketBackend(BackendV2):
-    """Wraps a :py:class:`Backend` as a :py:class:`qiskit.providers.BaseBackend` for use
+    """Wraps a :py:class:`~pytket.backends.backend.Backend` as a :py:class:`qiskit.providers.BackendV2` for use
     within the Qiskit software stack.
 
     Each :py:class:`qiskit.circuit.quantumcircuit.QuantumCircuit` passed in will be
-    converted to a :py:class:`Circuit` object. If a :py:class:`BasePass` is provided for
-    ``comp_pass``, this is applied to the :py:class:`Circuit`. Then it is processed by
-    the :py:class:`Backend`, wrapping the :py:class:`ResultHandle` s in a
-    :py:class:`TketJob`, retrieving the results when called on the job object. The
-    required predicates of the :py:class:`Backend` are presented to the Qiskit
+    converted to a :py:class:`~pytket._tket.circuit.Circuit` object. If a :py:class:`~pytket._tket.passes.BasePass` is provided for
+    ``comp_pass``, this is applied to the :py:class:`~pytket._tket.circuit.Circuit`. Then it is processed by
+    the :py:class:`~pytket.backends.backend.Backend`, wrapping the :py:class:`~pytket.backends.resulthandle.ResultHandle` s in a
+    :py:class:`~pytket.extensions.qiskit.tket_job.TketJob`, retrieving the results when called on the job object. The
+    required predicates of the :py:class:`~pytket.backends.backend.Backend` are presented to the Qiskit
     transpiler to enable it to perform the compilation in many cases. This may not
     always be possible due to unsupported gatesets or additional constraints that cannot
     be captured in Qiskit's transpiler, in which case a custom
-    :py:class:`qiskit.transpiler.TranspilationPass` should be used to map into a tket-
+    :py:class:`qiskit.transpiler.TransformationPass` should be used to map into a tket-
     compatible gateset and set ``comp_pass`` to compile for the backend. To compile with
     tket only, set ``comp_pass`` and just use Qiskit to map into a tket-compatible
-    gateset. In Qiskit Aqua, you should wrap the :py:class:`TketBackend` in a
-    :py:class:`qiskit.aqua.QuantumInstance`, providing a custom
-    :py:class:`qiskit.transpiler.PassManager` with a
-    :py:class:`qiskit.transpiler.passes.Unroller`. For examples, see the `user manual
+    gateset. For examples, see the `user manual
     <https://docs.quantinuum.com/tket/user-guide/manual/manual_backend.html#embedding-into-
     qiskit>`_ or the `Qiskit integration example <https://docs.quantinuum.com/tket/user-
     guide/examples/backends/qiskit_integration.html>`_.
     """
 
     def __init__(self, backend: Backend, comp_pass: BasePass | None = None):
-        """Create a new :py:class:`TketBackend` from a :py:class:`Backend`.
+        """Create a new :py:class:`TketBackend` from a :py:class:`~pytket.backends.backend.Backend`.
 
         :param backend: The device or simulator to wrap up
         :param comp_pass: The (optional) tket compilation pass to apply to each circuit
-         before submitting to the :py:class:`Backend`, defaults to None
+         before submitting to the :py:class:`~pytket.backends.backend.Backend`, defaults to None
         """
         arch = backend.backend_info.architecture if backend.backend_info else None
         coupling: list[list[Any]] | None
@@ -111,6 +108,7 @@ class TketBackend(BackendV2):
 
     @property
     def target(self) -> Target:
+        """See :py:attr:`~qiskit.providers.BackendV2.target`"""
         return self._target
 
     @property
@@ -124,6 +122,7 @@ class TketBackend(BackendV2):
     def run(
         self, run_input: QuantumCircuit | list[QuantumCircuit], **options: Any
     ) -> TketJob:
+        """See :py:meth:`qiskit.providers.BackendV2.run`"""
         if isinstance(run_input, QuantumCircuit):
             run_input = [run_input]
         n_shots = options.get("shots")

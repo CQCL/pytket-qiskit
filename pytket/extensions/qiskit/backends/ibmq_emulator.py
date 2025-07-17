@@ -41,8 +41,8 @@ if TYPE_CHECKING:
 
 class IBMQEmulatorBackend(Backend):
     """A backend which uses the AerBackend to loaclly emulate the behaviour of
-    IBMQBackend. Identical to :py:class:`~.IBMQBackend` except there is no `monitor`
-    parameter. Performs the same compilation and predicate checks as IBMQBackend.
+    :py:class:`~.IBMQBackend`. Identical to :py:class:`~.IBMQBackend` except there is no ``monitor``
+    parameter. Performs the same compilation and predicate checks as :py:class:`~.IBMQBackend`.
     Requires a valid IBM account.
     """
 
@@ -113,7 +113,7 @@ class IBMQEmulatorBackend(Backend):
     ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
-        Supported kwargs: `seed`, `postprocess`.
+        Supported kwargs: ``seed``, ``postprocess``.
         """
 
         if valid_check:

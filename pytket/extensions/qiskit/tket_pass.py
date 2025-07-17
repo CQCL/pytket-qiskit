@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from qiskit_aer.backends import AerSimulator  # type: ignore
 
 from pytket.extensions.qiskit import (
@@ -90,7 +89,7 @@ class TketAutoPass(TketPass):
             compilation. Level 0 just solves the device constraints without
             optimising. Level 1 additionally performs some light optimisations.
             Level 2 adds more computationally intensive optimisations. Defaults to 2.
-        :param token: Authentication token to use the `QiskitRuntimeService`.
+        :param token: Authentication token to use the :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`.
         """
         if isinstance(backend, AerSimulator):
             tk_backend = self._aer_backend_map[backend.name]()

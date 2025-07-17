@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""Methods to allow conversion between Qiskit and pytket circuit classes"""
-
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
@@ -264,8 +261,8 @@ def _string_to_circuit(
     n_qubits: int,
     qiskit_prep: Initialize | StatePreparation,
 ) -> Circuit:
-    """Helper function to generate circuits for Initialize
-    and StatePreparation objects built with strings"""
+    """Helper function to generate circuits for :py:class:`~qiskit.circuit.library.Initialize`
+    and :py:class:`~qiskit.circuit.library.StatePreparation` objects built with strings"""
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
@@ -315,7 +312,7 @@ def _all_bits_set(integer: int, n_bits: int) -> bool:
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
-    """Get a pytket controlled OpType from a qiskit ControlledGate."""
+    """Get a pytket controlled :py:class:`~pytket.circuit.OpType` from a qiskit :py:class:`~qiskit.circuit.ControlledGate`."""
 
     # If the control state is not "all |1>", use QControlBox
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
@@ -347,7 +344,7 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
 
 
 def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
-    """Get a pytket OpType from a qiskit Instruction."""
+    """Get a pytket :py:class:`~pytket.circuit.OpType` from a qiskit :py:class:`~qiskit.circuit.Instruction`."""
     if isinstance(instruction, ControlledGate):
         return _get_controlled_tket_optype(instruction)
     try:
@@ -408,8 +405,8 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
 def _add_state_preparation(
     tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
-    """Handles different cases of Initialize and StatePreparation
-    and appends the appropriate state preparation to a Circuit instance."""
+    """Handles different cases of :py:class:`~qiskit.circuit.library.Initialize` and :py:class:`~qiskit.circuit.library.StatePreparation`
+    and appends the appropriate state preparation to a :py:class:`~pytket._tket.circuit.Circuit` instance."""
 
     # Check how Initialize or StatePrep is constructed
     # With a string, an int or an array of amplitudes
@@ -624,7 +621,7 @@ class CircuitBuilder:
         name: str | None = None,
         phase: sympy.Expr | None = None,
     ) -> "CircuitBuilder":
-        """Construct a circuit builder from Qiskit's qubits and clbits"""
+        """Construct a circuit builder from Qiskit's :py:class:`~qiskit.circuit.Qubit` s and :py:class:`~qiskit.circuit.Clbit` s"""
         builder = cls([], None, name, phase)
         for qb in qubits:
             tk_qb = Qubit(qb._register.name, qb._index)  # noqa: SLF001
@@ -726,10 +723,10 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     Converts a qiskit :py:class:`qiskit.circuit.QuantumCircuit` to a pytket :py:class:`~pytket._tket.circuit.Circuit`.
 
     :param qcirc: A circuit to be converted
-    :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
-        by appending them to the tket Circuit symbol names as "_UUID:<uuid>".
-        This can be useful if you want to reassign Parameters after conversion
-        to tket and back, as it is necessary for Parameter object equality
+    :param preserve_param_uuid: Whether to preserve symbolic :py:class:`~qiskit.circuit.Parameter` uuids
+        by appending them to the tket :py:class:`~pytket._tket.circuit.Circuit` symbol names as "_UUID:<uuid>".
+        This can be useful if you want to reassign :py:class:`~qiskit.circuit.Parameter` s after conversion
+        to tket and back, as it is necessary for :py:class:`~qiskit.circuit.Parameter` object equality
         to be preserved.
     :return: The converted circuit
     """
@@ -795,7 +792,7 @@ def _apply_qiskit_instruction(
 
 
 def _has_if_else(qc: QuantumCircuit) -> bool:
-    """Check if a QuantumCircuit contains an IfElseOp."""
+    """Check if a :py:class:`~qiskit.circuit.QuantumCircuit` contains an :py:class:`~qiskit.circuit.IfElseOp`."""
     return "if_else" in qc.count_ops()
 
 
@@ -1101,15 +1098,15 @@ def tk_to_qiskit(
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    Note that implicit swaps in a pytket Circuit are not handled by default.
-    Consider using the replace_implicit_swaps flag to replace these implicit swaps with
+    Note that implicit swaps in a pytket :py:class:`~pytket._tket.circuit.Circuit` are not handled by default.
+    Consider using the ``replace_implicit_swaps`` flag to replace these implicit swaps with
     SWAP gates.
 
     :param tkcirc: A :py:class:`~pytket._tket.circuit.Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
     :param perm_warning: Warn if an input circuit has implicit qubit permutations,
-        and `replace_implicit_swaps` is `False`. True by default.
+        and ``replace_implicit_swaps`` is ``False``. True by default.
     :return: The converted circuit
     """
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
@@ -1192,7 +1189,7 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
 def process_characterisation_from_config(  # noqa: PLR0915
     config: QasmBackendConfiguration, properties: BackendProperties | None
 ) -> dict[str, Any]:
-    """Obtain a dictionary containing device Characteristics given config and props.
+    """Obtain a dictionary containing device characteristics given config and props.
 
     :param config: A IBMQ configuration object
     :param properties: An optional IBMQ properties object
@@ -1291,8 +1288,8 @@ def get_avg_characterisation(
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors
 
-    Used to convert a typical output from `process_characterisation` into an input
-    noise characterisation for NoiseAwarePlacement
+    Used to convert a typical output from :py:func:`~.process_characterisation` into an input
+    noise characterisation for :py:class:`~pytket.placement.NoiseAwarePlacement`
     """
 
     K = TypeVar("K")

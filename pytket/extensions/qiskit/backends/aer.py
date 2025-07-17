@@ -119,7 +119,7 @@ def qiskit_aer_backend(backend_name: str) -> "QiskitAerBackend":
     """Find a qiskit backend with the given name.
 
     If more than one backend with the given name is available, emit a warning
-    and return the first one in the list returned by `Aer.backends()`.
+    and return the first one in the list returned by :py:meth:`~qiskit_aer.AerProvider.backends`.
     """
     candidates = [b for b in Aer.backends() if b.name == backend_name]
     n_candidates = len(candidates)
@@ -320,7 +320,7 @@ class _AerBaseBackend(Backend):
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
 
         :return: An optimised quantum circuit
@@ -344,7 +344,7 @@ class _AerBaseBackend(Backend):
         and return the list of compiled circuits (does not act in place).
 
         As well as applying a degree of optimisation (controlled by the
-        `optimisation_level` parameter), this method tries to ensure that the circuits
+        ``optimisation_level`` parameter), this method tries to ensure that the circuits
         can be run on the backend (i.e. successfully passed to
         :py:meth:`process_circuits`), for example by rebasing to the supported gate set,
         or routing to match the connectivity of the device. However, this is not always
@@ -355,7 +355,7 @@ class _AerBaseBackend(Backend):
         are submitted to the backend.
 
         If the validity check fails, you can obtain more information about the failure
-        by iterating through the predicates in the `required_predicates` property of the
+        by iterating through the predicates in the ``required_predicates`` property of the
         backend, and running the :py:meth:`~pytket.predicates.Predicate.verify` method on each in turn with your
         circuit.
 
@@ -364,7 +364,7 @@ class _AerBaseBackend(Backend):
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
         :return: Compiled circuits.
         """
@@ -381,7 +381,7 @@ class _AerBaseBackend(Backend):
     ) -> list[ResultHandle]:
         """
         See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
-        Supported kwargs: `seed`, `postprocess`.
+        Supported kwargs: ``seed``, ``postprocess``.
         """
         postprocess = kwargs.get("postprocess", False)
 
@@ -617,7 +617,7 @@ class AerBackend(_AerBaseBackend):
         https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
         for available values. Defaults to "automatic".
     :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
-        execution. `noise_model` will be overwritten if this is given. Default to None.
+        execution. ``noise_model`` will be overwritten if this is given. Default to None.
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 
@@ -789,7 +789,7 @@ class AerDensityMatrixBackend(_AerBaseBackend):
     """
     Backend for running simulations on the Qiskit Aer density matrix simulator.
 
-    :param noise_model: Noise model to apply during simulation. Defaults to None.
+    :param noise_model: Noise model to apply during simulation. Defaults to ``None``.
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 

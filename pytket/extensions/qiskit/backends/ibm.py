@@ -124,7 +124,7 @@ def _save_ibmq_auth(qiskit_config: QiskitConfig | None) -> None:
         token = qiskit_config.ibmq_api_token
     if token is not None and not QiskitRuntimeService.saved_accounts():
         QiskitRuntimeService.save_account(
-            channel="ibm_quantum", token=token, overwrite=True
+            channel="ibm_quantum_platform", token=token, overwrite=True
         )
 
 
@@ -149,13 +149,12 @@ def _int_from_readout(readout: np.ndarray) -> int:
 class IBMQBackend(Backend):
     """A backend for running circuits on remote IBMQ devices.
 
-    The provider arguments of ``hub``, ``group`` and ``project`` can
-    be specified here as parameters or set in the config file
-    using :py:meth:`pytket.extensions.qiskit.backends.config.set_ibmq_config`.
-    This function can also be used to set the IBMQ API token.
+    The provider ``instance`` argument can be specified here as a parameter or set in the
+    config file using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`. This function
+    can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. ``ibmq_16_melbourne``.
-    :param instance: String containing information about the hub/group/project.
+    :param instance: CRN string for your instance.
     :param monitor: Use the IBM job monitor. Defaults to True.
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
     :param service: A :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`
@@ -201,10 +200,7 @@ class IBMQBackend(Backend):
         props: BackendProperties | None = self._backend.properties()
         self._backend_info = self._get_backend_info(config, props)
 
-        self._service = QiskitRuntimeService(
-            channel="ibm_quantum", token=token, instance=instance
-        )
-        self._session = Session(backend=self._backend)
+        self._session: Session | None = None
 
         self._primitive_gates = _get_primitive_gates(gate_set)
         self._primitive_1q_gates = _get_primitive_1q_gates(gate_set)
@@ -231,8 +227,10 @@ class IBMQBackend(Backend):
     ) -> QiskitRuntimeService:
         _save_ibmq_auth(qiskit_config)
         if instance is not None:
-            return QiskitRuntimeService(channel="ibm_quantum", instance=instance)
-        return QiskitRuntimeService(channel="ibm_quantum")
+            return QiskitRuntimeService(
+                channel="ibm_quantum_platform", instance=instance
+            )
+        return QiskitRuntimeService(channel="ibm_quantum_platform")
 
     @property
     def backend_info(self) -> BackendInfo:
@@ -269,8 +267,7 @@ class IBMQBackend(Backend):
         # dynamic-circuits/feature-table
         supports_mid_measure = config.simulator or config.multi_meas_enabled
         supports_fast_feedforward = (
-            hasattr(config, "supported_features")
-            and "qasm3" in config.supported_features
+            hasattr(config, "conditional") and config.conditional
         )
 
         # simulator i.e. "ibmq_qasm_simulator" does not have `supported_instructions`
@@ -316,7 +313,7 @@ class IBMQBackend(Backend):
             if instance is not None:
                 service = cls._get_service(instance=instance, qiskit_config=None)
             else:
-                service = QiskitRuntimeService(channel="ibm_quantum")
+                service = QiskitRuntimeService(channel="ibm_quantum_platform")
 
         backend_info_list = []
         for backend in service.backends():
@@ -639,6 +636,7 @@ class IBMQBackend(Backend):
                             ppcirc_strs[i],
                         )
                 else:
+                    self._session = self._session or Session(backend=self._backend)
                     sampler = SamplerV2(mode=self._session, options=sampler_options)
                     job = sampler.run(qcs, shots=n_shots)
                     job_id = job.job_id()

@@ -109,7 +109,7 @@ def test_cancel() -> None:
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
+def test_qiskit_counts(brussels_emulator_backend: IBMQEmulatorBackend) -> None:
     num_qubits = 2
     qc = QuantumCircuit(num_qubits)
     qc.h(0)
@@ -118,8 +118,8 @@ def test_qiskit_counts(brisbane_emulator_backend: IBMQEmulatorBackend) -> None:
 
     s = BackendSamplerV2(
         backend=TketBackend(
-            brisbane_emulator_backend,
-            comp_pass=brisbane_emulator_backend.default_compilation_pass(
+            brussels_emulator_backend,
+            comp_pass=brussels_emulator_backend.default_compilation_pass(
                 optimisation_level=0
             ),
         )

@@ -100,7 +100,7 @@ inst = '<your_instance_CRN_here>''
 The instance CRN is the long string beginning with "crn:" which is shown on the
 "Instances" page for your account.
 
-### Method 1: Using {py:class}`QiskitRuntimeService`
+### Method 1: Using {py:class}`~qiskit_ibm_runtime.QiskitRuntimeService`
 
 You can use the following qiskit commands to save your IBM credentials
 to disk:

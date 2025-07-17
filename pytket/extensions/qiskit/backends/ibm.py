@@ -150,7 +150,7 @@ class IBMQBackend(Backend):
     """A backend for running circuits on remote IBMQ devices.
 
     The provider ``instance`` argument can be specified here as a parameter or set in the
-    config file using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`. This function
+    config file using :py:func:`~.set_ibmq_config`. This function
     can also be used to set the IBMQ API token.
 
     :param backend_name: Name of the IBMQ device, e.g. ``ibmq_16_melbourne``.

@@ -38,8 +38,8 @@ from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
     BackendProperties,
 )
 from symengine import sympify  # type: ignore
-from symengine.lib import symengine_wrapper  # type: ignore
 
+import qiskit._accelerate.circuit  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from pytket.architecture import Architecture, FullyConnected
 from pytket.circuit import (
@@ -725,9 +725,13 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     """
     Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
 
+    *Note:* Support for conversion of symbolic circuits is currently limited. In
+    particular, if the circuit contains `ParameterVectorElement` symbols this function
+    will probably fail.
+
     :param qcirc: A circuit to be converted
     :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
-        by appending them to the tket Circuit symbol names as "_UUID:<uuid>".
+        by appending them to the tket Circuit symbol names as "_UUID_<uuid_as_hex>".
         This can be useful if you want to reassign Parameters after conversion
         to tket and back, as it is necessary for Parameter object equality
         to be preserved.
@@ -737,7 +741,10 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # Parameter uses a hidden _uuid for equality check
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
-        updates = {p: Parameter(f"{p.name}_UUID:{p._uuid}") for p in qcirc.parameters}  # noqa: SLF001
+        updates = {
+            p: Parameter(f"{p.name}_UUID_{p._uuid.hex}")  # noqa: SLF001
+            for p in qcirc.parameters
+        }
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
     builder = CircuitBuilder(
@@ -756,13 +763,8 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        symexpr = p._symbol_expr  # noqa: SLF001
-        try:
-            return symexpr._sympy_() / sympy.pi
-        except AttributeError:
-            return symexpr / sympy.pi
-    else:
-        return p / sympy.pi
+        return sympy.sympify(str(p)) / sympy.pi
+    return p / sympy.pi
 
 
 def param_to_qiskit(
@@ -771,7 +773,7 @@ def param_to_qiskit(
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    return ParameterExpression(symb_map, sympify(ppi))
+    return ParameterExpression(symb_map, str(sympify(ppi)))
 
 
 def _get_params(
@@ -1028,7 +1030,7 @@ order or only one bit of one register"""
 
     if optype == OpType.TK1:
         params = _get_params(op, symb_map)
-        half = ParameterExpression(symb_map, sympify(sympy.pi / 2))
+        half = np.pi / 2
         qcirc.global_phase += -params[0] / 2 - params[2] / 2
         _apply_qiskit_instruction(
             qcirc,
@@ -1105,6 +1107,8 @@ def tk_to_qiskit(
     Consider using the replace_implicit_swaps flag to replace these implicit swaps with
     SWAP gates.
 
+    *Note:* Support for conversion of symbolic circuits is currently limited.
+
     :param tkcirc: A :py:class:`Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
@@ -1160,7 +1164,7 @@ def tk_to_qiskit(
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()  # noqa: C408
     for p in qcirc.parameters:
-        name_spl = p.name.split("_UUID:", 2)
+        name_spl = p.name.split("_UUID_", 2)
         if len(name_spl) == 2:  # noqa: PLR2004
             p_name, uuid_str = name_spl
             uuid = UUID(uuid_str)
@@ -1168,7 +1172,7 @@ def tk_to_qiskit(
             new_p = Parameter(p_name)
             new_p._uuid = uuid  # noqa: SLF001
             new_p._parameter_keys = frozenset(  # noqa: SLF001
-                ((symengine_wrapper.Symbol(p_name), uuid),)
+                ((qiskit._accelerate.circuit.ParameterExpression.Symbol(p_name), uuid),)  # noqa: SLF001
             )
             new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))  # noqa: SLF001
             updates[p] = new_p

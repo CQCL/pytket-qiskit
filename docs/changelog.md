@@ -4,6 +4,12 @@
 
 # Changelog
 
+## Unreleased
+
+- Update minimum qiskit version to 2.1.1.
+- Document limitations of conversion of symbolic circuits between pytket and
+  qiskit.
+
 ## 0.70.0 (July 2025)
 
 - Fix overwriting of user-supplied `service` parameter to `IBMQBackend`.

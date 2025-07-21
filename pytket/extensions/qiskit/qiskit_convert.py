@@ -1125,7 +1125,7 @@ def tk_to_qiskit(
             "The pytket Circuit contains implicit qubit permutations"  # noqa: ISC003
             + " which aren't handled by default."
             + " Consider using the replace_implicit_swaps flag in tk_to_qiskit or"
-            + " replacing them using Circuit.replace_implicit_swaps()."
+            + " replacing them using Circuit.replace_implicit_wire_swaps()."
         )
 
     qcirc = QuantumCircuit(name=tkc.name)

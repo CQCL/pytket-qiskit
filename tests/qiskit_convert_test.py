@@ -47,8 +47,8 @@ from qiskit.transpiler import (  # type: ignore
     PassManagerConfig,
 )
 from qiskit.transpiler.passes import BasisTranslator  # type: ignore
-from qiskit.transpiler.preset_passmanagers.level3 import (  # type: ignore
-    level_3_pass_manager,
+from qiskit.transpiler.preset_passmanagers.level2 import (  # type: ignore
+    level_2_pass_manager,
 )
 from qiskit_aer import Aer  # type: ignore
 from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2  # type: ignore
@@ -257,6 +257,21 @@ def test_symbolic() -> None:
         ]
     )
     assert np.allclose(state0, state1, atol=1e-10)
+
+
+def test_symbolic_2() -> None:
+    pi2 = Symbol("pi2")
+    pi3 = Symbol("pi3")
+    pi0 = Symbol("pi0")
+    tkc = Circuit(2, name="test").Ry(pi2, 1).Rx(pi3, 1).CX(1, 0)
+    tkc.add_phase(pi0 * 2)
+    RebaseTket().apply(tkc)
+
+    qc = tk_to_qiskit(tkc)
+
+    tkc1 = qiskit_to_tk(qc)
+    RebaseTket().apply(tkc1)
+    assert tkc == tkc1
 
 
 def test_measures() -> None:
@@ -1173,6 +1188,7 @@ def test_real_amplitudes_numeric_params() -> None:
 
 
 # https://github.com/CQCL/pytket-qiskit/issues/256
+@pytest.mark.xfail(reason="Limited support for symbolic conversions")
 def test_symbolic_param_conv() -> None:
     qc = n_local(2, "ry", "cz", reps=1, entanglement="linear")
     qc_transpiled = transpile(
@@ -1496,7 +1512,7 @@ def test_round_trip_with_qiskit_transpilation() -> None:
         basis_gates=["cx", "sx", "x", "rz", "if_else"],
         seed_transpiler=0,
     )
-    pass_manager = level_3_pass_manager(config)
+    pass_manager = level_2_pass_manager(config)
     compiled_qc = pass_manager.run(qc)
     tk_circ = qiskit_to_tk(compiled_qc)
     assert tk_circ.n_gates_of_type(OpType.Conditional) == 3

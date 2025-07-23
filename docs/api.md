@@ -90,12 +90,6 @@
     .. autofunction:: process_characterisation
     .. autofunction:: get_avg_characterisation
     .. autofunction:: process_characterisation_from_config
-    .. autoclass:: CircuitBuilder
-
-        .. automethod:: add_qiskit_data
-        .. automethod:: circuit
-        .. automethod:: from_qiskit_units
-
     .. autofunction:: append_tk_command_to_qiskit
     .. autofunction:: param_to_qiskit
     .. autofunction:: param_to_tk

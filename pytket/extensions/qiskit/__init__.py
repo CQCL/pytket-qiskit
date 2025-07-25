@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Module for conversion between IBM Qiskit and tket primitives."""
 
 # _metadata.py is copied to the folder after installation.
 from ._metadata import __extension_name__, __extension_version__

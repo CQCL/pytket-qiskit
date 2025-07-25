@@ -114,7 +114,7 @@ class NoIBMQCredentialsError(Exception):
     def __init__(self) -> None:
         super().__init__(
             "No IBMQ credentials found on disk, store your account using qiskit,"
-            " or using :py:meth:`pytket.extensions.qiskit.set_ibmq_config` first."
+            " or using :py:meth:`pytket.extensions.qiskit.backends.config.set_ibmq_config` first."
         )
 
 
@@ -149,17 +149,17 @@ def _int_from_readout(readout: np.ndarray) -> int:
 class IBMQBackend(Backend):
     """A backend for running circuits on remote IBMQ devices.
 
-    The provider `instance` argument can be specified here as a parameter or set in the
-    config file using :py:meth:`pytket.extensions.qiskit.set_ibmq_config`. This function
+    The provider ``instance`` argument can be specified here as a parameter or set in the
+    config file using :py:func:`~.set_ibmq_config`. This function
     can also be used to set the IBMQ API token.
 
-    :param backend_name: Name of the IBMQ device, e.g. `ibmq_16_melbourne`.
+    :param backend_name: Name of the IBMQ device, e.g. ``ibmq_16_melbourne``.
     :param instance: CRN string for your instance.
     :param monitor: Use the IBM job monitor. Defaults to True.
     :raises ValueError: If no IBMQ account is loaded and none exists on the disk.
-    :param service: A QiskitRuntimeService
-    :param token: Authentication token to use the `QiskitRuntimeService`.
-    :param sampler_options: A customised `qiskit_ibm_runtime` `SamplerOptions` instance.
+    :param service: A :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`
+    :param token: Authentication token to use the :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`.
+    :param sampler_options: A customised :py:class:`qiskit_ibm_runtime.options.SamplerOptions` instance.
         See the Qiskit documentation at
         https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
         for details and default values.
@@ -242,7 +242,7 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration,
         props: BackendProperties | None,
     ) -> BackendInfo:
-        """Construct a BackendInfo from data returned by the IBMQ API.
+        """Construct a :py:class:`~pytket.backends.backendinfo.BackendInfo` from data returned by the IBMQ API.
 
         :param config: The configuration of this backend.
         :param props: The measured properties of this backend (not required).
@@ -376,7 +376,7 @@ class IBMQBackend(Backend):
             - Level 2 (the default) adds more computationally intensive optimisations
               that should give the best results from execution.
             - Level 3 re-synthesises the circuit using the computationally intensive
-              `GreedyPauliSimp`. This will remove any barriers while optimising.
+              :py:meth:`~pytket.passes.GreedyPauliSimp`. This will remove any barriers while optimising.
 
 
         :return: Compilation pass guaranteeing required predicates.
@@ -490,14 +490,11 @@ class IBMQBackend(Backend):
         :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
 
         :return: An optimised quantum circuit
-        :rtype: Circuit
         """
         return_circuit = circuit.copy()
         if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
@@ -518,33 +515,29 @@ class IBMQBackend(Backend):
         and return the list of compiled circuits (does not act in place).
 
         As well as applying a degree of optimisation (controlled by the
-        `optimisation_level` parameter), this method tries to ensure that the circuits
+        ``optimisation_level`` parameter), this method tries to ensure that the circuits
         can be run on the backend (i.e. successfully passed to
         :py:meth:`process_circuits`), for example by rebasing to the supported gate set,
         or routing to match the connectivity of the device. However, this is not always
         possible, for example if the circuit contains classical operations that are not
-        supported by the backend. You may use :py:meth:`valid_circuit` to check whether
+        supported by the backend. You may use :py:meth:`~pytket.backends.backend.Backend.valid_circuit` to check whether
         the circuit meets the backend's requirements after compilation. This validity
         check is included in :py:meth:`process_circuits` by default, before any circuits
         are submitted to the backend.
 
         If the validity check fails, you can obtain more information about the failure
-        by iterating through the predicates in the `required_predicates` property of the
-        backend, and running the :py:meth:`verify` method on each in turn with your
+        by iterating through the predicates in the :py:attr`required_predicates` property of the
+        backend, and running the :py:meth:`~pytket.predicates.Predicate.verify` method on each in turn with your
         circuit.
 
         :param circuits: The circuits to compile.
-        :type circuit: Sequence[Circuit]
         :param optimisation_level: The level of optimisation to perform during
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
         :return: Compiled circuits.
-        :rtype: List[Circuit]
         """
         return [
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
@@ -574,18 +567,18 @@ class IBMQBackend(Backend):
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
 
         :Keyword Arguments:
             * `postprocess`:
                 apply end-of-circuit simplifications and classical
                 postprocessing to improve fidelity of results (bool, default False)
             * `simplify_initial`:
-                apply the pytket ``SimplifyInitial`` pass to improve
+                apply the pytket :py:meth:`~pytket.passes.SimplifyInitial` pass to improve
                 fidelity of results assuming all qubits initialized to zero
                 (bool, default False)
             * `sampler_options`:
-                A customised `qiskit_ibm_runtime` `SamplerOptions` instance. See
+                A customised :py:class:`qiskit_ibm_runtime.options.SamplerOptions` instance. See
                 the Qiskit documentation at
                 https://docs.quantum.ibm.com/api/qiskit-ibm-runtime/qiskit_ibm_runtime.options.SamplerOptions
                 for details and default values.
@@ -678,8 +671,8 @@ class IBMQBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
-        Supported kwargs: `timeout`, `wait`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
+        Supported kwargs: ``timeout``, ``wait``.
         """
         self._check_handle_type(handle)
         if handle in self._cache:

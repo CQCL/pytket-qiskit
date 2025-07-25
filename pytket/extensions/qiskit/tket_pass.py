@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from qiskit_aer.backends import AerSimulator  # type: ignore
 
 from pytket.extensions.qiskit import (
@@ -38,7 +37,7 @@ class TketPass(TransformationPass):
         """Wraps a pytket compiler pass as a
         :py:class:`qiskit.transpiler.TransformationPass`. A
         :py:class:`qiskit.dagcircuit.DAGCircuit` is converted to a pytket
-        :py:class:`Circuit`. `tket_pass` will be run and the result is converted back.
+        :py:class:`~pytket._tket.circuit.Circuit`. `tket_pass` will be run and the result is converted back.
 
         :param tket_pass: The pytket compiler pass to run
         """
@@ -91,8 +90,8 @@ class TketAutoPass(TketPass):
             compilation. Level 0 just solves the device constraints without
             optimising. Level 1 additionally performs some light optimisations.
             Level 2 adds more computationally intensive optimisations. Defaults to 2.
-        :param instance: Instance for the `QiskitRuntimeService`.
-        :param token: Authentication token to use the `QiskitRuntimeService`.
+        :param instance: Instance for the :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`.
+        :param token: Authentication token to use the :py:class:`~qiskit_ibm_runtime.QiskitRuntimeService`.
         """
         if isinstance(backend, AerSimulator):
             tk_backend = self._aer_backend_map[backend.name]()

@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""Methods to allow conversion between Qiskit and pytket circuit classes"""
-
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
@@ -242,7 +239,7 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOpe
     for p, c in zip(op.paulis, op.coeffs, strict=False):
         if np.iscomplex(c):
             raise ValueError(f"Coefficient for Pauli {p} is non-real.")
-        coeff = param_to_tk(t) * c
+        coeff = _param_to_tk(t) * c
         qpslist = []
         pstr = p.to_label()
         for a in pstr:
@@ -264,8 +261,8 @@ def _string_to_circuit(
     n_qubits: int,
     qiskit_prep: Initialize | StatePreparation,
 ) -> Circuit:
-    """Helper function to generate circuits for Initialize
-    and StatePreparation objects built with strings"""
+    """Helper function to generate circuits for :py:class:`~qiskit.circuit.library.Initialize`
+    and :py:class:`~qiskit.circuit.library.StatePreparation` objects built with strings"""
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
@@ -315,7 +312,7 @@ def _all_bits_set(integer: int, n_bits: int) -> bool:
 
 
 def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
-    """Get a pytket controlled OpType from a qiskit ControlledGate."""
+    """Get a pytket controlled :py:class:`~pytket.circuit.OpType` from a qiskit :py:class:`~qiskit.circuit.ControlledGate`."""
 
     # If the control state is not "all |1>", use QControlBox
     if not _all_bits_set(c_gate.ctrl_state, c_gate.num_ctrl_qubits):
@@ -347,7 +344,7 @@ def _get_controlled_tket_optype(c_gate: ControlledGate) -> OpType:
 
 
 def _optype_from_qiskit_instruction(instruction: Instruction) -> OpType:
-    """Get a pytket OpType from a qiskit Instruction."""
+    """Get a pytket :py:class:`~pytket.circuit.OpType` from a qiskit :py:class:`~qiskit.circuit.Instruction`."""
     if isinstance(instruction, ControlledGate):
         return _get_controlled_tket_optype(instruction)
     try:
@@ -408,8 +405,8 @@ def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBo
 def _add_state_preparation(
     tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
-    """Handles different cases of Initialize and StatePreparation
-    and appends the appropriate state preparation to a Circuit instance."""
+    """Handles different cases of :py:class:`~qiskit.circuit.library.Initialize` and :py:class:`~qiskit.circuit.library.StatePreparation`
+    and appends the appropriate state preparation to a :py:class:`~pytket._tket.circuit.Circuit` instance."""
 
     # Check how Initialize or StatePrep is constructed
     # With a string, an int or an array of amplitudes
@@ -443,152 +440,7 @@ def _add_state_preparation(
         )
 
 
-def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
-    qregs = [QuantumRegister(instr.num_qubits, "q")] if instr.num_qubits > 0 else []
-    cregs = [ClassicalRegister(instr.num_clbits, "c")] if instr.num_clbits > 0 else []
-    builder = CircuitBuilder(qregs, cregs)
-    builder.add_qiskit_data(circuit, instr.definition)
-    subc = builder.circuit()
-    subc.name = instr.name
-    return CircBox(subc)
-
-
-def _build_rename_map(
-    qcirc: QuantumCircuit,
-    if_else_builder: "CircuitBuilder",
-    outer_builder: "CircuitBuilder",
-    qargs: list[QCQubit],
-    cargs: list[Clbit],
-) -> dict[Qubit | Bit, Qubit | Bit]:
-    rename_map: dict[Qubit | Bit, Qubit | Bit] = {}
-    for i, inner_q in enumerate(qcirc.qubits):
-        rename_map[if_else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
-    for i, inner_c in enumerate(qcirc.clbits):
-        rename_map[if_else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
-    return rename_map
-
-
-# Used for handling of IfElseOp
-# docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
-# Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
-# pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
-def _pytket_circuits_from_ifelseop(
-    if_else_op: IfElseOp,
-    outer_builder: "CircuitBuilder",
-    qargs: list[QCQubit],
-    cargs: list[Clbit],
-) -> tuple[Circuit, Circuit | None]:
-    # Extract the QuantumCircuit implementing true_body
-    if_qc: QuantumCircuit = if_else_op.blocks[0]
-    # if_qc can have empty qregs, so build from bits
-    if_builder = CircuitBuilder.from_qiskit_units(
-        if_qc.qubits, if_qc.clbits, if_qc.name, param_to_tk(if_qc.global_phase)
-    )
-    if_builder.add_qiskit_data(if_qc)
-    if_circuit = if_builder.circuit()
-    # if_circuit might have a different set of registers, which might
-    # cause problems when appending to the outer circuit.
-    # We rename the units to make sure the registers in the inner circuit
-    # is a subset of the registers in the ourter circuit.
-    if_rename_map = _build_rename_map(
-        qcirc=if_qc,
-        if_else_builder=if_builder,
-        outer_builder=outer_builder,
-        qargs=qargs,
-        cargs=cargs,
-    )
-    if_circuit.rename_units(if_rename_map)  # type: ignore
-    if_circuit.name = "If"
-    if_circuit.remove_blank_wires(
-        keep_blank_classical_wires=False,
-        remove_classical_only_at_end_of_register=False,
-    )
-
-    # The false_body arg is optional
-    if len(if_else_op.blocks) == 2:  # noqa: PLR2004
-        else_qc: QuantumCircuit = if_else_op.blocks[1]
-        else_builder = CircuitBuilder.from_qiskit_units(
-            else_qc.qubits,
-            else_qc.clbits,
-            else_qc.name,
-            param_to_tk(else_qc.global_phase),
-        )
-        else_builder.add_qiskit_data(else_qc)
-        else_circuit = else_builder.circuit()
-        # else_circuit might have a different set of registers
-        else_rename_map = _build_rename_map(
-            else_qc,
-            if_else_builder=else_builder,
-            outer_builder=outer_builder,
-            qargs=qargs,
-            cargs=cargs,
-        )
-        else_circuit.rename_units(else_rename_map)  # type: ignore
-        else_circuit.name = "Else"
-        else_circuit.remove_blank_wires(
-            keep_blank_classical_wires=False,
-            remove_classical_only_at_end_of_register=False,
-        )
-        return if_circuit, else_circuit
-
-    # If no false_body is specified IfElseOp.blocks is of length 1.
-    # In this case we return a Circuit implementing true_body and None.
-    return if_circuit, None
-
-
-def _append_if_else_circuit(
-    if_else_op: IfElseOp,
-    outer_builder: "CircuitBuilder",
-    bits: list[Bit],
-    qargs: list[QCQubit],
-    cargs: list[Clbit],
-) -> None:
-    # Get two pytket circuits which implement the true_body and false_body.
-    if_circ, else_circ = _pytket_circuits_from_ifelseop(
-        if_else_op, outer_builder, qargs, cargs
-    )
-    # else_circ can be None if no false_body is specified.
-    if isinstance(if_else_op.condition[0], Clbit):
-        if len(bits) != 1:
-            raise NotImplementedError("Conditions on multiple bits not supported")
-        outer_builder.tkc.add_circbox(
-            circbox=CircBox(if_circ),
-            args=if_circ.qubits + if_circ.bits,  # type: ignore
-            condition_bits=bits,
-            condition_value=if_else_op.condition[1],
-        )
-        # If we have an else_circ defined, add it to the circuit
-        if else_circ is not None:
-            outer_builder.tkc.add_circbox(
-                circbox=CircBox(else_circ),
-                args=else_circ.qubits + else_circ.bits,  # type: ignore
-                condition_bits=bits,
-                condition_value=1 ^ if_else_op.condition[1],
-            )
-
-    elif isinstance(if_else_op.condition[0], ClassicalRegister):
-        pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(
-            if_else_op.condition[0].name
-        )
-        outer_builder.tkc.add_circbox(
-            circbox=CircBox(if_circ),
-            args=if_circ.qubits + if_circ.bits,  # type: ignore
-            condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
-        )
-        if else_circ is not None:
-            outer_builder.tkc.add_circbox(
-                circbox=CircBox(else_circ),
-                args=else_circ.qubits + else_circ.bits,  # type: ignore
-                condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
-            )
-    else:
-        raise TypeError(
-            "Unrecognized type used to construct IfElseOp. Expected "  # noqa: ISC003
-            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
-        )
-
-
-class CircuitBuilder:
+class _CircuitBuilder:
     def __init__(
         self,
         qregs: list[QuantumRegister],
@@ -623,8 +475,8 @@ class CircuitBuilder:
         bits: list[Clbit],
         name: str | None = None,
         phase: sympy.Expr | None = None,
-    ) -> "CircuitBuilder":
-        """Construct a circuit builder from Qiskit's qubits and clbits"""
+    ) -> "_CircuitBuilder":
+        """Construct a circuit builder from Qiskit's :py:class:`~qiskit.circuit.Qubit` s and :py:class:`~qiskit.circuit.Clbit` s"""
         builder = cls([], None, name, phase)
         for qb in qubits:
             tk_qb = Qubit(qb._register.name, qb._index)  # noqa: SLF001
@@ -656,7 +508,7 @@ class CircuitBuilder:
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
-                params = [param_to_tk(p) for p in instr.base_gate.params]
+                params = [_param_to_tk(p) for p in instr.base_gate.params]
                 q_ctrl_box = _get_qcontrol_box(c_gate=instr, params=params)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
@@ -707,13 +559,13 @@ class CircuitBuilder:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,
-                        [param_to_tk(p) for p in instr.params[:-1]],
+                        [_param_to_tk(p) for p in instr.params[:-1]],
                         qubits,
                     )
                 else:
                     raise NotImplementedError("CUGate with nonzero phase")
             else:
-                params = [param_to_tk(p) for p in instr.params]
+                params = [_param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(
                     optype,  # type: ignore
                     params,
@@ -721,19 +573,164 @@ class CircuitBuilder:
                 )
 
 
+def _build_circbox(instr: Instruction, circuit: QuantumCircuit) -> CircBox:
+    qregs = [QuantumRegister(instr.num_qubits, "q")] if instr.num_qubits > 0 else []
+    cregs = [ClassicalRegister(instr.num_clbits, "c")] if instr.num_clbits > 0 else []
+    builder = _CircuitBuilder(qregs, cregs)
+    builder.add_qiskit_data(circuit, instr.definition)
+    subc = builder.circuit()
+    subc.name = instr.name
+    return CircBox(subc)
+
+
+def _build_rename_map(
+    qcirc: QuantumCircuit,
+    if_else_builder: _CircuitBuilder,
+    outer_builder: _CircuitBuilder,
+    qargs: list[QCQubit],
+    cargs: list[Clbit],
+) -> dict[Qubit | Bit, Qubit | Bit]:
+    rename_map: dict[Qubit | Bit, Qubit | Bit] = {}
+    for i, inner_q in enumerate(qcirc.qubits):
+        rename_map[if_else_builder.qbmap[inner_q]] = outer_builder.qbmap[qargs[i]]
+    for i, inner_c in enumerate(qcirc.clbits):
+        rename_map[if_else_builder.cbmap[inner_c]] = outer_builder.cbmap[cargs[i]]
+    return rename_map
+
+
+# Used for handling of IfElseOp
+# docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
+# Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
+# pytket-qiskit issue -> https://github.com/CQCL/pytket-qiskit/issues/415
+def _pytket_circuits_from_ifelseop(
+    if_else_op: IfElseOp,
+    outer_builder: _CircuitBuilder,
+    qargs: list[QCQubit],
+    cargs: list[Clbit],
+) -> tuple[Circuit, Circuit | None]:
+    # Extract the QuantumCircuit implementing true_body
+    if_qc: QuantumCircuit = if_else_op.blocks[0]
+    # if_qc can have empty qregs, so build from bits
+    if_builder = _CircuitBuilder.from_qiskit_units(
+        if_qc.qubits, if_qc.clbits, if_qc.name, _param_to_tk(if_qc.global_phase)
+    )
+    if_builder.add_qiskit_data(if_qc)
+    if_circuit = if_builder.circuit()
+    # if_circuit might have a different set of registers, which might
+    # cause problems when appending to the outer circuit.
+    # We rename the units to make sure the registers in the inner circuit
+    # is a subset of the registers in the ourter circuit.
+    if_rename_map = _build_rename_map(
+        qcirc=if_qc,
+        if_else_builder=if_builder,
+        outer_builder=outer_builder,
+        qargs=qargs,
+        cargs=cargs,
+    )
+    if_circuit.rename_units(if_rename_map)  # type: ignore
+    if_circuit.name = "If"
+    if_circuit.remove_blank_wires(
+        keep_blank_classical_wires=False,
+        remove_classical_only_at_end_of_register=False,
+    )
+
+    # The false_body arg is optional
+    if len(if_else_op.blocks) == 2:  # noqa: PLR2004
+        else_qc: QuantumCircuit = if_else_op.blocks[1]
+        else_builder = _CircuitBuilder.from_qiskit_units(
+            else_qc.qubits,
+            else_qc.clbits,
+            else_qc.name,
+            _param_to_tk(else_qc.global_phase),
+        )
+        else_builder.add_qiskit_data(else_qc)
+        else_circuit = else_builder.circuit()
+        # else_circuit might have a different set of registers
+        else_rename_map = _build_rename_map(
+            else_qc,
+            if_else_builder=else_builder,
+            outer_builder=outer_builder,
+            qargs=qargs,
+            cargs=cargs,
+        )
+        else_circuit.rename_units(else_rename_map)  # type: ignore
+        else_circuit.name = "Else"
+        else_circuit.remove_blank_wires(
+            keep_blank_classical_wires=False,
+            remove_classical_only_at_end_of_register=False,
+        )
+        return if_circuit, else_circuit
+
+    # If no false_body is specified IfElseOp.blocks is of length 1.
+    # In this case we return a Circuit implementing true_body and None.
+    return if_circuit, None
+
+
+def _append_if_else_circuit(
+    if_else_op: IfElseOp,
+    outer_builder: _CircuitBuilder,
+    bits: list[Bit],
+    qargs: list[QCQubit],
+    cargs: list[Clbit],
+) -> None:
+    # Get two pytket circuits which implement the true_body and false_body.
+    if_circ, else_circ = _pytket_circuits_from_ifelseop(
+        if_else_op, outer_builder, qargs, cargs
+    )
+    # else_circ can be None if no false_body is specified.
+    if isinstance(if_else_op.condition[0], Clbit):
+        if len(bits) != 1:
+            raise NotImplementedError("Conditions on multiple bits not supported")
+        outer_builder.tkc.add_circbox(
+            circbox=CircBox(if_circ),
+            args=if_circ.qubits + if_circ.bits,  # type: ignore
+            condition_bits=bits,
+            condition_value=if_else_op.condition[1],
+        )
+        # If we have an else_circ defined, add it to the circuit
+        if else_circ is not None:
+            outer_builder.tkc.add_circbox(
+                circbox=CircBox(else_circ),
+                args=else_circ.qubits + else_circ.bits,  # type: ignore
+                condition_bits=bits,
+                condition_value=1 ^ if_else_op.condition[1],
+            )
+
+    elif isinstance(if_else_op.condition[0], ClassicalRegister):
+        pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(
+            if_else_op.condition[0].name
+        )
+        outer_builder.tkc.add_circbox(
+            circbox=CircBox(if_circ),
+            args=if_circ.qubits + if_circ.bits,  # type: ignore
+            condition=reg_eq(pytket_bit_reg, if_else_op.condition[1]),
+        )
+        if else_circ is not None:
+            outer_builder.tkc.add_circbox(
+                circbox=CircBox(else_circ),
+                args=else_circ.qubits + else_circ.bits,  # type: ignore
+                condition=reg_neq(pytket_bit_reg, if_else_op.condition[1]),
+            )
+    else:
+        raise TypeError(
+            "Unrecognized type used to construct IfElseOp. Expected "  # noqa: ISC003
+            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
+        )
+
+
 def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Circuit:
     """
-    Converts a qiskit :py:class:`qiskit.QuantumCircuit` to a pytket :py:class:`Circuit`.
+    Converts a qiskit :py:class:`qiskit.circuit.QuantumCircuit` to a pytket :py:class:`~pytket._tket.circuit.Circuit`.
 
     *Note:* Support for conversion of symbolic circuits is currently limited. In
     particular, if the circuit contains `ParameterVectorElement` symbols this function
     will probably fail.
 
     :param qcirc: A circuit to be converted
-    :param preserve_param_uuid: Whether to preserve symbolic Parameter uuids
-        by appending them to the tket Circuit symbol names as "_UUID_<uuid_as_hex>".
-        This can be useful if you want to reassign Parameters after conversion
-        to tket and back, as it is necessary for Parameter object equality
+    :param preserve_param_uuid: Whether to preserve symbolic :py:class:`~qiskit.circuit.Parameter` uuids
+        by appending them to the tket :py:class:`~pytket._tket.circuit.Circuit` symbol names as "_UUID:<uuid_as_hex>".
+        This can be useful if you want to reassign :py:class:`~qiskit.circuit.Parameter` s after conversion
+        to tket and back, as it is necessary for :py:class:`~qiskit.circuit.Parameter` object equality
         to be preserved.
     :return: The converted circuit
     """
@@ -747,11 +744,11 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
         }
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
-    builder = CircuitBuilder(
+    builder = _CircuitBuilder(
         qregs=qcirc.qregs,
         cregs=qcirc.cregs,
         name=circ_name,
-        phase=param_to_tk(qcirc.global_phase),
+        phase=_param_to_tk(qcirc.global_phase),
     )
     builder.add_qiskit_data(qcirc)
     return builder.circuit()
@@ -761,13 +758,13 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
     return "".join(str(int(b)) for b in bool_list)[::-1]
 
 
-def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
+def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         return sympy.sympify(str(p)) / sympy.pi
     return p / sympy.pi
 
 
-def param_to_qiskit(
+def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
 ) -> float | ParameterExpression:
     ppi = p * sympy.pi
@@ -779,7 +776,7 @@ def param_to_qiskit(
 def _get_params(
     op: Op, symb_map: dict[Parameter, sympy.Symbol]
 ) -> list[float | ParameterExpression]:
-    return [param_to_qiskit(p, symb_map) for p in op.params]
+    return [_param_to_qiskit(p, symb_map) for p in op.params]
 
 
 def _apply_qiskit_instruction(
@@ -797,7 +794,7 @@ def _apply_qiskit_instruction(
 
 
 def _has_if_else(qc: QuantumCircuit) -> bool:
-    """Check if a QuantumCircuit contains an IfElseOp."""
+    """Check if a :py:class:`~qiskit.circuit.QuantumCircuit` contains an :py:class:`~qiskit.circuit.IfElseOp`."""
     return "if_else" in qc.count_ops()
 
 
@@ -1011,7 +1008,7 @@ order or only one bit of one register"""
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
-        alpha = param_to_qiskit(op.params[0], symb_map)
+        alpha = _param_to_qiskit(op.params[0], symb_map)
         assert len(qargs) >= 2  # noqa: PLR2004
         if len(qargs) == 2:  # noqa: PLR2004
             # presumably more efficient; single control only
@@ -1097,23 +1094,23 @@ def tk_to_qiskit(
     perm_warning: bool = True,
 ) -> QuantumCircuit:
     """
-    Converts a pytket :py:class:`Circuit` to a qiskit :py:class:`qiskit.QuantumCircuit`.
+    Converts a pytket :py:class:`~pytket._tket.circuit.Circuit` to a qiskit :py:class:`qiskit.circuit.QuantumCircuit`.
 
     In many cases there will be a qiskit gate to exactly replace each tket gate.
     If no exact replacement can be found for a part of the circuit then an equivalent
     circuit will be returned using the tket gates which are supported in qiskit.
 
-    Note that implicit swaps in a pytket Circuit are not handled by default.
-    Consider using the replace_implicit_swaps flag to replace these implicit swaps with
+    Note that implicit swaps in a pytket :py:class:`~pytket._tket.circuit.Circuit` are not handled by default.
+    Consider using the ``replace_implicit_swaps`` flag to replace these implicit swaps with
     SWAP gates.
 
     *Note:* Support for conversion of symbolic circuits is currently limited.
 
-    :param tkcirc: A :py:class:`Circuit` to be converted
+    :param tkcirc: A :py:class:`~pytket._tket.circuit.Circuit` to be converted
     :param replace_implicit_swaps: Implement implicit permutation by adding SWAPs
         to the end of the circuit.
     :param perm_warning: Warn if an input circuit has implicit qubit permutations,
-        and `replace_implicit_swaps` is `False`. True by default.
+        and ``replace_implicit_swaps`` is ``False``. True by default.
     :return: The converted circuit
     """
     tkc = tkcirc.copy()  # Make a local copy of tkcirc
@@ -1159,7 +1156,7 @@ def tk_to_qiskit(
         append_tk_command_to_qiskit(
             command.op, command.args, qcirc, qregmap, cregmap, symb_map, range_preds
         )
-    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)
+    qcirc.global_phase += _param_to_qiskit(tkc.phase, symb_map)
 
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()  # noqa: C408
@@ -1196,7 +1193,7 @@ def process_characterisation(backend: "IBMBackend") -> dict[str, Any]:
 def process_characterisation_from_config(  # noqa: PLR0915
     config: QasmBackendConfiguration, properties: BackendProperties | None
 ) -> dict[str, Any]:
-    """Obtain a dictionary containing device Characteristics given config and props.
+    """Obtain a dictionary containing device characteristics given config and props.
 
     :param config: A IBMQ configuration object
     :param properties: An optional IBMQ properties object
@@ -1295,8 +1292,8 @@ def get_avg_characterisation(
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors
 
-    Used to convert a typical output from `process_characterisation` into an input
-    noise characterisation for NoiseAwarePlacement
+    Used to convert a typical output from :py:func:`~.process_characterisation` into an input
+    noise characterisation for :py:class:`~pytket.placement.NoiseAwarePlacement`
     """
 
     K = TypeVar("K")

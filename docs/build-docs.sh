@@ -3,7 +3,6 @@ rm -rf build/
 
 # Move theming elements into the docs folder
 cp -R pytket-docs-theming/_static .
-cp -R pytket-docs-theming/quantinuum-sphinx .
 cp pytket-docs-theming/conf.py .
 
 # Get the name of the project
@@ -23,6 +22,5 @@ else
 fi
 
 # Remove copied files. This ensures reusability.
-rm -r _static 
-rm -r quantinuum-sphinx
+rm -r _static
 rm conf.py

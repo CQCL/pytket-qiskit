@@ -72,7 +72,7 @@ from ..qiskit_convert import (
 from ..result_convert import qiskit_result_to_backendresult
 from .crosstalk_model import (
     CrosstalkParams,
-    NoisyCircuitBuilder,
+    _NoisyCircuitBuilder,
 )
 from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 
@@ -398,7 +398,7 @@ class _AerBaseBackend(Backend):
         if hasattr(self, "_crosstalk_params") and self._crosstalk_params is not None:
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
+                noisy_circ_builder = _NoisyCircuitBuilder(c, self._crosstalk_params)
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits

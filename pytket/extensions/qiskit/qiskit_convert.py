@@ -239,7 +239,7 @@ def _qpo_from_peg(peg: PauliEvolutionGate, qubits: list[Qubit]) -> QubitPauliOpe
     for p, c in zip(op.paulis, op.coeffs, strict=False):
         if np.iscomplex(c):
             raise ValueError(f"Coefficient for Pauli {p} is non-real.")
-        coeff = param_to_tk(t) * c
+        coeff = _param_to_tk(t) * c
         qpslist = []
         pstr = p.to_label()
         for a in pstr:
@@ -508,7 +508,7 @@ class _CircuitBuilder:
                 optype = _optype_from_qiskit_instruction(instruction=instr)
 
             if optype == OpType.QControlBox:
-                params = [param_to_tk(p) for p in instr.base_gate.params]
+                params = [_param_to_tk(p) for p in instr.base_gate.params]
                 q_ctrl_box = _get_qcontrol_box(c_gate=instr, params=params)
                 self.tkc.add_qcontrolbox(q_ctrl_box, qubits)
 
@@ -559,13 +559,13 @@ class _CircuitBuilder:
                 if instr.params[-1] == 0:
                     self.tkc.add_gate(
                         optype,
-                        [param_to_tk(p) for p in instr.params[:-1]],
+                        [_param_to_tk(p) for p in instr.params[:-1]],
                         qubits,
                     )
                 else:
                     raise NotImplementedError("CUGate with nonzero phase")
             else:
-                params = [param_to_tk(p) for p in instr.params]
+                params = [_param_to_tk(p) for p in instr.params]
                 self.tkc.add_gate(
                     optype,  # type: ignore
                     params,
@@ -612,7 +612,7 @@ def _pytket_circuits_from_ifelseop(
     if_qc: QuantumCircuit = if_else_op.blocks[0]
     # if_qc can have empty qregs, so build from bits
     if_builder = _CircuitBuilder.from_qiskit_units(
-        if_qc.qubits, if_qc.clbits, if_qc.name, param_to_tk(if_qc.global_phase)
+        if_qc.qubits, if_qc.clbits, if_qc.name, _param_to_tk(if_qc.global_phase)
     )
     if_builder.add_qiskit_data(if_qc)
     if_circuit = if_builder.circuit()
@@ -641,7 +641,7 @@ def _pytket_circuits_from_ifelseop(
             else_qc.qubits,
             else_qc.clbits,
             else_qc.name,
-            param_to_tk(else_qc.global_phase),
+            _param_to_tk(else_qc.global_phase),
         )
         else_builder.add_qiskit_data(else_qc)
         else_circuit = else_builder.circuit()
@@ -748,7 +748,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
         qregs=qcirc.qregs,
         cregs=qcirc.cregs,
         name=circ_name,
-        phase=param_to_tk(qcirc.global_phase),
+        phase=_param_to_tk(qcirc.global_phase),
     )
     builder.add_qiskit_data(qcirc)
     return builder.circuit()
@@ -758,13 +758,13 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
     return "".join(str(int(b)) for b in bool_list)[::-1]
 
 
-def param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
+def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         return sympy.sympify(str(p)) / sympy.pi
     return p / sympy.pi
 
 
-def param_to_qiskit(
+def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
 ) -> float | ParameterExpression:
     ppi = p * sympy.pi
@@ -776,7 +776,7 @@ def param_to_qiskit(
 def _get_params(
     op: Op, symb_map: dict[Parameter, sympy.Symbol]
 ) -> list[float | ParameterExpression]:
-    return [param_to_qiskit(p, symb_map) for p in op.params]
+    return [_param_to_qiskit(p, symb_map) for p in op.params]
 
 
 def _apply_qiskit_instruction(
@@ -1008,7 +1008,7 @@ order or only one bit of one register"""
     if optype == OpType.CnRy:
         # might as well do a bit more checking
         assert len(op.params) == 1
-        alpha = param_to_qiskit(op.params[0], symb_map)
+        alpha = _param_to_qiskit(op.params[0], symb_map)
         assert len(qargs) >= 2  # noqa: PLR2004
         if len(qargs) == 2:  # noqa: PLR2004
             # presumably more efficient; single control only
@@ -1156,7 +1156,7 @@ def tk_to_qiskit(
         append_tk_command_to_qiskit(
             command.op, command.args, qcirc, qregmap, cregmap, symb_map, range_preds
         )
-    qcirc.global_phase += param_to_qiskit(tkc.phase, symb_map)
+    qcirc.global_phase += _param_to_qiskit(tkc.phase, symb_map)
 
     # if UUID stored in name, set parameter uuids accordingly (see qiskit_to_tk)
     updates = dict()  # noqa: C408

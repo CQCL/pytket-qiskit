@@ -39,7 +39,7 @@ from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
 
 @dataclass
-class FractionalUnitary:
+class _FractionalUnitary:
     """
     Wrapper for a fractional unitary gate.
 
@@ -53,7 +53,7 @@ class FractionalUnitary:
 
 
 @dataclass
-class NoiseGate:
+class _NoiseGate:
     """
     Wrapper for a gate that simulates noise
 
@@ -66,7 +66,7 @@ class NoiseGate:
     type: str
 
 
-Instruction = FractionalUnitary | Command | NoiseGate
+Instruction = _FractionalUnitary | Command | _NoiseGate
 Slice = list[Instruction]
 EPS = 1e-9
 
@@ -123,7 +123,7 @@ class CrosstalkParams:
         return noise_model
 
 
-class NoisyCircuitBuilder:
+class _NoisyCircuitBuilder:
     """Builder used to generate a noisy circuit"""
 
     Ibox = Unitary1qBox(np.eye(2))
@@ -245,7 +245,7 @@ class NoisyCircuitBuilder:
                 for _ in range(n_fractions):
                     u_i_box = self._get_ubox(u_i)
                     self._slices.append(
-                        [FractionalUnitary(Command(u_i_box, cmd.args), n_fractions)]
+                        [_FractionalUnitary(Command(u_i_box, cmd.args), n_fractions)]
                     )
 
     def _add_zz_crosstalks(self, noise_slice: Slice) -> None:
@@ -254,7 +254,7 @@ class NoisyCircuitBuilder:
                 Z = zz / self.N
                 if abs(Z) > EPS:
                     noise_slice.append(
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.ZZPhase, Z), [q0, q1]),
                             "zz_crosstalks",
                         )
@@ -266,7 +266,7 @@ class NoisyCircuitBuilder:
                 Z = z / self.N
                 if abs(Z) > EPS:
                     noise_slice.append(
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.Rz, Z), [q]), "single_q_phase"
                         )
                     )
@@ -276,7 +276,7 @@ class NoisyCircuitBuilder:
     ) -> None:
         for inst in unitary_slice:
             if (
-                isinstance(inst, FractionalUnitary)
+                isinstance(inst, _FractionalUnitary)
                 and inst.cmd.op.type == OpType.Unitary2qBox
             ):
                 qubits = inst.cmd.qubits
@@ -289,7 +289,7 @@ class NoisyCircuitBuilder:
                 Z = value[1] / inst.n_fractions
                 if abs(Z) > EPS:
                     noise_slice.append(
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.Rz, Z), [value[0]]),
                             "two_q_induced_phase",
                         )
@@ -302,7 +302,7 @@ class NoisyCircuitBuilder:
             ZZ = zz / self.N
             if abs(ZZ) > EPS:
                 noise_slice.append(
-                    NoiseGate(
+                    _NoiseGate(
                         Command(Op.create(OpType.ZZPhase, ZZ), [two_level_q, q]),
                         "non_markovian",
                     )
@@ -310,15 +310,15 @@ class NoisyCircuitBuilder:
             if abs(ZX) > EPS:
                 noise_slice.extend(
                     [
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.H), [q]),
                             "non_markovian",
                         ),
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.ZZPhase, ZX), [two_level_q, q]),
                             "non_markovian",
                         ),
-                        NoiseGate(
+                        _NoiseGate(
                             Command(Op.create(OpType.H), [q]),
                             "non_markovian",
                         ),
@@ -369,11 +369,11 @@ class NoisyCircuitBuilder:
         return self._slices
 
 
-def get_gate_times_from_backendinfo(
+def _get_gate_times_from_backendinfo(
     backend_info: BackendInfo,
 ) -> dict[tuple[OpType, tuple[Qubit, ...]], float]:
     """Convert the gate time information stored in a :py:class:`~pytket.backends.backendinfo.BackendInfo`
-    into the format required by :py:class:`~.NoisyCircuitBuilder`"""
+    into the format required by :py:class:`~._NoisyCircuitBuilder`"""
     if (
         "characterisation" not in backend_info.misc
         or "GateTimes" not in backend_info.misc["characterisation"]

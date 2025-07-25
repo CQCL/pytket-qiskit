@@ -32,12 +32,12 @@ and methods into the `pytket.extensions` namespace.
 .. autosummary::
     :nosignatures:
 
-    backends.ibm.IBMQBackend
-    backends.ibmq_emulator.IBMQEmulatorBackend
-    backends.aer.AerBackend
-    backends.aer.AerStateBackend
-    backends.aer.AerUnitaryBackend
-    backends.aer.AerDensityMatrixBackend
+    ~backends.ibm.IBMQBackend
+    ~backends.ibmq_emulator.IBMQEmulatorBackend
+    ~backends.aer.AerBackend
+    ~backends.aer.AerStateBackend
+    ~backends.aer.AerUnitaryBackend
+    ~backends.aer.AerDensityMatrixBackend
 
 ```
 
@@ -200,43 +200,43 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
   - optimisation_level = 1
   - optimisation_level = 2 [1]
   - optimisation_level = 3
-* - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-* - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
-  - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-  - [RemoveBarriers](inv:#*pytket.passes.RemoveBarriers)
+* - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+* - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
+  - {py:meth}`~pytket.passes.FullPeepholeOptimise`
+  - {py:meth}`~pytket.passes.RemoveBarriers`
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-* - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
-  - [KAKDecomposition(allow_swaps=False)](inv:#*.passes.KAKDecomposition)
-  - [GreedyPauliSimp](inv:#*.passes.GreedyPauliSimp)
-* - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [CliffordSimp(allow_swaps=False)](inv:#*.passes.CliffordSimp)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+* - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
+  - [`KAKDecomposition(allow_swaps=False)`](inv:#*.passes.KAKDecomposition)
+  - {py:meth}`~pytket.passes.GreedyPauliSimp`
+* - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - [`CliffordSimp(allow_swaps=False)`](inv:#*.passes.CliffordSimp)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
 * -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.SynthesiseTket`
   - LightSabre [3]
 * -
   -
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
 * -
   -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
 
 * -
   -
   -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
 
 :::
 

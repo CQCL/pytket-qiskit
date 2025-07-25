@@ -91,8 +91,6 @@
     .. autofunction:: get_avg_characterisation
     .. autofunction:: process_characterisation_from_config
     .. autofunction:: append_tk_command_to_qiskit
-    .. autofunction:: param_to_qiskit
-    .. autofunction:: param_to_tk
 ```
 
 ```{eval-rst}
@@ -104,7 +102,7 @@
 
 ```{eval-rst}
 .. automodule:: pytket.extensions.qiskit.backends.crosstalk_model
-    :members: CrosstalkParams, NoiseGate, NoisyCircuitBuilder, FractionalUnitary, get_gate_times_from_backendinfo
+    :members: CrosstalkParams
 
 ```
 

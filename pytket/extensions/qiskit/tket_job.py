@@ -38,7 +38,7 @@ class JobInfo:
 
 
 class TketJob(JobV1):
-    """TketJob wraps a :py:class:`ResultHandle` list as a
+    """TketJob wraps a :py:class:`~pytket.backends.resulthandle.ResultHandle` list as a
     :py:class:`qiskit.providers.JobV1`"""
 
     def __init__(

@@ -72,7 +72,7 @@ from ..qiskit_convert import (
 from ..result_convert import qiskit_result_to_backendresult
 from .crosstalk_model import (
     CrosstalkParams,
-    NoisyCircuitBuilder,
+    _NoisyCircuitBuilder,
 )
 from .ibm_utils import _STATUS_MAP, _batch_circuits, _gen_lightsabre_transformation
 
@@ -119,7 +119,7 @@ def qiskit_aer_backend(backend_name: str) -> "QiskitAerBackend":
     """Find a qiskit backend with the given name.
 
     If more than one backend with the given name is available, emit a warning
-    and return the first one in the list returned by `Aer.backends()`.
+    and return the first one in the list returned by :py:meth:`~qiskit_aer.AerProvider.backends`.
     """
     candidates = [b for b in Aer.backends() if b.name == backend_name]
     n_candidates = len(candidates)
@@ -297,7 +297,7 @@ class _AerBaseBackend(Backend):
         timeout: int = 300,
     ) -> BasePass:
         """
-        See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
+        See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.
         """
         arch = self._backend_info.architecture
         if self._has_arch and arch.coupling:  # type: ignore
@@ -319,14 +319,11 @@ class _AerBaseBackend(Backend):
         :param optimisation_level: Allows values of 0, 1, 2 or 3, with higher values
             prompting more computationally heavy optimising compilation that
             can lead to reduced gate count in circuits.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
 
         :return: An optimised quantum circuit
-        :rtype: Circuit
         """
         return_circuit = circuit.copy()
         if optimisation_level == 3 and circuit.n_gates_of_type(OpType.Barrier) > 0:  # noqa: PLR2004
@@ -347,7 +344,7 @@ class _AerBaseBackend(Backend):
         and return the list of compiled circuits (does not act in place).
 
         As well as applying a degree of optimisation (controlled by the
-        `optimisation_level` parameter), this method tries to ensure that the circuits
+        ``optimisation_level`` parameter), this method tries to ensure that the circuits
         can be run on the backend (i.e. successfully passed to
         :py:meth:`process_circuits`), for example by rebasing to the supported gate set,
         or routing to match the connectivity of the device. However, this is not always
@@ -358,22 +355,18 @@ class _AerBaseBackend(Backend):
         are submitted to the backend.
 
         If the validity check fails, you can obtain more information about the failure
-        by iterating through the predicates in the `required_predicates` property of the
-        backend, and running the :py:meth:`verify` method on each in turn with your
+        by iterating through the predicates in the ``required_predicates`` property of the
+        backend, and running the :py:meth:`~pytket.predicates.Predicate.verify` method on each in turn with your
         circuit.
 
         :param circuits: The circuits to compile.
-        :type circuit: Sequence[Circuit]
         :param optimisation_level: The level of optimisation to perform during
             compilation. See :py:meth:`default_compilation_pass` for a description of
             the different levels (0, 1, 2 or 3). Defaults to 2.
-        :type optimisation_level: int, optional
         :param timeout: Only valid for optimisation level 3, gives a maximum time
-            for running a single thread of the pass `GreedyPauliSimp`. Increase for
+            for running a single thread of the pass :py:meth:`~pytket.passes.GreedyPauliSimp`. Increase for
             optimising larger circuits.
-        :type timeout: int, optional
         :return: Compiled circuits.
-        :rtype: List[Circuit]
         """
         return [
             self.get_compiled_circuit(c, optimisation_level, timeout) for c in circuits
@@ -387,8 +380,8 @@ class _AerBaseBackend(Backend):
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `seed`, `postprocess`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
+        Supported kwargs: ``seed``, ``postprocess``.
         """
         postprocess = kwargs.get("postprocess", False)
 
@@ -405,7 +398,7 @@ class _AerBaseBackend(Backend):
         if hasattr(self, "_crosstalk_params") and self._crosstalk_params is not None:
             noisy_circuits = []
             for c in circuits:
-                noisy_circ_builder = NoisyCircuitBuilder(c, self._crosstalk_params)
+                noisy_circ_builder = _NoisyCircuitBuilder(c, self._crosstalk_params)
                 noisy_circ_builder.build()
                 noisy_circuits.append(noisy_circ_builder.get_circuit())
             circuits = noisy_circuits
@@ -624,7 +617,7 @@ class AerBackend(_AerBaseBackend):
         https://qiskit.github.io/qiskit-aer/stubs/qiskit_aer.AerSimulator.html
         for available values. Defaults to "automatic".
     :param crosstalk_params: Apply crosstalk noise simulation to the circuits before
-        execution. `noise_model` will be overwritten if this is given. Default to None.
+        execution. ``noise_model`` will be overwritten if this is given. Default to None.
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 
@@ -796,7 +789,7 @@ class AerDensityMatrixBackend(_AerBaseBackend):
     """
     Backend for running simulations on the Qiskit Aer density matrix simulator.
 
-    :param noise_model: Noise model to apply during simulation. Defaults to None.
+    :param noise_model: Noise model to apply during simulation. Defaults to ``None``.
     :param n_qubits: The maximum number of qubits supported by the backend.
     """
 

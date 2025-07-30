@@ -32,16 +32,16 @@ and methods into the `pytket.extensions` namespace.
 .. autosummary::
     :nosignatures:
 
-    IBMQBackend
-    IBMQEmulatorBackend
-    AerBackend
-    AerStateBackend
-    AerUnitaryBackend
-    AerDensityMatrixBackend
+    ~backends.ibm.IBMQBackend
+    ~backends.ibmq_emulator.IBMQEmulatorBackend
+    ~backends.aer.AerBackend
+    ~backends.aer.AerStateBackend
+    ~backends.aer.AerUnitaryBackend
+    ~backends.aer.AerDensityMatrixBackend
 
 ```
 
-An example using the shots-based {py:class}`AerBackend` simulator is shown below.
+An example using the shots-based {py:class}`~.AerBackend` simulator is shown below.
 
 ```{code-cell} ipython3
 ---
@@ -59,7 +59,7 @@ result = backend.run_circuit(circ, n_shots=1000)
 
 This simulator supports a large set of gates and by default has no architectural constraints or quantum noise. However the user can pass in a noise model or custom architecture to more closely model a real quantum device.
 
-The {py:class}`AerBackend` also supports GPU simulation which can be configured as follows.
+The {py:class}`~.AerBackend` also supports GPU simulation which can be configured as follows.
 
 ```{code-cell} ipython3
 ---
@@ -100,7 +100,7 @@ inst = '<your_instance_CRN_here>''
 The instance CRN is the long string beginning with "crn:" which is shown on the
 "Instances" page for your account.
 
-### Method 1: Using {py:class}`QiskitRuntimeService`
+### Method 1: Using {py:class}`~qiskit_ibm_runtime.QiskitRuntimeService`
 
 You can use the following qiskit commands to save your IBM credentials
 to disk:
@@ -114,7 +114,7 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 QiskitRuntimeService.save_account(channel="ibm_quantum_platform", token=ibm_token, instance=inst)
 ```
 
-To see which devices you can access, use the {py:meth}`IBMQBackend.available_devices` method. Note that it is possible to pass an optional `instance` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
+To see which devices you can access, use the {py:meth}`~.IBMQBackend.available_devices` method. Note that it is possible to pass an optional `instance` argument to this method. This allows you to see which IBM devices are accessible with your credentials.
 
 ```{code-cell} ipython3
 ---
@@ -174,7 +174,7 @@ Users may wish to port quantum circuits between pytket and qiskit. This allows t
 For instance those familiar with qiskit may wish to convert their circuits to pytket and use the available compilation passes to optimise circuits.
 
 ```{eval-rst}
-.. currentmodule:: pytket.extensions.qiskit
+.. currentmodule:: pytket.extensions.qiskit.qiskit_convert
 
 ```
 
@@ -189,7 +189,7 @@ For instance those familiar with qiskit may wish to convert their circuits to py
 
 ## Default Compilation
 
-Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:meth}`~pytket.backends.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an `optimisation_level` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the {py:class}`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below. Note that optimisation levels 0, 1 and
+Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:meth}`~pytket.backends.backend.Backend.default_compilation_pass` method. This method applies a sequence of optimisations to a circuit depending on the value of an `optimisation_level` parameter. This default compilation will ensure that the circuit meets all the constraints required to run on the {py:class}`~pytket.backends.backend.Backend`. The passes applied by different levels of optimisation are specified in the table below. Note that optimisation levels 0, 1 and
 2 preserve barriers in a circuit, while optimisation level 3 will remove them.
 
 :::{list-table} **Default compilation pass for the IBMQBackend and IBMQEmulatorBackend**
@@ -200,51 +200,51 @@ Every {py:class}`~pytket.backends.backend.Backend` in pytket has its own {py:met
   - optimisation_level = 1
   - optimisation_level = 2 [1]
   - optimisation_level = 3
-* - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-  - [DecomposeBoxes](inv:#*.passes.DecomposeBoxes)
-* - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
-  - [FullPeepholeOptimise](inv:#*.passes.FullPeepholeOptimise)
-  - [RemoveBarriers](inv:#*pytket.passes.RemoveBarriers)
+* - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+  - {py:meth}`~pytket.passes.DecomposeBoxes`
+* - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
+  - {py:meth}`~pytket.passes.FullPeepholeOptimise`
+  - {py:meth}`~pytket.passes.RemoveBarriers`
 * - LightSabre [3]
   - LightSabre [3]
   - LightSabre [3]
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-* - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
-  - [KAKDecomposition(allow_swaps=False)](inv:#*.passes.KAKDecomposition)
-  - [GreedyPauliSimp](inv:#*.passes.GreedyPauliSimp)
-* - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [CliffordSimp(allow_swaps=False)](inv:#*.passes.CliffordSimp)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+* - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
+  - [`KAKDecomposition(allow_swaps=False)`](inv:#*.passes.KAKDecomposition)
+  - {py:meth}`~pytket.passes.GreedyPauliSimp`
+* - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - [`CliffordSimp(allow_swaps=False)`](inv:#*.passes.CliffordSimp)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
 * -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.SynthesiseTket`
   - LightSabre [3]
 * -
   -
-  - [AutoRebase [2]](inv:#*.AutoRebase)
-  - [SynthesiseTket](inv:#*.SynthesiseTket)
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
+  - {py:meth}`~pytket.passes.SynthesiseTket`
 * -
   -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
-  - [AutoRebase [2]](inv:#*.AutoRebase)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
+  - {py:meth}`~pytket.passes.AutoRebase` [2]
 
 * -
   -
   -
-  - [RemoveRedundancies](inv:#*.passes.RemoveRedundancies)
+  - {py:meth}`~pytket.passes.RemoveRedundancies`
 
 :::
 
 - \[1\] If no value is specified then `optimisation_level` defaults to a value of 2.
-- \[2\] {py:class}`~pytket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gate set is either $\{X, SX, Rz, CX\}$, $\{X, SX, Rz, ECR\}$, or $\{X, SX, Rz, CZ\}$. The more idealised Aer simulators have a much broader range of supported gates.
+- \[2\] {py:meth}`~pytket.passes.AutoRebase` is a conversion to the gateset supported by the backend. For IBM quantum devices and emulators the supported gate set is either $\{X, SX, Rz, CX\}$, $\{X, SX, Rz, ECR\}$, or $\{X, SX, Rz, CZ\}$. The more idealised Aer simulators have a much broader range of supported gates.
 - \[3\] This is imported from qiskit and corresponds to the method in "LightSABRE: A Lightweight and Enhanced SABRE Algorithm", Henry Zou, Matthew Treinish, Kevin Hartman, Alexander Ivrii, Jake Lishman, arXiv:2409.08368.
 
-**Note:** The {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend` is the same as above if a {py:class}`NoiseModel` is used. A {py:class}`NoiseModel` implicitly defines connectivity constraints via edge errors. If no {py:class}`NoiseModel` is used then then any passes related to connectivity constraints are omitted from the {py:meth}`~AerBackend.default_compilation_pass` for {py:class}`AerBackend`.
+**Note:** The {py:meth}`~.AerBackend.default_compilation_pass` for {py:class}`~.AerBackend` is the same as above if a {py:class}`~qiskit_aer.noise.NoiseModel` is used. A {py:class}`~qiskit_aer.noise.NoiseModel` implicitly defines connectivity constraints via edge errors. If no {py:class}`~qiskit_aer.noise.NoiseModel` is used then then any passes related to connectivity constraints are omitted from the {py:meth}`~.AerBackend.default_compilation_pass` for {py:class}`~.AerBackend`.
 
 ## Noise Modelling
 

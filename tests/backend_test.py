@@ -62,8 +62,8 @@ from pytket.extensions.qiskit import (
 )
 from pytket.extensions.qiskit.backends.crosstalk_model import (
     CrosstalkParams,
-    FractionalUnitary,
-    NoisyCircuitBuilder,
+    _FractionalUnitary,
+    _NoisyCircuitBuilder,
 )
 from pytket.extensions.qiskit.backends.ibm import _DEBUG_HANDLE_PREFIX
 from pytket.extensions.qiskit.backends.ibm_utils import _gen_lightsabre_transformation
@@ -1274,13 +1274,13 @@ def test_crosstalk_noise_model() -> None:
         amplitude_damping_error,
     )
     # test manual construction
-    noisy_circ_builder = NoisyCircuitBuilder(circ, ctparams)
+    noisy_circ_builder = _NoisyCircuitBuilder(circ, ctparams)
     noisy_circ_builder.build()
     slices = noisy_circ_builder.get_slices()
     n_fractions = 0
     for s in slices:
         for inst in s:
-            if isinstance(inst, FractionalUnitary):
+            if isinstance(inst, _FractionalUnitary):
                 n_fractions = n_fractions + 1
     assert n_fractions == 11
 

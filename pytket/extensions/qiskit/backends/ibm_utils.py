@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Shared utility methods for ibm backends."""
-
 import itertools
 from collections.abc import Callable, Collection, Sequence
 
@@ -87,10 +85,10 @@ def _batch_circuits(
 
 def _architecture_to_couplingmap(architecture: Architecture) -> CouplingMap:
     """
-    Converts a pytket Architecture object to a Qiskit CouplingMap object.
+    Converts a pytket :py:class:`~pytket.architecture.Architecture` object to a Qiskit :py:class:`~qiskit.transpiler.CouplingMap` object.
 
     :param architecture: Architecture to be converted
-    :return: A Qiskit CouplingMap object corresponding to the same connectivity
+    :return: A Qiskit :py:class:`~qiskit.transpiler.CouplingMap` object corresponding to the same connectivity
     """
     # we can make some assumptions from how the Architecture object is
     # originally constructed from the Qiskit CouplingMap:

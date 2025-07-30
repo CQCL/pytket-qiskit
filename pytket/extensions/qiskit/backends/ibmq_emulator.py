@@ -41,8 +41,8 @@ if TYPE_CHECKING:
 
 class IBMQEmulatorBackend(Backend):
     """A backend which uses the AerBackend to loaclly emulate the behaviour of
-    IBMQBackend. Identical to :py:class:`IBMQBackend` except there is no `monitor`
-    parameter. Performs the same compilation and predicate checks as IBMQBackend.
+    :py:class:`~.IBMQBackend`. Identical to :py:class:`~.IBMQBackend` except there is no ``monitor``
+    parameter. Performs the same compilation and predicate checks as :py:class:`~.IBMQBackend`.
     Requires a valid IBM account.
     """
 
@@ -91,7 +91,7 @@ class IBMQEmulatorBackend(Backend):
         optimisation_level: int = 2,
     ) -> BasePass:
         """
-        See documentation for :py:meth:`IBMQBackend.default_compilation_pass`.
+        See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.
         """
         return self._ibmq.default_compilation_pass(
             optimisation_level=optimisation_level
@@ -112,8 +112,8 @@ class IBMQEmulatorBackend(Backend):
         **kwargs: KwargTypes,
     ) -> list[ResultHandle]:
         """
-        See :py:meth:`pytket.backends.Backend.process_circuits`.
-        Supported kwargs: `seed`, `postprocess`.
+        See :py:meth:`pytket.backends.backend.Backend.process_circuits`.
+        Supported kwargs: ``seed``, ``postprocess``.
         """
 
         if valid_check:
@@ -130,7 +130,7 @@ class IBMQEmulatorBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
         Supported kwargs: none.
         """
         return self._aer.get_result(handle)

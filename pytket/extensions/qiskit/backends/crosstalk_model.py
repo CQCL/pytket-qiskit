@@ -91,7 +91,7 @@ class CrosstalkParams:
     :param gate_times: python dict to store the gate time information.
     :param phase_damping_error: dict specify amplitude phase damping error
         on each qubit
-    :param amplitude_damping_error: dict pecify amplitude damping error
+    :param amplitude_damping_error: dict specify amplitude damping error
         on each qubit
     """
 

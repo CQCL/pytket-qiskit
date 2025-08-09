@@ -94,7 +94,7 @@ tags: [skip-execution]
 # Replace the placeholders with your actual values
 
 ibm_token = '<your_ibm_token_here>'
-inst = '<your_instance_CRN_here>''
+inst = '<your_instance_CRN_here>'
 ```
 
 The instance CRN is the long string beginning with "crn:" which is shown on the

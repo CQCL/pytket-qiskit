@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 class IBMQEmulatorBackend(Backend):
-    """A backend which uses the AerBackend to loaclly emulate the behaviour of
+    """A backend which uses the AerBackend to locally emulate the behaviour of
     :py:class:`~.IBMQBackend`. Identical to :py:class:`~.IBMQBackend` except there is no ``monitor``
     parameter. Performs the same compilation and predicate checks as :py:class:`~.IBMQBackend`.
     Requires a valid IBM account.

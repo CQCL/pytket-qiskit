@@ -689,9 +689,9 @@ def _append_if_else_circuit(
             # Find the pytket Bit with the same register name and index as the Qiskit Clbit
             for bit in bits:
                 if (
-                    bit.reg_name == _condition.var._register.name
-                    and bit.index[0] == _condition.var._index
-                ):  # noqa: SLF001
+                    bit.reg_name == _condition.var._register.name  # noqa: SLF001
+                    and bit.index[0] == _condition.var._index  # noqa: SLF001
+                ):
                     return bit
 
             raise ValueError(
@@ -704,9 +704,9 @@ def _append_if_else_circuit(
             # Find the pytket Bit with the same register name and index as the Qiskit Clbit
             for bit in bits:
                 if (
-                    bit.reg_name == _condition.operand.var._register.name
-                    and bit.index[0] == _condition.operand.var._index
-                ):  # noqa: SLF001
+                    bit.reg_name == _condition.operand.var._register.name  # noqa: SLF001
+                    and bit.index[0] == _condition.operand.var._index  # noqa: SLF001
+                ):
                     return bit ^ val
 
             raise ValueError(
@@ -755,9 +755,9 @@ def _append_if_else_circuit(
         condition_bits = [
             bit
             for bit in bits
-            if bit.reg_name == if_else_op.condition.var._register.name
-            and bit.index[0] == if_else_op.condition.var._index
-        ]  # noqa: SLF001
+            if bit.reg_name == if_else_op.condition.var._register.name  # noqa: SLF001
+            and bit.index[0] == if_else_op.condition.var._index  # noqa: SLF001
+        ]
 
         if len(condition_bits) == 0:
             raise ValueError(
@@ -785,9 +785,9 @@ def _append_if_else_circuit(
         condition_bits = [
             bit
             for bit in bits
-            if bit.reg_name == if_else_op.condition[0]._register.name
-            and bit.index[0] == if_else_op.condition[0]._index
-        ]  # noqa: SLF001
+            if bit.reg_name == if_else_op.condition[0]._register.name  # noqa: SLF001
+            and bit.index[0] == if_else_op.condition[0]._index  # noqa: SLF001
+        ]
 
         if len(condition_bits) == 0:
             raise ValueError(

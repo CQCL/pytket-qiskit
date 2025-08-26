@@ -754,7 +754,7 @@ def _append_if_else_circuit(
                 condition_value=0,
             )
     elif hasattr(if_else_op.condition, "__getitem__") and isinstance(if_else_op.condition[0], Clbit):
-        condition_bits = [bit for bit in bits if bit.reg_name == if_else_op.condition.var._register.name and bit.index[0] == if_else_op.condition.var._index] # noqa: SLF001
+        condition_bits = [bit for bit in bits if bit.reg_name == if_else_op.condition[0]._register.name and bit.index[0] == if_else_op.condition[0]._index] # noqa: SLF001
 
         if len(condition_bits) == 0:
             raise ValueError(f"Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")

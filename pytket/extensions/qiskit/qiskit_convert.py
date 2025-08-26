@@ -684,36 +684,52 @@ def _append_if_else_circuit(
     )
 
     # Utility method to flatten conditions
-    def flatten_condition(
-        _condition: Var | Unary | Binary
-    ) -> BitLogicExp:
+    def flatten_condition(_condition: Var | Unary | Binary) -> BitLogicExp:
         if isinstance(_condition, Var):
             # Find the pytket Bit with the same register name and index as the Qiskit Clbit
             for bit in bits:
-                if bit.reg_name == _condition.var._register.name and bit.index[0] == _condition.var._index: # noqa: SLF001
+                if (
+                    bit.reg_name == _condition.var._register.name
+                    and bit.index[0] == _condition.var._index
+                ):  # noqa: SLF001
                     return bit
 
-            raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
         if isinstance(_condition, Unary):
             # Set the comparison value based on whether the Unary involves a NOT operation
             val = 0 if _condition.op.name == "BIT_NOT" else 1
 
             # Find the pytket Bit with the same register name and index as the Qiskit Clbit
             for bit in bits:
-                if bit.reg_name == _condition.operand.var._register.name and bit.index[0] == _condition.operand.var._index: # noqa: SLF001
+                if (
+                    bit.reg_name == _condition.operand.var._register.name
+                    and bit.index[0] == _condition.operand.var._index
+                ):  # noqa: SLF001
                     return bit ^ val
 
-            raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
         if isinstance(_condition, Binary):
             # Recursively handle both operands of the binary operation
             if _condition.op.name == "BIT_AND":
-                return flatten_condition(_condition.left) & flatten_condition(_condition.right)
+                return flatten_condition(_condition.left) & flatten_condition(
+                    _condition.right
+                )
             if _condition.op.name == "BIT_OR":
-                return flatten_condition(_condition.left) | flatten_condition(_condition.right)
+                return flatten_condition(_condition.left) | flatten_condition(
+                    _condition.right
+                )
             if _condition.op.name == "BIT_XOR":
-                return flatten_condition(_condition.left) ^ flatten_condition(_condition.right)
+                return flatten_condition(_condition.left) ^ flatten_condition(
+                    _condition.right
+                )
 
-            raise NotImplementedError(f"Binary condition with operation '{_condition.op.name}' not supported")
+            raise NotImplementedError(
+                f"Binary condition with operation '{_condition.op.name}' not supported"
+            )
         raise NotImplementedError(f"Condition of type {type(_condition)} not supported")
 
     # else_circ can be None if no false_body is specified.
@@ -733,11 +749,20 @@ def _append_if_else_circuit(
                 args=else_circ.qubits + else_circ.bits,  # type: ignore
                 condition=1 ^ condition_flattened,
             )
-    elif isinstance(if_else_op.condition, Var) and isinstance(if_else_op.condition.var, Clbit):
-        condition_bits = [bit for bit in bits if bit.reg_name == if_else_op.condition.var._register.name and bit.index[0] == if_else_op.condition.var._index] # noqa: SLF001
+    elif isinstance(if_else_op.condition, Var) and isinstance(
+        if_else_op.condition.var, Clbit
+    ):
+        condition_bits = [
+            bit
+            for bit in bits
+            if bit.reg_name == if_else_op.condition.var._register.name
+            and bit.index[0] == if_else_op.condition.var._index
+        ]  # noqa: SLF001
 
         if len(condition_bits) == 0:
-            raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
         outer_builder.tkc.add_circbox(
@@ -754,11 +779,20 @@ def _append_if_else_circuit(
                 condition_bits=condition_bits,
                 condition_value=0,
             )
-    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(if_else_op.condition[0], Clbit):
-        condition_bits = [bit for bit in bits if bit.reg_name == if_else_op.condition[0]._register.name and bit.index[0] == if_else_op.condition[0]._index] # noqa: SLF001
+    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+        if_else_op.condition[0], Clbit
+    ):
+        condition_bits = [
+            bit
+            for bit in bits
+            if bit.reg_name == if_else_op.condition[0]._register.name
+            and bit.index[0] == if_else_op.condition[0]._index
+        ]  # noqa: SLF001
 
         if len(condition_bits) == 0:
-            raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
         outer_builder.tkc.add_circbox(
@@ -775,7 +809,9 @@ def _append_if_else_circuit(
                 condition_bits=condition_bits,
                 condition_value=1 ^ if_else_op.condition[1],
             )
-    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(if_else_op.condition[0], ClassicalRegister):
+    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+        if_else_op.condition[0], ClassicalRegister
+    ):
         pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(
             if_else_op.condition[0].name
         )

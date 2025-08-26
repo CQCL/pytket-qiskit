@@ -55,7 +55,7 @@ from pytket.circuit import (
     Unitary3qBox,
     UnitType,
 )
-from pytket.circuit.logic_exp import reg_eq, reg_neq
+from pytket.circuit.logic_exp import BitLogicExp, reg_eq, reg_neq
 from pytket.passes import AutoRebase
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.unit_id import _TEMP_BIT_NAME
@@ -83,6 +83,11 @@ from qiskit.circuit import (
     Reset,
 )
 from qiskit.circuit import Qubit as QCQubit
+from qiskit.circuit.classical.expr import (
+    Binary,
+    Unary,
+    Var,
+)
 from qiskit.circuit.library import (
     CRYGate,
     Initialize,
@@ -90,11 +95,6 @@ from qiskit.circuit.library import (
     RYGate,
     StatePreparation,
     UnitaryGate,
-)
-from qiskit.circuit.classical.expr import (
-    Binary,
-    Unary,
-    Var,
 )
 
 if TYPE_CHECKING:
@@ -684,7 +684,9 @@ def _append_if_else_circuit(
     )
 
     # Utility method to flatten conditions
-    def flatten_condition(_condition):
+    def flatten_condition(
+        _condition: Var | Unary | Binary
+    ) -> BitLogicExp:
         if isinstance(_condition, Var):
             # Find the pytket Bit with the same register name and index as the Qiskit Clbit
             for bit in bits:
@@ -692,7 +694,7 @@ def _append_if_else_circuit(
                     return bit
 
             raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
-        elif isinstance(_condition, Unary):
+        if isinstance(_condition, Unary):
             # Set the comparison value based on whether the Unary involves a NOT operation
             val = 0 if _condition.op.name == "BIT_NOT" else 1
 
@@ -702,7 +704,7 @@ def _append_if_else_circuit(
                     return bit ^ val
 
             raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
-        elif isinstance(_condition, Binary):
+        if isinstance(_condition, Binary):
             # Recursively handle both operands of the binary operation
             if _condition.op.name == "BIT_AND":
                 return flatten_condition(_condition.left) & flatten_condition(_condition.right)
@@ -712,8 +714,7 @@ def _append_if_else_circuit(
                 return flatten_condition(_condition.left) ^ flatten_condition(_condition.right)
 
             raise NotImplementedError(f"Binary condition with operation '{_condition.op.name}' not supported")
-        else:
-            raise NotImplementedError(f"Condition of type {type(_condition)} not supported")
+        raise NotImplementedError(f"Condition of type {type(_condition)} not supported")
 
     # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition, (Var | Unary | Binary)):
@@ -757,7 +758,7 @@ def _append_if_else_circuit(
         condition_bits = [bit for bit in bits if bit.reg_name == if_else_op.condition[0]._register.name and bit.index[0] == if_else_op.condition[0]._index] # noqa: SLF001
 
         if len(condition_bits) == 0:
-            raise ValueError(f"Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
+            raise ValueError("Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp.")
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
         outer_builder.tkc.add_circbox(

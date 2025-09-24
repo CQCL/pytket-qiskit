@@ -86,7 +86,7 @@ from pytket.passes import (
     RebaseTket,
     SequencePass,
 )
-from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.unit_id import _TEMP_BIT_NAME, BitRegister
 from pytket.utils.results import (
     compare_statevectors,
     compare_unitaries,
@@ -1493,6 +1493,28 @@ def test_qiskitv2_conversions() -> None:
     assert if_prep.condition[1] == 1
     assert if_cnz.condition[1] == 0
     assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)
+
+
+def test_bit_ref_circuit() -> None:
+    qreg = QuantumRegister(1)
+    qreg_setter = QuantumRegister(2)
+    creg_A = ClassicalRegister(1)
+    creg_B = ClassicalRegister(1)
+
+    qc = QuantumCircuit(qreg, qreg_setter, creg_A, creg_B)
+    qc.x(qreg_setter[1])
+
+    with qc.if_test((creg_A[0], 0)) as _else:
+        qc.measure(qreg_setter[1], creg_B[0])
+    with _else:
+        qc.measure(qreg_setter[0], creg_B[0])
+    tkc = qiskit_to_tk(qc)
+    cregs = tkc.c_registers
+    assert len(cregs) == 2
+    a_creg: BitRegister = cregs[0]
+    b_creg: BitRegister = cregs[1]
+    assert a_creg.size == 1
+    assert b_creg.size == 1
 
 
 def test_round_trip_with_qiskit_transpilation() -> None:

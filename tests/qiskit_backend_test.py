@@ -16,13 +16,13 @@ import os
 
 import numpy as np
 import pytest
+from pytket.architecture import Architecture, FullyConnected
+from pytket.circuit import Circuit
 from qiskit import QuantumCircuit  # type: ignore
 from qiskit.primitives import BackendSamplerV2  # type: ignore
 from qiskit.providers import JobStatus  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 
-from pytket.architecture import Architecture, FullyConnected
-from pytket.circuit import Circuit
 from pytket.extensions.qiskit import (
     AerBackend,
     AerStateBackend,

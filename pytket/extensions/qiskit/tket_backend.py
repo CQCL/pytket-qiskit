@@ -17,11 +17,12 @@ from typing import Any
 
 from pytket.architecture import FullyConnected
 from pytket.backends import Backend
+from pytket.passes import BasePass
+from pytket.predicates import CompilationUnit, GateSetPredicate
+
 from pytket.extensions.qiskit import AerStateBackend, AerUnitaryBackend
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype_rev, qiskit_to_tk
 from pytket.extensions.qiskit.tket_job import JobInfo, TketJob
-from pytket.passes import BasePass
-from pytket.predicates import CompilationUnit, GateSetPredicate
 from qiskit.circuit.library.standard_gates import (  # type: ignore
     get_standard_gate_name_mapping,
 )
@@ -130,7 +131,7 @@ class TketBackend(BackendV2):
         jobinfos = []
         for qc in run_input:
             tk_circ = qiskit_to_tk(qc)
-            if isinstance(self._backend, (AerStateBackend, AerUnitaryBackend)):  # noqa: UP038
+            if isinstance(self._backend, (AerStateBackend, AerUnitaryBackend)):
                 tk_circ.remove_blank_wires()
             circ_list.append(tk_circ)
             jobinfos.append(JobInfo(qc.name, tk_circ.qubits, tk_circ.bits, n_shots))

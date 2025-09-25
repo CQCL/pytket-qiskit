@@ -28,16 +28,6 @@ from uuid import UUID
 import numpy as np
 import sympy
 from numpy.typing import NDArray
-from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    QasmBackendConfiguration,
-)
-from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
-    BackendProperties,
-)
-from symengine import sympify  # type: ignore
-
-import qiskit._accelerate.circuit  # type: ignore
-import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from pytket.architecture import Architecture, FullyConnected
 from pytket.circuit import (
     Bit,
@@ -64,6 +54,16 @@ from pytket.utils import (
     gen_term_sequence_circuit,
     permute_rows_cols_in_unitary,
 )
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    QasmBackendConfiguration,
+)
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
+)
+from symengine import sympify  # type: ignore
+
+import qiskit._accelerate.circuit  # type: ignore
+import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
     ClassicalRegister,
     QuantumCircuit,
@@ -93,11 +93,11 @@ from qiskit.circuit.library import (
 )
 
 if TYPE_CHECKING:
+    from pytket.circuit import UnitID
+    from pytket.unit_id import BitRegister
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
-    from pytket.circuit import UnitID
-    from pytket.unit_id import BitRegister
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {

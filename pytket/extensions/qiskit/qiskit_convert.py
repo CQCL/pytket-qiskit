@@ -1173,14 +1173,16 @@ def tk_to_qiskit(
             new_p._parameter_keys = frozenset(  # noqa: SLF001
                 (
                     (
-                        qiskit._accelerate.circuit.ParameterExpression.Symbol(p_name),
+                        qiskit._accelerate.circuit.ParameterExpression.Symbol(  # noqa: SLF001
+                            p_name
+                        ),
                         uuid,
                     ),
-                )  # noqa: SLF001
+                )
             )
-            new_p._hash = hash(
-                (new_p._parameter_keys, new_p._symbol_expr)
-            )  # noqa: SLF001
+            new_p._hash = hash(  # noqa: SLF001
+                (new_p._parameter_keys, new_p._symbol_expr)  # noqa: SLF001
+            )
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

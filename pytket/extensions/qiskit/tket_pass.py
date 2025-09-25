@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pytket.passes import BasePass
 from qiskit_aer.backends import AerSimulator  # type: ignore
 
 from pytket.extensions.qiskit import (
@@ -20,7 +21,6 @@ from pytket.extensions.qiskit import (
     AerUnitaryBackend,
     IBMQBackend,
 )
-from pytket.passes import BasePass
 from qiskit.converters import circuit_to_dag, dag_to_circuit  # type: ignore
 from qiskit.dagcircuit import DAGCircuit  # type: ignore
 from qiskit.providers import BackendV2  # type: ignore

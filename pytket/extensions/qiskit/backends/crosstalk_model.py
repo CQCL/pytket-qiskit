@@ -16,13 +16,6 @@
 from dataclasses import dataclass
 
 import numpy as np
-from qiskit_aer.noise import NoiseModel  # type: ignore
-from qiskit_aer.noise.errors.standard_errors import (  # type: ignore
-    amplitude_damping_error,
-    phase_damping_error,
-)
-from scipy.linalg import fractional_matrix_power  # type: ignore
-
 from pytket.backends.backendinfo import BackendInfo
 from pytket.circuit import (
     Circuit,
@@ -35,6 +28,13 @@ from pytket.circuit import (
     Unitary2qBox,
     Unitary3qBox,
 )
+from qiskit_aer.noise import NoiseModel  # type: ignore
+from qiskit_aer.noise.errors.standard_errors import (  # type: ignore
+    amplitude_damping_error,
+    phase_damping_error,
+)
+from scipy.linalg import fractional_matrix_power  # type: ignore
+
 from pytket.extensions.qiskit.qiskit_convert import _gate_str_2_optype
 
 

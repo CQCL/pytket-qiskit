@@ -18,8 +18,6 @@ from typing import (
     Optional,
 )
 
-from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
-
 from pytket.backends.backend import Backend
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
@@ -29,6 +27,7 @@ from pytket.circuit import Circuit
 from pytket.passes import BasePass
 from pytket.predicates import Predicate
 from pytket.utils.results import KwargTypes
+from qiskit_aer.noise.noise_model import NoiseModel  # type: ignore
 
 from .aer import AerBackend
 from .ibm import IBMQBackend

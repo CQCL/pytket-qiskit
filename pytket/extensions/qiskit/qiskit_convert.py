@@ -28,16 +28,6 @@ from uuid import UUID
 import numpy as np
 import sympy
 from numpy.typing import NDArray
-from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
-    QasmBackendConfiguration,
-)
-from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
-    BackendProperties,
-)
-from symengine import sympify  # type: ignore
-
-import qiskit._accelerate.circuit  # type: ignore
-import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from pytket.architecture import Architecture, FullyConnected
 from pytket.circuit import (
     Bit,
@@ -64,6 +54,16 @@ from pytket.utils import (
     gen_term_sequence_circuit,
     permute_rows_cols_in_unitary,
 )
+from qiskit_ibm_runtime.models.backend_configuration import (  # type: ignore
+    QasmBackendConfiguration,
+)
+from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
+    BackendProperties,
+)
+from symengine import sympify  # type: ignore
+
+import qiskit._accelerate.circuit  # type: ignore
+import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
     ClassicalRegister,
     QuantumCircuit,
@@ -93,11 +93,11 @@ from qiskit.circuit.library import (
 )
 
 if TYPE_CHECKING:
+    from pytket.circuit import UnitID
+    from pytket.unit_id import BitRegister
     from qiskit_ibm_runtime.ibm_backend import IBMBackend  # type: ignore
     from qiskit_ibm_runtime.models.backend_properties import Nduv
 
-    from pytket.circuit import UnitID
-    from pytket.unit_id import BitRegister
     from qiskit.circuit.quantumcircuitdata import QuantumCircuitData  # type: ignore
 
 _qiskit_gates_1q = {
@@ -262,7 +262,8 @@ def _string_to_circuit(
     qiskit_prep: Initialize | StatePreparation,
 ) -> Circuit:
     """Helper function to generate circuits for :py:class:`~qiskit.circuit.library.Initialize`
-    and :py:class:`~qiskit.circuit.library.StatePreparation` objects built with strings"""
+    and :py:class:`~qiskit.circuit.library.StatePreparation` objects built with strings
+    """
 
     circ = Circuit(n_qubits)
     # Check if Instruction is Initialize or Statepreparation
@@ -380,7 +381,7 @@ def _get_unitary_box(unitary: NDArray[np.complex128], num_qubits: int) -> Unitar
 
 
 def _get_qcontrol_box(c_gate: ControlledGate, params: list[float]) -> QControlBox:
-    qiskit_ctrl_state: str = bin(c_gate.ctrl_state)[2:]
+    qiskit_ctrl_state: str = f"{c_gate.ctrl_state:b}"
     pytket_ctrl_state: tuple[bool, ...] = _get_pytket_ctrl_state(
         bitstring=qiskit_ctrl_state, n_bits=c_gate.num_ctrl_qubits
     )
@@ -406,7 +407,8 @@ def _add_state_preparation(
     tkc: Circuit, qubits: list[Qubit], prep: Initialize | StatePreparation
 ) -> None:
     """Handles different cases of :py:class:`~qiskit.circuit.library.Initialize` and :py:class:`~qiskit.circuit.library.StatePreparation`
-    and appends the appropriate state preparation to a :py:class:`~pytket._tket.circuit.Circuit` instance."""
+    and appends the appropriate state preparation to a :py:class:`~pytket._tket.circuit.Circuit` instance.
+    """
 
     # Check how Initialize or StatePrep is constructed
     # With a string, an int or an array of amplitudes
@@ -430,7 +432,7 @@ def _add_state_preparation(
     elif isinstance(prep.params[0], complex):
         # convert int to a binary string and apply X for |1>
         integer_parameter = int(prep.params[0].real)
-        bit_string = bin(integer_parameter)[2:]
+        bit_string = f"{integer_parameter:b}"
         circuit = _string_to_circuit(bit_string, prep.num_qubits, qiskit_prep=prep)
         tkc.add_circuit(circuit, qubits)
     else:
@@ -1169,9 +1171,18 @@ def tk_to_qiskit(
             new_p = Parameter(p_name)
             new_p._uuid = uuid  # noqa: SLF001
             new_p._parameter_keys = frozenset(  # noqa: SLF001
-                ((qiskit._accelerate.circuit.ParameterExpression.Symbol(p_name), uuid),)  # noqa: SLF001
+                (
+                    (
+                        qiskit._accelerate.circuit.ParameterExpression.Symbol(  # noqa: SLF001
+                            p_name
+                        ),
+                        uuid,
+                    ),
+                )
             )
-            new_p._hash = hash((new_p._parameter_keys, new_p._symbol_expr))  # noqa: SLF001
+            new_p._hash = hash(  # noqa: SLF001
+                (new_p._parameter_keys, new_p._symbol_expr)  # noqa: SLF001
+            )
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

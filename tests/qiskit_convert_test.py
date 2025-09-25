@@ -43,7 +43,7 @@ from pytket.passes import (
     RebaseTket,
     SequencePass,
 )
-from pytket.unit_id import _TEMP_BIT_NAME
+from pytket.unit_id import _TEMP_BIT_NAME, BitRegister
 from pytket.utils.results import (
     compare_statevectors,
     compare_unitaries,

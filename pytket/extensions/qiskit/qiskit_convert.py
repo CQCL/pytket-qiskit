@@ -605,6 +605,58 @@ def _build_rename_map(
     return rename_map
 
 
+# Utility method to flatten conditions
+def flatten_condition(
+    _condition: Var | Unary | Binary, bits: list[Bit]
+) -> BitLogicExp | Bit:
+    if isinstance(_condition, Var):
+        # Find the pytket Bit with the same register name and index as the Qiskit Clbit
+        for bit in bits:
+            if (
+                bit.reg_name == _condition.var._register.name  # noqa: SLF001
+                and bit.index[0] == _condition.var._index  # noqa: SLF001
+            ):
+                return bit
+
+        raise ValueError(
+            "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+        )
+    if isinstance(_condition, Unary):
+        # Set the comparison value based on whether the Unary involves a NOT operation
+        val = 0 if _condition.op.name == "BIT_NOT" else 1
+
+        # Find the pytket Bit with the same register name and index as the Qiskit Clbit
+        for bit in bits:
+            if (
+                bit.reg_name == _condition.operand.var._register.name  # noqa: SLF001
+                and bit.index[0] == _condition.operand.var._index  # noqa: SLF001
+            ):
+                return bit ^ val
+
+        raise ValueError(
+            "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+        )
+    if isinstance(_condition, Binary):
+        # Recursively handle both operands of the binary operation
+        if _condition.op.name == "BIT_AND":
+            return flatten_condition(_condition.left, bits) & flatten_condition(
+                _condition.right, bits
+            )
+        if _condition.op.name == "BIT_OR":
+            return flatten_condition(_condition.left) | flatten_condition(
+                _condition.right, bits
+            )
+        if _condition.op.name == "BIT_XOR":
+            return flatten_condition(_condition.left) ^ flatten_condition(
+                _condition.right, bits
+            )
+
+        raise NotImplementedError(
+            f"Binary condition with operation '{_condition.op.name}' not supported"
+        )
+    raise NotImplementedError(f"Condition of type {type(_condition)} not supported")
+
+
 # Used for handling of IfElseOp
 # docs -> https://docs.quantum.ibm.com/api/qiskit/qiskit.circuit.IfElseOp
 # Examples -> https://docs.quantum.ibm.com/guides/classical-feedforward-and-control-flow
@@ -684,55 +736,6 @@ def _append_if_else_circuit(
     if_circ, else_circ = _pytket_circuits_from_ifelseop(
         if_else_op, outer_builder, qargs, cargs
     )
-
-    # Utility method to flatten conditions
-    def flatten_condition(_condition: Var | Unary | Binary) -> BitLogicExp:
-        if isinstance(_condition, Var):
-            # Find the pytket Bit with the same register name and index as the Qiskit Clbit
-            for bit in bits:
-                if (
-                    bit.reg_name == _condition.var._register.name  # noqa: SLF001
-                    and bit.index[0] == _condition.var._index  # noqa: SLF001
-                ):
-                    return bit
-
-            raise ValueError(
-                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
-            )
-        if isinstance(_condition, Unary):
-            # Set the comparison value based on whether the Unary involves a NOT operation
-            val = 0 if _condition.op.name == "BIT_NOT" else 1
-
-            # Find the pytket Bit with the same register name and index as the Qiskit Clbit
-            for bit in bits:
-                if (
-                    bit.reg_name == _condition.operand.var._register.name  # noqa: SLF001
-                    and bit.index[0] == _condition.operand.var._index  # noqa: SLF001
-                ):
-                    return bit ^ val
-
-            raise ValueError(
-                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
-            )
-        if isinstance(_condition, Binary):
-            # Recursively handle both operands of the binary operation
-            if _condition.op.name == "BIT_AND":
-                return flatten_condition(_condition.left) & flatten_condition(
-                    _condition.right
-                )
-            if _condition.op.name == "BIT_OR":
-                return flatten_condition(_condition.left) | flatten_condition(
-                    _condition.right
-                )
-            if _condition.op.name == "BIT_XOR":
-                return flatten_condition(_condition.left) ^ flatten_condition(
-                    _condition.right
-                )
-
-            raise NotImplementedError(
-                f"Binary condition with operation '{_condition.op.name}' not supported"
-            )
-        raise NotImplementedError(f"Condition of type {type(_condition)} not supported")
 
     # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition, (Var | Unary | Binary)):

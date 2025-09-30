@@ -1495,6 +1495,29 @@ def test_qiskitv2_conversions() -> None:
     assert if_tk1.condition == (ClassicalRegister(2, "c"), 2)
 
 
+# https://github.com/CQCL/pytket-qiskit/issues/514
+def test_bit_ref_circuit() -> None:
+    qreg = QuantumRegister(1)
+    qreg_setter = QuantumRegister(2)
+    creg_A = ClassicalRegister(1)
+    creg_B = ClassicalRegister(1)
+
+    qc = QuantumCircuit(qreg, qreg_setter, creg_A, creg_B)
+    qc.x(qreg_setter[1])
+
+    with qc.if_test((creg_A[0], 0)) as _else:
+        qc.measure(qreg_setter[1], creg_B[0])
+    with _else:
+        qc.measure(qreg_setter[0], creg_B[0])
+    tkc = qiskit_to_tk(qc)
+    cregs = tkc.c_registers
+    assert len(cregs) == 2
+    a_creg = cregs[0]
+    b_creg = cregs[1]
+    assert a_creg.size == 1
+    assert b_creg.size == 1
+
+
 def test_round_trip_with_qiskit_transpilation() -> None:
     circ = Circuit(4, 1)
     circ.H(0).Measure(0, 0)

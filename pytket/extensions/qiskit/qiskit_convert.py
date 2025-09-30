@@ -643,7 +643,7 @@ def _flatten_condition(
                 _condition.right, bits
             )
         if _condition.op.name == "BIT_XOR":
-            return _flatten_condition(_condition.lef, bits) ^ _flatten_condition(
+            return _flatten_condition(_condition.left, bits) ^ _flatten_condition(
                 _condition.right, bits
             )
 

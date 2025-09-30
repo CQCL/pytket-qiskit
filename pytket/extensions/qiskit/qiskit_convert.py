@@ -677,11 +677,11 @@ def _append_if_else_circuit(
     cargs: list[Clbit],
 ) -> None:
     # Get two pytket circuits which implement the true_body and false_body.
+    # Note that else_circ can be None if no false_body is specified.
     if_circ, else_circ = _pytket_circuits_from_ifelseop(
         if_else_op, outer_builder, qargs, cargs
     )
 
-    # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition, (Unary | Binary)):
         raise NotImplementedError(
             "Handling of Unary and Binary conditions is not supported yet."
@@ -767,7 +767,7 @@ def _append_if_else_circuit(
     else:
         raise TypeError(
             "Unrecognized type used to construct IfElseOp. Expected "  # noqa: ISC003
-            + f"Var, Unary, Binary, or ClBit or ClassicalRegister tuple, got {type(if_else_op.condition)}"
+            + f"a ClBit or ClassicalRegister tuple, got {type(if_else_op.condition)}"
         )
 
 

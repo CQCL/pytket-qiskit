@@ -643,11 +643,11 @@ def _flatten_condition(
                 _condition.right, bits
             )
         if _condition.op.name == "BIT_OR":
-            return _flatten_condition(_condition.left) | _flatten_condition(
+            return _flatten_condition(_condition.left, bits) | _flatten_condition(
                 _condition.right, bits
             )
         if _condition.op.name == "BIT_XOR":
-            return _flatten_condition(_condition.left) ^ _flatten_condition(
+            return _flatten_condition(_condition.lef, bits) ^ _flatten_condition(
                 _condition.right, bits
             )
 
@@ -740,7 +740,7 @@ def _append_if_else_circuit(
     # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition, (Var | Unary | Binary)):
         # In this case, if_else_op.condition is a Binary operation which we must flatten
-        condition_flattened = _flatten_condition(if_else_op.condition)
+        condition_flattened = _flatten_condition(if_else_op.condition, bits)
 
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),

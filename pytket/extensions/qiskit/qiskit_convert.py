@@ -83,6 +83,7 @@ from qiskit.circuit import (
     Reset,
 )
 from qiskit.circuit import Qubit as QCQubit
+from qiskit.circuit.classical.expr import Binary, Unary, Var  # type: ignore
 from qiskit.circuit.library import (
     CRYGate,
     Initialize,
@@ -679,14 +680,62 @@ def _append_if_else_circuit(
     if_circ, else_circ = _pytket_circuits_from_ifelseop(
         if_else_op, outer_builder, qargs, cargs
     )
+
     # else_circ can be None if no false_body is specified.
-    if isinstance(if_else_op.condition[0], Clbit):
-        if len(bits) != 1:
-            raise NotImplementedError("Conditions on multiple bits not supported")
+    if isinstance(if_else_op.condition, (Unary | Binary)):
+        raise NotImplementedError(
+            "Handling of Unary and Binary conditions is not supported yet."
+        )
+    if isinstance(if_else_op.condition, Var) and isinstance(
+        if_else_op.condition.var, Clbit
+    ):
+        condition_bits = [
+            bit
+            for bit in bits
+            if bit.reg_name == if_else_op.condition.var._register.name  # noqa: SLF001
+            and bit.index[0] == if_else_op.condition.var._index  # noqa: SLF001
+        ]
+
+        if len(condition_bits) == 0:
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
+
+        # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),
             args=if_circ.qubits + if_circ.bits,  # type: ignore
-            condition_bits=bits,
+            condition_bits=condition_bits,
+            condition_value=1,
+        )
+        # If we have an else_circ defined, add it to the circuit
+        if else_circ is not None:
+            outer_builder.tkc.add_circbox(
+                circbox=CircBox(else_circ),
+                args=else_circ.qubits + else_circ.bits,  # type: ignore
+                condition_bits=condition_bits,
+                condition_value=0,
+            )
+    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+        if_else_op.condition[0], Clbit
+    ):
+        condition_bits = [
+            bit
+            for bit in bits
+            if bit.reg_name == if_else_op.condition[0]._register.name  # noqa: SLF001
+            and bit.index[0] == if_else_op.condition[0]._index  # noqa: SLF001
+        ]
+
+        if len(condition_bits) == 0:
+            raise ValueError(
+                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
+
+        # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
+        outer_builder.tkc.add_circbox(
+            circbox=CircBox(if_circ),
+            args=if_circ.qubits + if_circ.bits,  # type: ignore
+            condition_bits=condition_bits,
             condition_value=if_else_op.condition[1],
         )
         # If we have an else_circ defined, add it to the circuit
@@ -694,14 +743,16 @@ def _append_if_else_circuit(
             outer_builder.tkc.add_circbox(
                 circbox=CircBox(else_circ),
                 args=else_circ.qubits + else_circ.bits,  # type: ignore
-                condition_bits=bits,
+                condition_bits=condition_bits,
                 condition_value=1 ^ if_else_op.condition[1],
             )
-
-    elif isinstance(if_else_op.condition[0], ClassicalRegister):
+    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+        if_else_op.condition[0], ClassicalRegister
+    ):
         pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(
             if_else_op.condition[0].name
         )
+
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),
             args=if_circ.qubits + if_circ.bits,  # type: ignore
@@ -716,7 +767,7 @@ def _append_if_else_circuit(
     else:
         raise TypeError(
             "Unrecognized type used to construct IfElseOp. Expected "  # noqa: ISC003
-            + f"ClBit or ClassicalRegister, got {type(if_else_op.condition[0])}"
+            + f"Var, Unary, Binary, or ClBit or ClassicalRegister tuple, got {type(if_else_op.condition)}"
         )
 
 

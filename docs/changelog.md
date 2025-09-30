@@ -4,6 +4,11 @@
 
 # Changelog
 
+## 0.72.0 (September 2025)
+
+- Set qiskit version to 2.1.1.
+- Set qiskit-ibm-runtime version to 0.41.1
+
 ## 0.71.0 (July 2025)
 
 - Update minimum pytket version to 2.8.0.

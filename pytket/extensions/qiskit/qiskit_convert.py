@@ -606,7 +606,7 @@ def _build_rename_map(
 
 
 # Utility method to flatten conditions
-def flatten_condition(
+def _flatten_condition(
     _condition: Var | Unary | Binary, bits: list[Bit]
 ) -> BitLogicExp | Bit:
     if isinstance(_condition, Var):
@@ -639,15 +639,15 @@ def flatten_condition(
     if isinstance(_condition, Binary):
         # Recursively handle both operands of the binary operation
         if _condition.op.name == "BIT_AND":
-            return flatten_condition(_condition.left, bits) & flatten_condition(
+            return _flatten_condition(_condition.left, bits) & _flatten_condition(
                 _condition.right, bits
             )
         if _condition.op.name == "BIT_OR":
-            return flatten_condition(_condition.left) | flatten_condition(
+            return _flatten_condition(_condition.left) | _flatten_condition(
                 _condition.right, bits
             )
         if _condition.op.name == "BIT_XOR":
-            return flatten_condition(_condition.left) ^ flatten_condition(
+            return _flatten_condition(_condition.left) ^ _flatten_condition(
                 _condition.right, bits
             )
 
@@ -740,7 +740,7 @@ def _append_if_else_circuit(
     # else_circ can be None if no false_body is specified.
     if isinstance(if_else_op.condition, (Var | Unary | Binary)):
         # In this case, if_else_op.condition is a Binary operation which we must flatten
-        condition_flattened = flatten_condition(if_else_op.condition)
+        condition_flattened = _flatten_condition(if_else_op.condition)
 
         outer_builder.tkc.add_circbox(
             circbox=CircBox(if_circ),

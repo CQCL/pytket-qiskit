@@ -83,11 +83,7 @@ from qiskit.circuit import (
     Reset,
 )
 from qiskit.circuit import Qubit as QCQubit
-from qiskit.circuit.classical.expr import (
-    Binary,
-    Unary,
-    Var,
-)
+from qiskit.circuit.classical.expr import Binary, Unary, Var  # type: ignore
 from qiskit.circuit.library import (
     CRYGate,
     Initialize,

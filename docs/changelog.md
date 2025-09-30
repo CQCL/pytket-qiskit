@@ -4,6 +4,10 @@
 
 # Changelog
 
+## UNRELEASED
+
+- Fix an issue related to the handling of `IfElseOp` conditions in {py:func}`qiskit_to_tk`. [#514](https://github.com/CQCL/pytket-qiskit/issues/514).
+
 ## 0.71.1 (September 2025)
 
 - Set qiskit version to 2.1.1.

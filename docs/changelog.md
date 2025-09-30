@@ -4,11 +4,16 @@
 
 # Changelog
 
-## 0.72.0 (September 2025)
+## 0.72.0 (October 2025)
 
 - Update minimum pytket version to 2.9.3.
 - Update minimum qiskit version to 2.2.0.
 - Update minimum qiskit-ibm-runtime version requirement to 0.42.0.
+
+## 0.71.1 (September 2025)
+
+- Set qiskit version to 2.1.1.
+- Set qiskit-ibm-runtime version to 0.41.1
 
 ## 0.71.0 (July 2025)
 

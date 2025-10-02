@@ -687,7 +687,7 @@ def _append_if_else_circuit(
             "Handling of Unary, Var and Binary conditions is not supported yet."
         )
 
-    if hasattr(if_else_op.condition, "__getitem__") and isinstance(
+    if isinstance(if_else_op.condition, tuple) and isinstance(
         if_else_op.condition[0], Clbit
     ):
         condition_bits = [
@@ -722,7 +722,7 @@ def _append_if_else_circuit(
                 condition_bits=condition_bits,
                 condition_value=1 ^ if_else_op.condition[1],
             )
-    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+    elif isinstance(if_else_op.condition, tuple) and isinstance(
         if_else_op.condition[0], ClassicalRegister
     ):
         pytket_bit_reg: BitRegister = outer_builder.tkc.get_c_register(

@@ -682,46 +682,7 @@ def _append_if_else_circuit(
         if_else_op, outer_builder, qargs, cargs
     )
 
-    if isinstance(if_else_op.condition, (Unary | Binary)):
-        raise NotImplementedError(
-            "Handling of Unary and Binary conditions is not supported yet."
-        )
-    if isinstance(if_else_op.condition, Var) and isinstance(
-        if_else_op.condition.var, Clbit
-    ):
-        condition_bits = [
-            bit
-            for bit in bits
-            if bit.reg_name == if_else_op.condition.var._register.name  # noqa: SLF001
-            and bit.index[0] == if_else_op.condition.var._index  # noqa: SLF001
-        ]
-
-        if len(condition_bits) == 0:
-            raise ValueError(
-                "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
-            )
-        if len(condition_bits) > 1:
-            raise ValueError(
-                f"Found condition on {len(condition_bits)},"
-                "only conditions on single individual bits are supported at present."
-            )
-
-        # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
-        outer_builder.tkc.add_circbox(
-            circbox=CircBox(if_circ),
-            args=if_circ.qubits + if_circ.bits,  # type: ignore
-            condition_bits=condition_bits,
-            condition_value=1,
-        )
-        # If we have an else_circ defined, add it to the circuit
-        if else_circ is not None:
-            outer_builder.tkc.add_circbox(
-                circbox=CircBox(else_circ),
-                args=else_circ.qubits + else_circ.bits,  # type: ignore
-                condition_bits=condition_bits,
-                condition_value=0,
-            )
-    elif hasattr(if_else_op.condition, "__getitem__") and isinstance(
+    if hasattr(if_else_op.condition, "__getitem__") and isinstance(
         if_else_op.condition[0], Clbit
     ):
         condition_bits = [

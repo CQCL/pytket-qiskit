@@ -700,6 +700,11 @@ def _append_if_else_circuit(
             raise ValueError(
                 "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
             )
+        if len(condition_bits) > 1:
+            raise ValueError(
+                f"Found condition on {len(condition_bits)},"
+                "only conditions on single individual bits are supported at present."
+            )
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)
         outer_builder.tkc.add_circbox(
@@ -729,6 +734,11 @@ def _append_if_else_circuit(
         if len(condition_bits) == 0:
             raise ValueError(
                 "Failed to find any pytket Bit matching Qiskit Clbit in condition for IfElseOp."
+            )
+        if len(condition_bits) > 1:
+            raise ValueError(
+                f"Found condition on {len(condition_bits)},"
+                "only conditions on single individual bits are supported at present."
             )
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)

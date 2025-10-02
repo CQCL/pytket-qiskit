@@ -682,6 +682,11 @@ def _append_if_else_circuit(
         if_else_op, outer_builder, qargs, cargs
     )
 
+    if isinstance(if_else_op.condition, (Unary | Binary | Var)):
+        raise NotImplementedError(
+            "Handling of Unary, Var and Binary conditions is not supported yet."
+        )
+
     if hasattr(if_else_op.condition, "__getitem__") and isinstance(
         if_else_op.condition[0], Clbit
     ):

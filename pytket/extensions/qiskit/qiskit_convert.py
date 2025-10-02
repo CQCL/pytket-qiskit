@@ -83,7 +83,7 @@ from qiskit.circuit import (
     Reset,
 )
 from qiskit.circuit import Qubit as QCQubit
-from qiskit.circuit.classical.expr import Binary, Unary, Var  # type: ignore
+from qiskit.circuit.classical.expr import Binary, Unary, Var, Expr  # type: ignore
 from qiskit.circuit.library import (
     CRYGate,
     Initialize,
@@ -682,9 +682,9 @@ def _append_if_else_circuit(
         if_else_op, outer_builder, qargs, cargs
     )
 
-    if isinstance(if_else_op.condition, (Unary | Binary | Var)):
+    if isinstance(if_else_op.condition, (Unary | Binary | Var | Expr)):
         raise NotImplementedError(
-            "Handling of Unary, Var and Binary conditions is not supported yet."
+            "Handling of Unary, Var, Binary and Expr conditions is not supported yet."
         )
 
     if isinstance(if_else_op.condition, tuple) and isinstance(

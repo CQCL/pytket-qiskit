@@ -63,7 +63,7 @@ from pytket.utils.outcomearray import OutcomeArray
 from pytket.utils.results import KwargTypes
 from qiskit_ibm_runtime import (  # type: ignore
     QiskitRuntimeService,
-    RuntimeJob,
+    RuntimeJobV2,
     SamplerOptions,
     SamplerV2,
     Session,
@@ -82,7 +82,7 @@ from qiskit.primitives import (  # type: ignore
     SamplerPubResult,
 )
 
-# RuntimeJob has no queue_position attribute, which is referenced
+# RuntimeJobV2 has no queue_position attribute, which is referenced
 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
 # therefore we can't use job_monitor until fixed
 # from qiskit.tools.monitor import job_monitor  # type: ignore
@@ -650,7 +650,7 @@ class IBMQBackend(Backend):
             self._cache[handle] = dict()  # noqa: C408
         return cast("list[ResultHandle]", handle_list)
 
-    def _retrieve_job(self, jobid: str) -> RuntimeJob:
+    def _retrieve_job(self, jobid: str) -> RuntimeJobV2:
         return self._service.job(jobid)
 
     def cancel(self, handle: ResultHandle) -> None:
@@ -694,7 +694,7 @@ class IBMQBackend(Backend):
                 except Exception as e:  # noqa: BLE001
                     warn(f"Unable to retrieve job {jobid}: {e}")  # noqa: B028
                     raise CircuitNotRunError(handle)  # noqa: B904
-                # RuntimeJob has no queue_position attribute, which is referenced
+                # RuntimeJobV2 has no queue_position attribute, which is referenced
                 # via job_monitor see-> https://github.com/CQCL/pytket-qiskit/issues/48
                 # therefore we can't use job_monitor until fixed
                 if self._monitor and job:

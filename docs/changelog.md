@@ -8,6 +8,12 @@
 
 - Fix an issue related to the handling of `IfElseOp` conditions in {py:func}`qiskit_to_tk`. [#514](https://github.com/CQCL/pytket-qiskit/issues/514).
 
+## 0.72.0 (October 2025)
+
+- Update minimum pytket version to 2.9.3.
+- Update minimum qiskit version to 2.2.0.
+- Update minimum qiskit-ibm-runtime version requirement to 0.42.0.
+
 ## 0.71.1 (September 2025)
 
 - Set qiskit version to 2.1.1.

@@ -62,7 +62,6 @@ from qiskit_ibm_runtime.models.backend_properties import (  # type: ignore
 )
 from symengine import sympify  # type: ignore
 
-import qiskit._accelerate.circuit  # type: ignore
 import qiskit.circuit.library.standard_gates as qiskit_gates  # type: ignore
 from qiskit import (
     ClassicalRegister,
@@ -769,8 +768,7 @@ def qiskit_to_tk(qcirc: QuantumCircuit, preserve_param_uuid: bool = False) -> Ci
     # we optionally preserve this in parameter name for later use
     if preserve_param_uuid:
         updates = {
-            p: Parameter(f"{p.name}_UUID_{p._uuid.hex}")  # noqa: SLF001
-            for p in qcirc.parameters
+            p: Parameter(f"{p.name}_UUID_{p.uuid.hex}") for p in qcirc.parameters
         }
         qcirc = cast("QuantumCircuit", qcirc.assign_parameters(updates))
 
@@ -796,16 +794,16 @@ def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
 
 def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
-) -> float | ParameterExpression:
+) -> float | ParameterExpression | Parameter:
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    return ParameterExpression(symb_map, str(sympify(ppi)))
+    return Parameter(str(sympify(ppi)))
 
 
 def _get_params(
     op: Op, symb_map: dict[Parameter, sympy.Symbol]
-) -> list[float | ParameterExpression]:
+) -> list[float | ParameterExpression | Parameter]:
     return [_param_to_qiskit(p, symb_map) for p in op.params]
 
 
@@ -1196,21 +1194,7 @@ def tk_to_qiskit(
             p_name, uuid_str = name_spl
             uuid = UUID(uuid_str)
             # See Parameter.__init__() in qiskit/circuit/parameter.py.
-            new_p = Parameter(p_name)
-            new_p._uuid = uuid  # noqa: SLF001
-            new_p._parameter_keys = frozenset(  # noqa: SLF001
-                (
-                    (
-                        qiskit._accelerate.circuit.ParameterExpression.Symbol(  # noqa: SLF001
-                            p_name
-                        ),
-                        uuid,
-                    ),
-                )
-            )
-            new_p._hash = hash(  # noqa: SLF001
-                (new_p._parameter_keys, new_p._symbol_expr)  # noqa: SLF001
-            )
+            new_p = Parameter(p_name, uuid=uuid)
             updates[p] = new_p
     qcirc.assign_parameters(updates, inplace=True)
 

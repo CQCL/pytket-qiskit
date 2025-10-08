@@ -705,6 +705,7 @@ def _append_if_else_circuit(
             raise ValueError(
                 f"Found condition on {len(condition_bits)},"
                 "only conditions on single individual bits are supported at present."
+                " Check for duplicate bits or bits with multiple indices."
             )
 
         # In this case, if_else_op.condition is a single tuple of shape (Clbit, value)

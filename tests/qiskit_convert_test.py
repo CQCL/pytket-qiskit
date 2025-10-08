@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import os
 import warnings
 from collections import Counter
@@ -822,6 +823,49 @@ def test_convert_multi_c_reg() -> None:
     circ = qiskit_to_tk(qcirc)
     assert circ.get_commands()[1].args == [Bit("tk_SCRATCH_BIT", 0), q1]
 
+
+def test_convert_symbolic_circ() -> None:
+    with open(
+            "sympy_qiskit_issue1.json"
+        ) as f:
+        circ = Circuit.from_dict(json.load(f))
+        for g in circ:
+            print(g)  # noqa: T201
+
+    from pytket.extensions.qiskit.qiskit_convert import (  # noqa: PLC0415
+        qiskit_to_tk,
+        tk_to_qiskit,
+    )
+
+    qc = tk_to_qiskit(circ)
+
+    print(qc)  # noqa: T201
+
+    tc = qiskit_to_tk(qc)
+
+    print(tc)  # noqa: T201
+
+
+def test_convert_symbolic_circ_2() -> None:
+    with open(
+            "sympy_qiskit_issue2.json"
+        ) as f:
+        circ = Circuit.from_dict(json.load(f))
+        for g in circ:
+            print(g)  # noqa: T201
+
+    from pytket.extensions.qiskit.qiskit_convert import (  # noqa: PLC0415
+        qiskit_to_tk,
+        tk_to_qiskit,
+    )
+
+    qc = tk_to_qiskit(circ)
+
+    print(qc)  # noqa: T201
+
+    tc = qiskit_to_tk(qc)
+
+    print(tc)  # noqa: T201
 
 # test that tk_to_qiskit works after adding OpType.CRx and OpType.CRy
 def test_crx_and_cry() -> None:

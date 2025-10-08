@@ -788,17 +788,17 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        return sympy.sympify(str(p)) / sympy.pi
+        return p.sympify() / sympy.pi
     return p / sympy.pi
 
 
 def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
 ) -> float | ParameterExpression | Parameter:
-    ppi = p * sympy.pi
+    ppi = sympy.pi * p
     if len(ppi.free_symbols) == 0:
-        return float(ppi.evalf())
-    return Parameter(str(sympify(ppi)))
+        return float(ppi.evalf()) * sympy.pi
+    return Parameter(str(ppi.simplify()))
 
 
 def _get_params(
@@ -1192,6 +1192,7 @@ def tk_to_qiskit(
         name_spl = p.name.split("_UUID_", 2)
         if len(name_spl) == 2:  # noqa: PLR2004
             p_name, uuid_str = name_spl
+            print(uuid_str)
             uuid = UUID(uuid_str)
             # See Parameter.__init__() in qiskit/circuit/parameter.py.
             new_p = Parameter(p_name, uuid=uuid)

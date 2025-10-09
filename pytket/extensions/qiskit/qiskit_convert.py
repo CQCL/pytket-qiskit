@@ -795,10 +795,10 @@ def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
 def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
 ) -> float | ParameterExpression | Parameter:
-    ppi = sympy.pi * p
+    ppi = sympify(p) * sympy.pi
     if len(ppi.free_symbols) == 0:
-        return float(ppi.evalf()) * sympy.pi
-    return Parameter(str(ppi.simplify()))
+        return float(ppi.evalf())
+    return Parameter(sympify(ppi))
 
 
 def _get_params(

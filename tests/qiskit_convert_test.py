@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import os
 import warnings
 from collections import Counter
@@ -33,6 +34,7 @@ from pytket.circuit import (
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
+    fresh_symbol,
     reg_eq,
     reg_neq,
 )
@@ -848,6 +850,59 @@ def test_rebased_conversion() -> None:
     u1 = tket_circzz.get_unitary()
     u2 = tket_circzz2.get_unitary()
     assert compare_unitaries(u1, u2)
+
+
+def test_convert_symbolic_circ() -> None:
+    a = fresh_symbol("alpha")
+
+    circ = Circuit(2)
+
+    circ.ZZPhase(a, 0, 1)
+
+    qc = tk_to_qiskit(circ)
+
+    print(qc)  # noqa: T201
+
+    tc = qiskit_to_tk(qc)
+
+    print(tc)  # noqa: T201
+
+    raise ValueError("STOP")
+
+
+def test_convert_symbolic_circ_2() -> None:
+    a = fresh_symbol("beta")
+
+    circ = Circuit(2)
+
+    circ.ZZPhase(a, 0, 1)
+
+    qc = tk_to_qiskit(circ)
+
+    print(qc)  # noqa: T201
+
+    tc = qiskit_to_tk(qc)
+
+    print(tc)  # noqa: T201
+
+    raise ValueError("STOP")
+
+
+def test_convert_symbolic_circ_3() -> None:
+    with open("symbolic-circuit.json") as f:
+        circ = Circuit.from_dict(json.load(f))
+        for g in circ:
+            print(g)  # noqa: T201
+
+    qc = tk_to_qiskit(circ)
+
+    print(qc)  # noqa: T201
+
+    tc = qiskit_to_tk(qc)
+
+    print(tc)  # noqa: T201
+
+    raise ValueError("STOP")
 
 
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")

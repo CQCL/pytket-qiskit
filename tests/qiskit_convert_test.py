@@ -33,6 +33,7 @@ from pytket.circuit import (
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
+    fresh_symbol,
     reg_eq,
     reg_neq,
 )
@@ -848,6 +849,29 @@ def test_rebased_conversion() -> None:
     u1 = tket_circzz.get_unitary()
     u2 = tket_circzz2.get_unitary()
     assert compare_unitaries(u1, u2)
+
+
+def test_convert_symbolic_circ() -> None:
+    a = fresh_symbol("alpha")
+
+    circ = Circuit(2)
+
+    circ.ZZPhase(a, 0, 1)
+
+    qc = tk_to_qiskit(circ)
+    _ = qiskit_to_tk(qc)
+
+
+def test_convert_symbolic_circ_2() -> None:
+    a = fresh_symbol("beta")
+
+    circ = Circuit(2)
+
+    circ.ZZPhase(a, 0, 1)
+
+    qc = tk_to_qiskit(circ)
+
+    _ = qiskit_to_tk(qc)
 
 
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")

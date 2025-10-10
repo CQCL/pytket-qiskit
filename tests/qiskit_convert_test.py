@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import os
 import warnings
 from collections import Counter
@@ -860,14 +859,7 @@ def test_convert_symbolic_circ() -> None:
     circ.ZZPhase(a, 0, 1)
 
     qc = tk_to_qiskit(circ)
-
-    print(qc)  # noqa: T201
-
-    tc = qiskit_to_tk(qc)
-
-    print(tc)  # noqa: T201
-
-    raise ValueError("STOP")
+    _ = qiskit_to_tk(qc)
 
 
 def test_convert_symbolic_circ_2() -> None:
@@ -879,30 +871,7 @@ def test_convert_symbolic_circ_2() -> None:
 
     qc = tk_to_qiskit(circ)
 
-    print(qc)  # noqa: T201
-
-    tc = qiskit_to_tk(qc)
-
-    print(tc)  # noqa: T201
-
-    raise ValueError("STOP")
-
-
-def test_convert_symbolic_circ_3() -> None:
-    with open("symbolic-circuit.json") as f:
-        circ = Circuit.from_dict(json.load(f))
-        for g in circ:
-            print(g)  # noqa: T201
-
-    qc = tk_to_qiskit(circ)
-
-    print(qc)  # noqa: T201
-
-    tc = qiskit_to_tk(qc)
-
-    print(tc)  # noqa: T201
-
-    raise ValueError("STOP")
+    _ = qiskit_to_tk(qc)
 
 
 @pytest.mark.xfail(reason="PauliEvolutionGate with symbolic parameter not supported")

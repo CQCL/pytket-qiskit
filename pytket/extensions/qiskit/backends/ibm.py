@@ -395,7 +395,13 @@ class IBMQBackend(Backend):
         timeout: int = 300,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        tk_gate_set = _tk_gate_set(config)
+        return IBMQBackend.pass_from_info(backend_info)
+
+    @staticmethod
+    def pass_from_info(
+        backend_info: BackendInfo, optimisation_level: int = 2, timeout: int = 300
+    ) -> BasePass:
+        tk_gate_set = backend_info.gate_set
         primitive_gates = _get_primitive_gates(tk_gate_set)
         primitive_1q_gates = _get_primitive_1q_gates(tk_gate_set)
         supports_rz = OpType.Rz in primitive_gates

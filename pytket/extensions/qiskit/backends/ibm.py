@@ -395,7 +395,7 @@ class IBMQBackend(Backend):
         timeout: int = 300,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        return IBMQBackend.pass_from_info(backend_info)
+        return IBMQBackend.pass_from_info(backend_info, optimisation_level, timeout)
 
     @staticmethod
     def pass_from_info(

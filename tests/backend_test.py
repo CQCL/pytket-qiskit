@@ -864,7 +864,9 @@ def test_ibmq_emulator(
     brussels_emulator_backend.rebase_pass().apply(copy_circ)
     assert brussels_emulator_backend.required_predicates[1].verify(copy_circ)
     circ = brussels_emulator_backend.get_compiled_circuit(circ)
-    b_noi = AerBackend(noise_model=brussels_emulator_backend._noise_model)  # noqa: SLF001
+    b_noi = AerBackend(
+        noise_model=brussels_emulator_backend._noise_model
+    )  # noqa: SLF001
     emu_counts = brussels_emulator_backend.run_circuit(
         circ, n_shots=10, seed=10
     ).get_counts()
@@ -1613,12 +1615,12 @@ def test_pass_from_info(qiskit_runtime_service: QiskitRuntimeService) -> None:
     for info in infos[:5]:
         actual_pass = IBMQBackend.pass_from_info(info)
 
-        torino_backend = IBMQBackend(
+        be = IBMQBackend(
             backend_name=info.device_name or "",
             monitor=False,
             instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
             token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
         )
-        expected_pass = torino_backend.default_compilation_pass()
+        expected_pass = be.default_compilation_pass()
 
         assert actual_pass.to_dict() == expected_pass.to_dict()

@@ -21,6 +21,7 @@
     .. automethod:: get_compiled_circuit
     .. automethod:: get_compiled_circuits
     .. automethod:: get_result
+    .. automethod:: pass_from_info
     .. automethod:: process_circuits
     .. automethod:: rebase_pass
     .. automethod:: rebase_pass_offline

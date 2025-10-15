@@ -1605,3 +1605,20 @@ def test_swap_unitary_compilation() -> None:
         dtype=complex,
     )
     assert np.allclose(u, u_swap)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_pass_from_info(qiskit_runtime_service: QiskitRuntimeService) -> None:
+    infos = IBMQBackend.available_devices(service=qiskit_runtime_service)
+    for info in infos[:5]:
+        actual_pass = IBMQBackend.pass_from_info(info)
+
+        be = IBMQBackend(
+            backend_name=info.device_name or "",
+            monitor=False,
+            instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+            token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
+        )
+        expected_pass = be.default_compilation_pass()
+
+        assert actual_pass.to_dict() == expected_pass.to_dict()

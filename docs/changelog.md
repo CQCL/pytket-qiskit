@@ -7,6 +7,7 @@
 ## UNRELEASED
 
 - Fix an issue related to the handling of `IfElseOp` conditions in {py:func}`~.qiskit_to_tk`. [#514](https://github.com/CQCL/pytket-qiskit/issues/514).
+- Add static method `IBMQBackend.pass_from_info` that takes a `BackendInfo` (and optimisation_level and timeout) and produces a base pass without requiring the network or authentication.
 
 ## 0.72.0 (October 2025)
 

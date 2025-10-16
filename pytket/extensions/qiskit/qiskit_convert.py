@@ -788,7 +788,7 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        return sympy.sympify(str(p)) / sympy.pi
+        return sympy.sympify(str(p), locals={"beta": sympy.Symbol("beta")}) / sympy.pi
     return p / sympy.pi
 
 
@@ -798,7 +798,10 @@ def _param_to_qiskit(
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    return Parameter(str(sympify(ppi)))
+    return Parameter(
+        str(sympify(ppi))
+    )  # this is creating new symbols for each expression. pi*beta becomes the new symbol "pi*beta".
+    # This works for compiling to qiskit and back, but not for targeting qiskit.
 
 
 def _get_params(

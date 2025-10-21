@@ -791,7 +791,7 @@ def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
         raise ValueError(
             f"qiskit to tk conversion found a ParameterExpression with symbol: {p!s}"
         )
-        return sympy.sympify(str(p), locals={"beta": sympy.Symbol("beta")}) / sympy.pi
+        # return sympy.sympify(str(p), locals={"beta": sympy.Symbol("beta")}) / sympy.pi
     return p / sympy.pi
 
 

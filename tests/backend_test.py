@@ -57,7 +57,6 @@ from pytket.utils.expectations import (
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
-from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore

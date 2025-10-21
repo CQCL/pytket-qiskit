@@ -33,7 +33,6 @@ from pytket.circuit import (
     Unitary1qBox,
     Unitary2qBox,
     Unitary3qBox,
-    fresh_symbol,
     reg_eq,
     reg_neq,
 )
@@ -69,7 +68,6 @@ from qiskit.circuit.library import (
     n_local,
     real_amplitudes,
 )
-from qiskit.circuit.parameterexpression import ParameterExpression  # type: ignore
 from qiskit.quantum_info import Operator, SparsePauliOp, Statevector  # type: ignore
 from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit.transpiler import (  # type: ignore
@@ -126,7 +124,7 @@ def test_parameterised_circuit_global_phase() -> None:
 
     pass_2.apply(tket_qc)
 
-    qc_2 = tk_to_qiskit(tket_qc)
+    qc_2 = tk_to_qiskit(tket_qc)  # noqa: F841
 
     # assert type(qc_2.global_phase) is ParameterExpression
 

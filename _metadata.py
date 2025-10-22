@@ -1,2 +1,2 @@
-__extension_version__ = "0.73.0rc0"
+__extension_version__ = "0.73.0rc1"
 __extension_name__ = "pytket-qiskit"

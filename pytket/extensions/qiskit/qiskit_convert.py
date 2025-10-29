@@ -802,7 +802,7 @@ def _param_to_qiskit(
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
     raise ValueError(
-        f"tk to qiskit conversion is trying to cerate qiskit circuit with symbolic parameter {sympify(ppi)!s}"
+        f"tk to qiskit conversion is trying to create qiskit circuit with symbolic parameter {sympify(ppi)!s}"
     )
     # return Parameter(
     #    str(sympify(ppi))

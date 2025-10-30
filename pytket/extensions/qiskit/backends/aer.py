@@ -34,6 +34,7 @@ from pytket.passes import (
     CliffordSimp,
     CustomPassMap,
     DecomposeBoxes,
+    DefaultMappingPass,
     FullPeepholeOptimise,
     GreedyPauliSimp,
     RemoveBarriers,
@@ -172,12 +173,21 @@ class _AerBaseBackend(Backend):
         arch: Architecture,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         assert optimisation_level in range(4)
         arch_specific_passes = [
             AutoRebase({OpType.CX, OpType.TK1}),
-            CustomPassMap(_gen_lightsabre_transformation(arch), label="lightsabrepass"),
         ]
+        if allow_symbolic:
+            arch_specific_passes.append(DefaultMappingPass(arch))
+        else:
+            arch_specific_passes.append(
+                CustomPassMap(
+                    _gen_lightsabre_transformation(arch), label="lightsabrepass"
+                )
+            )
+
         if optimisation_level == 0:
             return SequencePass(
                 [
@@ -295,7 +305,7 @@ class _AerBaseBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
-        allow_symbolic=False,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         """
         See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.

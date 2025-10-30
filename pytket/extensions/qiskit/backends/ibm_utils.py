@@ -157,7 +157,7 @@ def _gen_lightsabre_transformation(  # type: ignore
         circuit: Circuit,
     ) -> tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]:
         # route circuit
-        if len(circuit.free_symbols) != 0:
+        if len(circuit.free_symbols()) != 0:
             raise ValueError(
                 f"lightsabre routing can only be used for circuit not containing symbolic parameters. This circuit contains {circuit.free_symbols}"
             )

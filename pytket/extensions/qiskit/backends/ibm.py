@@ -353,7 +353,7 @@ class IBMQBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
-        allow_symbolic=False,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         """
         A suggested compilation pass that will, if possible, produce an equivalent
@@ -395,14 +395,19 @@ class IBMQBackend(Backend):
         props: BackendProperties | None,
         optimisation_level: int = 2,
         timeout: int = 300,
-        allow_symbolic=False,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        return IBMQBackend.pass_from_info(backend_info, optimisation_level, timeout)
+        return IBMQBackend.pass_from_info(
+            backend_info, optimisation_level, timeout, allow_symbolic
+        )
 
     @staticmethod
     def pass_from_info(
-        backend_info: BackendInfo, optimisation_level: int = 2, timeout: int = 300
+        backend_info: BackendInfo,
+        optimisation_level: int = 2,
+        timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         tk_gate_set = backend_info.gate_set
         primitive_gates = _get_primitive_gates(tk_gate_set)

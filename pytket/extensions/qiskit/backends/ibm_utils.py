@@ -157,6 +157,10 @@ def _gen_lightsabre_transformation(  # type: ignore
         circuit: Circuit,
     ) -> tuple[Circuit, tuple[dict[UnitID, UnitID], dict[UnitID, UnitID]]]:
         # route circuit
+        if len(circuit.free_symbols()) != 0:
+            raise ValueError(
+                f"lightsabre routing can only be used for circuit not containing symbolic parameters. This circuit contains {circuit.free_symbols}"
+            )
         applied_c = apply_layout.run(tk_to_qiskit(circuit, replace_implicit_swaps=True))
 
         # construct initial_map with ancillas

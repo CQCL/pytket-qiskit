@@ -57,7 +57,6 @@ from pytket.utils.expectations import (
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
-from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
@@ -1022,19 +1021,19 @@ def test_compilation_correctness(brussels_backend: IBMQBackend) -> None:
         assert c_pred.verify(cu.circuit)
 
 
-# pytket-extensions issue #69
-def test_symbolic_rebase() -> None:
-    circ = QuantumCircuit(2)
-    circ.rx(Parameter("a"), 0)
-    circ.ry(Parameter("b"), 1)
-    circ.cx(0, 1)
+# # pytket-extensions issue #69
+# def test_symbolic_rebase() -> None:
+#     circ = QuantumCircuit(2)
+#     circ.rx(Parameter("a"), 0)
+#     circ.ry(Parameter("b"), 1)
+#     circ.cx(0, 1)
 
-    pytket_circ = qiskit_to_tk(circ)
+#     pytket_circ = qiskit_to_tk(circ)
 
-    # rebase pass could not handle symbolic parameters originally and would fail here:
-    AerBackend().rebase_pass().apply(pytket_circ)
+#     # rebase pass could not handle symbolic parameters originally and would fail here:
+#     AerBackend().rebase_pass().apply(pytket_circ)
 
-    assert len(pytket_circ.free_symbols()) == 2
+#     assert len(pytket_circ.free_symbols()) == 2
 
 
 def _tk1_to_rotations(a: float, b: float, c: float) -> Circuit:

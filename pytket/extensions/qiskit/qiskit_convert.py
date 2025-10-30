@@ -799,7 +799,7 @@ def _param_to_qiskit(
     p: sympy.Expr, symb_map: dict[Parameter, sympy.Symbol]
 ) -> float | ParameterExpression | Parameter:
     ppi = p * sympy.pi
-    if len(ppi.free_symbols) == 0:
+    if len(ppi.free_symbols()) == 0:
         return float(ppi.evalf())
     raise ValueError(
         f"tk to qiskit conversion is trying to create qiskit circuit with symbolic parameter {sympify(ppi)!s}"

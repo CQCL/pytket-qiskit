@@ -39,6 +39,7 @@ from pytket.passes import (
     CliffordSimp,
     CustomPassMap,
     DecomposeBoxes,
+    DefaultMappingPass,
     FullPeepholeOptimise,
     GreedyPauliSimp,
     KAKDecomposition,
@@ -352,6 +353,7 @@ class IBMQBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic=False,
     ) -> BasePass:
         """
         A suggested compilation pass that will, if possible, produce an equivalent
@@ -384,7 +386,7 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration = self._backend.configuration()
         props: BackendProperties | None = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
-            config, props, optimisation_level, timeout
+            config, props, optimisation_level, timeout, allow_symbolic
         )
 
     @staticmethod
@@ -393,6 +395,7 @@ class IBMQBackend(Backend):
         props: BackendProperties | None,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic=False,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
         tk_gate_set = _tk_gate_set(config)
@@ -452,14 +455,18 @@ class IBMQBackend(Backend):
             )
         arch = backend_info.architecture
         assert arch is not None
+        # put in https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DefaultMappingPass here
         if not isinstance(arch, FullyConnected):
             passlist.append(AutoRebase(primitive_gates))
-            passlist.append(
-                CustomPassMap(
-                    _gen_lightsabre_transformation(arch),
-                    "lightsabrepass",
+            if allow_symbolic:
+                passlist.append(DefaultMappingPass(arch))
+            else:
+                passlist.append(
+                    CustomPassMap(
+                        _gen_lightsabre_transformation(arch),
+                        "lightsabrepass",
+                    )
                 )
-            )
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:  # noqa: PLR2004

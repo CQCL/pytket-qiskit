@@ -295,6 +295,7 @@ class _AerBaseBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic=False,
     ) -> BasePass:
         """
         See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.
@@ -305,6 +306,7 @@ class _AerBaseBackend(Backend):
                 arch,  # type: ignore
                 optimisation_level,
                 timeout,
+                allow_symbolic=allow_symbolic,
             )
         return self._arch_independent_default_compilation_pass(
             optimisation_level, timeout

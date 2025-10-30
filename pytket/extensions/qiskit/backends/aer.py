@@ -173,7 +173,7 @@ class _AerBaseBackend(Backend):
         arch: Architecture,
         optimisation_level: int = 2,
         timeout: int = 300,
-        allow_symbolic=False,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         assert optimisation_level in range(4)
         arch_specific_passes = [
@@ -305,7 +305,7 @@ class _AerBaseBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
-        allow_symbolic=False,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         """
         See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.

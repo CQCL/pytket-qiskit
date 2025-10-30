@@ -126,7 +126,7 @@ class CrosstalkParams:
 class _NoisyCircuitBuilder:
     """Builder used to generate a noisy circuit"""
 
-    Ibox = Unitary1qBox(np.eye(2))
+    Ibox = Unitary1qBox(np.eye(2))  # type: ignore
     SUPPORTED_TYPES = {  # noqa: RUF012
         OpType.Unitary1qBox,
         OpType.Unitary2qBox,

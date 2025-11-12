@@ -39,6 +39,7 @@ from pytket.circuit import (
     QControlBox,
     Qubit,
     Unitary2qBox,
+    fresh_symbol,
     reg_eq,
 )
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
@@ -149,6 +150,41 @@ def test_sim() -> None:
     c = circuit_gen(True)
     b = AerBackend()
     b.run_circuit(c, n_shots=1024).get_shots()
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_symbolic() -> None:
+    a = fresh_symbol("beta")
+    circ = Circuit(2)
+    circ.ZZPhase(a, 0, 1)
+
+    b = IBMQBackend(
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
+    )
+    with pytest.raises(ValueError) as e:
+        b.default_compilation_pass(optimisation_level=2).apply(circ)
+    assert (
+        "lightsabre routing can only be used for circuit not containing symbolic parameters."
+        in str(e)
+    )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_symbolic_ii() -> None:
+    a = fresh_symbol("beta")
+    circ = Circuit(2)
+    circ.ZZPhase(a, 0, 1)
+
+    b = IBMQBackend(
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
+    )
+    b.default_compilation_pass(optimisation_level=2, allow_symbolic=True).apply(circ)
+    assert a in circ.free_symbols()
+    assert b._uses_lightsabre  # noqa: SLF001
 
 
 def test_measures() -> None:

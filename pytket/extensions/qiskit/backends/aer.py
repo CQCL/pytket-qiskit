@@ -159,6 +159,9 @@ class _AerBaseBackend(Backend):
     def _result_id_type(self) -> _ResultIdTuple:
         return (str, int, int, str)
 
+    def _uses_lightsabre(self) -> bool:
+        return self._has_arch and self._backend_info.architecture.coupling  # type: ignore
+
     @property
     def backend_info(self) -> BackendInfo:
         return self._backend_info

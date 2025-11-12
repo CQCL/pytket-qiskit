@@ -237,6 +237,10 @@ class IBMQBackend(Backend):
     def backend_info(self) -> BackendInfo:
         return self._backend_info
 
+    @property
+    def _uses_lightsabre(self) -> bool:
+        return True
+
     @classmethod
     def _get_backend_info(
         cls,

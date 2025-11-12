@@ -791,7 +791,6 @@ def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
         raise ValueError(
             f"qiskit to tk conversion found a ParameterExpression with symbol: {p!s}"
         )
-        # return sympy.sympify(str(p), locals={"beta": sympy.Symbol("beta")}) / sympy.pi
     return p / sympy.pi
 
 
@@ -804,10 +803,6 @@ def _param_to_qiskit(
     raise ValueError(
         f"tk to qiskit conversion is trying to create qiskit circuit with symbolic parameter {sympify(ppi)!s}"
     )
-    # return Parameter(
-    #    str(sympify(ppi))
-    # )  # this is creating new symbols for each expression. pi*beta becomes the new symbol "pi*beta".
-    # This works for compiling to qiskit and back, but not for targeting qiskit.
 
 
 def _get_params(

@@ -470,7 +470,6 @@ class IBMQBackend(Backend):
             )
         arch = backend_info.architecture
         assert arch is not None
-        # put in https://docs.quantinuum.com/tket/api-docs/passes.html#pytket.passes.DefaultMappingPass here
         if not isinstance(arch, FullyConnected):
             passlist.append(AutoRebase(primitive_gates))
             if allow_symbolic:

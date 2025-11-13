@@ -789,7 +789,7 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
         raise ValueError(
-            f"qiskit to tk conversion found a ParameterExpression with symbol: {p!s}"
+            f"qiskit_to_tk conversion found a ParameterExpression with symbol: {p!s}"
         )
     return p / sympy.pi
 

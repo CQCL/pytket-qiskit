@@ -85,6 +85,10 @@ class IBMQEmulatorBackend(Backend):
     def required_predicates(self) -> list[Predicate]:
         return self._ibmq.required_predicates
 
+    @property
+    def _uses_lightsabre(self) -> bool:
+        return True
+
     def default_compilation_pass(
         self,
         optimisation_level: int = 2,

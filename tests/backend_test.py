@@ -39,6 +39,7 @@ from pytket.circuit import (
     QControlBox,
     Qubit,
     Unitary2qBox,
+    fresh_symbol,
     reg_eq,
 )
 from pytket.mapping import LexiLabellingMethod, LexiRouteRoutingMethod, MappingManager
@@ -57,7 +58,6 @@ from pytket.utils.expectations import (
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.results import compare_statevectors, compare_unitaries
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister  # type: ignore
-from qiskit.circuit import Parameter  # type: ignore
 from qiskit_aer import Aer  # type: ignore
 from qiskit_aer.noise import ReadoutError  # type: ignore
 from qiskit_aer.noise.errors import depolarizing_error, pauli_error  # type: ignore
@@ -150,6 +150,41 @@ def test_sim() -> None:
     c = circuit_gen(True)
     b = AerBackend()
     b.run_circuit(c, n_shots=1024).get_shots()
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_symbolic() -> None:
+    a = fresh_symbol("beta")
+    circ = Circuit(2)
+    circ.ZZPhase(a, 0, 1)
+
+    b = IBMQBackend(
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
+    )
+    with pytest.raises(ValueError) as e:
+        b.default_compilation_pass(optimisation_level=2).apply(circ)
+    assert (
+        "lightsabre routing can only be used for circuit not containing symbolic parameters."
+        in str(e)
+    )
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+def test_symbolic_ii() -> None:
+    a = fresh_symbol("beta")
+    circ = Circuit(2)
+    circ.ZZPhase(a, 0, 1)
+
+    b = IBMQBackend(
+        "ibm_brussels",
+        instance=os.getenv("PYTKET_REMOTE_IBM_CLOUD_INSTANCE"),
+        token=os.getenv("PYTKET_REMOTE_IBM_CLOUD_TOKEN"),
+    )
+    b.default_compilation_pass(optimisation_level=2, allow_symbolic=True).apply(circ)
+    assert a in circ.free_symbols()
+    assert b._uses_lightsabre  # noqa: SLF001
 
 
 def test_measures() -> None:
@@ -1020,21 +1055,6 @@ def test_compilation_correctness(brussels_backend: IBMQBackend) -> None:
         cu = CompilationUnit(c)
         p.apply(cu)
         assert c_pred.verify(cu.circuit)
-
-
-# pytket-extensions issue #69
-def test_symbolic_rebase() -> None:
-    circ = QuantumCircuit(2)
-    circ.rx(Parameter("a"), 0)
-    circ.ry(Parameter("b"), 1)
-    circ.cx(0, 1)
-
-    pytket_circ = qiskit_to_tk(circ)
-
-    # rebase pass could not handle symbolic parameters originally and would fail here:
-    AerBackend().rebase_pass().apply(pytket_circ)
-
-    assert len(pytket_circ.free_symbols()) == 2
 
 
 def _tk1_to_rotations(a: float, b: float, c: float) -> Circuit:

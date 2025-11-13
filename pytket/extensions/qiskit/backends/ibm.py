@@ -39,6 +39,7 @@ from pytket.passes import (
     CliffordSimp,
     CustomPassMap,
     DecomposeBoxes,
+    DefaultMappingPass,
     FullPeepholeOptimise,
     GreedyPauliSimp,
     KAKDecomposition,
@@ -236,6 +237,10 @@ class IBMQBackend(Backend):
     def backend_info(self) -> BackendInfo:
         return self._backend_info
 
+    @property
+    def _uses_lightsabre(self) -> bool:
+        return True
+
     @classmethod
     def _get_backend_info(
         cls,
@@ -352,6 +357,7 @@ class IBMQBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         """
         A suggested compilation pass that will, if possible, produce an equivalent
@@ -384,7 +390,7 @@ class IBMQBackend(Backend):
         config: QasmBackendConfiguration = self._backend.configuration()
         props: BackendProperties | None = self._backend.properties()
         return IBMQBackend.default_compilation_pass_offline(
-            config, props, optimisation_level, timeout
+            config, props, optimisation_level, timeout, allow_symbolic
         )
 
     @staticmethod
@@ -393,13 +399,19 @@ class IBMQBackend(Backend):
         props: BackendProperties | None,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         backend_info = IBMQBackend._get_backend_info(config, props)
-        return IBMQBackend.pass_from_info(backend_info, optimisation_level, timeout)
+        return IBMQBackend.pass_from_info(
+            backend_info, optimisation_level, timeout, allow_symbolic
+        )
 
     @staticmethod
     def pass_from_info(
-        backend_info: BackendInfo, optimisation_level: int = 2, timeout: int = 300
+        backend_info: BackendInfo,
+        optimisation_level: int = 2,
+        timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         tk_gate_set = backend_info.gate_set
         primitive_gates = _get_primitive_gates(tk_gate_set)
@@ -460,12 +472,15 @@ class IBMQBackend(Backend):
         assert arch is not None
         if not isinstance(arch, FullyConnected):
             passlist.append(AutoRebase(primitive_gates))
-            passlist.append(
-                CustomPassMap(
-                    _gen_lightsabre_transformation(arch),
-                    "lightsabrepass",
+            if allow_symbolic:
+                passlist.append(DefaultMappingPass(arch))
+            else:
+                passlist.append(
+                    CustomPassMap(
+                        _gen_lightsabre_transformation(arch),
+                        "lightsabrepass",
+                    )
                 )
-            )
         if optimisation_level == 1:
             passlist.append(SynthesiseTket())
         if optimisation_level == 2:  # noqa: PLR2004

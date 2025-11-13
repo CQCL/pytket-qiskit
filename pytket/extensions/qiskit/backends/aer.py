@@ -34,6 +34,7 @@ from pytket.passes import (
     CliffordSimp,
     CustomPassMap,
     DecomposeBoxes,
+    DefaultMappingPass,
     FullPeepholeOptimise,
     GreedyPauliSimp,
     RemoveBarriers,
@@ -159,6 +160,10 @@ class _AerBaseBackend(Backend):
         return (str, int, int, str)
 
     @property
+    def _uses_lightsabre(self) -> bool:
+        return self._has_arch and self._backend_info.architecture.coupling  # type: ignore
+
+    @property
     def backend_info(self) -> BackendInfo:
         return self._backend_info
 
@@ -172,12 +177,21 @@ class _AerBaseBackend(Backend):
         arch: Architecture,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         assert optimisation_level in range(4)
         arch_specific_passes = [
             AutoRebase({OpType.CX, OpType.TK1}),
-            CustomPassMap(_gen_lightsabre_transformation(arch), label="lightsabrepass"),
         ]
+        if allow_symbolic:
+            arch_specific_passes.append(DefaultMappingPass(arch))
+        else:
+            arch_specific_passes.append(
+                CustomPassMap(
+                    _gen_lightsabre_transformation(arch), label="lightsabrepass"
+                )
+            )
+
         if optimisation_level == 0:
             return SequencePass(
                 [
@@ -295,6 +309,7 @@ class _AerBaseBackend(Backend):
         self,
         optimisation_level: int = 2,
         timeout: int = 300,
+        allow_symbolic: bool = False,
     ) -> BasePass:
         """
         See documentation for :py:meth:`~.IBMQBackend.default_compilation_pass`.
@@ -305,6 +320,7 @@ class _AerBaseBackend(Backend):
                 arch,  # type: ignore
                 optimisation_level,
                 timeout,
+                allow_symbolic=allow_symbolic,
             )
         return self._arch_independent_default_compilation_pass(
             optimisation_level, timeout

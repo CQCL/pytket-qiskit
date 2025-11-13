@@ -788,7 +788,9 @@ def _get_qiskit_control_state(bool_list: list[bool]) -> str:
 
 def _param_to_tk(p: float | ParameterExpression) -> sympy.Expr:
     if isinstance(p, ParameterExpression):
-        return sympy.sympify(str(p)) / sympy.pi
+        raise ValueError(
+            f"qiskit_to_tk conversion found a ParameterExpression with symbol: {p!s}"
+        )
     return p / sympy.pi
 
 
@@ -798,7 +800,9 @@ def _param_to_qiskit(
     ppi = p * sympy.pi
     if len(ppi.free_symbols) == 0:
         return float(ppi.evalf())
-    return Parameter(str(sympify(ppi)))
+    raise ValueError(
+        f"tk_to_qiskit conversion is trying to create qiskit circuit with symbolic parameter {sympify(ppi)!s}"
+    )
 
 
 def _get_params(

@@ -4,11 +4,13 @@
 
 # Changelog
 
-## UNRELEASED
+## 0.73.0 (October 2025)
 
 - Fix an issue related to the handling of `IfElseOp` conditions in {py:func}`~.qiskit_to_tk`. [#514](https://github.com/CQCL/pytket-qiskit/issues/514).
 - Add static method `IBMQBackend.pass_from_info` that takes a `BackendInfo` (and optimisation_level and timeout) and produces a base pass without requiring the network or authentication.
 - Update minimum qiskit version to 2.2.3.
+- Remove support for conversion of circuits containing symbolic parameters
+- Update minimum pytket version to 2.10.3.
 
 ## 0.72.0 (October 2025)
 

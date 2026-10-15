@@ -4,6 +4,10 @@
 
 # Changelog
 
+## Unreleased
+
+- Cap the Qiskit dependency below version 3 until compatibility is tested.
+
 ## 0.78.0 (August 2026)
 
 - Make `qiskit_aer` an optional dependency.

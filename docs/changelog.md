@@ -4,9 +4,9 @@
 
 # Changelog
 
-## Unreleased
+## 0.79.0 (October 2026)
 
-- Cap the Qiskit dependency below version 3 until compatibility is tested.
+- fix in qiskit transpilation
 
 ## 0.78.0 (August 2026)
 

@@ -40,10 +40,7 @@ from qiskit.synthesis import SuzukiTrotter  # type: ignore
 from qiskit.transpiler import (  # type: ignore
     CouplingMap,
     PassManager,
-    PassManagerConfig,
-)
-from qiskit.transpiler.preset_passmanagers.level2 import (  # type: ignore
-    level_2_pass_manager,
+    generate_preset_pass_manager,
 )
 
 from pytket.extensions.qiskit import have_aer
@@ -1487,7 +1484,6 @@ def test_bit_ref_circuit() -> None:
     assert b_creg.size == 1
 
 
-@pytest.mark.xfail(reason="https://github.com/Quantinuum/pytket-qiskit/issues/539")
 def test_round_trip_with_qiskit_transpilation() -> None:
     circ = Circuit(4, 1)
     circ.H(0).Measure(0, 0)
@@ -1500,12 +1496,12 @@ def test_round_trip_with_qiskit_transpilation() -> None:
     coupling = CouplingMap(
         [[0, 1], [1, 0], [1, 2], [2, 1], [2, 3], [3, 2], [3, 4], [4, 3]]
     )
-    config = PassManagerConfig(
+    pass_manager = generate_preset_pass_manager(
+        optimization_level=2,
         coupling_map=coupling,
         basis_gates=["cx", "sx", "x", "rz", "if_else"],
         seed_transpiler=0,
     )
-    pass_manager = level_2_pass_manager(config)
     compiled_qc = pass_manager.run(qc)
     tk_circ = qiskit_to_tk(compiled_qc)
     assert tk_circ.n_gates_of_type(OpType.Conditional) == 3

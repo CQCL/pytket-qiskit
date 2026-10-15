@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.79.0 (October 2026)
+
+- fix in qiskit transpilation
+
 ## 0.78.0 (August 2026)
 
 - Make `qiskit_aer` an optional dependency.
